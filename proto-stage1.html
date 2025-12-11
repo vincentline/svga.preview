@@ -1,0 +1,918 @@
+NEW_FILE_CODE
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <title>A-viewer Stage 1</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- Vue 2 -->
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.min.js"></script>
+    <!-- Element UI -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/element-ui@2.15.1/lib/theme-chalk/index.css"
+    />
+    <script src="https://unpkg.com/element-ui@2.15.1/lib/index.js"></script>
+    <!-- SVGA / Lottie，与原项目保持一致 -->
+    <script src="https://cdn.jsdelivr.net/npm/svgaplayerweb@2.3.1/build/svga.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.7.6/lottie.min.js"></script>
+
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
+          'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+        background-color: #111;
+        color: #f5f5f5;
+      }
+
+      body {
+        display: flex;
+        flex-direction: column;
+      }
+
+      #app {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+      }
+
+      .app-root {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+      }
+
+      /* 顶部播放区域 */
+
+      .top-area {
+        flex: 1;
+        position: relative;
+        background-color: #1b1b1d;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+
+      .top-area.drag-hover {
+        outline: 2px dashed #409eff;
+        outline-offset: -10px;
+      }
+
+      .viewer-box {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        max-width: 1440px;
+        max-height: 900px;
+        margin: 0 auto;
+        box-sizing: border-box;
+        padding: 24px 24px 16px;
+      }
+
+      .viewer-inner-wrapper {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        background-color: #000;
+        border-radius: 8px;
+        overflow: hidden;
+        cursor: default;
+      }
+
+      .viewer-inner {
+        width: 100%;
+        height: 100%;
+        transform-origin: center center;
+        /* transform 在 Vue 里通过 :style 注入 */
+      }
+
+      .viewer-canvas {
+        width: 100%;
+        height: 100%;
+      }
+
+      .empty-overlay {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: #999;
+        pointer-events: none;
+      }
+
+      .empty-overlay-icon {
+        width: 80px;
+        height: 80px;
+        border-radius: 16px;
+        border: 2px dashed #555;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 16px;
+        font-size: 32px;
+      }
+
+      .empty-overlay-text {
+        font-size: 14px;
+      }
+
+      /* 底部浮层 */
+
+      .bottom-bar {
+        height: 160px;
+        background-color: #151518;
+        border-top: 1px solid #26262a;
+        display: flex;
+        flex-direction: row;
+        align-items: stretch;
+        padding: 8px 16px;
+        box-sizing: border-box;
+      }
+
+      .ad-slot {
+        width: 160px;
+        border-radius: 8px;
+        border: 1px dashed #444;
+        color: #666;
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 8px;
+      }
+
+      .bottom-main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+      }
+
+      .module-tabs {
+        display: flex;
+        flex-direction: row;
+        margin-bottom: 8px;
+      }
+
+      .module-tab-btn {
+        min-width: 72px;
+        padding: 4px 12px;
+        margin-right: 8px;
+        border-radius: 14px;
+        border: 1px solid #333;
+        background-color: #1f1f23;
+        color: #aaa;
+        font-size: 13px;
+        cursor: pointer;
+        outline: none;
+      }
+
+      .module-tab-btn:hover {
+        border-color: #409eff;
+        color: #e0e0e0;
+      }
+
+      /* Press/激活状态 */
+      .module-tab-btn.is-press {
+        background-color: #409eff;
+        border-color: #409eff;
+        color: #fff;
+      }
+
+      .bottom-content {
+        flex: 1;
+        display: flex;
+        flex-direction: row;
+        align-items: stretch;
+        min-width: 0;
+      }
+
+      .bottom-section {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        width: 100%;
+      }
+
+      .bottom-row {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        margin-bottom: 6px;
+        font-size: 12px;
+      }
+
+      .bottom-row-label {
+        width: 72px;
+        color: #888;
+        flex-shrink: 0;
+      }
+
+      .bottom-row-value {
+        flex: 1;
+        min-width: 0;
+        color: #eee;
+      }
+
+      .bottom-row-value span {
+        margin-right: 12px;
+      }
+
+      .bottom-row-controls {
+        flex: 1;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+      }
+
+      .bottom-row-controls .el-button {
+        margin-right: 8px;
+      }
+
+      .bottom-row-controls .el-slider {
+        flex: 1;
+      }
+
+      .bottom-footer-row {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 4px;
+      }
+
+      .bottom-footer-left {
+        font-size: 12px;
+        color: #777;
+      }
+
+      .bottom-footer-right {
+        display: flex;
+        align-items: center;
+      }
+
+      .bottom-footer-right .el-button {
+        margin-left: 8px;
+      }
+
+      .empty-tip-text {
+        font-size: 12px;
+        color: #777;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="app">
+      <div class="app-root">
+        <!-- 顶部播放区域 -->
+        <div
+          class="top-area"
+          :class="{'drag-hover': dropHover}"
+          @dragover.prevent="onDragOver"
+          @dragleave="onDragLeave"
+          @drop.prevent="onDrop"
+        >
+          <div class="viewer-box">
+            <div
+              class="viewer-inner-wrapper"
+              @wheel="onWheel"
+              @mousedown="onMouseDown"
+              @mousemove="onMouseMove"
+              @mouseup="onMouseUp"
+              @mouseleave="onMouseUp"
+            >
+              <div
+                class="viewer-inner"
+                :style="viewerTransformStyle"
+              >
+                <!-- 这里是所有模块共享的画布容器 -->
+                <div
+                  ref="svgaContainer"
+                  class="viewer-canvas"
+                  :style="{backgroundColor: currentBgColor}"
+                ></div>
+                <!-- 未来可以在这里根据模块切换不同渲染方式（svga / video / lottie） -->
+              </div>
+
+              <!-- 空状态覆盖层（所有模块都无文件时） -->
+              <div v-if="isEmpty" class="empty-overlay">
+                <div class="empty-overlay-icon">📁</div>
+                <div class="empty-overlay-text">请将文件拖到此区域</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 底部浮层 -->
+        <div class="bottom-bar">
+          <div class="ad-slot">广告位</div>
+
+          <div class="bottom-main">
+            <!-- 模块切换 -->
+            <div class="module-tabs">
+              <button
+                class="module-tab-btn"
+                :class="{'is-press': currentModule === 'svga'}"
+                @click="switchModule('svga')"
+              >
+                SVGA
+              </button>
+              <button
+                class="module-tab-btn"
+                :class="{'is-press': currentModule === 'yyeva'}"
+                @click="switchModule('yyeva')"
+              >
+                YYEVA MP4
+              </button>
+              <button
+                class="module-tab-btn"
+                :class="{'is-press': currentModule === 'lottie'}"
+                @click="switchModule('lottie')"
+              >
+                Lottie
+              </button>
+            </div>
+
+            <div class="bottom-content">
+              <div class="bottom-section">
+                <!-- 当前模块内容区 -->
+                <!-- SVGA 模块 -->
+                <template v-if="currentModule === 'svga' || (isEmpty && currentModule === 'empty')">
+                  <!-- 播放控制区域 -->
+                  <div class="bottom-row">
+                    <div class="bottom-row-label">播放控制</div>
+                    <div class="bottom-row-controls">
+                      <el-button
+                        size="mini"
+                        type="primary"
+                        :disabled="!svga.hasFile"
+                        @click="toggleSvgaPlay"
+                      >
+                        {{ svga.playing ? '暂停' : '播放' }}
+                      </el-button>
+                      <el-slider
+                        v-model="svga.progress"
+                        :min="0"
+                        :max="100"
+                        :step="1"
+                        :disabled="!svga.hasFile"
+                        @change="onSvgaSeek"
+                      ></el-slider>
+                    </div>
+                  </div>
+
+                  <!-- 文件信息区域 -->
+                  <div class="bottom-row">
+                    <div class="bottom-row-label">文件信息</div>
+                    <div class="bottom-row-value">
+                      <span>名称：{{ svga.fileInfo.name || '-' }}</span>
+                      <span>大小：{{ svga.fileInfo.sizeText || '-' }}</span>
+                    </div>
+                  </div>
+
+                  <div class="bottom-row">
+                    <div class="bottom-row-label"></div>
+                    <div class="bottom-row-value">
+                      <span>帧率：{{ svga.fps || '-' }}</span>
+                      <span>总帧数：{{ svga.totalFrames || '-' }}</span>
+                      <span>尺寸：{{ svga.sizeText || '-' }}</span>
+                      <span>内存：{{ svga.memoryText || '-' }}</span>
+                    </div>
+                  </div>
+
+                  <!-- 底色切换 -->
+                  <div class="bottom-row">
+                    <div class="bottom-row-label">底色</div>
+                    <div class="bottom-row-value">
+                      <el-radio-group
+                        v-model="bgColorKey"
+                        size="mini"
+                      >
+                        <el-radio-button label="black">黑</el-radio-button>
+                        <el-radio-button label="white">白</el-radio-button>
+                        <el-radio-button label="gray">灰</el-radio-button>
+                      </el-radio-group>
+                    </div>
+                  </div>
+
+                  <!-- 底部说明 + 清空按钮 -->
+                  <div class="bottom-footer-row">
+                    <div class="bottom-footer-left">
+                      <span
+                        v-if="isEmpty"
+                        class="empty-tip-text"
+                      >
+                        空状态：请将文件拖到上方播放区域
+                      </span>
+                      <span
+                        v-else
+                        class="empty-tip-text"
+                      >
+                        当前模块：SVGA
+                      </span>
+                    </div>
+                    <div class="bottom-footer-right">
+                      <el-button
+                        size="mini"
+                        @click="clearAll"
+                      >
+                        清空画布
+                      </el-button>
+                    </div>
+                  </div>
+                </template>
+
+                <!-- YYEVA 模块（阶段1先占位） -->
+                <template v-else-if="currentModule === 'yyeva'">
+                  <div class="bottom-row">
+                    <div class="bottom-row-label">播放控制</div>
+                    <div class="bottom-row-controls">
+                      <el-button
+                        size="mini"
+                        type="primary"
+                        :disabled="!yyeva.hasFile"
+                      >
+                        播放（待实现）
+                      </el-button>
+                    </div>
+                  </div>
+
+                  <div class="bottom-row">
+                    <div class="bottom-row-label">文件信息</div>
+                    <div class="bottom-row-value">
+                      <span>名称：{{ yyeva.fileInfo.name || '-' }}</span>
+                      <span>大小：{{ yyeva.fileInfo.sizeText || '-' }}</span>
+                    </div>
+                  </div>
+
+                  <div class="bottom-footer-row">
+                    <div class="bottom-footer-left">
+                      <span class="empty-tip-text">
+                        YYEVA MP4 模块功能将在后续阶段补充（暂为占位）
+                      </span>
+                    </div>
+                    <div class="bottom-footer-right">
+                      <el-button
+                        size="mini"
+                        @click="clearAll"
+                      >
+                        清空画布
+                      </el-button>
+                    </div>
+                  </div>
+                </template>
+
+                <!-- Lottie 模块（阶段1先占位） -->
+                <template v-else-if="currentModule === 'lottie'">
+                  <div class="bottom-row">
+                    <div class="bottom-row-label">播放控制</div>
+                    <div class="bottom-row-controls">
+                      <el-button
+                        size="mini"
+                        type="primary"
+                        :disabled="!lottie.hasFile"
+                      >
+                        播放（待实现）
+                      </el-button>
+                    </div>
+                  </div>
+
+                  <div class="bottom-row">
+                    <div class="bottom-row-label">文件信息</div>
+                    <div class="bottom-row-value">
+                      <span>名称：{{ lottie.fileInfo.name || '-' }}</span>
+                      <span>大小：{{ lottie.fileInfo.sizeText || '-' }}</span>
+                    </div>
+                  </div>
+
+                  <div class="bottom-footer-row">
+                    <div class="bottom-footer-left">
+                      <span class="empty-tip-text">
+                        Lottie 模块功能将在后续阶段补充（暂为占位）
+                      </span>
+                    </div>
+                    <div class="bottom-footer-right">
+                      <el-button
+                        size="mini"
+                        @click="clearAll"
+                      >
+                        清空画布
+                      </el-button>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </div>
+
+          <div class="ad-slot">广告位</div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      new Vue({
+        el: '#app',
+        data: function () {
+          return {
+            currentModule: 'empty', // 'empty' | 'svga' | 'yyeva' | 'lottie'
+            dropHover: false,
+
+            // 视图操作（缩放 + 平移）
+            viewerScale: 1,
+            viewerOffsetX: 0,
+            viewerOffsetY: 0,
+            dragging: false,
+            dragStartX: 0,
+            dragStartY: 0,
+            dragStartOffsetX: 0,
+            dragStartOffsetY: 0,
+
+            // 底色
+            bgColorKey: 'black',
+
+            // SVGA 状态
+            svga: {
+              hasFile: false,
+              file: null,
+              fileInfo: {
+                name: '',
+                size: 0,
+                sizeText: ''
+              },
+              fps: null,
+              totalFrames: null,
+              width: null,
+              height: null,
+              memoryMB: null,
+              memoryText: '',
+              sizeText: '',
+              progress: 0,
+              playing: false
+            },
+
+            // YYEVA 状态（阶段1占位）
+            yyeva: {
+              hasFile: false,
+              file: null,
+              fileInfo: {
+                name: '',
+                size: 0,
+                sizeText: ''
+              }
+            },
+
+            // Lottie 状态（阶段1占位）
+            lottie: {
+              hasFile: false,
+              file: null,
+              fileInfo: {
+                name: '',
+                size: 0,
+                sizeText: ''
+              }
+            },
+
+            // 播放器实例
+            svgaPlayer: null,
+            svgaParser: null,
+            svgaObjectUrl: null
+          };
+        },
+        computed: {
+          isEmpty: function () {
+            return !this.svga.hasFile && !this.yyeva.hasFile && !this.lottie.hasFile;
+          },
+          viewerTransformStyle: function () {
+            return {
+              transform:
+                'translate(' +
+                this.viewerOffsetX +
+                'px,' +
+                this.viewerOffsetY +
+                'px) scale(' +
+                this.viewerScale +
+                ')'
+            };
+          },
+          currentBgColor: function () {
+            if (this.bgColorKey === 'white') return '#ffffff';
+            if (this.bgColorKey === 'gray') return '#333333';
+            return '#000000';
+          }
+        },
+        methods: {
+          /* 拖拽上传 */
+
+          onDragOver: function () {
+            this.dropHover = true;
+          },
+          onDragLeave: function () {
+            this.dropHover = false;
+          },
+          onDrop: function (event) {
+            this.dropHover = false;
+            var files = event.dataTransfer && event.dataTransfer.files;
+            if (!files || !files.length) return;
+            var file = files[0];
+            var name = (file.name || '').toLowerCase();
+
+            if (name.endsWith('.svga')) {
+              this.loadSvga(file);
+            } else if (name.endsWith('.json')) {
+              // 先只记录文件信息，后续阶段再实现播放
+              this.loadLottiePlaceholder(file);
+            } else if (name.endsWith('.mp4')) {
+              // 先只记录文件信息，后续阶段再实现 yyeva 播放
+              this.loadYyevaPlaceholder(file);
+            } else {
+              this.$message.error('不支持的文件类型，只支持 .svga / .json / .mp4');
+            }
+          },
+
+          /* 模块切换 */
+          switchModule: function (key) {
+            if (key === 'svga') {
+              this.currentModule = this.svga.hasFile ? 'svga' : 'svga';
+            } else if (key === 'yyeva') {
+              this.currentModule = this.yyeva.hasFile ? 'yyeva' : 'yyeva';
+            } else if (key === 'lottie') {
+              this.currentModule = this.lottie.hasFile ? 'lottie' : 'lottie';
+            }
+            // 如果一个文件都没有，整体状态仍然是“空”的，只是当前 tab 高亮
+            if (this.isEmpty) {
+              this.currentModule = 'svga'; // 默认停留在 SVGA
+            }
+          },
+
+          /* 清空画布（三个模块一起清空） */
+          clearAll: function () {
+            // 停止 SVGA 播放
+            if (this.svgaPlayer) {
+              try {
+                this.svgaPlayer.stopAnimation();
+                this.svgaPlayer.clear();
+              } catch (e) {}
+            }
+            if (this.svgaObjectUrl) {
+              URL.revokeObjectURL(this.svgaObjectUrl);
+              this.svgaObjectUrl = null;
+            }
+
+            // 重置状态
+            this.svga = {
+              hasFile: false,
+              file: null,
+              fileInfo: {
+                name: '',
+                size: 0,
+                sizeText: ''
+              },
+              fps: null,
+              totalFrames: null,
+              width: null,
+              height: null,
+              memoryMB: null,
+              memoryText: '',
+              sizeText: '',
+              progress: 0,
+              playing: false
+            };
+            this.yyeva = {
+              hasFile: false,
+              file: null,
+              fileInfo: {
+                name: '',
+                size: 0,
+                sizeText: ''
+              }
+            };
+            this.lottie = {
+              hasFile: false,
+              file: null,
+              fileInfo: {
+                name: '',
+                size: 0,
+                sizeText: ''
+              }
+            };
+
+            this.currentModule = 'svga';
+          },
+
+          /* SVGA 加载与播放 */
+
+          initSvgaPlayer: function () {
+            var container = this.$refs.svgaContainer;
+            if (!container) return;
+            this.svgaPlayer = new SVGA.Player(container);
+            this.svgaParser = new SVGA.Parser();
+          },
+
+          loadSvga: function (file) {
+            var _this = this;
+            this.currentModule = 'svga';
+
+            this.svga.hasFile = true;
+            this.svga.file = file;
+            this.svga.fileInfo.name = file.name;
+            this.svga.fileInfo.size = file.size;
+            this.svga.fileInfo.sizeText = this.formatBytes(file.size);
+
+            // 重置播放相关信息
+            this.svga.progress = 0;
+            this.svga.playing = false;
+            this.svga.fps = null;
+            this.svga.totalFrames = null;
+            this.svga.width = null;
+            this.svga.height = null;
+            this.svga.memoryMB = null;
+            this.svga.memoryText = '';
+            this.svga.sizeText = '';
+
+            // 读取文件 -> Blob URL -> 交给 SVGA.Parser.load
+            var reader = new FileReader();
+            reader.onload = function (e) {
+              var arrayBuffer = e.target.result;
+              var blob = new Blob([arrayBuffer], { type: 'application/octet-stream' });
+              if (_this.svgaObjectUrl) {
+                URL.revokeObjectURL(_this.svgaObjectUrl);
+              }
+              _this.svgaObjectUrl = URL.createObjectURL(blob);
+
+              _this.svgaParser.load(
+                _this.svgaObjectUrl,
+                function (videoItem) {
+                  _this.onSvgaLoaded(videoItem);
+                },
+                function () {
+                  _this.$message.error('SVGA 解析失败');
+                }
+              );
+            };
+            reader.readAsArrayBuffer(file);
+          },
+
+          onSvgaLoaded: function (videoItem) {
+            if (!this.svgaPlayer) {
+              this.initSvgaPlayer();
+            }
+            if (!this.svgaPlayer) return;
+
+            // 读取元信息（该结构来自 SVGA VideoEntity）
+            try {
+              if (videoItem.videoSize) {
+                this.svga.width = videoItem.videoSize.width || null;
+                this.svga.height = videoItem.videoSize.height || null;
+              }
+              this.svga.fps = videoItem.FPS || videoItem.fps || null;
+              this.svga.totalFrames =
+                videoItem.frames || videoItem.framesCount || videoItem.framesLength || null;
+
+              if (this.svga.width && this.svga.height) {
+                this.svga.sizeText = this.svga.width + ' × ' + this.svga.height;
+              }
+
+              if (this.svga.width && this.svga.height && this.svga.totalFrames) {
+                var bytes =
+                  this.svga.width * this.svga.height * 4 * this.svga.totalFrames; // 粗略估算
+                this.svga.memoryMB = bytes / 1024 / 1024;
+                this.svga.memoryText = this.svga.memoryMB.toFixed(2) + ' MB';
+              }
+            } catch (e) {
+              // 元数据读取失败不影响播放
+            }
+
+            var _this = this;
+
+            this.svgaPlayer.setVideoItem(videoItem);
+            this.svgaPlayer.setContentMode('AspectFit');
+            this.svgaPlayer.clearDynamicObjects();
+
+            // 绑定回调，更新进度
+            this.svgaPlayer.onFrame(function (frame) {
+              if (_this.svga.totalFrames && _this.svga.totalFrames > 1) {
+                var p = (frame / (_this.svga.totalFrames - 1)) * 100;
+                _this.svga.progress = Math.max(0, Math.min(100, Math.round(p)));
+              }
+            });
+
+            this.svgaPlayer.onFinished(function () {
+              _this.svga.playing = false;
+            });
+
+            // 开始播放
+            this.svgaPlayer.startAnimation();
+            this.svga.playing = true;
+          },
+
+          toggleSvgaPlay: function () {
+            if (!this.svgaPlayer || !this.svga.hasFile) return;
+            if (this.svga.playing) {
+              try {
+                this.svgaPlayer.pauseAnimation();
+              } catch (e) {}
+              this.svga.playing = false;
+            } else {
+              try {
+                // 这里简单处理：重新播放（后续可以用 stepToPercentage 继续播放）
+                this.svgaPlayer.startAnimation();
+              } catch (e) {}
+              this.svga.playing = true;
+            }
+          },
+
+          onSvgaSeek: function (val) {
+            if (!this.svgaPlayer || !this.svga.hasFile) return;
+            var p = (val || 0) / 100;
+            try {
+              this.svgaPlayer.stepToPercentage(p, this.svga.playing);
+            } catch (e) {}
+          },
+
+          /* Lottie / YYEVA 阶段1占位逻辑，只记录文件信息 */
+
+          loadLottiePlaceholder: function (file) {
+            this.lottie.hasFile = true;
+            this.lottie.file = file;
+            this.lottie.fileInfo.name = file.name;
+            this.lottie.fileInfo.size = file.size;
+            this.lottie.fileInfo.sizeText = this.formatBytes(file.size);
+            this.currentModule = 'lottie';
+            this.$message.info('Lottie 模块将在后续阶段实现播放逻辑');
+          },
+
+          loadYyevaPlaceholder: function (file) {
+            this.yyeva.hasFile = true;
+            this.yyeva.file = file;
+            this.yyeva.fileInfo.name = file.name;
+            this.yyeva.fileInfo.size = file.size;
+            this.yyeva.fileInfo.sizeText = this.formatBytes(file.size);
+            this.currentModule = 'yyeva';
+            this.$message.info('YYEVA MP4 模块将在后续阶段实现播放逻辑');
+          },
+
+          /* 缩放 + 平移 */
+
+          onWheel: function (event) {
+            // Ctrl + 滚轮 缩放
+            if (!event.ctrlKey) return;
+            event.preventDefault();
+            var delta = event.deltaY || event.wheelDelta;
+            var step = delta > 0 ? -0.1 : 0.1;
+            var next = this.viewerScale + step;
+            if (next < 0.2) next = 0.2;
+            if (next > 5) next = 5;
+            this.viewerScale = next;
+          },
+
+          onMouseDown: function (event) {
+            // 鼠标中键拖动
+            if (event.button !== 1) return;
+            event.preventDefault();
+            this.dragging = true;
+            this.dragStartX = event.clientX;
+            this.dragStartY = event.clientY;
+            this.dragStartOffsetX = this.viewerOffsetX;
+            this.dragStartOffsetY = this.viewerOffsetY;
+          },
+
+          onMouseMove: function (event) {
+            if (!this.dragging) return;
+            var dx = event.clientX - this.dragStartX;
+            var dy = event.clientY - this.dragStartY;
+            this.viewerOffsetX = this.dragStartOffsetX + dx;
+            this.viewerOffsetY = this.dragStartOffsetY + dy;
+          },
+
+          onMouseUp: function () {
+            this.dragging = false;
+          },
+
+          /* 工具方法 */
+
+          formatBytes: function (bytes) {
+            if (!bytes && bytes !== 0) return '';
+            var kb = bytes / 1024;
+            if (kb < 1024) return kb.toFixed(1) + ' KB';
+            var mb = kb / 1024;
+            return mb.toFixed(2) + ' MB';
+          }
+        },
+        mounted: function () {
+          this.initSvgaPlayer();
+        }
+      });
+    </script>
+  </body>
+</html>
