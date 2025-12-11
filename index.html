@@ -110,6 +110,61 @@
         fill: #e0e0e0;
       }
 
+      /* Tooltip 气泡 */
+      .tooltip {
+        position: relative;
+        display: inline-block;
+      }
+
+      .tooltip .tooltip-text {
+        visibility: hidden;
+        position: absolute;
+        bottom: 125%;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: #ffffff;
+        border: 1px solid #e3e3e3;
+        border-radius: 8px;
+        padding: 8px;
+        font-family: 'Segoe UI', sans-serif;
+        font-weight: 400;
+        font-size: 12px;
+        line-height: 1.33;
+        color: #818181;
+        white-space: nowrap;
+        box-shadow: 0px 6px 10px 0px rgba(51, 51, 51, 0.2);
+        z-index: 1000;
+        opacity: 0;
+        transition: opacity 0.2s, visibility 0.2s;
+      }
+
+      body.dark-mode .tooltip .tooltip-text {
+        background-color: #2a2a2a;
+        border-color: #404040;
+        color: #999999;
+        box-shadow: 0px 6px 10px 0px rgba(0, 0, 0, 0.5);
+      }
+
+      .tooltip .tooltip-text::after {
+        content: '';
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        margin-left: -5px;
+        border-width: 5px;
+        border-style: solid;
+        border-color: #ffffff transparent transparent transparent;
+      }
+
+      body.dark-mode .tooltip .tooltip-text::after {
+        border-color: #2a2a2a transparent transparent transparent;
+      }
+
+      .tooltip:hover .tooltip-text {
+        visibility: visible;
+        opacity: 1;
+      }
+
       /* ==================== 主页面容器 ==================== */
 
       .main-page {
@@ -631,7 +686,8 @@
         <div class="header-navbar-title">
           SVGA、带通道MP4、Lottie动画在线预览
         </div>
-        <button class="theme-toggle" @click="toggleTheme">
+        <button class="theme-toggle tooltip" @click="toggleTheme">
+          <span class="tooltip-text">{{ isDarkMode ? '切换到白天模式' : '切换到暗黑模式' }}</span>
           <svg v-if="!isDarkMode" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <!-- 太阳图标 -->
             <circle cx="12" cy="12" r="5"/>
@@ -729,21 +785,25 @@
                     SVGA
                   </button>
                   <button
-                    class="tab-btn"
+                    class="tab-btn tooltip"
                     :class="{'is-active': currentModule === 'yyeva'}"
                     @click="switchModule('yyeva')"
                   >
+                    <span class="tooltip-text">还在开发中...</span>
                     YYEVA-MP4
                   </button>
                   <button
-                    class="tab-btn"
+                    class="tab-btn tooltip"
                     :class="{'is-active': currentModule === 'lottie'}"
                     @click="switchModule('lottie')"
                   >
+                    <span class="tooltip-text">还在开发中...</span>
                     Lottie
                   </button>
                 </div>
-                <button class="close-btn" @click="clearAll"></button>
+                <button class="close-btn tooltip" @click="clearAll">
+                  <span class="tooltip-text">清除画布预览</span>
+                </button>
               </div>
 
               <!-- 第二行：文件信息 -->
@@ -839,9 +899,18 @@
 
                 <!-- 右侧：操作按钮 -->
                 <div class="controls-right">
-                  <button class="btn-primary">素材图...</button>
-                  <button class="btn-primary">导出GIF</button>
-                  <button class="btn-secondary">转MP4</button>
+                  <button class="btn-primary tooltip">
+                    <span class="tooltip-text">还在开发中...</span>
+                    素材图...
+                  </button>
+                  <button class="btn-primary tooltip">
+                    <span class="tooltip-text">还在开发中...</span>
+                    导出GIF
+                  </button>
+                  <button class="btn-secondary tooltip">
+                    <span class="tooltip-text">还在开发中...</span>
+                    转MP4
+                  </button>
                 </div>
               </div>
             </template>
