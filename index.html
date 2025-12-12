@@ -72,16 +72,6 @@
         cursor: pointer;
         transition: opacity 0.3s;
         flex-shrink: 0;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
-
-      .nav-link-icon {
-        width: 20px;
-        height: 20px;
-        border-radius: 50%;
-        object-fit: cover;
       }
 
       .nav-link:hover {
@@ -91,6 +81,28 @@
 
       body.dark-mode .nav-link {
         color: #66b1ff;
+      }
+
+      .avatar-link {
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-left: 10px;
+        flex-shrink: 0;
+      }
+
+      .avatar-icon {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        object-fit: cover;
+        transition: opacity 0.3s;
+      }
+
+      .avatar-link:hover .avatar-icon {
+        opacity: 0.7;
       }
 
       body.dark-mode .header-navbar {
@@ -114,8 +126,8 @@
       }
 
       .theme-toggle {
-        width: 28px;
-        height: 28px;
+        width: 24px;
+        height: 24px;
         border: none;
         background: none;
         cursor: pointer;
@@ -886,10 +898,7 @@
     <div id="app">
       <!-- 顶部导航栏 -->
       <div class="header-navbar">
-        <a href="avatar_auto.html" class="nav-link">
-          <img src="./assets/img/toux.png" alt="" class="nav-link-icon">
-          大R头像框自助
-        </a>
+        <a href="avatar_auto.html" class="nav-link">大R头像框自助</a>
         <div class="header-navbar-title">
           SVGA、带通道MP4、Lottie动画在线预览
         </div>
@@ -912,6 +921,9 @@
             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
           </svg>
         </button>
+        <a href="https://saysth.design/" target="_blank" class="avatar-link">
+          <img src="./assets/img/toux.png" alt="" class="avatar-icon">
+        </a>
       </div>
 
       <!-- 主页面 -->
@@ -1150,7 +1162,7 @@
             // 视图操作（缩放 + 平移）
             viewerScale: 1,
             viewerOffsetX: 0,
-            viewerOffsetY: 0,
+            viewerOffsetY: -100,
             dragging: false,
             dragStartX: 0,
             dragStartY: 0,
@@ -1361,7 +1373,7 @@
             // 重置视图状态
             this.viewerScale = 1;
             this.viewerOffsetX = 0;
-            this.viewerOffsetY = 0;
+            this.viewerOffsetY = -100;
 
             this.svga.hasFile = true;
             this.svga.file = file;
@@ -1652,7 +1664,7 @@
             // 重置视图状态
             this.viewerScale = 1;
             this.viewerOffsetX = 0;
-            this.viewerOffsetY = 0;
+            this.viewerOffsetY = -100;
 
             this.lottie.hasFile = true;
             this.lottie.file = file;
@@ -1667,7 +1679,7 @@
             // 重置视图状态
             this.viewerScale = 1;
             this.viewerOffsetX = 0;
-            this.viewerOffsetY = 0;
+            this.viewerOffsetY = -100;
 
             this.yyeva.hasFile = true;
             this.yyeva.file = file;
@@ -1729,7 +1741,7 @@
           resetScale: function () {
             this.viewerScale = 1;
             this.viewerOffsetX = 0;
-            this.viewerOffsetY = 0;
+            this.viewerOffsetY = -100;
           },
 
           applyCanvasBackground: function () {
