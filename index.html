@@ -7,6 +7,8 @@
 
     <!-- Vue 2 -->
     <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    <!-- Marked.js for Markdown parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
     <!-- SVGA / Lottie -->
     <script src="https://cdn.jsdelivr.net/npm/svgaplayerweb@2.3.1/build/svga.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.7.6/lottie.min.js"></script>
@@ -230,6 +232,70 @@
       .tooltip:hover .tooltip-text {
         visibility: visible;
         opacity: 1;
+      }
+
+      /* Help 按钮样式 */
+      .help-button {
+        width: 40px;
+        height: 40px;
+        border: none;
+        background: none;
+        cursor: pointer;
+        outline: none;
+        position: fixed;
+        right: 8px;
+        top: 44px;
+        z-index: 1000;
+      }
+
+      .help-button:hover .help-popup {
+        visibility: visible;
+        opacity: 1;
+      }
+
+      .help-popup {
+        visibility: hidden;
+        opacity: 0;
+        position: fixed;
+        top: 92px;
+        right: 8px;
+        width: 360px;
+        max-height: 70vh;
+        background: #FFFFFF;
+        border: 1px solid #E3E3E3;
+        box-shadow: 0px 2px 8px rgba(51, 51, 51, 0.2);
+        border-radius: 16px;
+        padding: 24px;
+        overflow-y: auto;
+        z-index: 2000;
+        transition: opacity 0.2s, visibility 0.2s;
+        font-family: 'Segoe UI', 'Noto Sans SC', sans-serif;
+        font-size: 13px;
+        line-height: 2;
+        color: #5b5b5b;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+      }
+
+      .help-popup ul {
+        list-style: none;
+        padding-left: 0;
+        margin: 0;
+      }
+
+      .help-popup li {
+        margin-bottom: 8px;
+      }
+
+      .help-popup::-webkit-scrollbar {
+        display: none;
+      }
+
+      body.dark-mode .help-popup {
+        background: #2a2a2a;
+        border-color: #404040;
+        color: #999999;
+        box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.5);
       }
 
       /* ==================== 主页面容器 ==================== */
@@ -490,40 +556,44 @@
       .footer-row-info {
         display: flex;
         flex-direction: row;
-        align-items: center;
-        gap: 8px;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 16px;
       }
 
-      .info-label {
-        width: 70px;
+      .info-item {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 0;
+      }
+
+      .info-item-label {
         font-family: 'Segoe UI', sans-serif;
+        font-style: normal;
         font-weight: 400;
         font-size: 14px;
-        line-height: 1.57;
+        line-height: 22px;
         color: #818181;
         flex-shrink: 0;
         transition: color 0.3s;
       }
 
-      body.dark-mode .info-label {
+      body.dark-mode .info-item-label {
         color: #999999;
       }
 
-      .info-values {
-        flex: 1;
-        display: flex;
-        flex-direction: row;
-        flex-wrap: wrap;
-        gap: 8px;
+      .info-item-value {
         font-family: 'Segoe UI', sans-serif;
-        font-weight: 400;
+        font-style: normal;
+        font-weight: 600;
         font-size: 14px;
-        line-height: 1.57;
+        line-height: 22px;
         color: #333333;
         transition: color 0.3s;
       }
 
-      body.dark-mode .info-values {
+      body.dark-mode .info-item-value {
         color: #e0e0e0;
       }
 
@@ -955,23 +1025,102 @@
 
       /* 顶部统计信息 */
       .material-panel-stats {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 0px;
+        gap: 4px;
         width: 320px;
-        height: 22px;
+        flex: none;
+        order: 0;
+        align-self: stretch;
+        transition: color 0.3s;
+      }
+      
+      .stats-title {
+        width: 320px;
+        height: 19px;
         font-family: 'Segoe UI';
         font-style: normal;
         font-weight: 400;
         font-size: 14px;
-        line-height: 22px;
+        line-height: 19px;
         display: flex;
         align-items: center;
         color: #333333;
         flex: none;
         order: 0;
         align-self: stretch;
+        transition: color 0.3s;
       }
-
-      body.dark-mode .material-panel-stats {
+      
+      body.dark-mode .stats-title {
         color: #e0e0e0;
+      }
+      
+      .stats-help {
+        width: 320px;
+        font-family: 'Segoe UI';
+        font-style: normal;
+        font-weight: 400;
+        font-size: 12px;
+        line-height: 16px;
+        display: flex;
+        align-items: center;
+        color: #818181;
+        flex: none;
+        order: 1;
+        align-self: stretch;
+        transition: color 0.3s;
+      }
+      
+      body.dark-mode .stats-help {
+        color: #999999;
+      }
+      
+      /* 搜索框 */
+      .material-search {
+        width: 320px;
+        margin-top: 12px;
+        flex: none;
+        order: 1;
+        align-self: stretch;
+      }
+      
+      .material-search-input {
+        width: 100%;
+        height: 32px;
+        padding: 0 12px;
+        border: 1px solid #e3e3e3;
+        border-radius: 4px;
+        font-family: 'Segoe UI';
+        font-size: 14px;
+        color: #333333;
+        background: #ffffff;
+        outline: none;
+        transition: all 0.3s;
+      }
+      
+      .material-search-input::placeholder {
+        color: #999999;
+      }
+      
+      .material-search-input:focus {
+        border-color: #00b4ff;
+      }
+      
+      body.dark-mode .material-search-input {
+        background: #2a2a2a;
+        border-color: #444444;
+        color: #e0e0e0;
+      }
+      
+      body.dark-mode .material-search-input::placeholder {
+        color: #666666;
+      }
+      
+      body.dark-mode .material-search-input:focus {
+        border-color: #00b4ff;
       }
 
       /* 滚动区域 */
@@ -1042,20 +1191,17 @@
       .material-thumb {
         width: 150px;
         height: 100px;
-        background: #E3E3E3;
+        /* background 由 Vue 动态绑定 */
         flex: none;
         order: 0;
         display: flex;
         align-items: center;
         justify-content: center;
         overflow: hidden;
+        transition: background-color 0.3s;
       }
 
-      body.dark-mode .material-thumb {
-        background: #3a3a3a;
-      }
-
-      .material-thumb img {
+.material-thumb img {
         max-width: 100%;
         max-height: 100%;
         object-fit: contain;
@@ -1076,8 +1222,21 @@
         align-self: stretch;
       }
 
-      .material-name {
+      /* 素材名称行 */
+      .material-name-row {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        gap: 4px;
         width: 150px;
+        flex: none;
+        order: 0;
+        align-self: stretch;
+      }
+      
+      .material-name {
+        flex: 1;
         height: 19px;
         font-family: 'Segoe UI';
         font-style: normal;
@@ -1087,16 +1246,47 @@
         display: flex;
         align-items: center;
         color: #333333;
-        flex: none;
-        order: 0;
-        align-self: stretch;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+        transition: color 0.3s;
       }
 
       body.dark-mode .material-name {
         color: #e0e0e0;
+      }
+      
+      /* 复制按钮 */
+      .material-btn-copy {
+        width: 20px;
+        height: 20px;
+        padding: 0;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        opacity: 0.6;
+        transition: opacity 0.3s;
+      }
+      
+      .material-btn-copy:hover {
+        opacity: 1;
+      }
+      
+      .material-btn-copy svg rect {
+        transition: stroke 0.3s, fill 0.3s;
+      }
+      
+      body.dark-mode .material-btn-copy svg rect {
+        stroke: #999999;
+        fill: #2a2a2a;
+      }
+      
+      body.dark-mode .material-btn-copy svg rect:first-child {
+        fill: none;
       }
 
       .material-meta {
@@ -1397,6 +1587,12 @@
         </a>
       </div>
 
+      <!-- Help 按钮 -->
+      <div class="help-button">
+        <img src="./assets/img/help.png" alt="帮助" style="width: 40px; height: 40px;">
+        <div class="help-popup" v-html="helpContent"></div>
+      </div>
+
       <!-- 主页面 -->
       <div class="main-page">
         <!-- 播放区域 -->
@@ -1553,22 +1749,29 @@
 
               <!-- 第二行：文件信息 -->
               <div class="footer-row-info">
-                <div class="info-label">文件信息：</div>
-                <div class="info-values">
-                  <span>{{ currentFileInfo.name || '-' }}</span>
-                  <span>{{ currentFileInfo.sizeText || '-' }}</span>
-                  <span v-if="currentFileInfo.fps">
-                    帧率：{{ currentFileInfo.fps }}
-                  </span>
-                  <span v-if="currentFileInfo.sizeWH">
-                    尺寸：{{ currentFileInfo.sizeWH }}
-                  </span>
-                  <span v-if="currentFileInfo.duration">
-                    时长：{{ currentFileInfo.duration }}
-                  </span>
-                  <span v-if="currentFileInfo.memoryText">
-                    内存占用：{{ currentFileInfo.memoryText }}
-                  </span>
+                <div class="info-item" v-if="currentFileInfo.name">
+                  <span class="info-item-label">文件名称：</span>
+                  <span class="info-item-value">{{ currentFileInfo.name }}</span>
+                </div>
+                <div class="info-item" v-if="currentFileInfo.sizeText">
+                  <span class="info-item-label">文件大小：</span>
+                  <span class="info-item-value">{{ currentFileInfo.sizeText }}</span>
+                </div>
+                <div class="info-item" v-if="currentFileInfo.fps">
+                  <span class="info-item-label">帧率：</span>
+                  <span class="info-item-value">{{ currentFileInfo.fps }}</span>
+                </div>
+                <div class="info-item" v-if="currentFileInfo.sizeWH">
+                  <span class="info-item-label">尺寸：</span>
+                  <span class="info-item-value">{{ currentFileInfo.sizeWH }}</span>
+                </div>
+                <div class="info-item" v-if="currentFileInfo.duration">
+                  <span class="info-item-label">时长：</span>
+                  <span class="info-item-value">{{ currentFileInfo.duration }}</span>
+                </div>
+                <div class="info-item" v-if="currentFileInfo.memoryText">
+                  <span class="info-item-label">内存占用：</span>
+                  <span class="info-item-value">{{ currentFileInfo.memoryText }}</span>
                 </div>
               </div>
 
@@ -1642,25 +1845,44 @@
         <div class="material-panel-container">
           <!-- 顶部统计信息 -->
           <div class="material-panel-stats">
-            <span>图像资源: {{ materialList.length }} 个    内存占用: {{ svga.fileInfo.memoryText }}</span>
+            <div class="stats-title">图像资源: {{ materialList.length }} 个    内存占用: {{ svga.fileInfo.memoryText }}</div>
+            <div class="stats-help">你可以替换素材图片，然后导出新的SVGA。<br>选择替换的图片尺寸尽量和原图一致，否则会出现错位问题。</div>
+          </div>
+          
+          <!-- 搜索框 -->
+          <div class="material-search">
+            <input 
+              type="text" 
+              class="material-search-input" 
+              placeholder="搜索素材名称..." 
+              v-model="materialSearchQuery"
+            />
           </div>
           
           <!-- 素材列表 -->
           <div class="material-panel-scroll">
-            <div v-if="materialList.length === 0" class="material-empty">
-              未检测到素材图片
+            <div v-if="filteredMaterialList.length === 0" class="material-empty">
+              {{ materialSearchQuery ? '未找到匹配的素材' : '未检测到素材图片' }}
             </div>
             <div v-else class="material-list">
               <div 
-                v-for="(item, index) in materialList" 
+                v-for="(item, index) in filteredMaterialList" 
                 :key="item.imageKey"
                 class="material-item"
               >
-                <div class="material-thumb">
+                <div class="material-thumb" :style="{ backgroundColor: materialThumbBgColor }">
                   <img :src="item.previewUrl" v-if="item.previewUrl" />
                 </div>
                 <div class="material-info">
-                  <div class="material-name" :title="item.imageKey">{{ item.imageKey }}</div>
+                  <div class="material-name-row">
+                    <div class="material-name" :title="item.imageKey">{{ item.imageKey }}</div>
+                    <button class="material-btn-copy" @click="copyMaterialName(item.imageKey)" title="复制名称">
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="4" y="4" width="8" height="8" rx="1" stroke="#666666" stroke-width="1.2" fill="none"/>
+                        <rect x="2" y="2" width="8" height="8" rx="1" stroke="#666666" stroke-width="1.2" fill="#ffffff"/>
+                      </svg>
+                    </button>
+                  </div>
                   <div class="material-meta">文件大小：{{ item.fileSizeText }}</div>
                   <div class="material-meta">尺寸：{{ item.sizeText }}</div>
                 </div>
@@ -1720,6 +1942,9 @@
             // 主题模式
             isDarkMode: false,
 
+            // Help 内容
+            helpContent: '',
+
             // 底色
             bgColorKey: 'pattern', // 'black' | 'white' | 'pattern' | 'green' | 'red' | 'yellow' | 'blue'
 
@@ -1774,6 +1999,7 @@
             // 素材替换
             showMaterialPanel: false,
             materialList: [],
+            materialSearchQuery: '',
             originalVideoItem: null,
             replacedImages: {},
 
@@ -1879,9 +2105,25 @@
             this.currentFrame = 0;
             this.totalFrames = 0;
             this.bgColorKey = 'pattern';
+            
+            // 关闭侧边栏
+            this.showMaterialPanel = false;
           },
 
           /* SVGA 加载与播放 */
+
+          loadHelpContent: function () {
+            var _this = this;
+            fetch('./help.md')
+              .then(function(response) { return response.text(); })
+              .then(function(markdown) {
+                _this.helpContent = marked.parse(markdown);
+              })
+              .catch(function(error) {
+                console.error('加载帮助文档失败:', error);
+                _this.helpContent = '<p>无法加载帮助文档</p>';
+              });
+          },
 
           initSvgaPlayer: function () {
             var container = this.$refs.svgaContainer;
@@ -2244,11 +2486,40 @@
 
           openMaterialPanel: function () {
             if (!this.svga.hasFile || !this.originalVideoItem) return;
-            this.showMaterialPanel = true;
+            // 切换侧边栏显示状态：如果已打开则关闭，否则打开
+            this.showMaterialPanel = !this.showMaterialPanel;
           },
 
           closeMaterialPanel: function () {
             this.showMaterialPanel = false;
+          },
+          
+          copyMaterialName: function (name) {
+            var _this = this;
+            // 使用 Clipboard API 复制文本
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+              navigator.clipboard.writeText(name).then(function() {
+                // 可以添加一个简单的提示
+                console.log('已复制: ' + name);
+              }).catch(function(err) {
+                console.error('复制失败:', err);
+              });
+            } else {
+              // 降级方案：使用 textarea
+              var textarea = document.createElement('textarea');
+              textarea.value = name;
+              textarea.style.position = 'fixed';
+              textarea.style.opacity = '0';
+              document.body.appendChild(textarea);
+              textarea.select();
+              try {
+                document.execCommand('copy');
+                console.log('已复制: ' + name);
+              } catch (err) {
+                console.error('复制失败:', err);
+              }
+              document.body.removeChild(textarea);
+            }
           },
 
           extractMaterialList: function (videoItem) {
@@ -2705,7 +2976,29 @@
               // 等待渲染完成，然后捕获帧
               setTimeout(function() {
                 try {
-                  gif.addFrame(canvas, {copy: true, delay: frameDelay});
+                  // 创建临时 canvas 用于合成背景色
+                  var tempCanvas = document.createElement('canvas');
+                  tempCanvas.width = canvas.width;
+                  tempCanvas.height = canvas.height;
+                  var tempCtx = tempCanvas.getContext('2d');
+                  
+                  // 填充背景色
+                  var bgColor = '#ffffff'; // 默认白色
+                  if (_this.bgColorKey && _this.bgColorKey !== 'pattern') {
+                    // 使用当前背景色（白色、绿色、红色等）
+                    var computedBgColor = _this.currentBgColor;
+                    if (computedBgColor !== 'transparent' && computedBgColor !== '#000000') {
+                      bgColor = computedBgColor;
+                    }
+                  }
+                  tempCtx.fillStyle = bgColor;
+                  tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+                  
+                  // 将 SVGA 画布绘制到临时 canvas 上
+                  tempCtx.drawImage(canvas, 0, 0);
+                  
+                  // 使用合成后的 canvas 添加到 GIF
+                  gif.addFrame(tempCanvas, {copy: true, delay: frameDelay});
                   currentFrameIndex++;
                   
                   // 更新进度（捕获阶段占 0-50%）
@@ -2774,6 +3067,26 @@
             return '#000000';
           },
           
+          materialThumbBgColor: function () {
+            // 如果有设置背景色且不是透明格子，使用当前背景色
+            if (this.bgColorKey && this.bgColorKey !== 'pattern') {
+              return this.currentBgColor;
+            }
+            // 否则使用默认颜色：浅色模式 #fcfcfc，暗黑模式 #2a2a2a
+            return this.isDarkMode ? '#2a2a2a' : '#fcfcfc';
+          },
+          
+          filteredMaterialList: function () {
+            var _this = this;
+            if (!this.materialSearchQuery) {
+              return this.materialList;
+            }
+            var query = this.materialSearchQuery.toLowerCase();
+            return this.materialList.filter(function(item) {
+              return item.imageKey.toLowerCase().indexOf(query) !== -1;
+            });
+          },
+          
           viewerContainerStyle: function () {
             var style = {
               transform: 'translate(' + this.viewerOffsetX + 'px, ' + this.viewerOffsetY + 'px) scale(' + this.viewerScale + ')',
@@ -2811,6 +3124,8 @@
             this.isDarkMode = true;
             document.body.classList.add('dark-mode');
           }
+          // 加载 help.md
+          this.loadHelpContent();
         }
       });
     </script>
