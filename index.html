@@ -627,7 +627,7 @@
         display: flex;
         flex-direction: row;
         align-items: center;
-        gap: 16px;
+        gap: 6px;
       }
 
       /* 颜色选择按钮 */
@@ -739,7 +739,7 @@
       .btn-secondary {
         height: 28px;
         padding: 0 16px;
-        border-radius: 16px;
+        border-radius: 8px;
         font-family: 'Segoe UI', sans-serif;
         font-weight: 400;
         font-size: 14px;
@@ -951,7 +951,7 @@
         width: 32px;
         height: 28px;
         border: 1px solid #e3e3e3;
-        border-radius: 16px;
+        border-radius: 8px;
         background-color: #ffffff;
         cursor: pointer;
         outline: none;
@@ -1042,7 +1042,8 @@
       .material-panel {
         position: fixed;
         top: 0;
-        right: -380px;
+        right: -400px;
+        width: 400px;
         width: 380px;
         height: 100%;
         display: flex;
@@ -1061,6 +1062,7 @@
         display: flex;
         flex-direction: column;
         align-items: flex-start;
+        width: 380px;
         padding: 20px;
         gap: 16px;
         width: 360px;
@@ -1138,7 +1140,7 @@
       /* 搜索框 */
       .material-search {
         width: 320px;
-        margin-top: 12px;
+        margin-top: 0;
         flex: none;
         order: 1;
         align-self: stretch;
@@ -1185,6 +1187,7 @@
         display: flex;
         flex-direction: row;
         flex-wrap: wrap;
+        min-height: auto;
         align-items: flex-start;
         align-content: flex-start;
         padding: 0px;
@@ -1236,6 +1239,7 @@
         display: flex;
         flex-direction: column;
         justify-content: center;
+        width: 161px;
         align-items: flex-start;
         padding: 0px;
         gap: 10px;
@@ -1246,7 +1250,7 @@
 
       /* 缩略图 */
       .material-thumb {
-        width: 150px;
+        width: 161px;
         height: 100px;
         /* background 由 Vue 动态绑定 */
         flex: none;
@@ -1269,6 +1273,7 @@
         display: flex;
         flex-direction: column;
         justify-content: center;
+        width: 161px;
         align-items: flex-start;
         padding: 0px;
         gap: 4px;
@@ -1367,7 +1372,7 @@
 
       /* 操作按钮区 (Frame 29) */
       .material-actions {
-        width: 150px;
+        width: 161px;
         height: 28px;
         flex: none;
         order: 2;
@@ -1382,7 +1387,8 @@
         flex-direction: row;
         justify-content: center;
         align-items: center;
-        padding: 0px 16px;
+        padding: 6px;
+        width: auto;
         gap: 10px;
         position: absolute;
         width: 97px;
@@ -1392,7 +1398,7 @@
         top: 0px;
         background: #FFFFFF;
         border: 1px solid #E3E3E3;
-        border-radius: 16px;
+        border-radius: 8px;
         cursor: pointer;
         transition: all 0.15s ease;
       }
@@ -1412,7 +1418,6 @@
         color: #333333;
         flex: none;
         order: 0;
-        flex-grow: 1;
       }
 
       .material-btn-replace:hover {
@@ -1446,6 +1451,7 @@
         flex-direction: row;
         justify-content: center;
         align-items: center;
+        border-radius: 8px;
         padding: 0px 4px;
         gap: 10px;
         position: absolute;
@@ -1455,7 +1461,6 @@
         top: 0px;
         background: #FFFFFF;
         border: 1px solid #E3E3E3;
-        border-radius: 16px;
         cursor: pointer;
         transition: all 0.15s ease;
       }
