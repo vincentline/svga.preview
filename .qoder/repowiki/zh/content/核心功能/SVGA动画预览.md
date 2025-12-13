@@ -4,16 +4,17 @@
 **本文引用的文件**  
 - [docs/index.html](file://docs/index.html)
 - [ROADMAP.md](file://ROADMAP.md)
+- [TECH-RESEARCH.md](file://TECH-RESEARCH.md)
+- [docs/help.md](file://docs/help.md)
 </cite>
 
 ## 更新摘要
 **变更内容**  
-- 新增对GIF导出功能的详细说明，包括使用gif.js库和Web Worker进行编码
-- 增加SVGA素材替换功能的实现机制，支持动态图像替换与实时预览
-- 补充SVGA文件导出功能，利用protobuf.js解析并修改原始SVGA二进制数据
-- 更新用户界面交互流程，反映新增的“导出GIF”、“替换素材”等操作按钮
-- 引入protobuf解析机制，说明如何通过Protocol Buffers定义文件（svga.proto）进行结构化数据处理
-- **新增点击上传功能**：在空状态容器中添加点击事件(triggerFileUpload)，连接到隐藏的文件输入元素(@change="onFileSelect")，实现点击上传。同时在onFileSelect方法中重置input值，允许重新上传同一文件，解决重复上传的用户体验问题。
+- 新增“重传SVGA”功能按钮，允许用户在不刷新页面的情况下重新上传SVGA文件。该按钮仅在SVGA模块激活且已有文件加载时显示。
+- 优化文件信息展示方式，采用结构化的“标签-值”对布局，提升可读性与用户体验。信息项包括文件名称、大小、帧率、尺寸、时长和内存占用。
+- 在`index.html`中添加隐藏的文件输入框（`#reupload-svga-input`），用于触发重新上传流程。
+- 实现`triggerReuploadSVGA`和`handleReuploadSVGA`方法，处理点击按钮和文件选择事件，确保上传逻辑与现有流程一致，并在处理后清空输入框以支持重复上传。
+- 相关UI/UX改进已在`ROADMAP.md`中被标记为“已完成”，并归类于“UI体验完善”部分。
 
 ## 目录
 1. [简介](#简介)
@@ -28,7 +29,7 @@
 10. [附录](#附录)
 
 ## 简介
-本项目提供一个基于 Vue 的在线预览工具，用于加载与播放 SVGA 动画、带Alpha通道的MP4动画（YYEVA）以及 Lottie 动画。页面通过 CDN 引入 Vue 与 SVGAPlayerWeb 库，并在前端使用 Vue 组件完成拖拽上传、解析与播放控制。用户可直接上传本地 .svga 或 .json 文件，页面会根据文件类型选择对应的播放器进行渲染与播放；同时支持通过 URL 拖拽或上传的方式进行加载。系统已升级为现代化单页应用布局，包含固定高度的底部控制面板（154px），支持实时帧数更新、暗色模式切换、改进的拖拽交互状态以及新增的工具提示系统。新增功能包括：GIF 导出、SVGA 素材替换、SVGA 文件重新导出、protobuf 解析等高级特性。**特别更新了文件上传交互机制，支持点击上传功能。在空状态容器中添加了点击事件(triggerFileUpload)，并连接到隐藏的文件输入元素(@change="onFileSelect")，实现了点击上传功能。同时在onFileSelect方法中重置input值，允许重新上传同一文件，解决了重复上传的用户体验问题。**
+本项目提供一个基于 Vue 的在线预览工具，用于加载与播放 SVGA 动画、带Alpha通道的MP4动画（YYEVA）以及 Lottie 动画。页面通过 CDN 引入 Vue 与 SVGAPlayerWeb 库，并在前端使用 Vue 组件完成拖拽上传、解析与播放控制。用户可直接上传本地 .svga 或 .json 文件，页面会根据文件类型选择对应的播放器进行渲染与播放；同时支持通过 URL 拖拽或上传的方式进行加载。系统已升级为现代化单页应用布局，包含固定高度的底部控制面板（154px），支持实时帧数更新、暗色模式切换、改进的拖拽交互状态以及新增的工具提示系统。新增功能包括：GIF 导出、SVGA 素材替换、SVGA 文件重新导出、protobuf 解析等高级特性。**特别更新了文件上传交互机制，支持点击上传功能。在空状态容器中添加了点击事件(triggerFileUpload)，并连接到隐藏的文件输入元素(@change="onFileSelect")，实现了点击上传功能。同时在onFileSelect方法中重置input值，允许重新上传同一文件，解决了重复上传的用户体验问题。** 此次更新进一步增强了交互灵活性，新增了“重传SVGA”按钮，允许用户在不刷新页面的情况下重新上传文件，并优化了文件信息的展示布局。
 
 **Section sources**  
 - [docs/index.html](file://docs/index.html#L1-L1566)
@@ -190,6 +191,8 @@ V-->>U : "下载修改后的.svga文件"
   - replaceMaterial：替换 SVGA 中的指定图像素材  
   - applyReplacedMaterials：应用已替换的素材到播放器  
   - exportNewSVGA：使用 protobuf.js 修改并导出新的 SVGA 文件  
+  - **triggerReuploadSVGA**：触发隐藏的文件输入框，启动重新上传流程。  
+  - **handleReuploadSVGA**：处理重新上传的文件选择事件，验证文件类型并调用`loadSVGA`方法。  
 - 播放器封装类  
   - SVGA 播放器封装类：负责解析 .svga 文件、设置 videoItem、启动播放、销毁与尺寸调整  
   - Lottie 播放器封装类：负责解析 .json 数据、设置容器与参数、启动播放、销毁与尺寸调整  
@@ -208,6 +211,8 @@ class Aview {
 +replaceMaterial(index)
 +applyReplacedMaterials()
 +exportNewSVGA()
++triggerReuploadSVGA()
++handleReuploadSVGA(event)
 }
 class SVGAPlayerWrapper {
 -data
@@ -483,7 +488,7 @@ UI["Element-UI"] --> Upload["上传控件"]
 - 根据扩展名选择播放器  
 - 解析元数据并设置容器尺寸  
 - 自动播放与生命周期管理  
-在实际部署中，建议关注跨域、超时与格式校验等常见问题，以获得更稳定的用户体验。系统已升级为现代化UI设计，支持暗色模式、实时帧数更新、改进的拖拽交互和工具提示，提升了整体用户体验。新增功能包括：GIF导出（使用gif.js+Web Worker）、SVGA素材替换（动态setImage）、SVGA文件重新导出（protobuf+pako解析），显著增强了工具的实用性与灵活性。**特别更新了文件上传交互机制，支持点击上传功能。在空状态容器中添加了点击事件(triggerFileUpload)，并连接到隐藏的文件输入元素(@change="onFileSelect")，实现了点击上传功能。同时在onFileSelect方法中重置input值，允许重新上传同一文件，解决了重复上传的用户体验问题。**
+在实际部署中，建议关注跨域、超时与格式校验等常见问题，以获得更稳定的用户体验。系统已升级为现代化UI设计，支持暗色模式、实时帧数更新、改进的拖拽交互和工具提示，提升了整体用户体验。新增功能包括：GIF导出（使用gif.js+Web Worker）、SVGA素材替换（动态setImage）、SVGA文件重新导出（protobuf+pako解析），显著增强了工具的实用性与灵活性。**特别更新了文件上传交互机制，支持点击上传功能。在空状态容器中添加了点击事件(triggerFileUpload)，并连接到隐藏的文件输入元素(@change="onFileSelect")，实现了点击上传功能。同时在onFileSelect方法中重置input值，允许重新上传同一文件，解决了重复上传的用户体验问题。** 此次更新进一步完善了用户体验，新增了“重传SVGA”按钮，允许用户在不刷新页面的情况下重新上传文件，并优化了文件信息的展示方式。
 
 ## 附录
 - 嵌入播放器的基本用法（路径参考）  
