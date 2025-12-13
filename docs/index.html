@@ -810,18 +810,11 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        transition: opacity 0.3s;
+        padding: 0;
+        margin: 0;
+        position: relative;
       }
-
-      .zoom-btn:hover {
-        opacity: 0.7;
-      }
-
-      .zoom-btn svg {
-        width: 28px;
-        height: 28px;
-      }
-
+      
       /* 百分比显示 */
       .scale-percentage {
         width: 60px;
@@ -836,22 +829,6 @@
 
       body.dark-mode .scale-percentage {
         color: #999999;
-      }
-
-      /* 缩放按钮 */
-      .zoom-btn {
-        width: 28px;
-        height: 28px;
-        border: none;
-        background-color: transparent;
-        cursor: pointer;
-        outline: none;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 0;
-        margin: 0 4px;
-        position: relative;
       }
       
       .zoom-icon {
