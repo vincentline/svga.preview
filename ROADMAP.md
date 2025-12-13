@@ -21,11 +21,52 @@
 
 ---
 
-## 阶段2：SVGA 高级功能
+## 阶段2：SVGA 高级功能 ✅
 **目标：完善 SVGA 模块的导出与转换能力**
+**状态：已完成**
 
-### 2.1 素材替换功能
+### 开发总结
+
+#### 已完成功能
+- ✅ **素材替换功能**（侧边栏展示、搜索、复制名称、替换上传）
+- ✅ **导出GIF功能**（使用gif.js，支持背景色、进度显示）
+- ✅ **缩放控制优化**（zoom in/out图标、hover状态、暗黑模式）
+- ✅ **UI体验完善**（重传SVGA、文件信息展示、帮助说明）
+
+#### 技术亮点
+1. **GIF导出背景色处理**
+   - 使用临时Canvas合成背景色
+   - 透明部分使用当前背景色或默认白色
+   - 过滤掉transparent和#000000避免黑色底
+
+2. **素材替换流程**
+   - 解析SVGA获取所有图片素材（imageKey）
+   - 侧边栏展示缩略图（背景色同步播放器）
+   - 支持搜索过滤、一键复制名称
+   - 替换后自动重新渲染
+
+3. **交互优化**
+   - 图标hover状态（使用::after伪元素+CSS变量）
+   - 暗黑模式图标切换（_dark后缀）
+   - 侧边栏自动关闭（点击素材图/清空画布）
+
+#### 用户体验改进
+- 文件信息展示重构（去掉总标题，每项加独立标签）
+- 搜索框+复制按钮（提升素材查找效率）
+- 重传SVGA按钮（无需刷新页面重新上传）
+- 缩放图标（zoom_in/zoom_out + 1:1按钮）
+
+#### 关键代码位置
+- GIF导出：`docs/index.html` - `exportGIF()` 方法
+- 素材替换：`docs/index.html` - `showMaterialPanel()`, `replaceMaterial()` 方法
+- 缩放控制：`docs/index.html` - `zoomIn()`, `zoomOut()` 方法
+- 侧边栏UI：`docs/index.html` - `.material-panel` 相关样式
+
+---
+
+### 2.1 素材替换功能 ✅
 **优先级：高**
+**状态：已完成**
 
 #### 功能描述
 - 允许用户替换 SVGA 动画中的图片素材
@@ -45,8 +86,9 @@
 
 ---
 
-### 2.2 导出 GIF 功能
+### 2.2 导出 GIF 功能 ✅
 **优先级：高**
+**状态：已完成**
 
 #### 功能描述
 - 将 SVGA 动画导出为 GIF 格式
@@ -74,41 +116,220 @@ SVGA → Canvas 逐帧渲染 → GIF 编码器 → 下载
 
 ---
 
-### 2.3 转 YYEVA-MP4 功能
+### 2.3 转 YYEVA-MP4 功能 ⏳
 **优先级：中**
+**状态：设计完成，待实现**
 
 #### 功能描述
 - 将 SVGA 转换为 YYEVA 格式的 MP4 视频
 - YYEVA 格式：彩色通道 + Alpha 通道并排的视频
+- 支持进度显示、取消转换、错误处理
 
-#### 技术方案
+#### 详细实现方案
+
+##### 1. 技术架构
 ```
-SVGA → Canvas 逐帧渲染 
-     ↓
-提取彩色像素 + Alpha 像素
-     ↓
-合成双通道 Canvas（左彩色/右Alpha）
-     ↓
-使用 ffmpeg.wasm 编码为 MP4
-     ↓
-下载
+SVGA文件 
+  → 逐帧渲染到Canvas
+  → 提取每帧的RGB数据和Alpha数据
+  → 合成双通道画布（左彩色+右Alpha灰度图）
+  → ffmpeg.wasm编码为MP4
+  → 下载YYEVA-MP4文件
 ```
+
+##### 2. 核心模块
+
+**模块1：ffmpeg.wasm加载器**
+```javascript
+loadFFmpeg: async function() {
+  // 懒加载ffmpeg.wasm（约25MB）
+  // CDN: https://unpkg.com/@ffmpeg/ffmpeg@0.12.x
+  // 显示加载进度
+  // 加载后缓存，避免重复加载
+}
+```
+
+**模块2：序列帧提取**
+```javascript
+extractFrames: async function() {
+  // 遍历SVGA所有帧（videoItem.frames）
+  // 使用player.stepToFrame(i)跳转
+  // 渲染到临时Canvas
+  // 返回ImageData数组
+}
+```
+
+**模块3：双通道合成**
+```javascript
+composeDualChannel: function(imageData) {
+  // 创建宽度×2的Canvas
+  // 左侧：RGB数据（Alpha=255）
+  // 右侧：Alpha灰度图（R=G=B=Alpha值）
+  // 返回合成后的Canvas
+}
+```
+
+**模块4：MP4编码**
+```javascript
+encodeToMP4: async function(frames) {
+  // 将序列帧写入ffmpeg虚拟文件系统
+  // 使用libx264编码器
+  // 参数：-framerate {fps} -i frame_%04d.png -c:v libx264 -pix_fmt yuv420p output.mp4
+  // 实时更新编码进度
+  // 读取输出文件并返回Blob
+}
+```
+
+**模块5：主流程**
+```javascript
+convertToYYEVAMP4: async function() {
+  // 1. 检查是否已加载SVGA
+  // 2. 加载ffmpeg（如果未加载）
+  // 3. 显示进度弹窗
+  // 4. 提取序列帧
+  // 5. 合成双通道
+  // 6. 编码为MP4
+  // 7. 下载文件
+  // 8. 错误处理和清理
+}
+```
+
+##### 3. 数据结构
+```javascript
+// Vue data 新增属性
+{
+  ffmpegLoaded: false,        // ffmpeg是否已加载
+  ffmpegLoading: false,       // ffmpeg是否正在加载
+  isConvertingToMP4: false,   // 是否正在转换
+  conversionProgress: {
+    stage: '',                // 'loading'/'extracting'/'encoding'/'done'
+    current: 0,               // 当前进度
+    total: 0,                 // 总进度
+    message: ''               // 进度消息
+  }
+}
+```
+
+##### 4. UI设计
+
+**按钮位置**：底部浮层，"导出GIF"按钮右侧
+
+**进度弹窗**：
+```html
+<div class="conversion-modal" v-if="isConvertingToMP4">
+  <div class="modal-content">
+    <h3>转换为YYEVA-MP4</h3>
+    <div class="progress-info">
+      <p>{{ conversionProgress.message }}</p>
+      <div class="progress-bar">
+        <div class="progress-fill" :style="{width: progressPercent + '%'}"></div>
+      </div>
+      <p>{{ conversionProgress.current }} / {{ conversionProgress.total }}</p>
+    </div>
+    <button @click="cancelConversion">取消</button>
+  </div>
+</div>
+```
+
+##### 5. 性能优化
+
+**懒加载策略**
+- 首次转换时才加载ffmpeg.wasm
+- 显示加载进度条（"正在加载转换器..."）
+- 使用CDN加速：unpkg.com 或 jsdelivr.com
+
+**尺寸限制**
+- 最大宽度：2048px（双通道后4096px）
+- 最大高度：2048px
+- 超出则等比缩小，显示警告
+
+**内存管理**
+- 及时释放临时Canvas对象
+- 分批处理序列帧（避免一次性加载所有帧）
+- 编码完成后清理ffmpeg虚拟文件系统
+
+**Web Worker（可选）**
+- 将序列帧提取放入Worker
+- 避免阻塞主线程
+- 需要重构现有代码结构
+
+##### 6. 错误处理
+
+**前置检查**
+- 未加载SVGA → 提示"请先上传SVGA文件"
+- 浏览器不支持WASM → 提示"浏览器不支持，请使用Chrome/Edge"
+- 文件尺寸过大 → 提示"文件尺寸超过限制"
+
+**运行时错误**
+- ffmpeg加载失败 → "加载转换器失败，请检查网络"
+- 内存不足 → "内存不足，转换失败"
+- 编码失败 → "编码失败，请重试或联系开发者"
+
+**取消转换**
+- 用户点击取消 → 终止ffmpeg进程
+- 清理临时数据和虚拟文件系统
+- 恢复UI状态
+
+##### 7. 开发计划
+
+| 步骤 | 任务 | 预计耗时 |
+|------|------|----------|
+| 1 | 引入ffmpeg.wasm库和初始化逻辑 | 30分钟 |
+| 2 | 实现序列帧提取函数 | 20分钟 |
+| 3 | 实现双通道合成函数 | 30分钟 |
+| 4 | 实现MP4编码函数 | 40分钟 |
+| 5 | 添加UI按钮和进度显示 | 30分钟 |
+| 6 | 整合流程和错误处理 | 20分钟 |
+| 7 | 测试和优化 | 30分钟 |
+
+**预计总耗时**：3-4小时
+
+##### 8. 技术风险和应对
+
+| 风险 | 影响 | 应对方案 |
+|------|------|----------|
+| ffmpeg.wasm体积大（25MB） | 首次加载慢 | CDN加速+懒加载+进度显示 |
+| 编码速度慢 | 用户等待时间长 | 详细进度提示+支持取消 |
+| 内存占用高 | 可能崩溃 | 限制最大尺寸+错误提示 |
+| 浏览器兼容性 | 部分浏览器不支持 | 前置检查+降级提示 |
+
+##### 9. 测试用例
+
+**基础功能测试**
+- [ ] 小尺寸SVGA（< 500x500）转换成功
+- [ ] 中等尺寸SVGA（500-1000）转换成功
+- [ ] 大尺寸SVGA（> 1000）显示缩放警告
+- [ ] 进度显示正确更新
+- [ ] 下载的MP4文件可正常播放
+
+**边界测试**
+- [ ] 未加载SVGA时点击转换 → 提示错误
+- [ ] 转换过程中刷新页面 → 清理资源
+- [ ] 转换过程中点击取消 → 正确终止
+- [ ] 网络断开时加载ffmpeg → 提示错误
+
+**兼容性测试**
+- [ ] Chrome浏览器
+- [ ] Edge浏览器
+- [ ] Firefox浏览器
+- [ ] Safari浏览器（可能不支持）
 
 #### 推荐库
 - **ffmpeg.wasm**: 在浏览器中运行的 FFmpeg（需要加载较大 WASM 文件）
-- 或使用 **MediaRecorder API**（需要浏览器支持）
+  - 版本：@0.12.x
+  - CDN：https://unpkg.com/@ffmpeg/ffmpeg@0.12.x
 
-#### 实现步骤
+#### 实现步骤（简化版）
 1. 渲染每帧 SVGA 到 Canvas
 2. 提取彩色数据和 Alpha 数据
-3. 合成双通道画布（左右并排或上下并排）
+3. 合成双通道画布（左右并排布局）
 4. 使用 ffmpeg.wasm 编码为 MP4
 5. 下载文件
 
 #### 技术挑战
 - ffmpeg.wasm 体积大（约 25MB），需要 CDN 加速
 - 编码速度较慢，需要进度提示
-- 内存占用高
+- 内存占用高，需要限制尺寸
 
 ---
 
@@ -274,16 +495,18 @@ await ffmpeg.load();
 
 ### 第一批（高优先级）
 1. ✅ 技术调研（YYEVA、GIF、序列帧、MP4 合成）
-2. 🔄 SVGA 导出 GIF
-3. 🔄 Lottie 预览功能
+2. ✅ SVGA 素材替换功能
+3. ✅ SVGA 导出 GIF 功能
+4. 🔄 SVGA 转 YYEVA-MP4 功能（设计完成）
+5. ⏳ Lottie 预览功能
 
 ### 第二批（中优先级）
-4. SVGA 素材替换
-5. YYEVA-MP4 预览与播放控制
+1. YYEVA-MP4 预览与播放控制
+2. Lottie 播放控制与功能完善
 
 ### 第三批（低优先级）
-6. SVGA 转 YYEVA-MP4
-7. YYEVA-MP4 转 SVGA
+1. YYEVA-MP4 转 SVGA
+2. 性能优化和体验提升
 
 ---
 
@@ -366,4 +589,5 @@ await ffmpeg.load();
 
 ---
 
-*最后更新：2024-12-12*
+*最后更新：2024-12-13*
+*阶段2完成日期：2024-12-13*
