@@ -315,6 +315,7 @@
         line-height: 1.33;
         color: #5b5b5b;
         text-align: center;
+        pointer-events: auto;
       }
 
       .empty-state-text em {
@@ -1438,9 +1439,16 @@
                 />
               </svg>
             </div>
-            <div class="empty-state-text">
+            <div class="empty-state-text" @click="triggerFileUpload" style="cursor: pointer;">
               将文件拖到此处预览动画,或<em>点击上传</em>
             </div>
+            <input
+              ref="fileInput"
+              type="file"
+              accept=".svga,.json,.mp4"
+              style="display: none;"
+              @change="onFileSelect"
+            />
           </div>
         </div>
 
@@ -1787,7 +1795,22 @@
             this.dropHover = false;
             var files = event.dataTransfer && event.dataTransfer.files;
             if (!files || !files.length) return;
-            var file = files[0];
+            this.handleFile(files[0]);
+          },
+
+          triggerFileUpload: function () {
+            this.$refs.fileInput.click();
+          },
+
+          onFileSelect: function (event) {
+            var files = event.target.files;
+            if (!files || !files.length) return;
+            this.handleFile(files[0]);
+            // 清空input，允许重复选择同一文件
+            event.target.value = '';
+          },
+
+          handleFile: function (file) {
             var name = (file.name || '').toLowerCase();
 
             if (name.endsWith('.svga')) {
