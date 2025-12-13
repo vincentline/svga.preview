@@ -3,12 +3,7 @@
 <cite>
 **本文引用的文件**  
 - [docs/index.html](file://docs/index.html)
-- [figma-mcp-example.md](file://figma-mcp-example.md)
-- [CNAME](file://CNAME)
-- [demo-gif-export.html](file://demo-gif-export.html)
-- [demo-yyeva-format.html](file://demo-yyeva-format.html)
-- [TECH-RESEARCH.md](file://TECH-RESEARCH.md)
-- [docs/svga.proto](file://docs/svga.proto)
+- [ROADMAP.md](file://ROADMAP.md)
 </cite>
 
 ## 更新摘要
@@ -18,6 +13,7 @@
 - 补充SVGA文件导出功能，利用protobuf.js解析并修改原始SVGA二进制数据
 - 更新用户界面交互流程，反映新增的“导出GIF”、“替换素材”等操作按钮
 - 引入protobuf解析机制，说明如何通过Protocol Buffers定义文件（svga.proto）进行结构化数据处理
+- **新增点击上传功能**：在空状态容器中添加点击事件(triggerFileUpload)，连接到隐藏的文件输入元素(@change="onFileSelect")，实现点击上传。同时在onFileSelect方法中重置input值，允许重新上传同一文件，解决重复上传的用户体验问题。
 
 ## 目录
 1. [简介](#简介)
@@ -32,7 +28,7 @@
 10. [附录](#附录)
 
 ## 简介
-本项目提供一个基于 Vue 的在线预览工具，用于加载与播放 SVGA 动画、带Alpha通道的MP4动画（YYEVA）以及 Lottie 动画。页面通过 CDN 引入 Vue 与 SVGAPlayerWeb 库，并在前端使用 Vue 组件完成拖拽上传、解析与播放控制。用户可直接上传本地 .svga 或 .json 文件，页面会根据文件类型选择对应的播放器进行渲染与播放；同时支持通过 URL 拖拽或上传的方式进行加载。系统已升级为现代化单页应用布局，包含固定高度的底部控制面板（154px），支持实时帧数更新、暗色模式切换、改进的拖拽交互状态以及新增的工具提示系统。新增功能包括：GIF 导出、SVGA 素材替换、SVGA 文件重新导出、protobuf 解析等高级特性。
+本项目提供一个基于 Vue 的在线预览工具，用于加载与播放 SVGA 动画、带Alpha通道的MP4动画（YYEVA）以及 Lottie 动画。页面通过 CDN 引入 Vue 与 SVGAPlayerWeb 库，并在前端使用 Vue 组件完成拖拽上传、解析与播放控制。用户可直接上传本地 .svga 或 .json 文件，页面会根据文件类型选择对应的播放器进行渲染与播放；同时支持通过 URL 拖拽或上传的方式进行加载。系统已升级为现代化单页应用布局，包含固定高度的底部控制面板（154px），支持实时帧数更新、暗色模式切换、改进的拖拽交互状态以及新增的工具提示系统。新增功能包括：GIF 导出、SVGA 素材替换、SVGA 文件重新导出、protobuf 解析等高级特性。**特别更新了文件上传交互机制，支持点击上传功能。在空状态容器中添加了点击事件(triggerFileUpload)，并连接到隐藏的文件输入元素(@change="onFileSelect")，实现了点击上传功能。同时在onFileSelect方法中重置input值，允许重新上传同一文件，解决了重复上传的用户体验问题。**
 
 **Section sources**  
 - [docs/index.html](file://docs/index.html#L1-L1566)
@@ -273,7 +269,7 @@ Aview --> ProtobufParser : "解析/导出SVGA"
 
 ```mermaid
 flowchart TD
-Start(["开始"]) --> Load["读取文件<br/>FileReader/URL.createObjectURL"]
+Start["开始"] --> Load["读取文件<br/>FileReader/URL.createObjectURL"]
 Load --> Parser["创建 SVGA.Parser 并 load"]
 Parser --> ParseDone{"解析成功？"}
 ParseDone --> |否| Error["错误处理"]
@@ -281,7 +277,7 @@ ParseDone --> |是| SetPlayer["创建 SVGA.Player 并 setVideoItem"]
 SetPlayer --> Meta["读取 FPS 与 videoSize"]
 Meta --> Resize["按比例设置容器宽高"]
 Resize --> Play["startAnimation()"]
-Play --> End(["结束"])
+Play --> End["结束"]
 Error --> End
 ```
 
@@ -298,11 +294,11 @@ Error --> End
 
 ```mermaid
 flowchart TD
-Start(["开始"]) --> Read["读取 .json 文本并 JSON.parse"]
+Start["开始"] --> Read["读取 .json 文本并 JSON.parse"]
 Read --> Create["lottie.loadAnimation(配置)"]
 Create --> Resize["设置容器宽高"]
 Resize --> Play["自动播放"]
-Play --> End(["结束"])
+Play --> End["结束"]
 ```
 
 **Diagram sources**  
@@ -487,7 +483,7 @@ UI["Element-UI"] --> Upload["上传控件"]
 - 根据扩展名选择播放器  
 - 解析元数据并设置容器尺寸  
 - 自动播放与生命周期管理  
-在实际部署中，建议关注跨域、超时与格式校验等常见问题，以获得更稳定的用户体验。系统已升级为现代化UI设计，支持暗色模式、实时帧数更新、改进的拖拽交互和工具提示，提升了整体用户体验。新增功能包括：GIF导出（使用gif.js+Web Worker）、SVGA素材替换（动态setImage）、SVGA文件重新导出（protobuf+pako解析），显著增强了工具的实用性与灵活性。
+在实际部署中，建议关注跨域、超时与格式校验等常见问题，以获得更稳定的用户体验。系统已升级为现代化UI设计，支持暗色模式、实时帧数更新、改进的拖拽交互和工具提示，提升了整体用户体验。新增功能包括：GIF导出（使用gif.js+Web Worker）、SVGA素材替换（动态setImage）、SVGA文件重新导出（protobuf+pako解析），显著增强了工具的实用性与灵活性。**特别更新了文件上传交互机制，支持点击上传功能。在空状态容器中添加了点击事件(triggerFileUpload)，并连接到隐藏的文件输入元素(@change="onFileSelect")，实现了点击上传功能。同时在onFileSelect方法中重置input值，允许重新上传同一文件，解决了重复上传的用户体验问题。**
 
 ## 附录
 - 嵌入播放器的基本用法（路径参考）  
