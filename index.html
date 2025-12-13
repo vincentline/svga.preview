@@ -2264,6 +2264,9 @@
                 materialItem.fileSize = bytes;
                 materialItem.fileSizeText = _this.formatBytes(bytes);
                 materialItem.sizeText = this.width + 'px*' + this.height + 'px';
+                // 保存原始宽高，用于后续图片替换时的缩放
+                materialItem.width = this.width;
+                materialItem.height = this.height;
               };
               
               img.onerror = function () {
@@ -2294,29 +2297,43 @@
               // 读取文件为 base64
               var reader = new FileReader();
               reader.onload = function (evt) {
-                var dataUrl = evt.target.result;
+                var uploadedDataUrl = evt.target.result;
                 
-                // 更新预览
-                material.previewUrl = dataUrl;
-                material.isReplaced = true;
-                
-                // 保存替换的图片 - 使用新对象触发响应式更新
-                var newReplacedImages = Object.assign({}, _this.replacedImages);
-                newReplacedImages[material.imageKey] = dataUrl;
-                _this.replacedImages = newReplacedImages;
-                
-                // 重新渲染 SVGA
-                _this.applyReplacedMaterials();
-                
-                // 计算新图片尺寸
-                var img = new Image();
-                img.onload = function () {
-                  var bytes = this.width * this.height * 4;
+                // 加载上传的图片
+                var uploadedImg = new Image();
+                uploadedImg.onload = function () {
+                  // 直接使用上传的图片，不进行缩放
+                  // SVGA 播放器会自动处理图片尺寸
+                  var resizedDataUrl = uploadedDataUrl;
+                  
+                  console.log('使用原始上传图片，尺寸:', uploadedImg.width, 'x', uploadedImg.height);
+                  console.log('Base64 数据长度:', resizedDataUrl.length);
+                  
+                  // 更新预览
+                  material.previewUrl = resizedDataUrl;
+                  material.isReplaced = true;
+                  
+                  // 保存替换的图片 - 使用新对象触发响应式更新
+                  var newReplacedImages = Object.assign({}, _this.replacedImages);
+                  newReplacedImages[material.imageKey] = resizedDataUrl;
+                  _this.replacedImages = newReplacedImages;
+                  
+                  // 更新文件大小信息（使用上传图片的实际尺寸）
+                  var bytes = uploadedImg.width * uploadedImg.height * 4;
                   material.fileSize = bytes;
                   material.fileSizeText = _this.formatBytes(bytes);
-                  material.sizeText = this.width + 'px*' + this.height + 'px';
+                  material.sizeText = uploadedImg.width + 'px*' + uploadedImg.height + 'px';
+                  
+                  // 延迟后应用到 SVGA
+                  setTimeout(function() {
+                    _this.applyReplacedMaterials();
+                  }, 300);
                 };
-                img.src = dataUrl;
+                uploadedImg.onerror = function() {
+                  console.error('上传的图片加载失败');
+                  alert('图片加载失败，请确保图片格式正确');
+                };
+                uploadedImg.src = uploadedDataUrl;
               };
               
               reader.readAsDataURL(file);
@@ -2362,18 +2379,69 @@
             // 清除之前的动态替换
             this.svgaPlayer.clearDynamicObjects();
             
-            // 应用所有替换的图片
-            Object.keys(this.replacedImages).forEach(function (imageKey) {
-              var imageUrl = _this.replacedImages[imageKey];
-              _this.svgaPlayer.setImage(imageUrl, imageKey);
-            });
+            // 预加载所有图片，然后一起应用
+            var imageKeys = Object.keys(this.replacedImages);
+            var loadedImages = {};
+            var loadedCount = 0;
+            var totalCount = imageKeys.length;
             
-            // 重启播放
-            if (this.isPlaying) {
-              this.svgaPlayer.startAnimation();
-            } else {
-              this.svgaPlayer.stepToFrame(this.currentFrame);
+            if (totalCount === 0) {
+              // 没有替换的图片，直接重启播放
+              if (_this.isPlaying) {
+                _this.svgaPlayer.startAnimation();
+              } else {
+                _this.svgaPlayer.stepToFrame(_this.currentFrame);
+              }
+              return;
             }
+            
+            // 加载所有图片
+            imageKeys.forEach(function(imageKey) {
+              var imageUrl = _this.replacedImages[imageKey];
+              var img = new Image();
+              
+              img.onload = function() {
+                loadedImages[imageKey] = img;
+                loadedCount++;
+                
+                // 所有图片都加载完成
+                if (loadedCount === totalCount) {
+                  // 应用所有替换的图片
+                  Object.keys(loadedImages).forEach(function(key) {
+                    _this.svgaPlayer.setImage(loadedImages[key], key);
+                  });
+                  
+                  // 重启播放
+                  if (_this.isPlaying) {
+                    _this.svgaPlayer.startAnimation();
+                  } else {
+                    _this.svgaPlayer.stepToFrame(_this.currentFrame);
+                  }
+                }
+              };
+              
+              img.onerror = function() {
+                console.error('图片加载失败:', imageKey);
+                console.error('图片 URL 长度:', imageUrl ? imageUrl.length : 0);
+                console.error('图片 URL 前100个字符:', imageUrl ? imageUrl.substring(0, 100) : '');
+                loadedCount++;
+                
+                // 即使有错误也继续
+                if (loadedCount === totalCount) {
+                  Object.keys(loadedImages).forEach(function(key) {
+                    _this.svgaPlayer.setImage(loadedImages[key], key);
+                  });
+                  
+                  if (_this.isPlaying) {
+                    _this.svgaPlayer.startAnimation();
+                  } else {
+                    _this.svgaPlayer.stepToFrame(_this.currentFrame);
+                  }
+                }
+              };
+              
+              img.src = imageUrl;
+            });
           },
 
           previewMaterials: function () {
@@ -2395,7 +2463,6 @@
               return;
             }
 
-            // 显示处理中
             var processing = confirm('即将导出替换后的 SVGA 文件。继续吗？');
             if (!processing) return;
 
@@ -2410,11 +2477,75 @@
                   // 解压缩
                   var inflatedData = pako.inflate(uint8Array);
                   
-                  // 使用 protobuf.js 解码
-                  // 注意：这里需要 SVGA 的 proto 定义，目前直接操作二进制数据
-                  // 由于 SVGA 格式复杂，暂时使用简化方案
-                  
-                  alert('抱歉！SVGA 导出功能需要 SVGA 的 .proto 定义文件。\n\n请参考 https://github.com/svga/SVGA-Format \n或使用“导出GIF”代替。');
+                  // 使用 protobuf.js 动态加载 proto 并解码
+                  protobuf.load('svga.proto', function(err, root) {
+                    if (err) {
+                      alert('加载 proto 定义失败: ' + err.message);
+                      return;
+                    }
+                    
+                    try {
+                      // 获取 MovieEntity 类型
+                      var MovieEntity = root.lookupType('com.opensource.svga.MovieEntity');
+                      
+                      // 解码（直接操作 protobuf 消息对象）
+                      var movieData = MovieEntity.decode(inflatedData);
+                      
+                      // 替换图片数据
+                      var replacedCount = 0;
+                      for (var imageKey in _this.replacedImages) {
+                        if (_this.replacedImages.hasOwnProperty(imageKey)) {
+                          // 检查 images 字典中是否存在该 key
+                          if (movieData.images && movieData.images[imageKey]) {
+                            var base64Data = _this.replacedImages[imageKey];
+                            // 移除 data:image/xxx;base64, 前缀
+                            var base64String = base64Data.split(',')[1] || base64Data;
+                            // 转换为 Uint8Array
+                            var binaryString = atob(base64String);
+                            var bytes = new Uint8Array(binaryString.length);
+                            for (var i = 0; i < binaryString.length; i++) {
+                              bytes[i] = binaryString.charCodeAt(i);
+                            }
+                            // 直接替换 protobuf 消息中的 bytes 字段
+                            movieData.images[imageKey] = bytes;
+                            replacedCount++;
+                          }
+                        }
+                      }
+                      
+                      if (replacedCount === 0) {
+                        alert('未找到需要替换的图片');
+                        return;
+                      }
+                      
+                      // 直接编码 protobuf 消息
+                      var buffer = MovieEntity.encode(movieData).finish();
+                      
+                      // 压缩
+                      var deflatedData = pako.deflate(buffer);
+                      
+                      // 创建 Blob 并下载
+                      var blob = new Blob([deflatedData], { type: 'application/octet-stream' });
+                      var url = URL.createObjectURL(blob);
+                      var a = document.createElement('a');
+                      a.href = url;
+                      var originalName = _this.svga.fileInfo.name.replace(/\.svga$/i, '');
+                      a.download = originalName + '_modified.svga';
+                      document.body.appendChild(a);
+                      a.click();
+                      document.body.removeChild(a);
+                      
+                      setTimeout(function() {
+                        URL.revokeObjectURL(url);
+                      }, 100);
+                      
+                      alert('导出成功！已替换 ' + replacedCount + ' 个素材。');
+                      
+                    } catch (decodeErr) {
+                      console.error('编解码失败:', decodeErr);
+                      alert('编解码失败: ' + decodeErr.message);
+                    }
+                  });
                   
                 } catch (err) {
                   console.error('处理 SVGA 失败:', err);
