@@ -850,17 +850,45 @@
         justify-content: center;
         padding: 0;
         margin: 0 4px;
-        transition: opacity 0.3s;
-      }
-      
-      .zoom-btn:hover {
-        opacity: 0.8;
+        position: relative;
       }
       
       .zoom-icon {
         width: 28px;
         height: 28px;
         display: block;
+        transition: opacity 0.2s;
+      }
+      
+      /* 放大按钮 hover 状态 */
+      .zoom-btn:hover .zoom-icon {
+        opacity: 0;
+      }
+      
+      .zoom-btn::after {
+        content: '';
+        position: absolute;
+        width: 28px;
+        height: 28px;
+        opacity: 0;
+        transition: opacity 0.2s;
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+      }
+      
+      .zoom-btn:hover::after {
+        opacity: 1;
+      }
+      
+      /* 浅色模式下的 hover 图标 */
+      .zoom-btn:hover::after {
+        background-image: var(--zoom-hover-icon);
+      }
+      
+      /* 暗黑模式下的 hover 图标 */
+      body.dark-mode .zoom-btn:hover::after {
+        background-image: var(--zoom-hover-icon-dark);
       }
       
       /* 1:1按钮 */
@@ -876,17 +904,45 @@
         justify-content: center;
         padding: 0;
         margin-left: 4px;
-        transition: opacity 0.3s;
-      }
-      
-      .reset-scale-btn:hover {
-        opacity: 0.8;
+        position: relative;
       }
       
       .one-to-one-icon {
         width: 28px;
         height: 28px;
         display: block;
+        transition: opacity 0.2s;
+      }
+      
+      /* 1:1 按钮 hover 状态 */
+      .reset-scale-btn:hover .one-to-one-icon {
+        opacity: 0;
+      }
+      
+      .reset-scale-btn::after {
+        content: '';
+        position: absolute;
+        width: 28px;
+        height: 28px;
+        opacity: 0;
+        transition: opacity 0.2s;
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+      }
+      
+      .reset-scale-btn:hover::after {
+        opacity: 1;
+      }
+      
+      /* 浅色模式下的 hover 图标 */
+      .reset-scale-btn:hover::after {
+        background-image: url('assets/img/one2one_hover.png');
+      }
+      
+      /* 暗黑模式下的 hover 图标 */
+      body.dark-mode .reset-scale-btn:hover::after {
+        background-image: url('assets/img/one2one_hover_dark.png');
       }
 
 /* 清空/关闭按钮 (btn03样式) */
@@ -1735,10 +1791,26 @@
                 </div>
                 <div class="controls-right">
                   <div class="scale-percentage">{{ Math.round(viewerScale * 100) }}%</div>
-                  <button class="zoom-btn" @click="zoomOut" title="缩小">
+                  <button 
+                    class="zoom-btn" 
+                    @click="zoomOut" 
+                    title="缩小"
+                    :style="{
+                      '--zoom-hover-icon': 'url(assets/img/zoom_out_hover.png)',
+                      '--zoom-hover-icon-dark': 'url(assets/img/zoom_out_hover_dark.png)'
+                    }"
+                  >
                     <img :src="zoomOutIcon" class="zoom-icon" />
                   </button>
-                  <button class="zoom-btn" @click="zoomIn" title="放大">
+                  <button 
+                    class="zoom-btn" 
+                    @click="zoomIn" 
+                    title="放大"
+                    :style="{
+                      '--zoom-hover-icon': 'url(assets/img/zoom_in_hover.png)',
+                      '--zoom-hover-icon-dark': 'url(assets/img/zoom_in_hover_dark.png)'
+                    }"
+                  >
                     <img :src="zoomInIcon" class="zoom-icon" />
                   </button>
                   <button class="reset-scale-btn" @click="resetScale" title="恢复1:1尺寸">
