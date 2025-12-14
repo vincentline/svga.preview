@@ -43,22 +43,6 @@
 ### 在线使用
 访问 [SVGA 预览工具](https://svga.duohuo.net) 直接使用，无需安装。
 
-### 本地运行
-
-1. **克隆项目**
-```bash
-git clone <repository-url>
-cd svga.preview
-```
-
-2. **启动开发服务器**
-```bash
-cd docs
-python run-server.py
-```
-
-3. **打开浏览器**
-访问 `http://localhost:8081`
 
 > **注意**：MP4 转换功能需要使用支持跨源隔离的服务器（已包含在 `run-server.py` 中）
 
@@ -71,11 +55,6 @@ python run-server.py
 5. **替换素材**：点击"素材图替换"按钮，选择要替换的图片，然后导出新文件
 6. **转换格式**：点击"导出GIF"或"转MP4"按钮，根据提示完成转换
 
-## 📝 许可证
-
-MIT License
-
-## 🤝 贡献
 
 欢迎提交 Issue 和 Pull Request！
 
