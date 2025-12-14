@@ -18,6 +18,8 @@
     <script src="https://cdn.jsdelivr.net/npm/protobufjs@7.2.5/dist/protobuf.min.js"></script>
     <!-- pako for zlib compression -->
     <script src="https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js"></script>
+    <!-- FFmpeg.wasm for MP4 encoding (0.11版本不需要SharedArrayBuffer) -->
+    <script src="ffmpeg/ffmpeg-0.11.min.js"></script>
 
     <style>
       /* ==================== 全局重置 & 基础布局 ==================== */
@@ -1515,6 +1517,54 @@
         border-color: #606060;
       }
 
+      body.dark-mode .material-btn-back svg path {
+        stroke: #e0e0e0;
+      }
+
+      /* MP4转换按钮进度显示 */
+      .material-btn-export.mp4-btn-converting {
+        position: relative;
+        flex-direction: column;
+        padding: 4px 12px;
+        gap: 2px;
+      }
+
+      .mp4-progress-text {
+        font-family: 'Segoe UI', sans-serif;
+        font-weight: 600;
+        font-size: 14px;
+        line-height: 18px;
+        color: #333333;
+      }
+
+      .mp4-stage-text {
+        font-family: 'Segoe UI', sans-serif;
+        font-weight: 400;
+        font-size: 10px;
+        line-height: 14px;
+        color: #666666;
+        max-width: 120px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .mp4-btn-cancel {
+        border-color: #ff4444 !important;
+      }
+
+      .mp4-btn-cancel:hover {
+        background: rgba(255, 68, 68, 0.1) !important;
+      }
+
+      body.dark-mode .mp4-progress-text {
+        color: #ffffff;
+      }
+
+      body.dark-mode .mp4-stage-text {
+        color: #aaaaaa;
+      }
+
       /* 导出新SVGA按钮 (btn02_Large) */
       .material-btn-export {
         box-sizing: border-box;
@@ -1585,6 +1635,595 @@
       /* 遮罩层 - 隐藏 */
       .material-overlay {
         display: none !important;
+      }
+
+      /* ==================== MP4转换弹窗（Figma设计） ==================== */
+
+      .mp4-panel {
+        position: fixed;
+        top: 0;
+        right: -400px;
+        width: 400px;
+        height: 100%;
+        display: flex;
+        flex-direction: row;
+        align-items: stretch;
+        padding: 10px;
+        transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 1000;
+      }
+
+      .mp4-panel.show {
+        right: 0;
+      }
+
+      .mp4-panel-container {
+        display: flex;
+        flex-direction: column;
+        align-self: stretch;
+        padding: 20px;
+        gap: 16px;
+        width: 380px;
+        background: #FFFFFF;
+        border: 1px solid #E3E3E3;
+        box-shadow: 0px 10px 32px 0px rgba(51, 51, 51, 0.2);
+        border-radius: 16px;
+        overflow-y: auto;
+      }
+
+      body.dark-mode .mp4-panel-container {
+        background: #1a1a1a;
+        border-color: #404040;
+        box-shadow: 0px 10px 32px rgba(0, 0, 0, 0.5);
+      }
+
+      /* 标题区 */
+      .mp4-panel-header {
+        display: flex;
+        flex-direction: column;
+        align-self: stretch;
+        gap: 12px;
+      }
+
+      .mp4-panel-title {
+        font-family: 'Segoe UI', sans-serif;
+        font-weight: 400;
+        font-size: 12px;
+        line-height: 16px;
+        color: #818181;
+        margin: 0;
+      }
+
+      body.dark-mode .mp4-panel-title {
+        color: #999999;
+      }
+
+      .mp4-panel-divider {
+        width: 100%;
+        height: 1px;
+        background: #F3F3F3;
+      }
+
+      body.dark-mode .mp4-panel-divider {
+        background: #404040;
+      }
+
+      /* SVGA信息区 */
+      .mp4-info-section {
+        display: flex;
+        flex-direction: column;
+        align-self: stretch;
+        gap: 4px;
+      }
+
+      .mp4-info-row {
+        font-family: 'Segoe UI', sans-serif;
+        font-weight: 400;
+        font-size: 14px;
+        line-height: 19px;
+        color: #333333;
+        margin: 0;
+      }
+
+      body.dark-mode .mp4-info-row {
+        color: #cccccc;
+      }
+
+      .mp4-compress-hint {
+        font-family: 'Segoe UI', sans-serif;
+        font-weight: 400;
+        font-size: 12px;
+        line-height: 16px;
+        color: #AAAAAA;
+        margin: 0;
+      }
+
+      body.dark-mode .mp4-compress-hint {
+        color: #666666;
+      }
+
+      /* 配置区域 */
+      .mp4-config-section {
+        display: flex;
+        flex-direction: column;
+        align-self: stretch;
+        gap: 24px;
+      }
+
+      .mp4-config-item {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        align-self: stretch;
+        gap: 8px;
+      }
+
+      .mp4-config-label {
+        font-family: 'Segoe UI', sans-serif;
+        font-weight: 400;
+        font-size: 16px;
+        line-height: 21px;
+        color: #333333;
+        margin: 0;
+        flex-shrink: 0;
+        text-align: left;
+      }
+
+      body.dark-mode .mp4-config-label {
+        color: #cccccc;
+      }
+
+      /* 下拉选择框样式 */
+      .mp4-select-wrapper {
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 16px;
+        gap: 4px;
+        width: 218px;
+        min-width: 200px;
+        height: 44px;
+        background: #F3F3F3;
+        border: none;
+        border-radius: 12px;
+        cursor: pointer;
+        position: relative;
+        transition: all 0.2s ease;
+        flex: none;
+        flex-grow: 0;
+      }
+
+      .mp4-select-wrapper:hover {
+        background: #FCFCFC;
+        border: 1px solid #333333;
+      }
+
+      .mp4-select-wrapper:active {
+        background: #FFFFFF;
+        border: 2px solid #333333;
+        padding: 0 14px;
+      }
+
+      body.dark-mode .mp4-select-wrapper {
+        background: #3a3a3a;
+        border: none;
+      }
+
+      body.dark-mode .mp4-select-wrapper:hover {
+        background: #454545;
+        border: none;
+      }
+
+      body.dark-mode .mp4-select-wrapper:active {
+        background: #3a3a3a;
+        border: 2px solid #666666;
+        padding: 0 14px;
+      }
+
+      .mp4-select-text {
+        font-family: 'Segoe UI', sans-serif;
+        font-weight: 600;
+        font-size: 16px;
+        line-height: 24px;
+        color: #333333;
+        margin: 0;
+      }
+
+      body.dark-mode .mp4-select-text {
+        color: #cccccc;
+      }
+
+      .mp4-select-icon {
+        width: 16px;
+        height: 16px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .mp4-select-icon svg {
+        width: 100%;
+        height: 100%;
+        stroke: #333333;
+      }
+
+      body.dark-mode .mp4-select-icon svg {
+        stroke: #cccccc;
+      }
+
+      /* 下拉菜单 */
+      .mp4-select-dropdown {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0;
+        right: 0;
+        background: #FFFFFF;
+        border: 1px solid #E6E6E6;
+        border-radius: 12px;
+        box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.15);
+        z-index: 1000;
+        overflow: hidden;
+        display: none;
+      }
+
+      .mp4-select-wrapper.open .mp4-select-dropdown {
+        display: block;
+      }
+
+      body.dark-mode .mp4-select-dropdown {
+        background: #2c2c2c;
+        border-color: #666666;
+        box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.5);
+      }
+
+      .mp4-select-option {
+        padding: 12px 16px;
+        font-family: 'Segoe UI', sans-serif;
+        font-weight: 400;
+        font-size: 16px;
+        line-height: 21px;
+        color: #333333;
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+
+      .mp4-select-option:hover {
+        background: #FCFCFC;
+      }
+
+      .mp4-select-option.selected {
+        font-weight: 600;
+        
+      }
+
+      body.dark-mode .mp4-select-option {
+        color: #cccccc;
+      }
+
+      body.dark-mode .mp4-select-option:hover {
+        background: #3a3a3a;
+      }
+
+      body.dark-mode .mp4-select-option.selected {
+        background: #404040;
+      }
+
+      /* 尺寸输入 */
+      .mp4-size-container {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+        flex: none;
+      }
+
+      .mp4-size-input-wrapper {
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        padding: 0 16px;
+        gap: 4px;
+        width: 73px;
+        min-width: 50px;
+        height: 44px;
+        background: #F3F3F3;
+        border: none;
+        border-radius: 12px;
+        transition: all 0.2s ease;
+        flex: none;
+        flex-grow: 0;
+      }
+
+      .mp4-size-input-wrapper:hover {
+        background: #FCFCFC;
+        border: 1px solid #333333;
+        padding: 0 15px;
+      }
+
+      .mp4-size-input-wrapper:focus-within {
+        background: #FFFFFF;
+        border: 2px solid #5B5B5B;
+        padding: 0 14px;
+      }
+
+      body.dark-mode .mp4-size-input-wrapper {
+        background: #3a3a3a;
+        border: none;
+      }
+
+      body.dark-mode .mp4-size-input-wrapper:hover {
+        background: #454545;
+        border: 1px solid #999999;
+        padding: 0 15px;
+      }
+
+      body.dark-mode .mp4-size-input-wrapper:focus-within {
+        background: #3a3a3a;
+        border: 2px solid #999999;
+        padding: 0 14px;
+      }
+
+      .mp4-input {
+        width: 100%;
+        height: 100%;
+        background: transparent;
+        border: none;
+        font-family: 'Segoe UI', sans-serif;
+        font-weight: 600;
+        font-size: 16px;
+        line-height: 24px;
+        color: #333333;
+        text-align: center;
+        outline: none;
+      }
+
+      /* 隐藏数字输入框的上下箭头 */
+      .mp4-input::-webkit-outer-spin-button,
+      .mp4-input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
+
+      .mp4-input[type=number] {
+        -moz-appearance: textfield;
+      }
+
+      body.dark-mode .mp4-input {
+        color: #cccccc;
+      }
+
+      .mp4-size-lock {
+        width: 16px;
+        height: 16px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .mp4-size-lock svg {
+        width: 100%;
+        height: 100%;
+        stroke: #333333;
+      }
+
+      body.dark-mode .mp4-size-lock svg {
+        stroke: #cccccc;
+      }
+
+      /* 质量和帧率输入 */
+      .mp4-value-container {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 4px;
+        flex: none;
+      }
+
+      .mp4-value-input-wrapper {
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        padding: 0 16px;
+        gap: 4px;
+        width: 73px;
+        min-width: 50px;
+        height: 44px;
+        background: #F3F3F3;
+        border: none;
+        border-radius: 12px;
+        transition: all 0.2s ease;
+        flex: none;
+        flex-grow: 0;
+      }
+
+      .mp4-value-input-wrapper:hover {
+        background: #FCFCFC;
+        border: 1px solid #333333;
+        padding: 0 15px;
+      }
+
+      .mp4-value-input-wrapper:focus-within {
+        background: #FFFFFF;
+        border: 2px solid #5B5B5B;
+        padding: 0 14px;
+      }
+
+      body.dark-mode .mp4-value-input-wrapper {
+        background: #3a3a3a;
+        border: none;
+      }
+
+      body.dark-mode .mp4-value-input-wrapper:hover {
+        background: #454545;
+        border: 1px solid #999999;
+        padding: 0 15px;
+      }
+
+      body.dark-mode .mp4-value-input-wrapper:focus-within {
+        background: #3a3a3a;
+        border: 2px solid #999999;
+        padding: 0 14px;
+      }
+
+      .mp4-value-unit {
+        font-family: 'Segoe UI', sans-serif;
+        font-weight: 600;
+        font-size: 16px;
+        line-height: 24px;
+        color: #333333;
+        margin: 0;
+        flex-shrink: 0;
+      }
+
+      body.dark-mode .mp4-value-unit {
+        color: #cccccc;
+      }
+
+      /* 静音开关 */
+      .mp4-mute-toggle {
+        width: 46px;
+        height: 26px;
+        background: #5B5B5B;
+        border-radius: 100px;
+        cursor: pointer;
+        flex-shrink: 0;
+        position: relative;
+        transition: background 0.3s;
+      }
+
+      .mp4-mute-toggle.active {
+        background: #409EFF;
+      }
+
+      body.dark-mode .mp4-mute-toggle {
+        background: #5B5B5B;
+      }
+
+      body.dark-mode .mp4-mute-toggle.active {
+        background: #409EFF;
+      }
+
+      .mp4-mute-toggle-handle {
+        width: 24px;
+        height: 24px;
+        background: #FFFFFF;
+        border-radius: 50%;
+        position: absolute;
+        top: 1px;
+        left: 1px;
+        transition: transform 0.3s;
+      }
+
+      .mp4-mute-toggle.active .mp4-mute-toggle-handle {
+        transform: translateX(20px);
+      }
+
+      /* 底部按钮 */
+      .mp4-panel-footer {
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-end;
+        align-self: stretch;
+        gap: 12px;
+        margin-top: auto;
+      }
+
+      .mp4-btn {
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        padding: 0 20px;
+        height: 44px;
+        border-radius: 16px;
+        font-family: 'Segoe UI', sans-serif;
+        font-weight: 400;
+        font-size: 14px;
+        line-height: 22px;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: none;
+        outline: none;
+        box-sizing: border-box;
+        user-select: none;
+      }
+
+      .mp4-btn-preview {
+        background: #FFFFFF;
+        border: 1px solid #E3E3E3;
+        color: #333333;
+        flex-shrink: 0;
+      }
+
+      .mp4-btn-preview:hover {
+        background: #F5F5F5;
+        border-color: #CCCCCC;
+      }
+
+      .mp4-btn-preview:active {
+        background: #EBEBEB;
+        border-color: #B3B3B3;
+      }
+
+      body.dark-mode .mp4-btn-preview {
+        background: #2c2c2c;
+        border-color: #404040;
+        color: #cccccc;
+      }
+
+      body.dark-mode .mp4-btn-preview:hover {
+        background: #363636;
+        border-color: #4d4d4d;
+      }
+
+      body.dark-mode .mp4-btn-preview:active {
+        background: #404040;
+        border-color: #595959;
+      }
+
+      .mp4-btn-convert {
+        background: #5B5B5B;
+        color: #FFFFFF;
+        flex: 1;
+      }
+
+      .mp4-btn-convert:hover:not(:disabled) {
+        background: #4A4A4A;
+      }
+
+      .mp4-btn-convert:active:not(:disabled) {
+        background: #333333;
+      }
+
+      .mp4-btn-convert:disabled {
+        background: rgba(91, 91, 91, 0.3);
+        cursor: not-allowed;
+      }
+
+      body.dark-mode .mp4-btn-convert {
+        background: #e0e0e0;
+        color: #1a1a1a;
+      }
+
+      body.dark-mode .mp4-btn-convert:hover:not(:disabled) {
+        background: #f0f0f0;
+      }
+
+      body.dark-mode .mp4-btn-convert:active:not(:disabled) {
+        background: #d0d0d0;
+      }
+
+      body.dark-mode .mp4-btn-convert:disabled {
+        background: rgba(224, 224, 224, 0.3);
       }
     </style>
   </head>
@@ -1878,8 +2517,13 @@
                     <span v-if="!svga.hasFile" class="tooltip-text">请先拖入 SVGA 文件</span>
                     {{ isExportingGIF ? '导出中 ' + gifExportProgress + '%' : '导出GIF' }}
                   </button>
-                  <button class="btn-secondary tooltip">
-                    <span class="tooltip-text">还在开发中...</span>
+                  <button 
+                    class="btn-secondary"
+                    :class="{'tooltip': !svga.hasFile}"
+                    :disabled="!svga.hasFile"
+                    @click="openMP4Panel"
+                  >
+                    <span v-if="!svga.hasFile" class="tooltip-text">请先拖入 SVGA 文件</span>
                     转MP4
                   </button>
                 </div>
@@ -1972,6 +2616,174 @@
           </div>
         </div>
       </div>
+
+      <!-- MP4转换弹窗 -->
+      <div class="mp4-panel" :class="{'show': showMP4Panel}">
+        <div class="mp4-panel-container">
+          <!-- 标题区 -->
+          <div class="mp4-panel-header">
+            <h3 class="mp4-panel-title">转换为带通道的MP4格式</h3>
+            <div class="mp4-panel-divider"></div>
+          </div>
+          
+          <!-- SVGA信息 -->
+          <div class="mp4-info-section">
+            <div class="mp4-info-row">SVGA尺寸：{{ svga.fileInfo.sizeWH }}    时长：{{ svga.fileInfo.duration }}</div>
+            <div class="mp4-compress-hint">压缩开大</div>
+          </div>
+
+          <!-- 配置区域 -->
+          <div class="mp4-config-section">
+            <!-- 遮罩位置 -->
+            <div class="mp4-config-item">
+              <div class="mp4-config-label">遮罩位置：</div>
+              <div class="mp4-select-wrapper" :class="{open: showChannelModeDropdown}" @click="toggleChannelModeDropdown">
+                <div class="mp4-select-text">
+                  {{ mp4Config.channelMode === 'color-left-alpha-right' ? '左彩右灰' : '左灰右彩' }}
+                </div>
+                <div class="mp4-select-icon">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </div>
+                <!-- 下拉菜单 -->
+                <div class="mp4-select-dropdown">
+                  <div 
+                    class="mp4-select-option"
+                    :class="{selected: mp4Config.channelMode === 'color-left-alpha-right'}"
+                    @click.stop="selectChannelMode('color-left-alpha-right')"
+                  >
+                    左彩右灰（左侧彩色通道，右侧Alpha通道）
+                  </div>
+                  <div 
+                    class="mp4-select-option"
+                    :class="{selected: mp4Config.channelMode === 'alpha-left-color-right'}"
+                    @click.stop="selectChannelMode('alpha-left-color-right')"
+                  >
+                    左灰右彩（左侧Alpha通道，右侧彩色通道）
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 尺寸 -->
+            <div class="mp4-config-item">
+              <div class="mp4-config-label">尺寸：</div>
+              <div class="mp4-size-container">
+                <div class="mp4-size-input-wrapper">
+                  <input 
+                    type="number" 
+                    class="mp4-input" 
+                    v-model.number="mp4Config.width" 
+                    @input="onMP4WidthChange"
+                    min="0"
+                    max="3000"
+                  />
+                </div>
+                <div class="mp4-size-lock">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4.66667 7.33333V5.33333C4.66667 3.86057 5.86057 2.66667 7.33333 2.66667H8.66667C10.1394 2.66667 11.3333 3.86057 11.3333 5.33333V7.33333M5.33333 7.33333H10.6667C11.403 7.33333 12 7.93029 12 8.66667V12C12 12.7364 11.403 13.3333 10.6667 13.3333H5.33333C4.59695 13.3333 4 12.7364 4 12V8.66667C4 7.93029 4.59695 7.33333 5.33333 7.33333Z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </div>
+                <div class="mp4-size-input-wrapper">
+                  <input 
+                    type="number" 
+                    class="mp4-input" 
+                    v-model.number="mp4Config.height" 
+                    @input="onMP4HeightChange"
+                    min="0"
+                    max="3000"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- 压缩到质量 -->
+            <div class="mp4-config-item">
+              <div class="mp4-config-label">压缩到质量：</div>
+              <div class="mp4-value-container">
+                <div class="mp4-value-input-wrapper">
+                  <input 
+                    type="number" 
+                    class="mp4-input" 
+                    v-model.number="mp4Config.quality" 
+                    min="1"
+                    max="100"
+                  />
+                </div>
+                <div class="mp4-value-unit">%</div>
+              </div>
+            </div>
+
+            <!-- 帧率修改 -->
+            <div class="mp4-config-item">
+              <div class="mp4-config-label">帧率修改：</div>
+              <div class="mp4-value-container">
+                <div class="mp4-value-input-wrapper">
+                  <input 
+                    type="number" 
+                    class="mp4-input" 
+                    v-model.number="mp4Config.fps" 
+                    min="1"
+                    max="120"
+                  />
+                </div>
+                <div class="mp4-value-unit">FPS</div>
+              </div>
+            </div>
+
+            <!-- 静音 -->
+            <div class="mp4-config-item">
+              <div class="mp4-config-label">静音</div>
+              <div class="mp4-mute-toggle" :class="{active: mp4Config.muted}" @click="mp4Config.muted = !mp4Config.muted">
+                <div class="mp4-mute-toggle-handle"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 底部按钮 -->
+          <div class="mp4-panel-footer">
+            <!-- 返回按钮（转换中变为取消按钮） -->
+            <button 
+              v-if="!isConvertingMP4"
+              class="material-btn-back" 
+              @click="closeMP4Panel" 
+              title="返回"
+            >
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M12 16L6 10L12 4" stroke="#333333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <button 
+              v-else
+              class="material-btn-back mp4-btn-cancel" 
+              @click="cancelMP4Conversion" 
+              title="取消转换"
+            >
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M5 5L15 15M15 5L5 15" stroke="#ff4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            
+            <!-- 转换按钮 -->
+            <button 
+              class="material-btn-export" 
+              :class="{'mp4-btn-converting': isConvertingMP4}"
+              :data-progress="mp4ConvertProgress"
+              :disabled="isConvertingMP4"
+              @click="startMP4Conversion"
+            >
+              <template v-if="isConvertingMP4">
+                <span class="mp4-progress-text">{{ mp4ConvertProgress }}%</span>
+                <span class="mp4-stage-text">{{ mp4ConvertMessage }}</span>
+              </template>
+              <template v-else>
+                开始转换MP4
+              </template>
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <script>
@@ -2058,7 +2870,27 @@
 
             // GIF 导出状态
             isExportingGIF: false,
-            gifExportProgress: 0
+            gifExportProgress: 0,
+
+            // MP4 转换配置
+            showMP4Panel: false,
+            showChannelModeDropdown: false,
+            mp4Config: {
+              channelMode: 'color-left-alpha-right', // 'color-left-alpha-right' | 'alpha-left-color-right'
+              width: 0,
+              height: 0,
+              quality: 80, // 0-100
+              fps: 30, // 1-120
+              muted: false
+            },
+            isConvertingMP4: false,
+            mp4ConvertProgress: 0,
+            mp4ConvertStage: '', // 'loading' | 'extracting' | 'composing' | 'encoding' | 'done'
+            mp4ConvertMessage: '',
+            mp4ConvertCancelled: false,
+            ffmpeg: null,
+            ffmpegLoaded: false,
+            ffmpegLoading: false
           };
         },
         methods: {
@@ -3122,6 +3954,477 @@
             if (kb < 1024) return kb.toFixed(0) + 'kb';
             var mb = kb / 1024;
             return mb.toFixed(2) + 'M';
+          },
+
+          /* MP4 转换功能 */
+          openMP4Panel: function () {
+            if (!this.svgaPlayer || !this.svga.hasFile || !this.originalVideoItem) {
+              alert('请先加载 SVGA 文件');
+              return;
+            }
+
+            // 初始化配置
+            var videoItem = this.originalVideoItem;
+            this.mp4Config.width = videoItem.videoSize.width;
+            this.mp4Config.height = videoItem.videoSize.height;
+            
+            // 如果localStorage有记录的配置，读取
+            try {
+              var savedQuality = localStorage.getItem('mp4_quality');
+              var savedFps = localStorage.getItem('mp4_fps');
+              if (savedQuality !== null) {
+                this.mp4Config.quality = parseInt(savedQuality);
+              }
+              if (savedFps !== null) {
+                this.mp4Config.fps = parseInt(savedFps);
+              }
+            } catch (e) {}
+
+            this.showMP4Panel = true;
+          },
+
+          closeMP4Panel: function () {
+            if (this.isConvertingMP4) {
+              if (!confirm('正在转换中，确定要取消吗？')) {
+                return;
+              }
+              this.isConvertingMP4 = false;
+              this.mp4ConvertProgress = 0;
+            }
+            this.showMP4Panel = false;
+          },
+
+          toggleChannelModeDropdown: function () {
+            // 切换下拉菜单显示状态
+            this.showChannelModeDropdown = !this.showChannelModeDropdown;
+          },
+
+          selectChannelMode: function (mode) {
+            // 选择遮罩位置
+            this.mp4Config.channelMode = mode;
+            this.showChannelModeDropdown = false;
+          },
+
+          toggleChannelMode: function () {
+            // 切换遮罩位置（旧方法，保留以免其他地方引用）
+            if (this.mp4Config.channelMode === 'color-left-alpha-right') {
+              this.mp4Config.channelMode = 'alpha-left-color-right';
+            } else {
+              this.mp4Config.channelMode = 'color-left-alpha-right';
+            }
+          },
+
+          previewMP4Effect: function () {
+            // TODO: 实现预览效果功能
+            alert('预览效果功能待实现');
+          },
+
+          onMP4WidthChange: function () {
+            // 保持比例，修改高度
+            var videoItem = this.originalVideoItem;
+            if (!videoItem) return;
+            
+            var originalWidth = videoItem.videoSize.width;
+            var originalHeight = videoItem.videoSize.height;
+            var ratio = originalHeight / originalWidth;
+            
+            var newWidth = Math.max(0, Math.min(3000, parseInt(this.mp4Config.width) || 0));
+            var newHeight = Math.floor(newWidth * ratio);
+            
+            this.mp4Config.width = newWidth;
+            this.mp4Config.height = newHeight;
+          },
+
+          onMP4HeightChange: function () {
+            // 保持比例，修改宽度
+            var videoItem = this.originalVideoItem;
+            if (!videoItem) return;
+            
+            var originalWidth = videoItem.videoSize.width;
+            var originalHeight = videoItem.videoSize.height;
+            var ratio = originalWidth / originalHeight;
+            
+            var newHeight = Math.max(0, Math.min(3000, parseInt(this.mp4Config.height) || 0));
+            var newWidth = Math.floor(newHeight * ratio);
+            
+            this.mp4Config.width = newWidth;
+            this.mp4Config.height = newHeight;
+          },
+
+          startMP4Conversion: async function () {
+            var _this = this;
+
+            // 前置检查
+            if (!this.svgaPlayer || !this.svga.hasFile || !this.originalVideoItem) {
+              alert('请先加载 SVGA 文件');
+              return;
+            }
+
+            // 保存配置到localStorage
+            try {
+              localStorage.setItem('mp4_quality', this.mp4Config.quality);
+              localStorage.setItem('mp4_fps', this.mp4Config.fps);
+            } catch (e) {}
+
+            this.isConvertingMP4 = true;
+            this.mp4ConvertProgress = 0;
+            this.mp4ConvertCancelled = false;
+            this.mp4ConvertStage = 'loading';
+            this.mp4ConvertMessage = '正在加载转换器...';
+
+            try {
+              // 1. 加载 ffmpeg.wasm
+              await this.loadFFmpeg();
+              if (this.mp4ConvertCancelled) throw new Error('用户取消转换');
+
+              // 2. 提取序列帧
+              this.mp4ConvertStage = 'extracting';
+              this.mp4ConvertMessage = '正在提取序列帧...';
+              var frames = await this.extractFrames();
+              if (this.mp4ConvertCancelled) throw new Error('用户取消转换');
+
+              // 3. 合成双通道
+              this.mp4ConvertStage = 'composing';
+              this.mp4ConvertMessage = '正在合成双通道...';
+              var dualFrames = await this.composeDualChannelFrames(frames);
+              if (this.mp4ConvertCancelled) throw new Error('用户取消转换');
+
+              // 4. 编码为 MP4
+              this.mp4ConvertStage = 'encoding';
+              this.mp4ConvertMessage = '正在编码为MP4...';
+              var mp4Blob = await this.encodeToMP4(dualFrames);
+              if (this.mp4ConvertCancelled) throw new Error('用户取消转换');
+
+              // 5. 下载文件
+              this.mp4ConvertStage = 'done';
+              this.mp4ConvertMessage = '转换完成！';
+              this.mp4ConvertProgress = 100;
+              this.downloadMP4(mp4Blob);
+              
+            } catch (error) {
+              if (error.message !== '用户取消转换') {
+                console.error('MP4转换失败:', error);
+                alert('转换失败：' + error.message);
+              }
+            } finally {
+              this.isConvertingMP4 = false;
+              this.mp4ConvertProgress = 0;
+              this.mp4ConvertStage = '';
+              this.mp4ConvertMessage = '';
+            }
+          },
+
+          // 加载 ffmpeg.wasm (0.11版本)
+          loadFFmpeg: async function () {
+            if (this.ffmpegLoaded) return;
+            if (this.ffmpegLoading) {
+              // 等待加载完成
+              while (this.ffmpegLoading) {
+                await new Promise(function(r) { setTimeout(r, 100); });
+              }
+              return;
+            }
+
+            this.ffmpegLoading = true;
+
+            try {
+              // 检查 FFmpeg 是否可用 (0.11版本暴露的是FFmpeg全局对象)
+              if (typeof FFmpeg === 'undefined' || typeof FFmpeg.createFFmpeg === 'undefined') {
+                throw new Error('FFmpeg库未加载，请刷新页面重试');
+              }
+
+              // 创建ffmpeg实例
+              this.ffmpeg = FFmpeg.createFFmpeg({
+                log: true,
+                progress: function(p) {
+                  console.log('[FFmpeg Progress]', p);
+                }
+              });
+
+              // 加载 ffmpeg core
+              this.mp4ConvertMessage = '正在加载编码器(约25MB)...';
+              await this.ffmpeg.load();
+
+              this.ffmpegLoaded = true;
+              console.log('FFmpeg 加载成功');
+            } catch (error) {
+              console.error('FFmpeg 加载失败:', error);
+              throw new Error('加载转换器失败：' + error.message);
+            } finally {
+              this.ffmpegLoading = false;
+            }
+          },
+
+          // 提取序列帧
+          extractFrames: async function () {
+            var _this = this;
+            var videoItem = this.originalVideoItem;
+            if (!videoItem) {
+              throw new Error('请先加载SVGA文件');
+            }
+            var totalFrames = videoItem.frames;
+            var originalWidth = videoItem.videoSize.width;
+            var originalHeight = videoItem.videoSize.height;
+            
+            // 使用用户配置的尺寸
+            var targetWidth = this.mp4Config.width || originalWidth;
+            var targetHeight = this.mp4Config.height || originalHeight;
+
+            var frames = [];
+            
+            // 获取canvas元素（与GIF导出相同的方式）
+            var container = this.$refs.svgaContainer;
+            if (!container) {
+              throw new Error('无法获取画布元素');
+            }
+            var playerCanvas = container.querySelector('canvas');
+            if (!playerCanvas) {
+              throw new Error('无法获取Canvas元素');
+            }
+            
+            // 保存当前播放状态
+            var wasPlaying = this.isPlaying;
+            if (wasPlaying) {
+              this.svgaPlayer.pauseAnimation();
+            }
+
+            for (var i = 0; i < totalFrames; i++) {
+              if (this.mp4ConvertCancelled) break;
+
+              // 更新进度
+              this.mp4ConvertProgress = Math.round((i + 1) / totalFrames * 100);
+              this.mp4ConvertMessage = '提取序列帧 ' + (i + 1) + '/' + totalFrames;
+
+              // 跳转到指定帧
+              this.svgaPlayer.stepToFrame(i, true);
+
+              // 等待渲染完成
+              await new Promise(function(r) { setTimeout(r, 20); });
+
+              // 创建临时Canvas
+              var tempCanvas = document.createElement('canvas');
+              tempCanvas.width = targetWidth;
+              tempCanvas.height = targetHeight;
+              var tempCtx = tempCanvas.getContext('2d');
+
+              // 绘制当前帧（从原始尺寸缩放到目标尺寸）
+              tempCtx.drawImage(playerCanvas, 0, 0, originalWidth, originalHeight, 0, 0, targetWidth, targetHeight);
+
+              // 获取ImageData
+              var imageData = tempCtx.getImageData(0, 0, targetWidth, targetHeight);
+              frames.push(imageData);
+
+              // 让出线程，避免阻塞UI
+              if (i % 5 === 0) {
+                await new Promise(function(r) { setTimeout(r, 0); });
+              }
+            }
+
+            // 恢复播放状态
+            if (wasPlaying) {
+              this.svgaPlayer.startAnimation();
+            }
+
+            return frames;
+          },
+
+          // 合成双通道帧
+          composeDualChannelFrames: async function (frames) {
+            var _this = this;
+            var dualFrames = [];
+            var isColorLeftAlphaRight = this.mp4Config.channelMode === 'color-left-alpha-right';
+
+            for (var i = 0; i < frames.length; i++) {
+              if (this.mp4ConvertCancelled) break;
+
+              // 更新进度
+              this.mp4ConvertProgress = Math.round((i + 1) / frames.length * 100);
+              this.mp4ConvertMessage = '合成双通道 ' + (i + 1) + '/' + frames.length;
+
+              var imageData = frames[i];
+              var dualCanvas = this.composeDualChannel(imageData, isColorLeftAlphaRight);
+              dualFrames.push(dualCanvas);
+
+              // 让出线程
+              if (i % 10 === 0) {
+                await new Promise(function(r) { setTimeout(r, 0); });
+              }
+            }
+
+            return dualFrames;
+          },
+
+          // 合成单帧双通道
+          composeDualChannel: function (imageData, isColorLeftAlphaRight) {
+            var width = imageData.width;
+            var height = imageData.height;
+
+            // 创建双倍宽度的Canvas
+            var dualCanvas = document.createElement('canvas');
+            dualCanvas.width = width * 2;
+            dualCanvas.height = height;
+            var dualCtx = dualCanvas.getContext('2d');
+
+            // 创建左侧和右侧的ImageData
+            var leftData = dualCtx.createImageData(width, height);
+            var rightData = dualCtx.createImageData(width, height);
+
+            // 分离通道
+            for (var i = 0; i < imageData.data.length; i += 4) {
+              var r = imageData.data[i + 0];
+              var g = imageData.data[i + 1];
+              var b = imageData.data[i + 2];
+              var a = imageData.data[i + 3];
+
+              if (isColorLeftAlphaRight) {
+                // 左彩右灰：左侧RGB，右侧Alpha灰度图
+                leftData.data[i + 0] = r;
+                leftData.data[i + 1] = g;
+                leftData.data[i + 2] = b;
+                leftData.data[i + 3] = 255;
+
+                rightData.data[i + 0] = a;
+                rightData.data[i + 1] = a;
+                rightData.data[i + 2] = a;
+                rightData.data[i + 3] = 255;
+              } else {
+                // 左灰右彩：左侧Alpha灰度图，右侧RGB
+                leftData.data[i + 0] = a;
+                leftData.data[i + 1] = a;
+                leftData.data[i + 2] = a;
+                leftData.data[i + 3] = 255;
+
+                rightData.data[i + 0] = r;
+                rightData.data[i + 1] = g;
+                rightData.data[i + 2] = b;
+                rightData.data[i + 3] = 255;
+              }
+            }
+
+            // 绘制到双通道Canvas
+            dualCtx.putImageData(leftData, 0, 0);
+            dualCtx.putImageData(rightData, width, 0);
+
+            return dualCanvas;
+          },
+
+          // 编码为MP4 (0.11版本API)
+          encodeToMP4: async function (dualFrames) {
+            var _this = this;
+            var ffmpeg = this.ffmpeg;
+            var fps = this.mp4Config.fps || 30;
+            var quality = this.mp4Config.quality || 80;
+            var muted = this.mp4Config.muted;
+            var frameCount = dualFrames.length;
+
+            // CRF值：quality 100 对应 CRF 18（最高质量），quality 0 对应 CRF 51（最低质量）
+            var crf = Math.round(51 - (quality / 100) * 33);
+
+            try {
+              // 将帧写入ffmpeg虚拟文件系统
+              for (var i = 0; i < frameCount; i++) {
+                if (this.mp4ConvertCancelled) throw new Error('用户取消转换');
+
+                var frameCanvas = dualFrames[i];
+                
+                // 转换为PNG Blob
+                var blob = await new Promise(function(resolve) {
+                  frameCanvas.toBlob(resolve, 'image/png');
+                });
+
+                // 读取为ArrayBuffer
+                var buffer = await blob.arrayBuffer();
+                var uint8Array = new Uint8Array(buffer);
+
+                // 写入虚拟文件系统 (0.11版本API)
+                var filename = 'frame_' + String(i).padStart(4, '0') + '.png';
+                ffmpeg.FS('writeFile', filename, uint8Array);
+
+                // 更新进度 (写入阶段占50%)
+                this.mp4ConvertProgress = Math.round((i + 1) / frameCount * 50);
+                this.mp4ConvertMessage = '写入帧数据 ' + (i + 1) + '/' + frameCount;
+              }
+
+              // 执行编码
+              this.mp4ConvertMessage = '正在编码视频...';
+              this.mp4ConvertProgress = 50;
+
+              var ffmpegArgs = [
+                '-framerate', String(fps),
+                '-i', 'frame_%04d.png',
+                '-c:v', 'libx264',
+                '-pix_fmt', 'yuv420p',
+                '-crf', String(crf),
+                '-preset', 'fast'
+              ];
+
+              // 如果静音，不添加音频轨道
+              if (muted) {
+                ffmpegArgs.push('-an');
+              }
+
+              ffmpegArgs.push('output.mp4');
+
+              // 0.11版本使用run方法
+              await ffmpeg.run.apply(ffmpeg, ffmpegArgs);
+
+              this.mp4ConvertProgress = 90;
+              this.mp4ConvertMessage = '正在读取输出文件...';
+
+              // 读取输出文件 (0.11版本API)
+              var data = ffmpeg.FS('readFile', 'output.mp4');
+              var mp4Blob = new Blob([data.buffer], { type: 'video/mp4' });
+
+              // 清理虚拟文件系统
+              for (var j = 0; j < frameCount; j++) {
+                var fname = 'frame_' + String(j).padStart(4, '0') + '.png';
+                try {
+                  ffmpeg.FS('unlink', fname);
+                } catch (e) {}
+              }
+              try {
+                ffmpeg.FS('unlink', 'output.mp4');
+              } catch (e) {}
+
+              return mp4Blob;
+
+            } catch (error) {
+              // 清理可能残留的文件
+              for (var k = 0; k < frameCount; k++) {
+                try {
+                  ffmpeg.FS('unlink', 'frame_' + String(k).padStart(4, '0') + '.png');
+                } catch (e) {}
+              }
+              try {
+                ffmpeg.FS('unlink', 'output.mp4');
+              } catch (e) {}
+              throw error;
+            }
+          },
+
+          // 下载MP4文件
+          downloadMP4: function (blob) {
+            var filename = this.svga.fileInfo.name || 'svga';
+            // 移除扩展名
+            filename = filename.replace(/\.svga$/i, '');
+            // 添加后缀
+            var suffix = this.mp4Config.channelMode === 'color-left-alpha-right' ? '_yyeva_LR' : '_yyeva_RL';
+            filename = filename + suffix + '.mp4';
+
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+          },
+
+          // 取消MP4转换
+          cancelMP4Conversion: function () {
+            this.mp4ConvertCancelled = true;
+            this.mp4ConvertMessage = '正在取消...';
           }
         },
         computed: {
@@ -3235,6 +4538,16 @@
             this.isDarkMode = true;
             document.body.classList.add('dark-mode');
           }
+
+          // 点击外部关闭下拉菜单
+          document.addEventListener('click', function(e) {
+            if (_this.showChannelModeDropdown) {
+              var selectWrapper = document.querySelector('.mp4-select-wrapper');
+              if (selectWrapper && !selectWrapper.contains(e.target)) {
+                _this.showChannelModeDropdown = false;
+              }
+            }
+          });
           // 加载 help.md
           this.loadHelpContent();
           
