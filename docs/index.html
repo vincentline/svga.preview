@@ -298,13 +298,6 @@
                   <button class="btn-primary" @click="triggerReuploadSVGA" v-if="currentModule === 'svga' && svga.hasFile">
                     重传SVGA
                   </button>
-                  <button class="btn-primary" @click="openMaterialPanel" v-if="currentModule === 'svga' && svga.hasFile">
-                    素材图...
-                  </button>
-                  <button class="btn-primary tooltip" v-else>
-                    <span class="tooltip-text">请先拖入 SVGA 文件</span>
-                    素材图...
-                  </button>
                   <button 
                     class="btn-primary"
                     :class="{'tooltip': !svga.hasFile}"
@@ -313,6 +306,13 @@
                   >
                     <span v-if="!svga.hasFile" class="tooltip-text">请先拖入 SVGA 文件</span>
                     {{ isExportingGIF ? '导出中 ' + gifExportProgress + '%' : '导出GIF' }}
+                  </button>
+                  <button class="btn-primary" @click="openMaterialPanel" v-if="currentModule === 'svga' && svga.hasFile">
+                    素材图替换
+                  </button>
+                  <button class="btn-primary tooltip" v-else>
+                    <span class="tooltip-text">请先拖入 SVGA 文件</span>
+                    素材图替换
                   </button>
                   <button 
                     class="btn-secondary"

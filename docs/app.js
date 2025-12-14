@@ -230,6 +230,7 @@ new Vue({
             
             // 关闭侧边栏
             this.showMaterialPanel = false;
+            this.showMP4Panel = false;
           },
 
           /* SVGA 加载与播放 */
@@ -1203,6 +1204,12 @@ new Vue({
 
             // 关闭素材图弹窗（互斥显示）
             this.showMaterialPanel = false;
+            
+            // 切换侧边栏显示状态：如果已打开则关闭，否则打开
+            if (this.showMP4Panel) {
+              this.showMP4Panel = false;
+              return;
+            }
 
             // 初始化配置
             var videoItem = this.originalVideoItem;
@@ -1298,6 +1305,36 @@ new Vue({
             // 前置检查
             if (!this.svgaPlayer || !this.svga.hasFile || !this.originalVideoItem) {
               alert('请先加载 SVGA 文件');
+              return;
+            }
+
+            // 参数验证
+            var width = this.mp4Config.width;
+            var height = this.mp4Config.height;
+            var quality = this.mp4Config.quality;
+            var fps = this.mp4Config.fps;
+
+            // 验证宽度
+            if (width < 1 || width > 9999) {
+              alert('宽度超出范围！\n\n合法范围：1-9999 像素\n当前值：' + width);
+              return;
+            }
+
+            // 验证高度
+            if (height < 1 || height > 9999) {
+              alert('高度超出范围！\n\n合法范围：1-9999 像素\n当前值：' + height);
+              return;
+            }
+
+            // 验证压缩质量
+            if (quality < 1 || quality > 100) {
+              alert('压缩质量超出范围！\n\n合法范围：1-100\n当前值：' + quality);
+              return;
+            }
+
+            // 验证帧率
+            if (fps < 1 || fps > 120) {
+              alert('帧率超出范围！\n\n合法范围：1-120 fps\n当前值：' + fps);
               return;
             }
 
