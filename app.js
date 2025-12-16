@@ -3087,16 +3087,17 @@ function loadScript(url) {
   loadingDiv.textContent = '正在加载...';
   document.body.appendChild(loadingDiv);
   
-  // 加载Vue
-  loadScript('https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.min.js')
+  // 并行加载Vue和SVGA播放器（不互相等待）
+  var vuePromise = loadScript('https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.min.js')
     .catch(function() {
       // 备用CDN
       return loadScript('https://unpkg.com/vue@2.6.14/dist/vue.min.js');
-    })
-    .then(function() {
-      // 加载SVGA播放器
-      return loadScript('https://cdn.jsdelivr.net/npm/svgaplayerweb@2.3.1/build/svga.min.js');
-    })
+    });
+  
+  var svgaPromise = loadScript('https://cdn.jsdelivr.net/npm/svgaplayerweb@2.3.1/build/svga.min.js');
+  
+  // 等待两个库都加载完成
+  Promise.all([vuePromise, svgaPromise])
     .then(function() {
       // 移除加载提示
       document.body.removeChild(loadingDiv);
