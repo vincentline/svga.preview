@@ -22,12 +22,12 @@ if (typeof window === 'undefined') {
     event.respondWith(
       fetch(request)
         .then(response => {
-          // 只为主文档添加COOP/COEP头部
+          // 只为主文档（HTML页面）添加COOP/COEP头部，其他资源不处理
           if (request.mode === 'navigate' || request.destination === 'document') {
             const newHeaders = new Headers(response.headers);
             newHeaders.set('Cross-Origin-Opener-Policy', 'same-origin');
-            newHeaders.set('Cross-Origin-Embedder-Policy', 'require-corp');
-            newHeaders.set('Cross-Origin-Resource-Policy', 'cross-origin');
+            // 使用credentialless模式，允许跨域资源加载
+            newHeaders.set('Cross-Origin-Embedder-Policy', 'credentialless');
 
             return new Response(response.body, {
               status: response.status,
@@ -36,6 +36,7 @@ if (typeof window === 'undefined') {
             });
           }
           
+          // 其他资源直接返回，不修改头部
           return response;
         })
         .catch(err => {
