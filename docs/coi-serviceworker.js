@@ -165,7 +165,7 @@ if (typeof window === 'undefined') {
         return;
       }
 
-      navigator.serviceWorker.register(window.document.currentScript.src).then(
+      navigator.serviceWorker.register(coisrc).then(
         (registration) => {
           if (!coi.quiet) console.log('[COI] Service worker registered', registration.scope);
           sessionStorage.setItem('coiReloadedBySelf', 'registered');
