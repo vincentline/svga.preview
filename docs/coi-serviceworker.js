@@ -4,9 +4,9 @@ let coi = {
   shouldDeregister: () => false,
   coepCredentialless: () => true,
   coepDegrade: () => true,
-  doReload: () => window.location.reload(),
+  doReload: () => (typeof window !== 'undefined' ? window.location.reload() : null),
   quiet: false,
-  ...window.coi
+  ...(typeof window !== 'undefined' ? window.coi : {})
 };
 
 if (typeof window === 'undefined') {
