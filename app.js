@@ -45,16 +45,31 @@ new Vue({
               }
             },
 
-            // YYEVA 状态（阶段1占位）
+            // YYEVA 状态
             yyeva: {
               hasFile: false,
               file: null,
               fileInfo: {
                 name: '',
                 size: 0,
-                sizeText: ''
-              }
+                sizeText: '',
+                fps: null,
+                sizeWH: '',
+                duration: ''
+              },
+              alphaPosition: 'right', // 'left' | 'right' - alpha通道在左边还是右边
+              originalWidth: 0,  // 视频原始宽度
+              originalHeight: 0, // 视频原始高度
+              displayWidth: 0,   // 显示宽度（原始宽度/2）
+              displayHeight: 0   // 显示高度
             },
+            
+            // YYEVA 播放器实例
+            yyevaVideo: null,
+            yyevaCanvas: null,
+            yyevaCtx: null,
+            yyevaAnimationId: null,
+            yyevaObjectUrl: null,
 
             // Lottie 状态（阶段1占位）
             lottie: {
@@ -254,6 +269,31 @@ new Vue({
             // 清空输入，允许重复选择同一文件
             event.target.value = '';
           },
+          
+          // 触发更换预览文件（支持SVGA和MP4）
+          triggerChangePreviewFile: function () {
+            if (this.$refs.changePreviewFileInput) {
+              this.$refs.changePreviewFileInput.click();
+            }
+          },
+          
+          // 处理更换预览文件
+          handleChangePreviewFile: function (event) {
+            var file = event.target.files[0];
+            if (!file) return;
+            
+            var name = file.name.toLowerCase();
+            if (name.endsWith('.svga')) {
+              this.loadSvga(file);
+            } else if (name.endsWith('.mp4')) {
+              this.loadYyevaPlaceholder(file);
+            } else {
+              alert('不支持的文件格式，请选择 .svga 或 .mp4 文件');
+            }
+            
+            // 清空输入，允许重复选择同一文件
+            event.target.value = '';
+          },
 
           /* 清空画布 */
           clearAll: function () {
@@ -262,10 +302,20 @@ new Vue({
                 this.svgaPlayer.stopAnimation();
                 this.svgaPlayer.clear();
               } catch (e) {}
+              this.svgaPlayer = null;
             }
             if (this.svgaObjectUrl) {
               URL.revokeObjectURL(this.svgaObjectUrl);
               this.svgaObjectUrl = null;
+            }
+            
+            // 清理 YYEVA 资源
+            this.cleanupYyeva();
+            
+            // 清空画布容器，恢复到空状态
+            var container = this.$refs.svgaContainer;
+            if (container) {
+              container.innerHTML = '';
             }
 
             this.svga = {
@@ -279,15 +329,6 @@ new Vue({
                 sizeWH: '',
                 duration: '',
                 memoryText: ''
-              }
-            };
-            this.yyeva = {
-              hasFile: false,
-              file: null,
-              fileInfo: {
-                name: '',
-                size: 0,
-                sizeText: ''
               }
             };
             this.lottie = {
@@ -309,6 +350,15 @@ new Vue({
             // 关闭侧边栏
             this.showMaterialPanel = false;
             this.showMP4Panel = false;
+            
+            // 重置模块状态
+            this.currentModule = 'svga';
+            
+            // 重新初始化空状态的随机SVGA动画
+            var _this = this;
+            this.$nextTick(function() {
+              _this.initEmptyStateSvgaPlayer();
+            });
           },
 
           /* SVGA 加载与播放 */
@@ -604,6 +654,26 @@ new Vue({
           },
 
           togglePlay: function () {
+            // YYEVA 模式
+            if (this.currentModule === 'yyeva' && this.yyeva.hasFile && this.yyevaVideo) {
+              if (this.isPlaying) {
+                this.yyevaVideo.pause();
+                if (this.yyevaAnimationId) {
+                  cancelAnimationFrame(this.yyevaAnimationId);
+                  this.yyevaAnimationId = null;
+                }
+                this.isPlaying = false;
+              } else {
+                var _this = this;
+                this.yyevaVideo.play().then(function() {
+                  _this.isPlaying = true;
+                  _this.startYyevaRenderLoop();
+                });
+              }
+              return;
+            }
+            
+            // SVGA 模式
             if (!this.svgaPlayer || !this.svga.hasFile) return;
             if (this.isPlaying) {
               try {
@@ -620,12 +690,22 @@ new Vue({
           },
 
           onProgressBarClick: function (event) {
-            if (!this.svgaPlayer || !this.svga.hasFile) return;
             var rect = event.currentTarget.getBoundingClientRect();
             var x = event.clientX - rect.left;
             var p = x / rect.width;
             p = Math.max(0, Math.min(1, p));
             this.progress = Math.round(p * 100);
+            
+            // YYEVA 模式
+            if (this.currentModule === 'yyeva' && this.yyeva.hasFile && this.yyevaVideo) {
+              var duration = this.yyevaVideo.duration || 1;
+              this.yyevaVideo.currentTime = p * duration;
+              this.currentFrame = Math.round(p * this.totalFrames);
+              return;
+            }
+            
+            // SVGA 模式
+            if (!this.svgaPlayer || !this.svga.hasFile) return;
             
             // 计算并立即更新当前帧数
             if (this.totalFrames > 0) {
@@ -655,10 +735,15 @@ new Vue({
           },
 
           loadYyevaPlaceholder: function (file) {
+            var _this = this;
+            
+            // 释放之前的资源
+            this.cleanupYyeva();
+            
             // 重置视图状态
             this.viewerScale = 1;
             this.viewerOffsetX = 0;
-            this.centerViewer();
+            this.viewerOffsetY = 0;
 
             this.yyeva.hasFile = true;
             this.yyeva.file = file;
@@ -666,7 +751,240 @@ new Vue({
             this.yyeva.fileInfo.size = file.size;
             this.yyeva.fileInfo.sizeText = this.formatBytes(file.size);
             this.currentModule = 'yyeva';
-            alert('YYEVA MP4 模块将在后续阶段实现播放逻辑');
+            
+            // 创建objectUrl
+            this.yyevaObjectUrl = URL.createObjectURL(file);
+            
+            // 创建视频元素
+            var video = document.createElement('video');
+            video.src = this.yyevaObjectUrl;
+            video.crossOrigin = 'anonymous';
+            video.muted = true;
+            video.loop = true;
+            video.playsInline = true;
+            this.yyevaVideo = video;
+            
+            // 加载视频元数据
+            video.onloadedmetadata = function() {
+              var videoWidth = video.videoWidth;
+              var videoHeight = video.videoHeight;
+              
+              _this.yyeva.originalWidth = videoWidth;
+              _this.yyeva.originalHeight = videoHeight;
+              
+              // 自动识别 alpha 位置：左右并排的视频宽度是高度的约两倍
+              if (videoWidth > videoHeight * 1.5) {
+                // 左右并排布局
+                _this.yyeva.displayWidth = Math.floor(videoWidth / 2);
+                _this.yyeva.displayHeight = videoHeight;
+                // 检测 alpha 在左还是在右（通过分析第一帧）
+                _this.detectAlphaPosition(video);
+              } else {
+                // 上下并排或普通视频（暂不支持）
+                alert('不支持的视频格式，请上传左右并排布局的YYEVA-MP4文件');
+                _this.cleanupYyeva();
+                return;
+              }
+              
+              // 设置显示信息
+              _this.yyeva.fileInfo.sizeWH = _this.yyeva.displayWidth + 'x' + _this.yyeva.displayHeight;
+              
+              // 计算帧率和时长
+              var duration = video.duration;
+              _this.yyeva.fileInfo.duration = duration.toFixed(2) + 's';
+              // 假设30fps（MP4没有直接获取帧率的方法）
+              _this.yyeva.fileInfo.fps = '30 FPS';
+              _this.totalFrames = Math.round(duration * 30);
+              
+              // 初始化Canvas
+              _this.initYyevaCanvas();
+              
+              // 开始播放
+              video.play().then(function() {
+                _this.isPlaying = true;
+                _this.startYyevaRenderLoop();
+              }).catch(function(err) {
+                console.error('YYEVA播放失败:', err);
+              });
+            };
+            
+            video.onerror = function() {
+              alert('视频加载失败，请检查文件格式');
+              _this.cleanupYyeva();
+            };
+            
+            video.load();
+          },
+          
+          // 检测 alpha 通道位置
+          detectAlphaPosition: function(video) {
+            var canvas = document.createElement('canvas');
+            var ctx = canvas.getContext('2d');
+            var halfWidth = Math.floor(video.videoWidth / 2);
+            var height = video.videoHeight;
+            
+            canvas.width = video.videoWidth;
+            canvas.height = height;
+            ctx.drawImage(video, 0, 0);
+            
+            // 取左侧中心区域的像素
+            var leftData = ctx.getImageData(halfWidth / 4, height / 4, 10, 10);
+            // 取右侧中心区域的像素
+            var rightData = ctx.getImageData(halfWidth + halfWidth / 4, height / 4, 10, 10);
+            
+            // 计算色彩方差（灰度图的RGB将非常接近）
+            var leftVariance = this.calculateColorVariance(leftData.data);
+            var rightVariance = this.calculateColorVariance(rightData.data);
+            
+            // 方差小的一侧更可能是灰度图（Alpha通道）
+            if (leftVariance < rightVariance) {
+              this.yyeva.alphaPosition = 'left';
+            } else {
+              this.yyeva.alphaPosition = 'right';
+            }
+          },
+          
+          // 计算色彩方差
+          calculateColorVariance: function(data) {
+            var variance = 0;
+            for (var i = 0; i < data.length; i += 4) {
+              var r = data[i];
+              var g = data[i + 1];
+              var b = data[i + 2];
+              // 计算RGB差异
+              var diff = Math.abs(r - g) + Math.abs(g - b) + Math.abs(r - b);
+              variance += diff;
+            }
+            return variance;
+          },
+          
+          // 初始化 YYEVA Canvas
+          initYyevaCanvas: function() {
+            var container = this.$refs.svgaContainer;
+            if (!container) return;
+            
+            // 清空容器
+            container.innerHTML = '';
+            
+            // 创建Canvas
+            var canvas = document.createElement('canvas');
+            canvas.width = this.yyeva.displayWidth;
+            canvas.height = this.yyeva.displayHeight;
+            canvas.style.width = this.yyeva.displayWidth + 'px';
+            canvas.style.height = this.yyeva.displayHeight + 'px';
+            container.appendChild(canvas);
+            
+            this.yyevaCanvas = canvas;
+            this.yyevaCtx = canvas.getContext('2d');
+          },
+          
+          // YYEVA 渲染循环
+          startYyevaRenderLoop: function() {
+            var _this = this;
+            
+            function render() {
+              if (!_this.yyevaVideo || !_this.yyevaCanvas || !_this.yyevaCtx) {
+                return;
+              }
+              
+              _this.renderYyevaFrame();
+              _this.updateYyevaProgress();
+              
+              _this.yyevaAnimationId = requestAnimationFrame(render);
+            }
+            
+            render();
+          },
+          
+          // 渲染 YYEVA 帧
+          renderYyevaFrame: function() {
+            var video = this.yyevaVideo;
+            var canvas = this.yyevaCanvas;
+            var ctx = this.yyevaCtx;
+            
+            if (!video || !canvas || !ctx) return;
+            
+            var halfWidth = Math.floor(video.videoWidth / 2);
+            var height = video.videoHeight;
+            
+            // 确定彩色和Alpha的位置
+            var colorX = this.yyeva.alphaPosition === 'right' ? 0 : halfWidth;
+            var alphaX = this.yyeva.alphaPosition === 'right' ? halfWidth : 0;
+            
+            // 创建临时Canvas用于提取数据
+            var tempCanvas = document.createElement('canvas');
+            tempCanvas.width = video.videoWidth;
+            tempCanvas.height = height;
+            var tempCtx = tempCanvas.getContext('2d');
+            tempCtx.drawImage(video, 0, 0);
+            
+            // 提取彩色和Alpha数据
+            var colorData = tempCtx.getImageData(colorX, 0, halfWidth, height);
+            var alphaData = tempCtx.getImageData(alphaX, 0, halfWidth, height);
+            
+            // 合成透明通道
+            for (var i = 0; i < colorData.data.length; i += 4) {
+              // 使用Alpha通道的R值作为透明度
+              colorData.data[i + 3] = alphaData.data[i];
+            }
+            
+            // 绘制到显示Canvas
+            ctx.putImageData(colorData, 0, 0);
+          },
+          
+          // 更新 YYEVA 进度
+          updateYyevaProgress: function() {
+            if (!this.yyevaVideo) return;
+            
+            var video = this.yyevaVideo;
+            var currentTime = video.currentTime;
+            var duration = video.duration || 1;
+            
+            this.progress = (currentTime / duration) * 100;
+            this.currentFrame = Math.round(currentTime * 30); // 假设30fps
+          },
+          
+          // 清理 YYEVA 资源
+          cleanupYyeva: function() {
+            if (this.yyevaAnimationId) {
+              cancelAnimationFrame(this.yyevaAnimationId);
+              this.yyevaAnimationId = null;
+            }
+            
+            if (this.yyevaVideo) {
+              // 先移除事件监听，避免设置src=''时触发onerror
+              this.yyevaVideo.onerror = null;
+              this.yyevaVideo.onloadedmetadata = null;
+              this.yyevaVideo.pause();
+              this.yyevaVideo.src = '';
+              this.yyevaVideo = null;
+            }
+            
+            if (this.yyevaObjectUrl) {
+              URL.revokeObjectURL(this.yyevaObjectUrl);
+              this.yyevaObjectUrl = null;
+            }
+            
+            this.yyevaCanvas = null;
+            this.yyevaCtx = null;
+            
+            this.yyeva = {
+              hasFile: false,
+              file: null,
+              fileInfo: {
+                name: '',
+                size: 0,
+                sizeText: '',
+                fps: null,
+                sizeWH: '',
+                duration: ''
+              },
+              alphaPosition: 'right',
+              originalWidth: 0,
+              originalHeight: 0,
+              displayWidth: 0,
+              displayHeight: 0
+            };
           },
 
           /* 主题切换 */
@@ -1463,6 +1781,196 @@ new Vue({
 
             // 开始捕获
             console.log('开始捕获帧，总帧数:', totalFrames);
+            captureFrame();
+          },
+
+          // YYEVA GIF 导出
+          exportYyevaGIF: async function() {
+            var _this = this;
+            
+            if (!this.yyevaVideo || !this.yyeva.hasFile || !this.yyevaCanvas) {
+              alert('请先加载 YYEVA-MP4 文件');
+              return;
+            }
+            
+            // 添加确认弹窗
+            if (!confirm('确认要导出GIF吗？')) {
+              return;
+            }
+
+            // 动态加载 GIF.js
+            try {
+              await this.loadGifJs();
+            } catch (err) {
+              alert('GIF导出库加载失败，请检查网络');
+              return;
+            }
+
+            this.isExportingGIF = true;
+            this.gifExportProgress = 0;
+
+            var canvas = this.yyevaCanvas;
+            var video = this.yyevaVideo;
+            
+            // 获取视频信息
+            var duration = video.duration;
+            var fps = 30; // 假设30fps
+            var totalFrames = Math.round(duration * fps);
+            var frameDelay = Math.round(1000 / fps);
+
+            // 创建 GIF 编码器
+            var gif = new GIF({
+              workers: 2,
+              quality: 10,
+              width: canvas.width,
+              height: canvas.height,
+              workerScript: 'gif.worker.js'
+            });
+
+            // 监听进度
+            gif.on('progress', function(p) {
+              _this.gifExportProgress = 50 + Math.floor(p * 50);
+            });
+
+            // 完成时触发
+            gif.on('finished', function(blob) {
+              _this.isExportingGIF = false;
+              _this.gifExportProgress = 0;
+
+              // 下载 GIF
+              var url = URL.createObjectURL(blob);
+              var a = document.createElement('a');
+              a.href = url;
+              a.download = (_this.yyeva.fileInfo.name.replace(/\.mp4$/i, '') || 'yyeva') + '.gif';
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              
+              setTimeout(function() {
+                URL.revokeObjectURL(url);
+              }, 100);
+
+              alert('GIF 导出成功！大小: ' + (_this.formatBytes(blob.size)));
+            });
+
+            // 错误处理
+            gif.on('abort', function() {
+              _this.isExportingGIF = false;
+              _this.gifExportProgress = 0;
+              alert('GIF 导出已取消');
+            });
+
+            // 暂停当前播放和渲染循环
+            var wasPlaying = this.isPlaying;
+            if (this.yyevaAnimationId) {
+              cancelAnimationFrame(this.yyevaAnimationId);
+              this.yyevaAnimationId = null;
+            }
+            video.pause();
+            this.isPlaying = false;
+
+            // 逐帧捕获
+            var currentFrameIndex = 0;
+            var frameTime = 1 / fps;
+            
+            var captureFrame = function() {
+              if (currentFrameIndex >= totalFrames) {
+                // 所有帧都添加完毕，开始渲染 GIF
+                console.log('开始编码 YYEVA GIF...');
+                _this.gifExportProgress = 50;
+                
+                setTimeout(function() {
+                  try {
+                    gif.render();
+                  } catch (err) {
+                    console.error('GIF 编码失败:', err);
+                    _this.isExportingGIF = false;
+                    _this.gifExportProgress = 0;
+                    alert('GIF 编码失败: ' + err.message);
+                    
+                    // 恢复播放状态
+                    if (wasPlaying) {
+                      video.play();
+                      _this.isPlaying = true;
+                      _this.startYyevaRenderLoop();
+                    }
+                  }
+                }, 100);
+                
+                return;
+              }
+
+              // 跳转到指定时间
+              video.currentTime = currentFrameIndex * frameTime;
+            };
+            
+            // 监听seeked事件来捕获帧
+            var onSeeked = function() {
+              try {
+                // 渲染当前帧
+                _this.renderYyevaFrame();
+                
+                // 创建临时 canvas 用于合成背景色
+                var tempCanvas = document.createElement('canvas');
+                tempCanvas.width = canvas.width;
+                tempCanvas.height = canvas.height;
+                var tempCtx = tempCanvas.getContext('2d', { alpha: true });
+                
+                tempCtx.imageSmoothingEnabled = true;
+                tempCtx.imageSmoothingQuality = 'high';
+                
+                // 填充背景色
+                var bgColor = '#ffffff';
+                if (_this.bgColorKey && _this.bgColorKey !== 'pattern') {
+                  var computedBgColor = _this.currentBgColor;
+                  if (computedBgColor !== 'transparent' && computedBgColor !== '#000000') {
+                    bgColor = computedBgColor;
+                  }
+                }
+                tempCtx.fillStyle = bgColor;
+                tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+                
+                // 将 YYEVA 画布绘制到临时 canvas 上
+                tempCtx.drawImage(canvas, 0, 0);
+                
+                // 添加到 GIF
+                gif.addFrame(tempCanvas, {copy: true, delay: frameDelay});
+                currentFrameIndex++;
+                
+                // 更新进度
+                _this.gifExportProgress = Math.floor((currentFrameIndex / totalFrames) * 50);
+                
+                // 继续下一帧
+                captureFrame();
+              } catch (err) {
+                console.error('捕获帧失败:', err);
+                _this.isExportingGIF = false;
+                _this.gifExportProgress = 0;
+                video.removeEventListener('seeked', onSeeked);
+                alert('捕获帧失败: ' + err.message);
+                
+                if (wasPlaying) {
+                  video.play();
+                  _this.isPlaying = true;
+                  _this.startYyevaRenderLoop();
+                }
+              }
+            };
+            
+            video.addEventListener('seeked', onSeeked);
+            
+            // GIF完成或失败后移除事件监听
+            gif.on('finished', function() {
+              video.removeEventListener('seeked', onSeeked);
+              if (wasPlaying) {
+                video.play();
+                _this.isPlaying = true;
+                _this.startYyevaRenderLoop();
+              }
+            });
+            
+            // 开始捕获
+            console.log('开始捕获 YYEVA 帧，总帧数:', totalFrames);
             captureFrame();
           },
 

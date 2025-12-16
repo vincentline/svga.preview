@@ -400,6 +400,122 @@ body.dark-mode .help-popup {
   flex-shrink: 0;
 }
 
+/* 底部主控制区容器 */
+.footer-main-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+/* 右上角清空按钮区域 */
+.footer-top-actions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  
+  position: absolute;
+  bottom: 132px;
+}
+
+/* 文件名容器 */
+.file-name-box {
+  display: flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 12px;
+  background: #ffffff;
+  border: 1px solid #F3F3F3;
+  border-radius: 8px;
+}
+
+body.dark-mode .file-name-box {
+  background: #2a2a2a;
+  border-color: #404040;
+}
+
+/* 文件名标签 */
+.file-name-label {
+  font-family: 'Segoe UI', sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 28px;
+  color: #333333;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body.dark-mode .file-name-label {
+  color: #e0e0e0;
+}
+
+/* 清空画布按钮（右上角） */
+.clear-canvas-btn {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  padding: 0px 4px;
+  gap: 10px;
+  width: 32px;
+  height: 28px;
+  background: #E6E6E6;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  outline: none;
+  transition: background-color 0.15s;
+  position: relative;
+}
+
+.clear-canvas-btn svg {
+  width: 24px;
+  height: 24px;
+}
+
+.clear-canvas-btn svg path {
+  stroke: #333333;
+  transition: stroke 0.15s;
+}
+
+.clear-canvas-btn:hover {
+  background: #FF8888;
+}
+
+.clear-canvas-btn:active {
+  background: #FF5252;
+}
+
+/* 暗黑模式 */
+body.dark-mode .clear-canvas-btn {
+  background: #404040;
+}
+
+body.dark-mode .clear-canvas-btn svg path {
+  stroke: #e0e0e0;
+}
+
+body.dark-mode .clear-canvas-btn:hover {
+  background: #FF8888;
+}
+
+body.dark-mode .clear-canvas-btn:hover svg path {
+  stroke: #333333;
+}
+
+body.dark-mode .clear-canvas-btn:active {
+  background: #FF5252;
+}
+
+body.dark-mode .clear-canvas-btn:active svg path {
+  stroke: #333333;
+}
+
 /* 底部主控制区 */
 .footer-main {
   flex: 0 1 auto;
@@ -439,6 +555,13 @@ body.dark-mode .footer-main {
 }
 
 .footer-actions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+.footer-actions-left {
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -631,7 +754,7 @@ body.dark-mode .info-item-value {
 
 .color-btn.is-active {
   border-color: #333333;
-  border-width: 2px;
+  border-width: 3px;
 }
 
 /* 播放/暂停按钮 */
