@@ -1,12 +1,12 @@
 /*! coi-serviceworker v0.1.7 - Guido Zuidhof and contributors, licensed under MIT */
 let coi = {
-  shouldRegister: () => !window.crossOriginIsolated,
+  shouldRegister: () => true,
   shouldDeregister: () => false,
   coepCredentialless: () => true,
   coepDegrade: () => true,
-  doReload: () => (typeof window !== 'undefined' ? window.location.reload() : null),
+  doReload: () => window.location.reload(),
   quiet: false,
-  ...(typeof window !== 'undefined' ? window.coi : {})
+  ...window.coi
 };
 
 if (typeof window === 'undefined') {
@@ -168,21 +168,11 @@ if (typeof window === 'undefined') {
       navigator.serviceWorker.register(coisrc).then(
         (registration) => {
           if (!coi.quiet) console.log('[COI] Service worker registered', registration.scope);
-
-          if (reloadedBySelf) {
+          
+          // 只在首次注册时刷新一次，避免无限循环
+          if (!reloadedBySelf) {
+            sessionStorage.setItem('coiReloadedBySelf', 'registered');
             coi.doReload();
-          } else {
-            registration.addEventListener("updatefound", () => {
-              if (!coi.quiet) console.log('[COI] Service worker update found, reloading...');
-              sessionStorage.setItem('coiReloadedBySelf', 'registered');
-              coi.doReload();
-            });
-            // 如果已经在注册中但未激活，可能需要reload
-            if (registration.active && !navigator.serviceWorker.controller) {
-               if (!coi.quiet) console.log('[COI] Service worker active but not controlling, reloading...');
-               sessionStorage.setItem('coiReloadedBySelf', 'registered');
-               coi.doReload();
-            }
           }
         },
         (err) => {
