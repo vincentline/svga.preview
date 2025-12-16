@@ -561,20 +561,13 @@ body.dark-mode .clear-canvas-btn:active svg path {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  transition: background-color 0.3s, border-color 0.3s, box-shadow 0.3s, min-width 0.3s, max-width 0.3s, width 0.3s;
+  transition: background-color 0.3s, border-color 0.3s, box-shadow 0.3s;
 }
 
 body.dark-mode .footer-main {
   background-color: #2a2a2a;
   border-color: #404040;
   box-shadow: 0px 10px 32px 0px rgba(0, 0, 0, 0.5);
-}
-
-/* 空状态下的底部浮层宽度 */
-.footer-main.footer-main-empty {
-  min-width: 600px;
-  width: 600px;
-  max-width: 600px;
 }
 
 /* 第一行：模块切换 + 清空按钮 */
@@ -593,13 +586,6 @@ body.dark-mode .footer-main {
 }
 
 .footer-actions {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 10px;
-}
-
-.footer-actions-left {
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -2513,4 +2499,85 @@ body.dark-mode .mp4-btn-convert:active:not(:disabled) {
 
 body.dark-mode .mp4-btn-convert:disabled {
   background: rgba(224, 224, 224, 0.3);
+}
+
+/* ===== 库加载进度条 ===== */
+.library-loading-indicator {
+  position: fixed;
+  top: 60px; /* 在header-navbar下方 */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 400px;
+  max-width: 90%;
+  background: #ffffff;
+  border: 1px solid #e3e3e3;
+  border-radius: 8px;
+  padding: 12px 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  z-index: 999;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.library-loading-indicator .loading-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.library-loading-indicator .loading-text {
+  font-size: 13px;
+  color: #818181; /* 辅助颜色 */
+  font-weight: 400;
+}
+
+.library-loading-indicator .loading-percentage {
+  font-size: 12px;
+  color: #999999;
+  font-weight: 500;
+}
+
+.library-loading-indicator .loading-bar {
+  width: 100%;
+  height: 4px;
+  background: #f3f3f3;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.library-loading-indicator .loading-progress {
+  height: 100%;
+  background: #409eff; /* 主色调 */
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+/* 暗黑模式 */
+body.dark-mode .library-loading-indicator {
+  background: #2a2a2a;
+  border-color: #404040;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+body.dark-mode .library-loading-indicator .loading-text {
+  color: #a0a0a0;
+}
+
+body.dark-mode .library-loading-indicator .loading-percentage {
+  color: #808080;
+}
+
+body.dark-mode .library-loading-indicator .loading-bar {
+  background: #404040;
 }
