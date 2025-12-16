@@ -7,6 +7,10 @@ function initApp() {
             currentModule: 'svga', // 'svga' | 'yyeva' | 'lottie'
             dropHover: false,
 
+            // 底部浮层过渡状态
+            footerTransitioning: false, // 正在过渡中
+            footerContentVisible: false, // 内容是否可见
+
             // 视图操作（缩放 + 平移）
             viewerScale: 1,
             viewerOffsetX: 0,
@@ -516,6 +520,12 @@ function initApp() {
 
           /* 清空画布 */
           clearAll: function () {
+            var _this = this;
+            
+            // 先隐藏内容
+            this.footerContentVisible = false;
+            this.footerTransitioning = true;
+            
             if (this.svgaPlayer) {
               try {
                 this.svgaPlayer.stopAnimation();
@@ -573,11 +583,13 @@ function initApp() {
             // 重置模块状态
             this.currentModule = 'svga';
             
-            // 重新初始化空状态的随机SVGA动画
-            var _this = this;
-            this.$nextTick(function() {
-              _this.initEmptyStateSvgaPlayer();
-            });
+            // 等待400ms过渡动画完成后，重新初始化空状态的随机SVGA动画
+            setTimeout(function() {
+              _this.footerTransitioning = false;
+              _this.$nextTick(function() {
+                _this.initEmptyStateSvgaPlayer();
+              });
+            }, 400);
           },
 
           /* SVGA 加载与播放 */
@@ -879,19 +891,27 @@ function initApp() {
               _this.isPlaying = false;
             });
 
-            // 延迟300ms再播放，等待底部浮层宽度过渡动画完成
-            var _this2 = this;
+            // 启动过渡：先显示宽度变化，400ms后显示内容并开始播放
+            this.footerTransitioning = true;
+            this.footerContentVisible = false;
+            
             setTimeout(function() {
-              _this2.svgaPlayer.startAnimation();
-              _this2.isPlaying = true;
-            }, 300);
+              // 过渡完成，显示内容
+              _this.footerTransitioning = false;
+              _this.footerContentVisible = true;
+              
+              // 再等待50ms让内容渲染，然后开始播放
+              setTimeout(function() {
+                _this.svgaPlayer.startAnimation();
+                _this.isPlaying = true;
+              }, 50);
+            }, 400);
 
             this.applyCanvasBackground();
             
             // 动态计算居中位置
-            var _this2 = this;
-            this.$nextTick(function() {
-              _this2.centerViewer();
+            _this.$nextTick(function() {
+              _this.centerViewer();
             });
           },
 
@@ -962,6 +982,7 @@ function initApp() {
           /* Lottie / YYEVA 阶段1占位逻辑 */
 
           loadLottiePlaceholder: function (file) {
+            var _this = this;
             // 清理YYEVA资源（如果正在播放MP4）
             this.cleanupYyeva();
             
@@ -976,7 +997,16 @@ function initApp() {
             this.lottie.fileInfo.size = file.size;
             this.lottie.fileInfo.sizeText = this.formatBytes(file.size);
             this.currentModule = 'lottie';
-            alert('Lottie 模块将在后续阶段实现播放逻辑');
+            
+            // 启动过渡
+            this.footerTransitioning = true;
+            this.footerContentVisible = false;
+            
+            setTimeout(function() {
+              _this.footerTransitioning = false;
+              _this.footerContentVisible = true;
+              alert('Lottie 模块将在后续阶段实现播放逻辑');
+            }, 400);
           },
 
           loadYyevaPlaceholder: function (file) {
@@ -1045,15 +1075,25 @@ function initApp() {
               // 初始化Canvas
               _this.initYyevaCanvas();
               
-              // 延迟300ms再播放，等待底部浮层宽度过渡动画完成
+              // 启动过渡：先显示宽度变化，400ms后显示内容并开始播放
+              _this.footerTransitioning = true;
+              _this.footerContentVisible = false;
+              
               setTimeout(function() {
-                video.play().then(function() {
-                  _this.isPlaying = true;
-                  _this.startYyevaRenderLoop();
-                }).catch(function(err) {
-                  console.error('YYEVA播放失败:', err);
-                });
-              }, 300);
+                // 过渡完成，显示内容
+                _this.footerTransitioning = false;
+                _this.footerContentVisible = true;
+                
+                // 再等待50ms让内容渲染，然后开始播放
+                setTimeout(function() {
+                  video.play().then(function() {
+                    _this.isPlaying = true;
+                    _this.startYyevaRenderLoop();
+                  }).catch(function(err) {
+                    console.error('YYEVA播放失败:', err);
+                  });
+                }, 50);
+              }, 400);
             };
             
             video.onerror = function() {
@@ -1661,7 +1701,7 @@ function initApp() {
             img.src = material.previewUrl;
           },
 
-          handleNewAction: function (index) {
+          downloadMaterial: function (index) {
             // 下载素材图片
             var material = this.materialList[index];
             if (!material) return;
@@ -3140,6 +3180,26 @@ function initApp() {
           });
           // 加载 help.md
           this.loadHelpContent();
+          
+          // 空格键控制播放/暂停
+          document.addEventListener('keydown', function(e) {
+            // 空格键（keyCode 32 或 key === ' '）
+            if (e.keyCode === 32 || e.key === ' ') {
+              // 检查焦点是否在输入框或文本域
+              var activeElement = document.activeElement;
+              var isInputFocused = activeElement && (
+                activeElement.tagName === 'INPUT' ||
+                activeElement.tagName === 'TEXTAREA' ||
+                activeElement.isContentEditable
+              );
+              
+              // 只有在非输入状态且有文件加载时才触发播放/暂停
+              if (!isInputFocused && !_this.isEmpty) {
+                e.preventDefault(); // 阻止页面滚动
+                _this.togglePlay();
+              }
+            }
+          });
           
           // 预加载非关键库
           this.preloadLibraries();
