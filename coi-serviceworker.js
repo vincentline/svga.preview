@@ -123,6 +123,8 @@ if (typeof window === 'undefined') {
       .join('; ');
   };
 } else {
+  let coisrc = window.document.currentScript ? window.document.currentScript.src : 'coi-serviceworker.js';
+
   const reloadedBySelf = sessionStorage.getItem('coiReloadedBySelf');
   const redirected = reloadedBySelf && sessionStorage.getItem('coiRedirected');
 
