@@ -703,13 +703,25 @@ function initApp() {
           },
 
           onSvgaLoaded: function (videoItem) {
+            // 彻底销毁旧的播放器实例，避免事件回调累积
+            if (this.svgaPlayer) {
+              try {
+                this.svgaPlayer.stopAnimation();
+                this.svgaPlayer.clear();
+              } catch (e) {
+                console.warn('清理旧播放器失败:', e);
+              }
+              this.svgaPlayer = null;
+            }
+            
             // 检查容器是否为空（可能被 cleanupYyeva 清空了）
             var container = this.$refs.svgaContainer;
-            var needReinit = !this.svgaPlayer || (container && container.children.length === 0);
-            
-            if (needReinit) {
-              this.initSvgaPlayer();
+            if (container) {
+              container.innerHTML = ''; // 清空容器，确保DOM干净
             }
+            
+            // 重新初始化播放器
+            this.initSvgaPlayer();
             if (!this.svgaPlayer) return;
 
             var _this = this;
@@ -1647,6 +1659,30 @@ function initApp() {
               material.sizeText = this.width + 'px*' + this.height + 'px';
             };
             img.src = material.previewUrl;
+          },
+
+          handleNewAction: function (index) {
+            // 下载素材图片
+            var material = this.materialList[index];
+            if (!material) return;
+            
+            // 获取图片URL
+            var imageUrl = material.previewUrl;
+            if (!imageUrl) {
+              alert('图片数据不存在');
+              return;
+            }
+            
+            // 生成文件名：使用imageKey或索引
+            var fileName = (material.imageKey || 'material_' + index) + '.png';
+            
+            // 创建临时链接下载
+            var link = document.createElement('a');
+            link.href = imageUrl;
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
           },
 
           applyReplacedMaterials: function () {

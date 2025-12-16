@@ -1500,7 +1500,7 @@ body.dark-mode .material-meta {
 
 /* 操作按钮区 (Frame 29) */
 .material-actions {
-  width: 161px;
+  width: 161px;  
   height: 28px;
   flex: none;
   order: 2;
@@ -1519,7 +1519,6 @@ body.dark-mode .material-meta {
   width: auto;
   gap: 10px;
   position: absolute;
-  width: 97px;
   min-width: 60px;
   height: 28px;
   left: 0px;
@@ -1585,7 +1584,7 @@ body.dark-mode .material-btn-replace:hover {
   position: absolute;
   width: 32px;
   height: 28px;
-  left: 123px;
+  left: 92px;
   top: 0px;
   background: #FFFFFF;
   border: 1px solid #E3E3E3;
@@ -1616,6 +1615,62 @@ body.dark-mode .material-btn-close {
 }
 
 body.dark-mode .material-btn-close:hover {
+  background: #3a3a3a;
+  border-color: #606060;
+}
+
+/* 新按钮 - 在material-btn-close右边8px */
+.material-btn-new {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  border-radius: 8px;
+  padding: 0px 4px;
+  gap: 10px;
+  position: absolute;
+  width: 32px;
+  height: 28px;
+  left: 129px;  
+  top: 0px;
+  background: #FFFFFF;
+  border: 1px solid #E3E3E3;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.material-btn-new svg {
+  width: 24px;
+  height: 24px;
+  flex: none;
+  order: 0;
+}
+
+.material-btn-new svg path {
+  stroke: #333333;
+}
+
+body.dark-mode .material-btn-new svg path {
+  stroke: #CCCCCC;
+}
+
+.material-btn-new:hover {
+  background: #F5F5F7;
+  border-color: #CCCCCC;
+}
+
+.material-btn-new:active {
+  background: #E8E8ED;
+  transform: scale(0.95);
+}
+
+body.dark-mode .material-btn-new {
+  background: #2d2d2d;
+  border-color: #505050;
+}
+
+body.dark-mode .material-btn-new:hover {
   background: #3a3a3a;
   border-color: #606060;
 }
