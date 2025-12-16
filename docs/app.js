@@ -109,81 +109,214 @@ new Vue({
             mp4ConvertCancelled: false,
             ffmpeg: null,
             ffmpegLoaded: false,
-            ffmpegLoading: false
+            ffmpegLoading: false,
+            
+            // 库加载管理
+            libraryLoader: {
+              queue: [], // 加载队列
+              loading: false, // 是否正在加载
+              currentLib: null, // 当前加载的库 { name, url, progress }
+              loadedLibs: {} // 已加载的库 { libName: true }
+            }
           };
         },
         methods: {
-          /* 动态加载库文件 */
+          /* 库加载管理系统 */
           
-          loadScript: function(url, checkFn) {
-            return new Promise(function(resolve, reject) {
-              // 如果已加载，直接返回
-              if (checkFn && checkFn()) {
-                resolve();
-                return;
+          // 库配置表
+          getLibraryConfig: function() {
+            return {
+              'vue': {
+                name: 'Vue.js',
+                url: 'https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.min.js',
+                checkFn: function() { return typeof Vue !== 'undefined'; },
+                priority: 0, // 最高优先级，页面加载必须
+                preload: true
+              },
+              'svgaplayer': {
+                name: 'SVGA播放器',
+                url: 'https://cdn.jsdelivr.net/npm/svgaplayerweb@2.3.1/build/svga.min.js',
+                checkFn: function() { return typeof SVGA !== 'undefined'; },
+                priority: 1,
+                preload: true
+              },
+              'lottie': {
+                name: 'Lottie播放器',
+                url: 'https://cdn.jsdelivr.net/npm/lottie-web@5.7.6/build/player/lottie.min.js',
+                checkFn: function() { return typeof lottie !== 'undefined'; },
+                priority: 2,
+                preload: false
+              },
+              'howler': {
+                name: 'Howler音频',
+                url: 'https://cdn.jsdelivr.net/npm/howler@2.0.15/dist/howler.core.min.js',
+                checkFn: function() { return typeof Howl !== 'undefined'; },
+                priority: 3,
+                preload: false
+              },
+              'marked': {
+                name: 'Marked文档解析',
+                url: 'https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js',
+                checkFn: function() { return typeof marked !== 'undefined'; },
+                priority: 10,
+                preload: false
+              },
+              'gif': {
+                name: 'GIF编码器',
+                url: 'https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.js',
+                checkFn: function() { return typeof GIF !== 'undefined'; },
+                priority: 10,
+                preload: false
+              },
+              'protobuf': {
+                name: 'Protobuf解析',
+                url: 'https://cdn.jsdelivr.net/npm/protobufjs@7.2.5/dist/protobuf.min.js',
+                checkFn: function() { return typeof protobuf !== 'undefined'; },
+                priority: 10,
+                preload: false
+              },
+              'pako': {
+                name: 'Pako压缩',
+                url: 'https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js',
+                checkFn: function() { return typeof pako !== 'undefined'; },
+                priority: 10,
+                preload: false
+              },
+              'svgaweb': {
+                name: 'SVGA-Web帧提取',
+                url: 'https://cdn.jsdelivr.net/npm/svga-web@2.4.2/svga-web.min.js',
+                checkFn: function() { return typeof SVGA !== 'undefined' && SVGA.Downloader; },
+                priority: 10,
+                preload: false
+              },
+              'ffmpeg': {
+                name: 'FFmpeg编码器',
+                url: 'https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js',
+                checkFn: function() { return typeof FFmpeg !== 'undefined' && typeof FFmpeg.createFFmpeg !== 'undefined'; },
+                priority: 10,
+                preload: false
               }
+            };
+          },
+          
+          // 加载单个库（底层方法）
+          loadSingleLibrary: function(libKey, highPriority) {
+            var _this = this;
+            var config = this.getLibraryConfig()[libKey];
+            if (!config) {
+              return Promise.reject(new Error('未知的库: ' + libKey));
+            }
+            
+            // 如果已加载，直接返回
+            if (this.libraryLoader.loadedLibs[libKey] || (config.checkFn && config.checkFn())) {
+              this.libraryLoader.loadedLibs[libKey] = true;
+              return Promise.resolve();
+            }
+            
+            return new Promise(function(resolve, reject) {
+              _this.libraryLoader.currentLib = {
+                name: config.name,
+                url: config.url,
+                progress: 0
+              };
+              
               var script = document.createElement('script');
-              script.src = url;
+              script.src = config.url;
+              
               script.onload = function() {
+                _this.libraryLoader.currentLib.progress = 50;
+                
                 // 等待全局变量可用
                 var maxWait = 30;
                 var check = function() {
-                  if (!checkFn || checkFn()) {
+                  if (!config.checkFn || config.checkFn()) {
+                    _this.libraryLoader.currentLib.progress = 100;
+                    _this.libraryLoader.loadedLibs[libKey] = true;
                     resolve();
                   } else if (maxWait-- > 0) {
+                    _this.libraryLoader.currentLib.progress = 50 + Math.floor((30 - maxWait) / 30 * 50);
                     setTimeout(check, 100);
                   } else {
-                    reject(new Error('库加载超时'));
+                    reject(new Error(config.name + ' 加载超时'));
                   }
                 };
                 check();
               };
+              
               script.onerror = function() {
-                reject(new Error('加载失败: ' + url));
+                reject(new Error(config.name + ' 加载失败'));
               };
+              
               document.head.appendChild(script);
             });
           },
           
-          // 加载Marked.js
-          loadMarked: function() {
-            return this.loadScript(
-              'https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js',
-              function() { return typeof marked !== 'undefined'; }
-            );
-          },
-          
-          // 加载GIF.js
-          loadGifJs: function() {
-            return this.loadScript(
-              'https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.js',
-              function() { return typeof GIF !== 'undefined'; }
-            );
-          },
-          
-          // 加载Protobuf + Pako
-          loadProtobufAndPako: function() {
+          // 加载库（支持队列和优先级）
+          loadLibrary: function(libKeys, highPriority) {
             var _this = this;
-            return Promise.all([
-              this.loadScript(
-                'https://cdn.jsdelivr.net/npm/protobufjs@7.2.5/dist/protobuf.min.js',
-                function() { return typeof protobuf !== 'undefined'; }
-              ),
-              this.loadScript(
-                'https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js',
-                function() { return typeof pako !== 'undefined'; }
-              )
-            ]);
+            if (typeof libKeys === 'string') {
+              libKeys = [libKeys];
+            }
+            
+            return new Promise(function(resolve, reject) {
+              var loadTask = {
+                libs: libKeys,
+                priority: highPriority ? 0 : 10,
+                resolve: resolve,
+                reject: reject
+              };
+              
+              // 插队：高优先级插到队列最前面
+              if (highPriority) {
+                _this.libraryLoader.queue.unshift(loadTask);
+              } else {
+                _this.libraryLoader.queue.push(loadTask);
+              }
+              
+              // 启动队列处理
+              _this.processLibraryQueue();
+            });
           },
           
-          // 加载SVGA-Web（用于帧提取）
-          loadSvgaWeb: function() {
-            return this.loadScript(
-              'https://cdn.jsdelivr.net/npm/svga-web@2.4.2/svga-web.min.js',
-              function() { return typeof SVGA !== 'undefined' && SVGA.Downloader; }
-            );
+          // 处理加载队列
+          processLibraryQueue: function() {
+            var _this = this;
+            
+            // 如果正在加载或队列为空，不处理
+            if (this.libraryLoader.loading || this.libraryLoader.queue.length === 0) {
+              return;
+            }
+            
+            this.libraryLoader.loading = true;
+            var task = this.libraryLoader.queue.shift();
+            
+            // 按顺序加载所有库
+            var loadChain = Promise.resolve();
+            task.libs.forEach(function(libKey) {
+              loadChain = loadChain.then(function() {
+                return _this.loadSingleLibrary(libKey, task.priority === 0);
+              });
+            });
+            
+            loadChain
+              .then(function() {
+                _this.libraryLoader.currentLib = null;
+                _this.libraryLoader.loading = false;
+                task.resolve();
+                
+                // 继续处理下一个任务
+                _this.processLibraryQueue();
+              })
+              .catch(function(error) {
+                _this.libraryLoader.currentLib = null;
+                _this.libraryLoader.loading = false;
+                task.reject(error);
+                
+                // 继续处理下一个任务
+                _this.processLibraryQueue();
+              });
           },
-
+          
           /* 拖拽上传 */
 
           onDragOver: function () {
@@ -315,8 +448,8 @@ new Vue({
 
           loadHelpContent: function () {
             var _this = this;
-            // 先加载Marked库，再加载帮助文档
-            this.loadMarked().then(function() {
+            // 先加载Marked库（低优先级，后台加载），再加载帮助文档
+            this.loadLibrary('marked', false).then(function() {
               return fetch('./help.md');
             }).then(function(response) {
               return response.text();
@@ -812,9 +945,9 @@ new Vue({
           parseSvgaAudioData: async function (arrayBuffer) {
             var _this = this;
             
-            // 动态加载 protobuf 和 pako
+            // 动态加载 protobuf 和 pako（低优先级，后台加载）
             try {
-              await this.loadProtobufAndPako();
+              await this.loadLibrary(['protobuf', 'pako'], false); // false = 低优先级
             } catch (err) {
               // 加载失败时静默跳过音频提取
               return;
@@ -1171,9 +1304,9 @@ new Vue({
             var processing = confirm('即将导出替换后的 SVGA 文件。继续吗？');
             if (!processing) return;
 
-            // 动态加载 protobuf 和 pako
+            // 动态加载 protobuf 和 pako（高优先级插队）
             try {
-              await this.loadProtobufAndPako();
+              await this.loadLibrary(['protobuf', 'pako'], true); // true = 高优先级
             } catch (err) {
               alert('库加载失败，请检查网络');
               return;
@@ -1299,9 +1432,9 @@ new Vue({
               return;
             }
 
-            // 动态加载 GIF.js
+            // 动态加载 GIF.js（高优先级插队）
             try {
-              await this.loadGifJs();
+              await this.loadLibrary('gif', true); // true = 高优先级
             } catch (err) {
               alert('GIF导出库加载失败，请检查网络');
               return;
@@ -1662,7 +1795,7 @@ new Vue({
             this.mp4ConvertMessage = '正在加载转换器...';
 
             try {
-              // 1. 加载 ffmpeg.wasm
+              // 1. 加载 ffmpeg.wasm（高优先级插队）
               await this.loadFFmpeg();
               if (this.mp4ConvertCancelled) throw new Error('用户取消转换');
 
@@ -1746,31 +1879,9 @@ new Vue({
             this.ffmpegLoading = true;
 
             try {
-              // 动态加载 FFmpeg 库（如果尚未加载）
-              if (typeof FFmpeg === 'undefined' || typeof FFmpeg.createFFmpeg === 'undefined') {
-                this.mp4ConvertMessage = '正在加载FFmpeg库...';
-                
-                await new Promise(function(resolve, reject) {
-                  var script = document.createElement('script');
-                  script.src = 'https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js';
-                  script.onload = resolve;
-                  script.onerror = function() {
-                    reject(new Error('FFmpeg库加载失败，请检查网络'));
-                  };
-                  document.head.appendChild(script);
-                });
-                
-                // 等待FFmpeg对象可用
-                var maxWait = 50; // 最多等待5秒
-                while ((typeof FFmpeg === 'undefined' || typeof FFmpeg.createFFmpeg === 'undefined') && maxWait > 0) {
-                  await new Promise(function(r) { setTimeout(r, 100); });
-                  maxWait--;
-                }
-                
-                if (typeof FFmpeg === 'undefined' || typeof FFmpeg.createFFmpeg === 'undefined') {
-                  throw new Error('FFmpeg库加载超时');
-                }
-              }
+              // 使用统一的库加载系统（高优先级）
+              this.mp4ConvertMessage = '正在加载FFmpeg库...';
+              await this.loadLibrary('ffmpeg', true); // true = 高优先级插队
 
               // 创建ffmpeg实例（配置使用CDN加载核心文件）
               this.ffmpeg = FFmpeg.createFFmpeg({
@@ -2283,6 +2394,19 @@ new Vue({
             }
             
             return style;
+          },
+          
+          // 预加载库
+          preloadLibraries: function() {
+            var _this = this;
+            // Lottie 和 Howler 是次要功能，优先级较高
+            this.loadLibrary(['lottie', 'howler'], false)
+              .then(function() {
+                console.log('Lottie 和 Howler 加载完成');
+              })
+              .catch(function(error) {
+                console.warn('部分库加载失败:', error);
+              });
           }
         },
         watch: {
@@ -2314,5 +2438,8 @@ new Vue({
           });
           // 加载 help.md
           this.loadHelpContent();
+          
+          // 异步加载非关键库（按优先级排队）
+          this.preloadLibraries();
         }
       });
