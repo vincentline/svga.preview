@@ -8,21 +8,14 @@
     <!-- 外部样式表（优先加载） -->
     <link rel="stylesheet" href="styles.css" />
     
-    <!-- ===== 关键资源（页面渲染必需） ===== -->
-    <!-- Vue 2 -->
-    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.min.js"></script>
-    <script>
-      if (typeof Vue === 'undefined') {
-        document.write('<script src="https://unpkg.com/vue@2.6.14/dist/vue.min.js"><\/script>');
-      }
-    </script>
-    <!-- SVGA播放器（核心功能） -->
-    <script src="https://cdn.jsdelivr.net/npm/svgaplayerweb@2.3.1/build/svga.min.js"></script>
-    
-    <!-- ===== 按需加载的资源（在app.js中通过库管理器动态加载） ===== -->
-    <!-- Lottie播放器、Howler音频 - 后台加载 -->
-    <!-- marked.min.js - 帮助文档时加载 -->
-    <!-- gif.js - 导出GIF时加载 -->
+    <!-- ===== 所有库统一由 app.js 中的库加载管理系统动态加载 ===== -->
+    <!-- Vue.js - 核心框架，优先级最高 -->
+    <!-- SVGA播放器 - 核心功能，优先级次之 -->
+    <!-- Lottie、Howler - 后台加载 -->
+    <!-- Marked - 帮助文档时加载 -->
+    <!-- GIF.js - 导出GIF时加载 -->
+    <!-- Protobuf、Pako - 导出SVGA时加载 -->
+    <!-- FFmpeg - 转MP4时加载 -->
     <!-- protobuf.min.js - 导出SVGA时加载 -->
     <!-- pako.min.js - 导出SVGA时加载 -->
     <!-- svga-web.min.js - 转MP4帧提取时加载 -->
@@ -460,7 +453,7 @@
           <!-- SVGA信息 -->
           <div class="mp4-info-section">
             <div class="mp4-info-row">SVGA尺寸：{{ svga.fileInfo.sizeWH }}    时长：{{ svga.fileInfo.duration }}</div>
-            <div class="mp4-compress-hint">带Key信息的SVGA，转换后就没有了。压缩质量调越低，文件就越小，画面越糊。</div>
+            <div class="mp4-compress-hint">注意：第一次转换需要加载FFmpeg（25M），请耐心等待。压缩质量调越低，文件就越小，画面越糊。</div>
           </div>
 
           <!-- 配置区域 -->

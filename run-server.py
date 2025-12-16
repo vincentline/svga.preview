@@ -12,8 +12,9 @@ PORT = 8081
 class CORSRequestHandler(http.server.SimpleHTTPRequestHandler):
     def end_headers(self):
         # 添加跨域隔离头，启用SharedArrayBuffer
+        # 使用 credentialless 代替 require-corp，允许从 CDN 加载资源
         self.send_header('Cross-Origin-Opener-Policy', 'same-origin')
-        self.send_header('Cross-Origin-Embedder-Policy', 'require-corp')
+        self.send_header('Cross-Origin-Embedder-Policy', 'credentialless')
         self.send_header('Cross-Origin-Resource-Policy', 'cross-origin')
         super().end_headers()
 

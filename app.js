@@ -1,4 +1,6 @@
-new Vue({
+// 启动应用：先加载Vue和SVGA播放器，再创建Vue实例
+function initApp() {
+  new Vue({
         el: '#app',
         data: function () {
           return {
@@ -2252,11 +2254,10 @@ new Vue({
               var _this = this;
               this.loadLibrary('ffmpeg', true)
                 .then(function() {
-                  console.log('FFmpeg库加载完成');
-                  _this.ffmpegLoaded = true;
+                  console.log('FFmpeg脚本加载完成，待初始化');
                 })
                 .catch(function(error) {
-                  console.warn('FFmpeg库加载失败:', error);
+                  console.warn('FFmpeg脚本加载失败:', error);
                 });
             }
           },
@@ -2517,9 +2518,10 @@ new Vue({
               }
 
               // 创建ffmpeg实例（配置使用CDN加载核心文件）
+              // 使用jsdelivr CDN，支持CORS
               this.ffmpeg = FFmpeg.createFFmpeg({
-                log: false,
-                corePath: 'https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js',
+                log: true,
+                corePath: 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js',
                 progress: function(p) {
                   // 静默处理进度
                 }
@@ -3063,3 +3065,47 @@ new Vue({
           this.preloadLibraries();
         }
       });
+}
+
+// 动态加载脚本
+function loadScript(url) {
+  return new Promise(function(resolve, reject) {
+    var script = document.createElement('script');
+    script.src = url;
+    script.onload = resolve;
+    script.onerror = function() { reject(new Error('加载失败: ' + url)); };
+    document.head.appendChild(script);
+  });
+}
+
+// 页面加载完成后立即启动
+(function() {
+  // 显示加载提示
+  var loadingDiv = document.createElement('div');
+  loadingDiv.id = 'app-loading';
+  loadingDiv.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 14px; color: #666;';
+  loadingDiv.textContent = '正在加载...';
+  document.body.appendChild(loadingDiv);
+  
+  // 加载Vue
+  loadScript('https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.min.js')
+    .catch(function() {
+      // 备用CDN
+      return loadScript('https://unpkg.com/vue@2.6.14/dist/vue.min.js');
+    })
+    .then(function() {
+      // 加载SVGA播放器
+      return loadScript('https://cdn.jsdelivr.net/npm/svgaplayerweb@2.3.1/build/svga.min.js');
+    })
+    .then(function() {
+      // 移除加载提示
+      document.body.removeChild(loadingDiv);
+      // 启动应用
+      initApp();
+    })
+    .catch(function(error) {
+      loadingDiv.textContent = '加载失败，请刷新页面重试';
+      loadingDiv.style.color = 'red';
+      console.error(error);
+    });
+})();
