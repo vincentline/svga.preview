@@ -982,7 +982,7 @@ function initApp() {
             var video = document.createElement('video');
             video.src = this.yyevaObjectUrl;
             video.crossOrigin = 'anonymous';
-            video.muted = true;
+            video.muted = false; // 允许播放声音
             video.loop = true;
             video.playsInline = true;
             this.yyevaVideo = video;
@@ -996,8 +996,9 @@ function initApp() {
               _this.yyeva.originalHeight = videoHeight;
               
               // 自动识别 alpha 位置：左右并排的视频宽度是高度的约两倍
-              if (videoWidth > videoHeight * 1.5) {
-                // 左右并排布局
+              // 支持横屏（1500×750）和竖屏（1500×1700）的左右并排格式
+              if (videoWidth >= videoHeight * 0.8) {
+                // 左右并排布局（宽度至少是高度的0.8個）
                 _this.yyeva.displayWidth = Math.floor(videoWidth / 2);
                 _this.yyeva.displayHeight = videoHeight;
                 // 检测 alpha 在左还是在右（通过分析第一帧）
@@ -1147,11 +1148,22 @@ function initApp() {
             var colorData = tempCtx.getImageData(colorX, 0, halfWidth, height);
             var alphaData = tempCtx.getImageData(alphaX, 0, halfWidth, height);
             
-            // 合成透明通道
+            // 合成透明通道（处理预乘Alpha）
             for (var i = 0; i < colorData.data.length; i += 4) {
-              // 使用Alpha通道的R值作为透明度
-              colorData.data[i + 3] = alphaData.data[i];
+              var alpha = alphaData.data[i]; // 使用Alpha通道的R值作为透明度
+              
+              if (alpha > 0) {
+                // 反预乘：将预乘的RGB值还原
+                colorData.data[i] = Math.min(255, (colorData.data[i] * 255) / alpha);
+                colorData.data[i + 1] = Math.min(255, (colorData.data[i + 1] * 255) / alpha);
+                colorData.data[i + 2] = Math.min(255, (colorData.data[i + 2] * 255) / alpha);
+              }
+              
+              colorData.data[i + 3] = alpha;
             }
+            
+            // 清除画布（避免黑边）
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
             
             // 绘制到显示Canvas
             ctx.putImageData(colorData, 0, 0);
@@ -2438,9 +2450,10 @@ function initApp() {
               // 提示音频状态
               setTimeout(function() {
                 var hasAudioData = _this.svgaAudioData && Object.keys(_this.svgaAudioData).length > 0;
+                var isMuted = _this.mp4Config.muted;
                 var msg = '';
                 
-                if (muted) {
+                if (isMuted) {
                   // 用户选择静音
                   msg = '✅ 转换完成！\n\n已按您的要求生成静音MP4文件。';
                 } else if (!hasAudioData) {
