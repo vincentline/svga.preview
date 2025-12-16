@@ -65,7 +65,7 @@ if (typeof window === 'undefined') {
     const justReloaded = sessionStorage.getItem('coi_reloaded');
     if (justReloaded === 'yes') {
       sessionStorage.removeItem('coi_reloaded');
-      console.log('[COI] Reloaded, waiting for activation...');
+      console.log('[COI] Reloaded, Service Worker should be active now');
       return;
     }
 
@@ -76,25 +76,19 @@ if (typeof window === 'undefined') {
       .then(registration => {
         console.log('[COI] Service Worker registered:', registration.scope);
         
-        // 如果已经有活动的Service Worker，不需要刷新
-        if (registration.active) {
-          console.log('[COI] Service Worker already active');
+        // 检查Service Worker状态
+        if (registration.active && navigator.serviceWorker.controller) {
+          // Service Worker已激活且已控制页面，不需要刷新
+          console.log('[COI] Service Worker already controlling page');
           return;
         }
         
-        // 等待Service Worker激活后刷新一次
-        registration.addEventListener('updatefound', () => {
-          const worker = registration.installing;
-          if (!worker) return;
-          
-          worker.addEventListener('statechange', () => {
-            if (worker.state === 'activated') {
-              console.log('[COI] Service Worker activated, reloading...');
-              sessionStorage.setItem('coi_reloaded', 'yes');
-              window.location.reload();
-            }
-          });
-        });
+        // 首次注册，需要刷新一次来激活Service Worker
+        if (!navigator.serviceWorker.controller) {
+          console.log('[COI] First registration, reloading to activate...');
+          sessionStorage.setItem('coi_reloaded', 'yes');
+          window.location.reload();
+        }
       })
       .catch(err => {
         console.error('[COI] Service Worker registration failed:', err);
