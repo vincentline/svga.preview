@@ -136,7 +136,7 @@
             </div>
 
             <!-- 中间主控制区 -->
-            <div class="footer-main">
+            <div class="footer-main" :class="{'footer-main-empty': isEmpty}">
             <!-- 空状态 -->
             <template v-if="isEmpty">
               <div class="footer-empty-tip">

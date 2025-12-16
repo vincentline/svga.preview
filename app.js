@@ -641,8 +641,12 @@ new Vue({
               _this.isPlaying = false;
             });
 
-            this.svgaPlayer.startAnimation();
-            this.isPlaying = true;
+            // 延迟300ms再播放，等待底部浮层宽度过渡动画完成
+            var _this2 = this;
+            setTimeout(function() {
+              _this2.svgaPlayer.startAnimation();
+              _this2.isPlaying = true;
+            }, 300);
 
             this.applyCanvasBackground();
             
@@ -799,13 +803,15 @@ new Vue({
               // 初始化Canvas
               _this.initYyevaCanvas();
               
-              // 开始播放
-              video.play().then(function() {
-                _this.isPlaying = true;
-                _this.startYyevaRenderLoop();
-              }).catch(function(err) {
-                console.error('YYEVA播放失败:', err);
-              });
+              // 延迟300ms再播放，等待底部浮层宽度过渡动画完成
+              setTimeout(function() {
+                video.play().then(function() {
+                  _this.isPlaying = true;
+                  _this.startYyevaRenderLoop();
+                }).catch(function(err) {
+                  console.error('YYEVA播放失败:', err);
+                });
+              }, 300);
             };
             
             video.onerror = function() {
