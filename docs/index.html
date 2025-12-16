@@ -19,13 +19,8 @@
     <!-- SVGA播放器（核心功能） -->
     <script src="https://cdn.jsdelivr.net/npm/svgaplayerweb@2.3.1/build/svga.min.js"></script>
     
-    <!-- ===== 非关键资源（延迟加载） ===== -->
-    <!-- Lottie播放器 - 延迟加载 -->
-    <script defer src="https://cdn.jsdelivr.net/npm/lottie-web@5.7.6/build/player/lottie.min.js"></script>
-    <!-- Howler音频 - 延迟加载 -->
-    <script defer src="https://cdn.jsdelivr.net/npm/howler@2.0.15/dist/howler.core.min.js"></script>
-    
-    <!-- ===== 按需加载的资源（在app.js中动态加载） ===== -->
+    <!-- ===== 按需加载的资源（在app.js中通过库管理器动态加载） ===== -->
+    <!-- Lottie播放器、Howler音频 - 后台加载 -->
     <!-- marked.min.js - 帮助文档时加载 -->
     <!-- gif.js - 导出GIF时加载 -->
     <!-- protobuf.min.js - 导出SVGA时加载 -->
@@ -64,6 +59,11 @@
         <a href="https://saysth.design/" target="_blank" class="avatar-link">
           <img src="./assets/img/toux.png" alt="" class="avatar-icon">
         </a>
+      </div>
+
+      <!-- 库加载进度条 -->
+      <div v-if="libraryLoader.currentLib" class="library-loading-indicator">
+        <div class="loading-text">正在加载 {{ libraryLoader.currentLib.name }}（{{ libraryLoader.currentLib.progress }}%）</div>
       </div>
 
       <!-- Help 按钮 -->

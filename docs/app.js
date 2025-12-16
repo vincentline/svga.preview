@@ -124,10 +124,227 @@ new Vue({
             mp4ConvertCancelled: false,
             ffmpeg: null,
             ffmpegLoaded: false,
-            ffmpegLoading: false
+            ffmpegLoading: false,
+            
+            // 库加载管理
+            libraryLoader: {
+              queue: [], // 加载队列
+              loading: false, // 是否正在加载
+              currentLib: null, // 当前加载的库 { name, url, progress }
+              loadedLibs: {} // 已加载的库 { libName: true }
+            }
           };
         },
         methods: {
+          /* 库加载管理器 */
+          
+          // 获取库配置
+          getLibraryConfig: function() {
+            return {
+              'vue': {
+                name: 'Vue.js',
+                url: 'https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.min.js',
+                checkFn: function() { return typeof Vue !== 'undefined'; },
+                priority: 0, // 核心库，已预加载
+                preload: true
+              },
+              'svgaplayer': {
+                name: 'SVGA播放器',
+                url: 'https://cdn.jsdelivr.net/npm/svgaplayerweb@2.3.1/build/svga.min.js',
+                checkFn: function() { return typeof SVGA !== 'undefined'; },
+                priority: 1, // 核心库，已预加载
+                preload: true
+              },
+              'lottie': {
+                name: 'Lottie播放器',
+                url: 'https://cdn.jsdelivr.net/npm/lottie-web@5.7.6/build/player/lottie.min.js',
+                checkFn: function() { return typeof lottie !== 'undefined'; },
+                priority: 5
+              },
+              'howler': {
+                name: 'Howler音频',
+                url: 'https://cdn.jsdelivr.net/npm/howler@2.0.15/dist/howler.core.min.js',
+                checkFn: function() { return typeof Howl !== 'undefined'; },
+                priority: 5
+              },
+              'marked': {
+                name: '帮助文档',
+                url: 'https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js',
+                checkFn: function() { return typeof marked !== 'undefined'; },
+                priority: 10
+              },
+              'gif': {
+                name: 'GIF导出',
+                url: 'https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.js',
+                checkFn: function() { return typeof GIF !== 'undefined'; },
+                priority: 20
+              },
+              'protobuf': {
+                name: 'Protobuf',
+                url: 'https://cdn.jsdelivr.net/npm/protobufjs@7.2.5/dist/protobuf.min.js',
+                checkFn: function() { return typeof protobuf !== 'undefined'; },
+                priority: 20
+              },
+              'pako': {
+                name: 'Pako',
+                url: 'https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js',
+                checkFn: function() { return typeof pako !== 'undefined'; },
+                priority: 20
+              },
+              'svgaweb': {
+                name: 'SVGA-Web',
+                url: 'https://cdn.jsdelivr.net/npm/svga-web@1.0.3/dist/svga-web.min.js',
+                checkFn: function() { return typeof SVGAWeb !== 'undefined'; },
+                priority: 20
+              },
+              'ffmpeg': {
+                name: 'FFmpeg',
+                url: 'https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js',
+                checkFn: function() { return typeof FFmpeg !== 'undefined'; },
+                priority: 30
+              }
+            };
+          },
+          
+          // 加载单个库
+          loadSingleLibrary: function(libKey, highPriority) {
+            var _this = this;
+            var config = this.getLibraryConfig()[libKey];
+            
+            if (!config) {
+              return Promise.reject(new Error('未知的库: ' + libKey));
+            }
+            
+            // 如果已加载，直接返回
+            if (this.libraryLoader.loadedLibs[libKey] || (config.checkFn && config.checkFn())) {
+              this.libraryLoader.loadedLibs[libKey] = true;
+              return Promise.resolve();
+            }
+            
+            return new Promise(function(resolve, reject) {
+              _this.libraryLoader.currentLib = {
+                name: config.name,
+                url: config.url,
+                progress: 0
+              };
+              
+              var script = document.createElement('script');
+              script.src = config.url;
+              
+              script.onload = function() {
+                _this.libraryLoader.currentLib.progress = 50;
+                
+                // 等待全局变量可用
+                var maxWait = 30;
+                var check = function() {
+                  if (!config.checkFn || config.checkFn()) {
+                    _this.libraryLoader.currentLib.progress = 100;
+                    setTimeout(function() {
+                      _this.libraryLoader.currentLib = null;
+                      _this.libraryLoader.loadedLibs[libKey] = true;
+                      resolve();
+                    }, 300); // 显示100%后稍等
+                  } else if (maxWait-- > 0) {
+                    var progress = 50 + (30 - maxWait) * 1.5;
+                    _this.libraryLoader.currentLib.progress = Math.min(99, Math.round(progress));
+                    setTimeout(check, 100);
+                  } else {
+                    _this.libraryLoader.currentLib = null;
+                    reject(new Error('库加载超时: ' + libKey));
+                  }
+                };
+                check();
+              };
+              
+              script.onerror = function() {
+                _this.libraryLoader.currentLib = null;
+                reject(new Error('加载失败: ' + config.url));
+              };
+              
+              document.head.appendChild(script);
+            });
+          },
+          
+          // 加载库（统一入口）
+          loadLibrary: function(libKeys, highPriority) {
+            var _this = this;
+            if (typeof libKeys === 'string') {
+              libKeys = [libKeys];
+            }
+            
+            return new Promise(function(resolve, reject) {
+              var loadTask = {
+                libs: libKeys,
+                priority: highPriority ? 0 : 10,
+                resolve: resolve,
+                reject: reject
+              };
+              
+              // 高优先级插队到队列最前面
+              if (highPriority) {
+                _this.libraryLoader.queue.unshift(loadTask);
+              } else {
+                _this.libraryLoader.queue.push(loadTask);
+              }
+              
+              _this.processLibraryQueue();
+            });
+          },
+          
+          // 处理加载队列
+          processLibraryQueue: function() {
+            var _this = this;
+            
+            // 如果正在加载，不重复处理
+            if (this.libraryLoader.loading || this.libraryLoader.queue.length === 0) {
+              return;
+            }
+            
+            this.libraryLoader.loading = true;
+            
+            // 按优先级排序
+            this.libraryLoader.queue.sort(function(a, b) {
+              return a.priority - b.priority;
+            });
+            
+            var task = this.libraryLoader.queue.shift();
+            
+            // 顺序加载所有库
+            var loadChain = Promise.resolve();
+            
+            task.libs.forEach(function(libKey) {
+              loadChain = loadChain.then(function() {
+                return _this.loadSingleLibrary(libKey, task.priority === 0);
+              });
+            });
+            
+            loadChain
+              .then(function() {
+                task.resolve();
+                _this.libraryLoader.loading = false;
+                _this.processLibraryQueue(); // 继续处理队列
+              })
+              .catch(function(error) {
+                console.error('库加载失败:', error);
+                task.reject(error);
+                _this.libraryLoader.loading = false;
+                _this.processLibraryQueue(); // 继续处理队列
+              });
+          },
+          
+          // 预加载非关键库
+          preloadLibraries: function() {
+            var _this = this;
+            // Lottie 和 Howler 是次要功能，优先级较高
+            this.loadLibrary(['lottie', 'howler'], false)
+              .then(function() {
+                console.log('Lottie 和 Howler 加载完成');
+              })
+              .catch(function(error) {
+                console.warn('部分库加载失败:', error);
+              });
+          },
+          
           /* 动态加载库文件 */
           
           loadScript: function(url, checkFn) {
@@ -365,8 +582,8 @@ new Vue({
 
           loadHelpContent: function () {
             var _this = this;
-            // 先加载Marked库，再加载帮助文档
-            this.loadMarked().then(function() {
+            // 先加载Marked库（低优先级，后台加载），再加载帮助文档
+            this.loadLibrary('marked', false).then(function() {
               return fetch('./help.md');
             }).then(function(response) {
               return response.text();
@@ -1138,7 +1355,7 @@ new Vue({
             
             // 动态加载 protobuf 和 pako
             try {
-              await this.loadProtobufAndPako();
+              await this.loadLibrary(['protobuf', 'pako'], true)
             } catch (err) {
               // 加载失败时静默跳过音频提取
               return;
@@ -1497,7 +1714,7 @@ new Vue({
 
             // 动态加载 protobuf 和 pako
             try {
-              await this.loadProtobufAndPako();
+              await this.loadLibrary(['protobuf', 'pako'], true)
             } catch (err) {
               alert('库加载失败，请检查网络');
               return;
@@ -1625,7 +1842,7 @@ new Vue({
 
             // 动态加载 GIF.js
             try {
-              await this.loadGifJs();
+              await this.loadLibrary('gif', true)
             } catch (err) {
               alert('GIF导出库加载失败，请检查网络');
               return;
@@ -1806,7 +2023,7 @@ new Vue({
 
             // 动态加载 GIF.js
             try {
-              await this.loadGifJs();
+              await this.loadLibrary('gif', true)
             } catch (err) {
               alert('GIF导出库加载失败，请检查网络');
               return;
@@ -2029,6 +2246,19 @@ new Vue({
             } catch (e) {}
 
             this.showMP4Panel = true;
+            
+            // 预加载FFmpeg库（高优先级插队）
+            if (!this.libraryLoader.loadedLibs['ffmpeg']) {
+              var _this = this;
+              this.loadLibrary('ffmpeg', true)
+                .then(function() {
+                  console.log('FFmpeg库加载完成');
+                  _this.ffmpegLoaded = true;
+                })
+                .catch(function(error) {
+                  console.warn('FFmpeg库加载失败:', error);
+                });
+            }
           },
 
           closeMP4Panel: function () {
@@ -2828,5 +3058,8 @@ new Vue({
           });
           // 加载 help.md
           this.loadHelpContent();
+          
+          // 预加载非关键库
+          this.preloadLibraries();
         }
       });
