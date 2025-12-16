@@ -246,7 +246,89 @@ video.addEventListener('timeupdate', () => {
 });
 ```
 
-### 1.5 可用库
+### 1.5 播放器优化与模式切换
+
+#### 1.5.1 模式切换规则
+当在播放MP4过程中拖入SVGA文件时，应立即终止MP4播放，切换至SVGA渲染模式，确保SVGA内容优先展示，避免两种格式同时播放导致的渲染冲突。
+
+#### 1.5.2 资源清理机制
+```javascript
+// 切换模式时的资源清理
+function cleanupYyeva() {
+    // 停止动画循环
+    if (yyevaAnimationId) {
+        cancelAnimationFrame(yyevaAnimationId);
+        yyevaAnimationId = null;
+    }
+    
+    // 停止视频播放
+    if (yyevaVideo) {
+        yyevaVideo.pause();
+        yyevaVideo.src = '';
+        yyevaVideo = null;
+    }
+    
+    // 释放对象URL
+    if (yyevaObjectUrl) {
+        URL.revokeObjectURL(yyevaObjectUrl);
+        yyevaObjectUrl = null;
+    }
+    
+    // 清空画布
+    if (yyevaCanvas) {
+        yyevaCanvas = null;
+        yyevaCtx = null;
+    }
+    
+    // 清空容器内容
+    const container = document.querySelector('.viewer-container');
+    if (container) {
+        container.innerHTML = '';
+    }
+}
+```
+
+#### 1.5.3 Alpha通道位置检测
+```javascript
+// 检测Alpha通道位置（左或右）
+function detectAlphaPosition(video) {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const halfWidth = Math.floor(video.videoWidth / 2);
+    const height = video.videoHeight;
+    
+    canvas.width = video.videoWidth;
+    canvas.height = height;
+    ctx.drawImage(video, 0, 0);
+    
+    // 取左侧和右侧中心区域的像素
+    const leftData = ctx.getImageData(halfWidth / 4, height / 4, 10, 10);
+    const rightData = ctx.getImageData(halfWidth + halfWidth / 4, height / 4, 10, 10);
+    
+    // 计算色彩方差（灰度图的RGB将非常接近）
+    const leftVariance = calculateColorVariance(leftData.data);
+    const rightVariance = calculateColorVariance(rightData.data);
+    
+    // 方差小的一侧更可能是灰度图（Alpha通道）
+    return leftVariance < rightVariance ? 'left' : 'right';
+}
+
+// 计算色彩方差
+function calculateColorVariance(data) {
+    let variance = 0;
+    for (let i = 0; i < data.length; i += 4) {
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
+        // 计算RGB差异
+        const diff = Math.abs(r - g) + Math.abs(g - b) + Math.abs(r - b);
+        variance += diff;
+    }
+    return variance;
+}
+```
+
+### 1.6 可用库
 | 库名 | 来源 | 特点 | 推荐度 |
 |------|------|------|--------|
 | 原生 Canvas + Video | W3C 标准 | 无依赖，性能好 | ⭐⭐⭐⭐⭐ |
@@ -254,7 +336,7 @@ video.addEventListener('timeupdate', () => {
 
 **推荐方案**：优先使用原生 Canvas API，简单高效。
 
-### 1.6 Demo 文件
+### 1.7 Demo 文件
 已创建演示文件：`demo-yyeva-format.html`
 - ✅ 模拟双通道视频
 - ✅ 通道分离

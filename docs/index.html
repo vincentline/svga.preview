@@ -16,13 +16,42 @@
     <!-- GIF.js - 导出GIF时加载 -->
     <!-- Protobuf、Pako - 导出SVGA时加载 -->
     <!-- FFmpeg - 转MP4时加载 -->
-    <!-- protobuf.min.js - 导出SVGA时加载 -->
-    <!-- pako.min.js - 导出SVGA时加载 -->
-    <!-- svga-web.min.js - 转MP4帧提取时加载 -->
-    <!-- ffmpeg.wasm - 转MP4时加载 -->
   </head>
 
   <body>
+    <!-- 首屏骨架屏（Vue加载前显示） -->
+    <div id="loading-skeleton" style="
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-color, #f5f5f5);
+      z-index: 9999;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    ">
+      <div style="text-align: center;">
+        <div style="
+          width: 48px;
+          height: 48px;
+          margin: 0 auto 16px;
+          border: 4px solid #e0e0e0;
+          border-top-color: #666;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        "></div>
+        <div style="color: #666; font-size: 14px;">加载中...</div>
+      </div>
+    </div>
+    <style>
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+    </style>
+    
     <div id="app">
       <!-- 顶部导航栏 -->
       <div class="header-navbar">
@@ -632,6 +661,30 @@
       />
     </div>
 
+    <!-- 关键库预加载（高优先级） -->
+    <script>
+      // Vue.js - 核心框架
+      (function() {
+        var script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.min.js';
+        script.onerror = function() {
+          // 备用CDN
+          var fallback = document.createElement('script');
+          fallback.src = 'https://unpkg.com/vue@2.6.14/dist/vue.min.js';
+          document.head.appendChild(fallback);
+        };
+        document.head.appendChild(script);
+      })();
+      
+      // SVGA播放器 - 核心功能
+      (function() {
+        var script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/svgaplayerweb@2.3.1/build/svga.min.js';
+        document.head.appendChild(script);
+      })();
+    </script>
+    
+    <!-- 应用主逻辑 -->
     <script src="app.js"></script>
   </body>
 </html>

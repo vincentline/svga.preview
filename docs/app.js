@@ -654,6 +654,9 @@ function initApp() {
           loadSvga: function (file) {
             var _this = this;
             this.currentModule = 'svga';
+            
+            // 清理YYEVA资源（如果正在播放MP4）
+            this.cleanupYyeva();
 
             // 重置视图状态（垂直位置会在加载完成后动态计算）
             this.viewerScale = 1;
@@ -700,7 +703,11 @@ function initApp() {
           },
 
           onSvgaLoaded: function (videoItem) {
-            if (!this.svgaPlayer) {
+            // 检查容器是否为空（可能被 cleanupYyeva 清空了）
+            var container = this.$refs.svgaContainer;
+            var needReinit = !this.svgaPlayer || (container && container.children.length === 0);
+            
+            if (needReinit) {
               this.initSvgaPlayer();
             }
             if (!this.svgaPlayer) return;
@@ -943,6 +950,9 @@ function initApp() {
           /* Lottie / YYEVA 阶段1占位逻辑 */
 
           loadLottiePlaceholder: function (file) {
+            // 清理YYEVA资源（如果正在播放MP4）
+            this.cleanupYyeva();
+            
             // 重置视图状态
             this.viewerScale = 1;
             this.viewerOffsetX = 0;
@@ -1204,6 +1214,12 @@ function initApp() {
             
             this.yyevaCanvas = null;
             this.yyevaCtx = null;
+            
+            // 清空容器内容（移除YYEVA的Canvas）
+            var container = this.$refs.svgaContainer;
+            if (container) {
+              container.innerHTML = '';
+            }
             
             this.yyeva = {
               hasFile: false,
@@ -3093,33 +3109,39 @@ function loadScript(url) {
 
 // 页面加载完成后立即启动
 (function() {
-  // 显示加载提示
-  var loadingDiv = document.createElement('div');
-  loadingDiv.id = 'app-loading';
-  loadingDiv.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 14px; color: #666;';
-  loadingDiv.textContent = '正在加载...';
-  document.body.appendChild(loadingDiv);
+  // 检查库是否已加载
+  function checkLibraries() {
+    return typeof Vue !== 'undefined' && typeof SVGA !== 'undefined';
+  }
   
-  // 并行加载Vue和SVGA播放器（不互相等待）
-  var vuePromise = loadScript('https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.min.js')
-    .catch(function() {
-      // 备用CDN
-      return loadScript('https://unpkg.com/vue@2.6.14/dist/vue.min.js');
-    });
+  function start() {
+    // 隐藏骨架屏
+    var skeleton = document.getElementById('loading-skeleton');
+    if (skeleton) {
+      skeleton.style.display = 'none';
+    }
+    
+    // 启动应用
+    initApp();
+  }
   
-  var svgaPromise = loadScript('https://cdn.jsdelivr.net/npm/svgaplayerweb@2.3.1/build/svga.min.js');
-  
-  // 等待两个库都加载完成
-  Promise.all([vuePromise, svgaPromise])
-    .then(function() {
-      // 移除加载提示
-      document.body.removeChild(loadingDiv);
-      // 启动应用
-      initApp();
-    })
-    .catch(function(error) {
-      loadingDiv.textContent = '加载失败，请刷新页面重试';
-      loadingDiv.style.color = 'red';
-      console.error(error);
-    });
+  // 如果已加载，直接启动
+  if (checkLibraries()) {
+    start();
+  } else {
+    // 否则等待加载完成
+    var maxWait = 100; // 10秒超时
+    var interval = setInterval(function() {
+      if (checkLibraries()) {
+        clearInterval(interval);
+        start();
+      } else if (--maxWait <= 0) {
+        clearInterval(interval);
+        var skeleton = document.getElementById('loading-skeleton');
+        if (skeleton) {
+          skeleton.innerHTML = '<div style="text-align: center; color: red;">加载失败，请刷新页面重试</div>';
+        }
+      }
+    }, 100);
+  }
 })();
