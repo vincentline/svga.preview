@@ -174,7 +174,7 @@
               <div class="footer-empty-tip">
                 <div class="footer-empty-tip-main">请将文件拖到上面</div>
                 <div class="footer-empty-tip-sub">
-                  支持文件包括：.svga、.json、MP4
+                  支持文件包括：SVGA、双通道MP4、Lottie的jason格式
                 </div>
               </div>
             </template>
@@ -190,6 +190,16 @@
                     class="play-btn"
                     :class="{'is-playing': isPlaying}"
                     @click="togglePlay"
+                  ></button>
+                  <button
+                    class="mute-btn"
+                    :class="{
+                      'is-muted': isMuted,
+                      'is-disabled': !hasAudio
+                    }"
+                    :disabled="!hasAudio"
+                    @click="toggleMute"
+                    :title="hasAudio ? (isMuted ? '取消静音' : '静音') : '无音频'"
                   ></button>
                   <div class="progress-bar" @click="onProgressBarClick">
                     <div

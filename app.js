@@ -137,6 +137,10 @@ function initApp() {
             toastMessage: '',
             toastTimer: null,
             
+            // 静音控制
+            isMuted: false,
+            yyevaHasAudio: false, // YYEVA视频是否包含音频轨道
+            
             // 库加载管理
             libraryLoader: {
               queue: [], // 加载队列
@@ -958,6 +962,7 @@ function initApp() {
                 if (_this.svgaPlayer && _this.currentModule === 'svga') {
                   _this.svgaPlayer.startAnimation();
                   _this.isPlaying = true;
+                  // SVGA播放器会自动通过Howler播放音频，无需手动调用
                 }
               }, 50);
             }, 400);
@@ -996,14 +1001,57 @@ function initApp() {
               try {
                 this.svgaPlayer.pauseAnimation();
               } catch (e) {}
+              // SVGA播放器暴停时音频也会自动暂停
               this.isPlaying = false;
             } else {
               try {
                 var currentPercentage = this.progress / 100;
                 this.svgaPlayer.stepToPercentage(currentPercentage, true);
               } catch (e) {}
+              // SVGA播放器恢复播放时音频也会自动恢复
               this.isPlaying = true;
             }
+          },
+
+          // 切换静音状态
+          toggleMute: function () {
+            // 如果没有音频，不响应点击
+            if (!this.hasAudio) return;
+            
+            this.isMuted = !this.isMuted;
+            
+            // YYEVA 模式
+            if (this.currentModule === 'yyeva' && this.yyevaVideo) {
+              this.yyevaVideo.muted = this.isMuted;
+            }
+            
+            // SVGA 模式 - 使用Howler全局静音控制
+            // 因为SVGA播放器内部会自动使用Howler播放音频
+            if (this.currentModule === 'svga') {
+              if (typeof Howler !== 'undefined') {
+                Howler.mute(this.isMuted);
+                console.log('Howler全局静音设置为:', this.isMuted);
+              }
+            }
+          },
+          
+          // 检测视频是否包含音频轨道
+          detectVideoHasAudio: function(video) {
+            // 方法1: 使用 audioTracks (Safari/Chrome)
+            if (typeof video.audioTracks !== 'undefined') {
+              return video.audioTracks && video.audioTracks.length > 0;
+            }
+            // 方法2: 使用 webkitAudioDecodedByteCount (Chrome)
+            if (typeof video.webkitAudioDecodedByteCount !== 'undefined') {
+              // 返回 true 表示可能有音频，需要播放后才能确认
+              return true;
+            }
+            // 方法3: 使用 mozHasAudio (Firefox)
+            if (typeof video.mozHasAudio !== 'undefined') {
+              return video.mozHasAudio;
+            }
+            // 默认假设有音频（让用户可以尝试静音）
+            return true;
           },
 
           onProgressBarClick: function (event) {
@@ -1129,7 +1177,7 @@ function initApp() {
               var video = document.createElement('video');
               video.src = _this.yyevaObjectUrl;
               video.crossOrigin = 'anonymous';
-              video.muted = false; // 允许播放声音
+              video.muted = _this.isMuted; // 应用当前静音状态
               video.loop = true;
               video.playsInline = true;
               _this.yyevaVideo = video;
@@ -1147,6 +1195,9 @@ function initApp() {
                 
                 // 设置显示信息
                 _this.yyeva.fileInfo.sizeWH = _this.yyeva.displayWidth + 'x' + _this.yyeva.displayHeight;
+                
+                // 检测视频是否包含音频轨道
+                _this.yyevaHasAudio = _this.detectVideoHasAudio(video);
                 
                 // 计算帧率和时长
                 var duration = video.duration;
@@ -1385,6 +1436,10 @@ function initApp() {
               }
             };
             
+            // 重置SVGA音频数据
+            this.svgaAudioData = null;
+            this.svgaMovieData = null;
+            
             // 重置播放状态
             this.isPlaying = false;
             this.progress = 0;
@@ -1438,6 +1493,9 @@ function initApp() {
               displayWidth: 0,
               displayHeight: 0
             };
+            
+            // 重置YYEVA音频状态
+            this.yyevaHasAudio = false;
           },
 
           /* 主题切换 */
@@ -1627,6 +1685,11 @@ function initApp() {
                     
                     if (Object.keys(audioData).length > 0) {
                       _this.svgaAudioData = audioData;
+                      console.log('=== SVGA音频数据提取成功 ===');
+                      console.log('音频数量:', Object.keys(audioData).length);
+                      console.log('音频key:', Object.keys(audioData));
+                    } else {
+                      console.log('=== SVGA没有提取到音频数据 ===');
                     }
                   }
                 } catch (decodeErr) {
@@ -3264,6 +3327,22 @@ function initApp() {
               return 'transparent';
             }
             return '#000000';
+          },
+          
+          // 检测当前动画是否包含音频
+          hasAudio: function () {
+            if (this.currentModule === 'svga') {
+              // SVGA: 检查是否有音频数据
+              return this.svgaAudioData !== null || 
+                     (this.svgaMovieData && this.svgaMovieData.audios && this.svgaMovieData.audios.length > 0);
+            } else if (this.currentModule === 'yyeva') {
+              // YYEVA: 检查视频是否有音频轨道
+              return this.yyevaHasAudio;
+            } else if (this.currentModule === 'lottie') {
+              // Lottie: 通常不包含音频
+              return false;
+            }
+            return false;
           },
           
           materialThumbBgColor: function () {
