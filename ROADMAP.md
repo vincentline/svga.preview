@@ -1,7 +1,7 @@
 # 开发路线图
 
 ## 项目概述
-构建支持 SVGA、YYEVA-MP4、Lottie 三种动画格式的在线预览与转换工具。
+构建支持 SVGA、双通道MP4、Lottie 三种动画格式的在线预览与转换工具。
 
 ---
 
@@ -17,7 +17,7 @@
 - ✅ 1:1 显示、居中显示
 - ✅ 拖拽上传文件
 - ✅ 播放进度条与帧数显示
-- ✅ 模块切换（SVGA/YYEVA/Lottie）
+- ✅ 模块切换（SVGA/双通道MP4/Lottie）
 
 ---
 
@@ -117,13 +117,13 @@ SVGA → Canvas 逐帧渲染 → GIF 编码器 → 下载
 
 ---
 
-### 2.3 转 YYEVA-MP4 功能 ✅
+### 2.3 转 双通道MP4 功能 ✅
 **优先级：中**
 **状态：已完成**
 
 #### 功能描述
-- 将 SVGA 转换为 YYEVA 格式的 MP4 视频
-- YYEVA 格式：彩色通道 + Alpha 通道并排的视频
+- 将 SVGA 转换为 双通道MP4 格式的 MP4 视频
+- 双通道MP4 格式：彩色通道 + Alpha 通道并排的视频
 - 支持进度显示、取消转换、错误处理
 
 #### 详细实现方案
@@ -135,7 +135,7 @@ SVGA文件
   → 提取每帧的RGB数据和Alpha数据
   → 合成双通道画布（左彩色+右Alpha灰度图）
   → ffmpeg.wasm编码为MP4
-  → 下载YYEVA-MP4文件
+  → 下载双通道MP4-MP4文件
 ```
 
 ##### 2. 核心模块
@@ -334,10 +334,10 @@ convertToYYEVAMP4: async function() {
 
 ---
 
-## 阶段3：YYEVA-MP4 与 Lottie 模块
+## 阶段3：双通道MP4 与 Lottie 模块
 **目标：完成多格式支持，实现格式互转**
 
-### 3.1 YYEVA-MP4 模块
+### 3.1 双通道MP4 模块
 
 #### 3.1.1 文件解析与预览
 **功能描述**
@@ -386,7 +386,7 @@ MP4 视频 → <video> 元素加载
 
 #### 3.1.3 转 SVGA 功能
 **功能描述**
-- 将 YYEVA-MP4 转换为 SVGA 格式
+- 将 双通道MP4 转换为 SVGA 格式
 
 **技术方案**
 ```
@@ -442,7 +442,7 @@ const animation = lottie.loadAnimation({
 
 ### 1. YYEVA-MP4 格式规范
 **调研内容**
-- YYEVA 格式定义（腾讯开源？）
+- YYEVA 格式定义（YY开源？）
 - 双通道布局方式（左右并排 vs 上下并排）
 - 是否有官方解析库
 
@@ -506,15 +506,15 @@ await ffmpeg.load();
 1. ✅ 技术调研（YYEVA、GIF、序列帧、MP4 合成）
 2. ✅ SVGA 素材替换功能
 3. ✅ SVGA 导出 GIF 功能
-4. 🔄 SVGA 转 YYEVA-MP4 功能（设计完成）
+4. 🔄 SVGA 转 双通道MP4 功能（设计完成）
 5. ⏳ Lottie 预览功能
 
 ### 第二批（中优先级）
-1. ✅ YYEVA-MP4 预览与播放控制
+1. ✅ 双通道MP4 预览与播放控制
 2. ⏳ Lottie 播放控制与功能完善
 
 ### 第三批（低优先级）
-1. YYEVA-MP4 转 SVGA
+1. 双通道MP4 转 SVGA
 2. 性能优化和体验提升
 
 ---
@@ -581,9 +581,6 @@ await ffmpeg.load();
 ### SVGA 相关
 - [SVGAPlayer-Web](https://github.com/svga/SVGAPlayer-Web)
 - [SVGA 格式规范](https://github.com/svga/SVGA-Format)
-
-### YYEVA 相关
-- 待补充（需要调研）
 
 ### GIF 导出
 - [gif.js](https://github.com/jnordberg/gif.js)
