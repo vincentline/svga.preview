@@ -564,9 +564,9 @@ body.dark-mode .clear-canvas-btn:active svg path {
   transition: background-color 0.3s, border-color 0.3s, box-shadow 0.3s, min-width 0.4s ease, max-width 0.4s ease;
 }
 
-/* 空状态：宽度600px，居中 */
+/* 空状态：宽度300px，居中 */
 .footer-main.footer-main-empty {
-  min-width: 600px;
+  min-width: 300px;
   max-width: 600px;
   justify-content: center;
   align-items: center;
