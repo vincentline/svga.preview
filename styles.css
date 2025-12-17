@@ -2644,3 +2644,53 @@ body.dark-mode .library-loading-indicator .loading-percentage {
 body.dark-mode .library-loading-indicator .loading-bar {
   background: #404040;
 }
+
+/* ==================== Toast提示 ==================== */
+
+.toast-container {
+  position: fixed;
+  top: 48px; /* 在header-navbar下方24px */
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  pointer-events: none;
+}
+
+.toast-message {
+  background: #ffffff;
+  border: 1px solid #e3e3e3;
+  border-radius: 8px;
+  padding: 12px 20px;
+  font-size: 14px;
+  color: #333333;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  white-space: nowrap;
+  max-width: 500px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+body.dark-mode .toast-message {
+  background: #2a2a2a;
+  border-color: #404040;
+  color: #cccccc;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+/* Toast淡入淡出动画 */
+.toast-fade-enter-active,
+.toast-fade-leave-active {
+  transition: all 0.3s ease;
+}
+
+.toast-fade-enter-from,
+.toast-fade-leave-to {
+  opacity: 0;
+  transform: translateX(-50%) translateY(-10px);
+}
+
+.toast-fade-enter-to,
+.toast-fade-leave-from {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}

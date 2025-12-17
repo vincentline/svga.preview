@@ -86,6 +86,13 @@
         </a>
       </div>
 
+      <!-- Toast提示 -->
+      <transition name="toast-fade">
+        <div v-if="toastVisible" class="toast-container">
+          <div class="toast-message">{{ toastMessage }}</div>
+        </div>
+      </transition>
+
       <!-- 库加载进度条 -->
       <div v-if="libraryLoader.currentLib" class="library-loading-indicator">
         <div class="loading-text">正在加载 {{ libraryLoader.currentLib.name }}（{{ libraryLoader.currentLib.progress }}%）</div>

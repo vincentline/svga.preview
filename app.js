@@ -132,6 +132,11 @@ function initApp() {
             ffmpegLoaded: false,
             ffmpegLoading: false,
             
+            // Toast提示
+            toastVisible: false,
+            toastMessage: '',
+            toastTimer: null,
+            
             // 库加载管理
             libraryLoader: {
               queue: [], // 加载队列
@@ -526,40 +531,13 @@ function initApp() {
             this.footerContentVisible = false;
             this.footerTransitioning = true;
             
-            if (this.svgaPlayer) {
-              try {
-                this.svgaPlayer.stopAnimation();
-                this.svgaPlayer.clear();
-              } catch (e) {}
-              this.svgaPlayer = null;
-            }
-            if (this.svgaObjectUrl) {
-              URL.revokeObjectURL(this.svgaObjectUrl);
-              this.svgaObjectUrl = null;
-            }
+            // 清理SVGA资源
+            this.cleanupSvga();
             
             // 清理 YYEVA 资源
             this.cleanupYyeva();
             
-            // 清空画布容器，恢复到空状态
-            var container = this.$refs.svgaContainer;
-            if (container) {
-              container.innerHTML = '';
-            }
-
-            this.svga = {
-              hasFile: false,
-              file: null,
-              fileInfo: {
-                name: '',
-                size: 0,
-                sizeText: '',
-                fps: null,
-                sizeWH: '',
-                duration: '',
-                memoryText: ''
-              }
-            };
+            // 重置Lottie状态
             this.lottie = {
               hasFile: false,
               file: null,
@@ -570,10 +548,6 @@ function initApp() {
               }
             };
 
-            this.isPlaying = false;
-            this.progress = 0;
-            this.currentFrame = 0;
-            this.totalFrames = 0;
             this.bgColorKey = 'pattern';
             
             // 关闭侧边栏
@@ -593,6 +567,50 @@ function initApp() {
           },
 
           /* SVGA 加载与播放 */
+          
+          /* Toast提示 */
+          showToast: function(message) {
+            var _this = this;
+            // 清除之前的定时器
+            if (this.toastTimer) {
+              clearTimeout(this.toastTimer);
+              this.toastTimer = null;
+            }
+            
+            this.toastMessage = message;
+            this.toastVisible = true;
+            
+            // 3秒后自动隐藏
+            this.toastTimer = setTimeout(function() {
+              _this.toastVisible = false;
+              _this.toastTimer = null;
+            }, 3000);
+          },
+          
+          /* 取消正在进行的任务 */
+          cancelOngoingTasks: function() {
+            var cancelledTasks = [];
+            
+            // 检查并取消GIF导出
+            if (this.isExportingGIF) {
+              this.isExportingGIF = false;
+              this.gifExportProgress = 0;
+              cancelledTasks.push('GIF导出');
+            }
+            
+            // 检查并取消MP4转换
+            if (this.isConvertingMP4) {
+              this.isConvertingMP4 = false;
+              this.mp4ConvertProgress = 0;
+              this.mp4ConvertCancelled = true;
+              cancelledTasks.push('转换MP4');
+            }
+            
+            // 如果有取消的任务，显示toast
+            if (cancelledTasks.length > 0) {
+              this.showToast('已取消：' + cancelledTasks.join('、'));
+            }
+          },
 
           loadHelpContent: function () {
             var _this = this;
@@ -687,6 +705,8 @@ function initApp() {
                   _this.currentModule = 'svga';
                   
                   // SVGA模式不关闭任何弹窗，保持当前状态
+                  // 但需要检查并取消正在进行的任务（如果是从其他模式切换过来）
+                  // 注：如果是同模式内切换，不会进行任务取消
                   
                   // 清理YYEVA资源（如果正在播放MP4）
                   _this.cleanupYyeva();
@@ -1015,12 +1035,17 @@ function initApp() {
 
           loadLottiePlaceholder: function (file) {
             var _this = this;
+            // 清理SVGA资源（如果正在播放SVGA）
+            this.cleanupSvga();
             // 清理YYEVA资源（如果正在播放MP4）
             this.cleanupYyeva();
             
             // 切换到Lottie模式，关闭SVGA特有的弹窗
             this.showMaterialPanel = false;
             this.showMP4Panel = false;
+            
+            // 取消正在进行的任务
+            this.cancelOngoingTasks();
             
             // 重置视图状态
             this.viewerScale = 1;
@@ -1072,11 +1097,15 @@ function initApp() {
               URL.revokeObjectURL(tempObjectUrl);
               
               // 现在才清理旧内容，开始加载新内容
-              _this.cleanupYyeva();
+              _this.cleanupSvga(); // 清理SVGA资源
+              _this.cleanupYyeva(); // 清理YYEVA资源
               
               // 切换到YYEVA模式，关闭SVGA特有的弹窗
               _this.showMaterialPanel = false;
               _this.showMP4Panel = false;
+              
+              // 取消正在进行的任务
+              _this.cancelOngoingTasks();
               
               // 重置视图状态
               _this.viewerScale = 1;
@@ -1305,6 +1334,61 @@ function initApp() {
           },
           
           // 清理 YYEVA 资源
+          cleanupSvga: function() {
+            // 停止并清理SVGA播放器
+            if (this.svgaPlayer) {
+              try {
+                this.svgaPlayer.stopAnimation();
+                this.svgaPlayer.clear();
+              } catch (e) {
+                console.warn('清理SVGA播放器失败:', e);
+              }
+              this.svgaPlayer = null;
+            }
+            
+            // 清理SVGA音频
+            if (this.svgaAudioPlayer) {
+              try {
+                this.svgaAudioPlayer.stop();
+                this.svgaAudioPlayer.unload();
+              } catch (e) {
+                console.warn('清理SVGA音频失败:', e);
+              }
+              this.svgaAudioPlayer = null;
+            }
+            
+            // 清理objectUrl
+            if (this.svgaObjectUrl) {
+              URL.revokeObjectURL(this.svgaObjectUrl);
+              this.svgaObjectUrl = null;
+            }
+            
+            // 清空容器内容
+            var container = this.$refs.svgaContainer;
+            if (container) {
+              container.innerHTML = '';
+            }
+            
+            // 重置SVGA状态
+            this.svga = {
+              hasFile: false,
+              file: null,
+              fileInfo: {
+                name: '',
+                size: 0,
+                sizeText: '',
+                fps: null,
+                sizeWH: ''
+              }
+            };
+            
+            // 重置播放状态
+            this.isPlaying = false;
+            this.progress = 0;
+            this.currentFrame = 0;
+            this.totalFrames = 0;
+          },
+          
           cleanupYyeva: function() {
             if (this.yyevaAnimationId) {
               cancelAnimationFrame(this.yyevaAnimationId);
