@@ -2871,22 +2871,54 @@ function initApp() {
 
                 var frameCanvas = dualFrames[i];
                 
-                // 转换为PNG Blob
+                // 手动合成黑底，避免drawImage的Alpha混合导致颜色变暗
+                var blackBgCanvas = document.createElement('canvas');
+                blackBgCanvas.width = frameCanvas.width;
+                blackBgCanvas.height = frameCanvas.height;
+                var blackBgCtx = blackBgCanvas.getContext('2d');
+                
+                // 获取双通道图像数据
+                var dualCtx = frameCanvas.getContext('2d');
+                var dualImageData = dualCtx.getImageData(0, 0, frameCanvas.width, frameCanvas.height);
+                var dualData = dualImageData.data;
+                
+                // 创建黑底图像数据
+                var blackBgImageData = blackBgCtx.createImageData(frameCanvas.width, frameCanvas.height);
+                var blackBgData = blackBgImageData.data;
+                
+                // 手动合成：对于半透明像素，不与黑色混合，而是直接使用RGB值
+                for (var j = 0; j < dualData.length; j += 4) {
+                  var r = dualData[j + 0];
+                  var g = dualData[j + 1];
+                  var b = dualData[j + 2];
+                  var a = dualData[j + 3];
+                  
+                  // 直接使用RGB，不做混合，Alpha设为255（JPG不支持透明）
+                  blackBgData[j + 0] = r;
+                  blackBgData[j + 1] = g;
+                  blackBgData[j + 2] = b;
+                  blackBgData[j + 3] = 255;
+                }
+                
+                // 写入黑底Canvas
+                blackBgCtx.putImageData(blackBgImageData, 0, 0);
+                
+                // 转换为JPEG Blob（质量60）
                 var blob = await new Promise(function(resolve) {
-                  frameCanvas.toBlob(resolve, 'image/png');
+                  blackBgCanvas.toBlob(resolve, 'image/jpeg', 0.6);
                 });
 
                 // 读取为ArrayBuffer
                 var buffer = await blob.arrayBuffer();
                 var uint8Array = new Uint8Array(buffer);
 
-                // 写入虚拟文件系统 (0.11版本API)
-                var filename = 'frame_' + String(i).padStart(4, '0') + '.png';
+                // 写入虚拟文件系统 (0.11版本API，改为.jpg)
+                var filename = 'frame_' + String(i).padStart(4, '0') + '.jpg';
                 ffmpeg.FS('writeFile', filename, uint8Array);
 
                 // 更新进度 (写入阶段占50%)
                 this.mp4ConvertProgress = Math.round((i + 1) / frameCount * 50);
-                this.mp4ConvertMessage = '写入帧数据 ' + (i + 1) + '/' + frameCount;
+                this.mp4ConvertMessage = '转换JPG帧 ' + (i + 1) + '/' + frameCount;
               }
 
               // 执行编码
@@ -2926,7 +2958,7 @@ function initApp() {
 
               var ffmpegArgs = [
                 '-framerate', String(fps),
-                '-i', 'frame_%04d.png'
+                '-i', 'frame_%04d.jpg'  // 从.png改为.jpg
               ];
               
               // 如果有音频，添加音频输入
@@ -2935,15 +2967,13 @@ function initApp() {
               }
               
               ffmpegArgs.push(
-                // 添加黑色底色：在PNG下方叠加黑色层
-                '-vf', 'format=rgba,colorchannelmixer=aa=1,split[bg][fg];[bg]drawbox=c=black@1:replace=1:t=fill[bg];[bg][fg]overlay=format=auto',
+                // 已在JPG生成时加了黑底，无需滚镜处理
                 '-c:v', 'libx264',
                 '-profile:v', 'high',
                 '-level', '4.0',
                 '-pix_fmt', 'yuv420p',  // Windows兼容性
                 '-crf', String(crf),
                 '-preset', 'medium',
-                '-sws_flags', 'neighbor',  // 使用最近邻插值，避免颜色混合
                 '-movflags', '+faststart'
               );
 
@@ -3000,7 +3030,7 @@ function initApp() {
 
               // 清理虚拟文件系统
               for (var j = 0; j < frameCount; j++) {
-                var fname = 'frame_' + String(j).padStart(4, '0') + '.png';
+                var fname = 'frame_' + String(j).padStart(4, '0') + '.jpg';  // 从.png改为.jpg
                 try {
                   ffmpeg.FS('unlink', fname);
                 } catch (e) {}
