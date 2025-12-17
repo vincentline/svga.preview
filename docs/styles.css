@@ -839,6 +839,90 @@ body.dark-mode .info-item-value {
   transform: translate(-50%, -50%);
 }
 
+/* 静音按钮 */
+.mute-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  border: none;
+  background-color: transparent;
+  background-image: url('assets/img/mute_Default.png');
+  background-size: 20px 20px;
+  background-position: center;
+  background-repeat: no-repeat;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s;
+  margin-left: 4px;
+}
+
+.mute-btn:hover {
+  background-image: url('assets/img/mute_hover.png');
+}
+
+.mute-btn:active {
+  background-image: url('assets/img/mute_press.png');
+}
+
+/* 静音状态（已开启静音） */
+.mute-btn.is-muted {
+  background-image: url('assets/img/mute_on_Default.png');
+}
+
+.mute-btn.is-muted:hover {
+  background-image: url('assets/img/mute_on_hover.png');
+}
+
+.mute-btn.is-muted:active {
+  background-image: url('assets/img/mute_on_press.png');
+}
+
+/* 禁用状态（无音频） */
+.mute-btn.is-disabled {
+  background-image: url('assets/img/mute_disabled.png');
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.mute-btn.is-disabled:hover,
+.mute-btn.is-disabled:active {
+  background-image: url('assets/img/mute_disabled.png');
+}
+
+/* 暗黑模式 */
+body.dark-mode .mute-btn {
+  background-image: url('assets/img/mute_Default_dark.png');
+}
+
+body.dark-mode .mute-btn:hover {
+  background-image: url('assets/img/mute_hover_dark.png');
+}
+
+body.dark-mode .mute-btn:active {
+  background-image: url('assets/img/mute_press_dark.png');
+}
+
+body.dark-mode .mute-btn.is-muted {
+  background-image: url('assets/img/mute_on_Default_dark.png');
+}
+
+body.dark-mode .mute-btn.is-muted:hover {
+  background-image: url('assets/img/mute_on_hover_dark.png');
+}
+
+body.dark-mode .mute-btn.is-muted:active {
+  background-image: url('assets/img/mute_on_press_dark.png');
+}
+
+body.dark-mode .mute-btn.is-disabled {
+  background-image: url('assets/img/mute_disabled_dark.png');
+}
+
+body.dark-mode .mute-btn.is-disabled:hover,
+body.dark-mode .mute-btn.is-disabled:active {
+  background-image: url('assets/img/mute_disabled_dark.png');
+}
+
 /* 进度条 */
 .progress-bar {
   width: 260px;
