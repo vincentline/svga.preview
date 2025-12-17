@@ -954,8 +954,11 @@ function initApp() {
               
               // 再等待50ms让内容渲染，然后开始播放
               setTimeout(function() {
-                _this.svgaPlayer.startAnimation();
-                _this.isPlaying = true;
+                // 检查svgaPlayer是否还存在（可能已被模式切换清理）
+                if (_this.svgaPlayer && _this.currentModule === 'svga') {
+                  _this.svgaPlayer.startAnimation();
+                  _this.isPlaying = true;
+                }
               }, 50);
             }, 400);
 
@@ -2189,8 +2192,8 @@ function initApp() {
                     _this.gifExportProgress = 0;
                     alert('GIF 编码失败: ' + err.message);
                     
-                    // 恢复播放状态
-                    if (wasPlaying) {
+                    // 恢复播放状态（检查播放器是否还存在）
+                    if (wasPlaying && _this.svgaPlayer && _this.currentModule === 'svga') {
                       _this.svgaPlayer.startAnimation();
                     }
                   }
@@ -2245,8 +2248,8 @@ function initApp() {
                   _this.gifExportProgress = 0;
                   alert('捕获帧失败: ' + err.message);
                   
-                  // 恢复播放状态
-                  if (wasPlaying) {
+                  // 恢复播放状态（检查播放器是否还存在）
+                  if (wasPlaying && _this.svgaPlayer && _this.currentModule === 'svga') {
                     _this.svgaPlayer.startAnimation();
                   }
                 }
@@ -2877,8 +2880,8 @@ function initApp() {
                 }
               }
             } finally {
-              // 恢复播放状态
-              if (wasPlaying) {
+              // 恢复播放状态（检查播放器是否还存在）
+              if (wasPlaying && this.svgaPlayer && this.currentModule === 'svga') {
                 this.svgaPlayer.startAnimation();
               }
             }
