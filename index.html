@@ -322,8 +322,8 @@
                 <!-- SVGA 模式 -->
                 <template v-if="currentModule === 'svga'">
                   <div class="footer-actions-left">
-                    <button class="btn-primary" @click="triggerReuploadSVGA" v-if="svga.hasFile">
-                      重传SVGA
+                    <button class="btn-primary" @click="triggerChangePreviewFile" v-if="svga.hasFile">
+                      更换预览文件
                     </button>
                   </div>
                   <div class="footer-actions">
