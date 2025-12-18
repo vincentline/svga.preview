@@ -448,6 +448,12 @@
       .material-btns {
         display: flex;
         gap: 8px;
+        opacity: 0;
+        transition: opacity 0.2s;
+      }
+
+      .material-card:hover .material-btns {
+        opacity: 1;
       }
 
       /* 按钮样式 */
