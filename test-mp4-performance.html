@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SVGA转MP4性能对比测试</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            font-size: 32px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .upload-section {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #f8f9ff;
+        }
+        
+        .upload-area:hover {
+            border-color: #764ba2;
+            background: #f0f2ff;
+        }
+        
+        .upload-area.dragging {
+            border-color: #764ba2;
+            background: #e8ebff;
+            transform: scale(1.02);
+        }
+        
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        
+        .file-info {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e8f5e9;
+            border-radius: 8px;
+            display: none;
+        }
+        
+        .file-info.show {
+            display: block;
+        }
+        
+        .comparison-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .test-panel {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .panel-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .version-badge {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .badge-old {
+            background: #ffebee;
+            color: #c62828;
+        }
+        
+        .badge-new {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        
+        .start-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+        }
+        
+        .start-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .start-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .progress-section {
+            display: none;
+        }
+        
+        .progress-section.active {
+            display: block;
+        }
+        
+        .progress-bar-container {
+            background: #f0f0f0;
+            border-radius: 10px;
+            height: 30px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .stage-info {
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .metric-item {
+            padding: 12px;
+            background: #f8f9ff;
+            border-radius: 6px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .metric-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .metric-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .result-section {
+            display: none;
+            margin-top: 20px;
+        }
+        
+        .result-section.show {
+            display: block;
+        }
+        
+        .download-btn {
+            width: 100%;
+            padding: 12px;
+            background: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .download-btn:hover {
+            background: #45a049;
+        }
+        
+        .video-preview {
+            width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            margin-top: 15px;
+            background: #000;
+        }
+        
+        .summary-section {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            display: none;
+        }
+        
+        .summary-section.show {
+            display: block;
+        }
+        
+        .summary-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        
+        .comparison-table th,
+        .comparison-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .comparison-table th {
+            background: #f5f5f5;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .comparison-table td.better {
+            color: #2e7d32;
+            font-weight: bold;
+        }
+        
+        .comparison-table td.worse {
+            color: #c62828;
+        }
+        
+        .reset-btn {
+            width: 100%;
+            padding: 15px;
+            background: #ff5722;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .reset-btn:hover {
+            background: #f4511e;
+        }
+        
+        .error-message {
+            padding: 15px;
+            background: #ffebee;
+            color: #c62828;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
+        }
+        
+        .error-message.show {
+            display: block;
+        }
+        
+        @media (max-width: 768px) {
+            .comparison-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 SVGA转MP4性能对比测试</h1>
+        
+        <!-- 上传区域 -->
+        <div class="upload-section">
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📁</div>
+                <h3>拖拽SVGA文件到这里，或点击选择文件</h3>
+                <p style="color: #666; margin-top: 10px;">支持 .svga 格式</p>
+                <input type="file" id="fileInput" accept=".svga" style="display: none;">
+            </div>
+            
+            <div class="file-info" id="fileInfo">
+                <strong>已选择文件：</strong>
+                <span id="fileName"></span>
+                <br>
+                <strong>文件大小：</strong>
+                <span id="fileSize"></span>
+                <br>
+                <strong>动画尺寸：</strong>
+                <span id="svgaSize"></span>
+                <br>
+                <strong>总帧数：</strong>
+                <span id="svgaFrames"></span>
+            </div>
+        </div>
+        
+        <!-- 对比测试区域 -->
+        <div class="comparison-container">
+            <!-- 优化前 -->
+            <div class="test-panel">
+                <div class="panel-header">
+                    <div class="panel-title">方案A：优化前</div>
+                    <div class="version-badge badge-old">当前版本</div>
+                </div>
+                
+                <button class="start-btn" id="startOld" disabled>开始转换</button>
+                
+                <div class="progress-section" id="progressOld">
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" id="progressBarOld" style="width: 0%">0%</div>
+                    </div>
+                    <div class="stage-info" id="stageOld">等待开始...</div>
+                    
+                    <div class="metrics">
+                        <div class="metric-item">
+                            <div class="metric-label">总耗时</div>
+                            <div class="metric-value" id="timeOld">0s</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-label">当前阶段</div>
+                            <div class="metric-value" id="currentStageOld">-</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="result-section" id="resultOld">
+                    <button class="download-btn" id="downloadOld">下载MP4</button>
+                    <video class="video-preview" id="videoOld" controls></video>
+                </div>
+                
+                <div class="error-message" id="errorOld"></div>
+            </div>
+            
+            <!-- 优化后 -->
+            <div class="test-panel">
+                <div class="panel-header">
+                    <div class="panel-title">方案B：优化后</div>
+                    <div class="version-badge badge-new">优化版本</div>
+                </div>
+                
+                <button class="start-btn" id="startNew" disabled>开始转换</button>
+                
+                <div class="progress-section" id="progressNew">
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" id="progressBarNew" style="width: 0%">0%</div>
+                    </div>
+                    <div class="stage-info" id="stageNew">等待开始...</div>
+                    
+                    <div class="metrics">
+                        <div class="metric-item">
+                            <div class="metric-label">总耗时</div>
+                            <div class="metric-value" id="timeNew">0s</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-label">当前阶段</div>
+                            <div class="metric-value" id="currentStageNew">-</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="result-section" id="resultNew">
+                    <button class="download-btn" id="downloadNew">下载MP4</button>
+                    <video class="video-preview" id="videoNew" controls></video>
+                </div>
+                
+                <div class="error-message" id="errorNew"></div>
+            </div>
+        </div>
+        
+        <!-- 对比总结 -->
+        <div class="summary-section" id="summary">
+            <div class="summary-title">📊 性能对比总结</div>
+            
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>指标</th>
+                        <th>优化前</th>
+                        <th>优化后</th>
+                        <th>提升</th>
+                    </tr>
+                </thead>
+                <tbody id="summaryTable">
+                    <!-- 动态填充 -->
+                </tbody>
+            </table>
+            
+            <button class="reset-btn" id="resetBtn">重置并开始新测试</button>
+        </div>
+    </div>
+    
+    <!-- SVGA库 -->
+    <script src="https://cdn.jsdelivr.net/npm/svgaplayerweb@2.3.1/build/svga.min.js"></script>
+    
+    <script>
+        // 等待SVGA库加载完成
+        window.addEventListener('load', function() {
+            console.log('SVGA库已加载:', typeof SVGA);
+        });
+    </script>
+    
+    <!-- FFmpeg.wasm -->
+    <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
+    
+    <script>
+        // 全局变量
+        let svgaFile = null;
+        let svgaParser = null; // 延迟初始化
+        let videoItem = null;
+        let ffmpegOld = null;
+        let ffmpegNew = null;
+        
+        // 测试结果
+        let resultsOld = null;
+        let resultsNew = null;
+        
+        // 等待SVGA库完全加载后初始化
+        window.addEventListener('load', function() {
+            if (typeof SVGA !== 'undefined') {
+                svgaParser = new SVGA.Parser();
+                console.log('SVGA Parser已初始化');
+            } else {
+                console.error('SVGA库加载失败');
+                alert('SVGA库加载失败，请刷新页面重试');
+            }
+        });
+        
+        // DOM元素
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('fileInfo');
+        const startOldBtn = document.getElementById('startOld');
+        const startNewBtn = document.getElementById('startNew');
+        
+        // 上传区域事件
+        uploadArea.addEventListener('click', () => fileInput.click());
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragging');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragging');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragging');
+            const files = e.dataTransfer.files;
+            if (files.length > 0 && files[0].name.endsWith('.svga')) {
+                handleFile(files[0]);
+            }
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+        
+        // 处理文件
+        async function handleFile(file) {
+            // 确保SVGA Parser已初始化
+            if (!svgaParser) {
+                alert('SVGA库尚未加载完成，请稍后再试');
+                return;
+            }
+            
+            svgaFile = file;
+            
+            // 显示文件信息
+            document.getElementById('fileName').textContent = file.name;
+            document.getElementById('fileSize').textContent = (file.size / 1024).toFixed(2) + ' KB';
+            
+            // 解析SVGA
+            try {
+                // 使用URL方式加载SVGA文件（推荐方式）
+                const fileURL = URL.createObjectURL(file);
+                
+                videoItem = await new Promise((resolve, reject) => {
+                    svgaParser.load(
+                        fileURL,
+                        (videoItem) => {
+                            console.log('SVGA解析成功:', videoItem);
+                            URL.revokeObjectURL(fileURL); // 释放URL
+                            resolve(videoItem);
+                        },
+                        (error) => {
+                            console.error('SVGA解析失败:', error);
+                            URL.revokeObjectURL(fileURL); // 释放URL
+                            reject(new Error(error || 'SVGA解析失败'));
+                        }
+                    );
+                });
+                
+                // 验证videoItem
+                if (!videoItem || !videoItem.videoSize || !videoItem.frames) {
+                    throw new Error('SVGA文件数据不完整');
+                }
+                
+                document.getElementById('svgaSize').textContent = 
+                    videoItem.videoSize.width + ' x ' + videoItem.videoSize.height;
+                document.getElementById('svgaFrames').textContent = videoItem.frames;
+                
+                fileInfo.classList.add('show');
+                startOldBtn.disabled = false;
+                startNewBtn.disabled = false;
+                
+            } catch (error) {
+                console.error('SVGA解析错误:', error);
+                alert('SVGA文件解析失败：' + (error.message || error || '未知错误'));
+            }
+        }
+        
+        // 开始测试（优化前）
+        startOldBtn.addEventListener('click', async () => {
+            startOldBtn.disabled = true;
+            document.getElementById('progressOld').classList.add('active');
+            document.getElementById('resultOld').classList.remove('show');
+            document.getElementById('errorOld').classList.remove('show');
+            
+            try {
+                resultsOld = await convertToMP4Old();
+                showResult('old', resultsOld);
+                checkShowSummary();
+            } catch (error) {
+                showError('old', error.message);
+            } finally {
+                startOldBtn.disabled = false;
+            }
+        });
+        
+        // 开始测试（优化后）
+        startNewBtn.addEventListener('click', async () => {
+            startNewBtn.disabled = true;
+            document.getElementById('progressNew').classList.add('active');
+            document.getElementById('resultNew').classList.remove('show');
+            document.getElementById('errorNew').classList.remove('show');
+            
+            try {
+                resultsNew = await convertToMP4New();
+                showResult('new', resultsNew);
+                checkShowSummary();
+            } catch (error) {
+                showError('new', error.message);
+            } finally {
+                startNewBtn.disabled = false;
+            }
+        });
+        
+        // 显示结果
+        function showResult(type, results) {
+            const prefix = type === 'old' ? 'Old' : 'New';
+            document.getElementById(`result${prefix}`).classList.add('show');
+            document.getElementById(`video${prefix}`).src = URL.createObjectURL(results.blob);
+            
+            document.getElementById(`download${prefix}`).onclick = () => {
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(results.blob);
+                a.download = `test_${type}_${Date.now()}.mp4`;
+                a.click();
+            };
+        }
+        
+        // 显示错误
+        function showError(type, message) {
+            const prefix = type === 'old' ? 'Old' : 'New';
+            const errorEl = document.getElementById(`error${prefix}`);
+            errorEl.textContent = '转换失败：' + message;
+            errorEl.classList.add('show');
+        }
+        
+        // 检查是否显示总结
+        function checkShowSummary() {
+            if (resultsOld && resultsNew) {
+                showSummary();
+            }
+        }
+        
+        // 显示总结
+        function showSummary() {
+            const summary = document.getElementById('summary');
+            const tbody = document.getElementById('summaryTable');
+            
+            const speedup = (resultsOld.totalTime / resultsNew.totalTime).toFixed(2);
+            const timeSaved = (resultsOld.totalTime - resultsNew.totalTime).toFixed(2);
+            
+            tbody.innerHTML = `
+                <tr>
+                    <td>总耗时</td>
+                    <td>${resultsOld.totalTime.toFixed(2)}s</td>
+                    <td class="better">${resultsNew.totalTime.toFixed(2)}s</td>
+                    <td class="better">快 ${timeSaved}s (${speedup}x)</td>
+                </tr>
+                <tr>
+                    <td>序列帧提取</td>
+                    <td>${resultsOld.extractTime.toFixed(2)}s</td>
+                    <td class="better">${resultsNew.extractTime.toFixed(2)}s</td>
+                    <td class="better">快 ${(resultsOld.extractTime - resultsNew.extractTime).toFixed(2)}s</td>
+                </tr>
+                <tr>
+                    <td>双通道合成</td>
+                    <td>${resultsOld.composeTime.toFixed(2)}s</td>
+                    <td class="better">${resultsNew.composeTime.toFixed(2)}s</td>
+                    <td class="better">快 ${(resultsOld.composeTime - resultsNew.composeTime).toFixed(2)}s</td>
+                </tr>
+                <tr>
+                    <td>JPEG转换</td>
+                    <td>${resultsOld.jpegTime.toFixed(2)}s</td>
+                    <td class="better">${resultsNew.jpegTime.toFixed(2)}s</td>
+                    <td class="better">快 ${(resultsOld.jpegTime - resultsNew.jpegTime).toFixed(2)}s</td>
+                </tr>
+                <tr>
+                    <td>FFmpeg编码</td>
+                    <td>${resultsOld.encodeTime.toFixed(2)}s</td>
+                    <td class="better">${resultsNew.encodeTime.toFixed(2)}s</td>
+                    <td class="better">快 ${(resultsOld.encodeTime - resultsNew.encodeTime).toFixed(2)}s</td>
+                </tr>
+                <tr>
+                    <td>文件大小</td>
+                    <td>${(resultsOld.fileSize / 1024 / 1024).toFixed(2)} MB</td>
+                    <td>${(resultsNew.fileSize / 1024 / 1024).toFixed(2)} MB</td>
+                    <td>${resultsOld.fileSize === resultsNew.fileSize ? '相同' : '略有差异'}</td>
+                </tr>
+            `;
+            
+            summary.classList.add('show');
+        }
+        
+        // 重置
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            location.reload();
+        });
+        
+        // ============ 优化前的转换逻辑 ============
+        async function convertToMP4Old() {
+            const startTime = Date.now();
+            let extractTime, composeTime, jpegTime, encodeTime;
+            
+            updateProgress('old', 0, '加载FFmpeg...');
+            await loadFFmpegOld();
+            
+            // 提取帧
+            updateProgress('old', 10, '提取序列帧...');
+            const extractStart = Date.now();
+            const frames = await extractFramesOld();
+            extractTime = (Date.now() - extractStart) / 1000;
+            
+            // 合成双通道
+            updateProgress('old', 40, '合成双通道...');
+            const composeStart = Date.now();
+            const dualFrames = await composeDualChannelOld(frames);
+            composeTime = (Date.now() - composeStart) / 1000;
+            
+            // 编码
+            updateProgress('old', 60, '转换JPEG并编码...');
+            const encodeStart = Date.now();
+            const result = await encodeToMP4Old(dualFrames);
+            const encodeEnd = Date.now();
+            encodeTime = (encodeEnd - encodeStart) / 1000;
+            jpegTime = result.jpegTime;
+            
+            const totalTime = (Date.now() - startTime) / 1000;
+            
+            updateProgress('old', 100, '完成！');
+            updateMetric('old', 'time', totalTime.toFixed(2) + 's');
+            
+            return {
+                blob: result.blob,
+                totalTime,
+                extractTime,
+                composeTime,
+                jpegTime,
+                encodeTime,
+                fileSize: result.blob.size
+            };
+        }
+        
+        async function loadFFmpegOld() {
+            if (!ffmpegOld) {
+                ffmpegOld = FFmpeg.createFFmpeg({
+                    log: false,
+                    corePath: 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js'
+                });
+                await ffmpegOld.load();
+            }
+        }
+        
+        async function extractFramesOld() {
+            const frames = [];
+            const totalFrames = videoItem.frames;
+            const width = videoItem.videoSize.width;
+            const height = videoItem.videoSize.height;
+            
+            // 创建临时播放器
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            document.body.appendChild(canvas); // 必须添加到DOM
+            canvas.style.display = 'none';
+            
+            const player = new SVGA.Player(canvas);
+            await new Promise(resolve => {
+                player.setVideoItem(videoItem);
+                setTimeout(resolve, 100); // 等待渲染准备
+            });
+            
+            for (let i = 0; i < totalFrames; i++) {
+                player.stepToFrame(i, false);
+                await new Promise(r => setTimeout(r, 100)); // 优化前：等待100ms
+                
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = width;
+                tempCanvas.height = height;
+                const ctx = tempCanvas.getContext('2d');
+                ctx.drawImage(canvas, 0, 0);
+                frames.push(ctx.getImageData(0, 0, width, height));
+                
+                updateProgress('old', 10 + (i + 1) / totalFrames * 30, `提取序列帧 ${i + 1}/${totalFrames}`);
+            }
+            
+            // 清理
+            player.clear();
+            document.body.removeChild(canvas);
+            
+            return frames;
+        }
+        
+        async function composeDualChannelOld(frames) {
+            const dualFrames = [];
+            
+            for (let i = 0; i < frames.length; i++) {
+                const imageData = frames[i];
+                const width = imageData.width;
+                const height = imageData.height;
+                
+                const dualCanvas = document.createElement('canvas');
+                dualCanvas.width = width * 2;
+                dualCanvas.height = height;
+                const dualCtx = dualCanvas.getContext('2d');
+                
+                // 优化前：创建左右两个ImageData
+                const leftData = dualCtx.createImageData(width, height);
+                const rightData = dualCtx.createImageData(width, height);
+                
+                for (let j = 0; j < imageData.data.length; j += 4) {
+                    const r = imageData.data[j + 0];
+                    const g = imageData.data[j + 1];
+                    const b = imageData.data[j + 2];
+                    const a = imageData.data[j + 3];
+                    
+                    let finalR = r, finalG = g, finalB = b;
+                    if (a > 0 && a < 255) {
+                        finalR = Math.min(255, Math.round(r * 255 / a));
+                        finalG = Math.min(255, Math.round(g * 255 / a));
+                        finalB = Math.min(255, Math.round(b * 255 / a));
+                    } else if (a === 0) {
+                        finalR = finalG = finalB = 0;
+                    }
+                    
+                    leftData.data[j + 0] = finalR;
+                    leftData.data[j + 1] = finalG;
+                    leftData.data[j + 2] = finalB;
+                    leftData.data[j + 3] = a;
+                    
+                    rightData.data[j + 0] = a;
+                    rightData.data[j + 1] = a;
+                    rightData.data[j + 2] = a;
+                    rightData.data[j + 3] = 255;
+                }
+                
+                dualCtx.putImageData(leftData, 0, 0);
+                dualCtx.putImageData(rightData, width, 0);
+                
+                dualFrames.push(dualCanvas);
+                
+                updateProgress('old', 40 + (i + 1) / frames.length * 20, `合成双通道 ${i + 1}/${frames.length}`);
+            }
+            
+            return dualFrames;
+        }
+        
+        async function encodeToMP4Old(dualFrames) {
+            const jpegStart = Date.now();
+            
+            // 优化前：每帧创建新Canvas
+            for (let i = 0; i < dualFrames.length; i++) {
+                const frameCanvas = dualFrames[i];
+                
+                const blackBgCanvas = document.createElement('canvas'); // 每次创建
+                blackBgCanvas.width = frameCanvas.width;
+                blackBgCanvas.height = frameCanvas.height;
+                const blackBgCtx = blackBgCanvas.getContext('2d');
+                
+                const dualCtx = frameCanvas.getContext('2d');
+                const dualImageData = dualCtx.getImageData(0, 0, frameCanvas.width, frameCanvas.height);
+                const blackBgImageData = blackBgCtx.createImageData(frameCanvas.width, frameCanvas.height);
+                
+                for (let j = 0; j < dualImageData.data.length; j += 4) {
+                    blackBgImageData.data[j + 0] = dualImageData.data[j + 0];
+                    blackBgImageData.data[j + 1] = dualImageData.data[j + 1];
+                    blackBgImageData.data[j + 2] = dualImageData.data[j + 2];
+                    blackBgImageData.data[j + 3] = 255;
+                }
+                
+                blackBgCtx.putImageData(blackBgImageData, 0, 0);
+                
+                const blob = await new Promise(resolve => {
+                    blackBgCanvas.toBlob(resolve, 'image/jpeg', 0.6);
+                });
+                
+                const buffer = await blob.arrayBuffer();
+                const filename = 'frame_' + String(i).padStart(4, '0') + '.jpg';
+                ffmpegOld.FS('writeFile', filename, new Uint8Array(buffer));
+                
+                updateProgress('old', 60 + (i + 1) / dualFrames.length * 20, `转换JPG ${i + 1}/${dualFrames.length}`);
+            }
+            
+            const jpegTime = (Date.now() - jpegStart) / 1000;
+            
+            // FFmpeg编码（优化前：medium preset）
+            updateProgress('old', 80, '编码视频...');
+            await ffmpegOld.run(
+                '-framerate', '30',
+                '-i', 'frame_%04d.jpg',
+                '-c:v', 'libx264',
+                '-pix_fmt', 'yuv420p',
+                '-crf', '24',
+                '-preset', 'medium', // 优化前
+                'output.mp4'
+            );
+            
+            const data = ffmpegOld.FS('readFile', 'output.mp4');
+            const blob = new Blob([data.buffer], { type: 'video/mp4' });
+            
+            // 清理
+            for (let i = 0; i < dualFrames.length; i++) {
+                try {
+                    ffmpegOld.FS('unlink', 'frame_' + String(i).padStart(4, '0') + '.jpg');
+                } catch (e) {}
+            }
+            try {
+                ffmpegOld.FS('unlink', 'output.mp4');
+            } catch (e) {}
+            
+            return { blob, jpegTime };
+        }
+        
+        // ============ 优化后的转换逻辑 ============
+        async function convertToMP4New() {
+            const startTime = Date.now();
+            let extractTime, composeTime, jpegTime, encodeTime;
+            
+            updateProgress('new', 0, '加载FFmpeg...');
+            await loadFFmpegNew();
+            
+            // 提取帧（优化）
+            updateProgress('new', 10, '提取序列帧...');
+            const extractStart = Date.now();
+            const frames = await extractFramesNew();
+            extractTime = (Date.now() - extractStart) / 1000;
+            
+            // 合成双通道（优化）
+            updateProgress('new', 40, '合成双通道...');
+            const composeStart = Date.now();
+            const dualFrames = await composeDualChannelNew(frames);
+            composeTime = (Date.now() - composeStart) / 1000;
+            
+            // 编码（优化）
+            updateProgress('new', 60, '转换JPEG并编码...');
+            const encodeStart = Date.now();
+            const result = await encodeToMP4New(dualFrames);
+            const encodeEnd = Date.now();
+            encodeTime = (encodeEnd - encodeStart) / 1000;
+            jpegTime = result.jpegTime;
+            
+            const totalTime = (Date.now() - startTime) / 1000;
+            
+            updateProgress('new', 100, '完成！');
+            updateMetric('new', 'time', totalTime.toFixed(2) + 's');
+            
+            return {
+                blob: result.blob,
+                totalTime,
+                extractTime,
+                composeTime,
+                jpegTime,
+                encodeTime,
+                fileSize: result.blob.size
+            };
+        }
+        
+        async function loadFFmpegNew() {
+            if (!ffmpegNew) {
+                ffmpegNew = FFmpeg.createFFmpeg({
+                    log: false,
+                    corePath: 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js'
+                });
+                await ffmpegNew.load();
+            }
+        }
+        
+        async function extractFramesNew() {
+            const frames = [];
+            const totalFrames = videoItem.frames;
+            const width = videoItem.videoSize.width;
+            const height = videoItem.videoSize.height;
+            
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            document.body.appendChild(canvas); // 必须添加到DOM
+            canvas.style.display = 'none';
+            
+            const player = new SVGA.Player(canvas);
+            await new Promise(resolve => {
+                player.setVideoItem(videoItem);
+                setTimeout(resolve, 100); // 等待渲染准备
+            });
+            
+            for (let i = 0; i < totalFrames; i++) {
+                player.stepToFrame(i, false);
+                await new Promise(r => setTimeout(r, 16)); // 优化后：16ms
+                
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = width;
+                tempCanvas.height = height;
+                const ctx = tempCanvas.getContext('2d');
+                ctx.drawImage(canvas, 0, 0);
+                frames.push(ctx.getImageData(0, 0, width, height));
+                
+                updateProgress('new', 10 + (i + 1) / totalFrames * 30, `提取序列帧 ${i + 1}/${totalFrames}`);
+            }
+            
+            // 清理
+            player.clear();
+            document.body.removeChild(canvas);
+            
+            return frames;
+        }
+        
+        async function composeDualChannelNew(frames) {
+            const dualFrames = [];
+            
+            for (let i = 0; i < frames.length; i++) {
+                const imageData = frames[i];
+                const width = imageData.width;
+                const height = imageData.height;
+                
+                const dualCanvas = document.createElement('canvas');
+                dualCanvas.width = width * 2;
+                dualCanvas.height = height;
+                const dualCtx = dualCanvas.getContext('2d');
+                
+                // 优化后：直接操作最终ImageData
+                const dualImageData = dualCtx.createImageData(width * 2, height);
+                const dualData = dualImageData.data;
+                
+                for (let j = 0; j < imageData.data.length; j += 4) {
+                    const r = imageData.data[j + 0];
+                    const g = imageData.data[j + 1];
+                    const b = imageData.data[j + 2];
+                    const a = imageData.data[j + 3];
+                    
+                    let finalR = r, finalG = g, finalB = b;
+                    if (a > 0 && a < 255) {
+                        finalR = Math.min(255, Math.round(r * 255 / a));
+                        finalG = Math.min(255, Math.round(g * 255 / a));
+                        finalB = Math.min(255, Math.round(b * 255 / a));
+                    } else if (a === 0) {
+                        finalR = finalG = finalB = 0;
+                    }
+                    
+                    const pixelIndex = Math.floor(j / 4);
+                    const row = Math.floor(pixelIndex / width);
+                    const col = pixelIndex % width;
+                    
+                    const leftIdx = (row * width * 2 + col) * 4;
+                    const rightIdx = (row * width * 2 + col + width) * 4;
+                    
+                    dualData[leftIdx + 0] = finalR;
+                    dualData[leftIdx + 1] = finalG;
+                    dualData[leftIdx + 2] = finalB;
+                    dualData[leftIdx + 3] = a;
+                    
+                    dualData[rightIdx + 0] = a;
+                    dualData[rightIdx + 1] = a;
+                    dualData[rightIdx + 2] = a;
+                    dualData[rightIdx + 3] = 255;
+                }
+                
+                dualCtx.putImageData(dualImageData, 0, 0);
+                dualFrames.push(dualCanvas);
+                
+                updateProgress('new', 40 + (i + 1) / frames.length * 20, `合成双通道 ${i + 1}/${frames.length}`);
+            }
+            
+            return dualFrames;
+        }
+        
+        async function encodeToMP4New(dualFrames) {
+            const jpegStart = Date.now();
+            
+            // 优化后：复用Canvas
+            const blackBgCanvas = document.createElement('canvas');
+            blackBgCanvas.width = dualFrames[0].width;
+            blackBgCanvas.height = dualFrames[0].height;
+            const blackBgCtx = blackBgCanvas.getContext('2d');
+            const blackBgImageData = blackBgCtx.createImageData(blackBgCanvas.width, blackBgCanvas.height);
+            
+            for (let i = 0; i < dualFrames.length; i++) {
+                const frameCanvas = dualFrames[i];
+                const dualCtx = frameCanvas.getContext('2d');
+                const dualImageData = dualCtx.getImageData(0, 0, frameCanvas.width, frameCanvas.height);
+                
+                for (let j = 0; j < dualImageData.data.length; j += 4) {
+                    blackBgImageData.data[j + 0] = dualImageData.data[j + 0];
+                    blackBgImageData.data[j + 1] = dualImageData.data[j + 1];
+                    blackBgImageData.data[j + 2] = dualImageData.data[j + 2];
+                    blackBgImageData.data[j + 3] = 255;
+                }
+                
+                blackBgCtx.putImageData(blackBgImageData, 0, 0);
+                
+                const blob = await new Promise(resolve => {
+                    blackBgCanvas.toBlob(resolve, 'image/jpeg', 0.6);
+                });
+                
+                const buffer = await blob.arrayBuffer();
+                const filename = 'frame_' + String(i).padStart(4, '0') + '.jpg';
+                ffmpegNew.FS('writeFile', filename, new Uint8Array(buffer));
+                
+                updateProgress('new', 60 + (i + 1) / dualFrames.length * 20, `转换JPG ${i + 1}/${dualFrames.length}`);
+            }
+            
+            const jpegTime = (Date.now() - jpegStart) / 1000;
+            
+            // FFmpeg编码（优化后：veryfast + animation tune）
+            updateProgress('new', 80, '编码视频...');
+            await ffmpegNew.run(
+                '-framerate', '30',
+                '-i', 'frame_%04d.jpg',
+                '-c:v', 'libx264',
+                '-pix_fmt', 'yuv420p',
+                '-crf', '24',
+                '-preset', 'veryfast',  // 优化后
+                '-tune', 'animation',   // 优化后
+                'output.mp4'
+            );
+            
+            const data = ffmpegNew.FS('readFile', 'output.mp4');
+            const blob = new Blob([data.buffer], { type: 'video/mp4' });
+            
+            // 清理
+            for (let i = 0; i < dualFrames.length; i++) {
+                try {
+                    ffmpegNew.FS('unlink', 'frame_' + String(i).padStart(4, '0') + '.jpg');
+                } catch (e) {}
+            }
+            try {
+                ffmpegNew.FS('unlink', 'output.mp4');
+            } catch (e) {}
+            
+            return { blob, jpegTime };
+        }
+        
+        // 工具函数
+        function updateProgress(type, percent, message) {
+            const prefix = type === 'old' ? 'Old' : 'New';
+            document.getElementById(`progressBar${prefix}`).style.width = percent + '%';
+            document.getElementById(`progressBar${prefix}`).textContent = Math.round(percent) + '%';
+            document.getElementById(`stage${prefix}`).textContent = message;
+            document.getElementById(`currentStage${prefix}`).textContent = message.split(' ')[0];
+        }
+        
+        function updateMetric(type, metric, value) {
+            const prefix = type === 'old' ? 'Old' : 'New';
+            document.getElementById(`${metric}${prefix}`).textContent = value;
+        }
+    </script>
+</body>
+</html>
