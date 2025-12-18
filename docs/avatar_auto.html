@@ -216,15 +216,62 @@
         max-width: 1000px;
         height: 80%;
         max-height: 700px;
-        background: #ffffff;
-        border-radius: 16px;
         overflow: hidden;
+        position: relative;
+        border-radius: 16px;
+        background: #ffffff;
+        background-image: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjEiIGZpbGw9IiNlM2UzZTMiLz48L3N2Zz4=);
+        background-size: 8px 8px;
         box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
       }
 
       body.dark-mode .modal-container {
         background: #2a2a2a;
+        background-image: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjEiIGZpbGw9IiM0MDQwNDAiLz48L3N2Zz4=);
+        background-size: 8px 8px;
         box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+      }
+
+      /* 关闭按钮 */
+      .modal-close-btn {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        width: 32px;
+        height: 32px;
+        border: none;
+        background: rgba(0, 0, 0, 0.1);
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+        transition: all 0.2s;
+      }
+
+      .modal-close-btn:hover {
+        background: rgba(0, 0, 0, 0.2);
+        transform: scale(1.1);
+      }
+
+      body.dark-mode .modal-close-btn {
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      body.dark-mode .modal-close-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
+
+      .modal-close-btn svg {
+        width: 16px;
+        height: 16px;
+        stroke: #333;
+        stroke-width: 2;
+      }
+
+      body.dark-mode .modal-close-btn svg {
+        stroke: #e0e0e0;
       }
 
       /* 左侧效果预览区 */
@@ -233,7 +280,6 @@
         display: flex;
         flex-direction: column;
         padding: 24px;
-        border-right: 1px solid #e3e3e3;
       }
 
       body.dark-mode .preview-section {
@@ -245,10 +291,10 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background: #f5f5f5;
         border-radius: 12px;
         overflow: hidden;
         position: relative;
+        max-height: 400px;
       }
 
       body.dark-mode .preview-player {
@@ -256,14 +302,14 @@
       }
 
       #svgaContainer {
-        width: 100%;
-        height: 100%;
+        width: 400px;
+        height: 400px;
       }
 
       .preview-info {
         margin-top: 16px;
         padding: 12px;
-        background: #f5f5f5;
+        background: #fff;
         border-radius: 8px;
       }
 
@@ -292,8 +338,16 @@
         font-weight: 500;
       }
 
+      .info-value.warning {
+        color: #ff4444;
+      }
+
       body.dark-mode .info-value {
         color: #e0e0e0;
+      }
+
+      body.dark-mode .info-value.warning {
+        color: #ff6666;
       }
 
       /* 右侧设置面板 */
@@ -302,6 +356,13 @@
         display: flex;
         flex-direction: column;
         overflow-y: auto;
+        background: #ffffff;
+        border-radius: 16px;
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+      }
+
+      body.dark-mode .settings-panel {
+        background: #1e1e1e;
       }
 
       .panel-section {
@@ -461,19 +522,26 @@
 
       .text-canvas-wrapper {
         width: 100%;
-        height: 60px;
-        background: #1a1a1a;
+        height: 70px;
+        background: #fff;
         border-radius: 8px;
         overflow: hidden;
         margin-bottom: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
+        cursor: move;
+        position: relative;
+      }
+
+      body.dark-mode .text-canvas-wrapper {
+        background: #2a2a2a;
       }
 
       .text-canvas {
         max-width: 100%;
         max-height: 100%;
+        border: 1px solid #e3e3e3;
       }
 
       .text-input {
@@ -641,8 +709,14 @@
       </div>
 
       <!-- 蒙层弹窗 -->
-      <div class="modal-overlay" :class="{show: showModal}" @click.self="closeModal">
+      <div class="modal-overlay" :class="{show: showModal}">
         <div class="modal-container" v-if="currentFrame">
+          <!-- 关闭按钮 -->
+          <button class="modal-close-btn" @click="closeModal" title="关闭">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M18 6L6 18M6 6l12 12" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
           <!-- 左侧效果预览区 -->
           <div class="preview-section">
             <div class="preview-player">
@@ -670,7 +744,7 @@
                 </div>
                 <div class="info-item">
                   <span class="info-label">内存占用：</span>
-                  <span class="info-value">{{ svgaInfo.memoryText }}</span>
+                  <span class="info-value" :class="{warning: isMemoryHigh}">{{ svgaInfo.memoryText }}</span>
                 </div>
               </div>
             </div>
@@ -698,7 +772,10 @@
               <!-- 文本效果区域01 -->
               <div class="text-effect-area">
                 <div class="section-title" style="font-size: 12px; margin-bottom: 8px;">文本效果区域01</div>
-                <div class="text-canvas-wrapper">
+                <div 
+                  class="text-canvas-wrapper"
+                  @mousedown="startDragText1"
+                >
                   <canvas ref="textCanvas1" class="text-canvas" width="300" height="50"></canvas>
                 </div>
                 <input 
@@ -717,7 +794,17 @@
                     <button class="pos-btn" @click="moveText(1, 'right')">→</button>
                   </div>
                 </div>
-                <button class="btn btn-primary" style="width: 100%;" @click="applyText1">确定</button>
+                <div class="position-controls">
+                  <span class="position-label">缩放微调：</span>
+                  <div class="position-btns">
+                    <button class="pos-btn" @click="scaleText(1, 'down')" title="缩小">-</button>
+                    <button class="pos-btn" @click="scaleText(1, 'up')" title="放大">+</button>
+                  </div>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                  <button class="btn" style="flex: 1;" @click="resetText1">恢复</button>
+                  <button class="btn btn-primary" style="flex: 2;" @click="applyText1">确定</button>
+                </div>
               </div>
             </div>
 
@@ -741,7 +828,10 @@
               <!-- 文本效果区域02 -->
               <div class="text-effect-area">
                 <div class="section-title" style="font-size: 12px; margin-bottom: 8px;">文本效果区域02</div>
-                <div class="text-canvas-wrapper">
+                <div 
+                  class="text-canvas-wrapper"
+                  @mousedown="startDragText2"
+                >
                   <canvas ref="textCanvas2" class="text-canvas" width="300" height="50"></canvas>
                 </div>
                 <input 
@@ -760,7 +850,17 @@
                     <button class="pos-btn" @click="moveText(2, 'right')">→</button>
                   </div>
                 </div>
-                <button class="btn btn-primary" style="width: 100%;" @click="applyText2">确定</button>
+                <div class="position-controls">
+                  <span class="position-label">缩放微调：</span>
+                  <div class="position-btns">
+                    <button class="pos-btn" @click="scaleText(2, 'down')" title="缩小">-</button>
+                    <button class="pos-btn" @click="scaleText(2, 'up')" title="放大">+</button>
+                  </div>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                  <button class="btn" style="flex: 1;" @click="resetText2">恢复</button>
+                  <button class="btn btn-primary" style="flex: 2;" @click="applyText2">确定</button>
+                </div>
               </div>
             </div>
 
@@ -842,8 +942,12 @@
             // 文本输入
             textInput1: '',
             textInput2: '',
-            textOffset1: { x: 0, y: 0 },
-            textOffset2: { x: 0, y: 0 },
+            textOffset: { x: 0, y: 0 },  // 共享的位置
+            textScale: 1,  // 共享的缩放
+            
+            // 文本拖拽状态
+            draggingText: false,
+            dragStartPos: { x: 0, y: 0 },
             
             // 文本样式配置（默认描边样式）
             textStyle: {
@@ -866,6 +970,20 @@
         computed: {
           canExport: function() {
             return Object.keys(this.replacedImages).length > 0;
+          },
+          isMemoryHigh: function() {
+            // 判断内存是否超过8M
+            var memText = this.svgaInfo.memoryText;
+            if (!memText || memText === '-' || memText === '计算中...') {
+              return false;
+            }
+            // 提取数字，如 "12.34M"
+            var match = memText.match(/([\d.]+)\s*M/);
+            if (match) {
+              var mb = parseFloat(match[1]);
+              return mb > 8;
+            }
+            return false;
           }
         },
         mounted: function() {
@@ -878,6 +996,14 @@
           }
           // 加载头像框列表
           this.loadFrameList();
+          
+          // 监听全局鼠标事件用于拖拽
+          document.addEventListener('mousemove', this.onDragMove);
+          document.addEventListener('mouseup', this.onDragEnd);
+        },
+        beforeDestroy: function() {
+          document.removeEventListener('mousemove', this.onDragMove);
+          document.removeEventListener('mouseup', this.onDragEnd);
         },
         methods: {
           // 切换主题
@@ -919,6 +1045,12 @@
           // 打开头像框
           openFrame: function(item) {
             var _this = this;
+            
+            // 清理之前的播放器
+            if (_this.svgaPlayer) {
+              _this.svgaPlayer.clear();
+            }
+            
             _this.currentFrame = item;
             _this.showModal = true;
             _this.materials = { name01: null, Username01: null };
@@ -948,24 +1080,33 @@
             var _this = this;
             var svgaUrl = 'assets/dar_svga/' + item.svga;
             
-            // 初始化播放器
-            if (!_this.svgaPlayer) {
-              _this.svgaPlayer = new SVGA.Player('#svgaContainer');
-              _this.svgaParser = new SVGA.Parser('#svgaContainer');
+            // 每次都重新初始化播放器（确保干净状态）
+            var container = document.getElementById('svgaContainer');
+            if (container) {
+              container.innerHTML = ''; // 清空容器
             }
+            _this.svgaPlayer = new SVGA.Player('#svgaContainer');
+            _this.svgaParser = new SVGA.Parser('#svgaContainer');
             
-            // 同时获取文件大小
+            // 先获取文件大小和Blob
             fetch(svgaUrl)
               .then(function(res) {
                 var size = res.headers.get('content-length');
                 _this.svgaInfo.sizeText = _this.formatBytes(parseInt(size) || 0);
-                return res.arrayBuffer();
+                return res.blob();
               })
-              .then(function(arrayBuffer) {
+              .then(function(blob) {
                 // 保存文件数据用于导出
-                _this.svgaFile = new Blob([arrayBuffer], { type: 'application/octet-stream' });
+                _this.svgaFile = blob;
                 
-                _this.svgaParser.load(arrayBuffer, function(videoItem) {
+                // 使用 URL.createObjectURL 创建临时URL
+                var objectUrl = URL.createObjectURL(blob);
+                
+                // 用临时URL加载SVGA（避免 incorrect header check 错误）
+                _this.svgaParser.load(objectUrl, function(videoItem) {
+                  // 释放临时URL
+                  URL.revokeObjectURL(objectUrl);
+                  
                   _this.svgaVideoItem = videoItem;
                   _this.svgaPlayer.setVideoItem(videoItem);
                   _this.svgaPlayer.loops = 0; // 循环播放
@@ -976,20 +1117,53 @@
                   _this.svgaInfo.height = videoItem.videoSize.height;
                   _this.svgaInfo.fps = videoItem.FPS;
                   
-                  // 计算内存占用
-                  var memorySize = 0;
+                  // 计算内存占用（使用index.html的算法）
                   var images = videoItem.images || {};
-                  Object.keys(images).forEach(function(key) {
-                    var img = images[key];
-                    if (img && img.width && img.height) {
-                      memorySize += img.width * img.height * 4;
+                  var imageKeys = Object.keys(images);
+                  var totalBytes = 0;
+                  var processedCount = 0;
+                  var imageCount = imageKeys.length;
+                  
+                  if (imageCount > 0) {
+                    imageKeys.forEach(function(imgKey) {
+                      var imgData = images[imgKey];
+                      if (imgData && typeof imgData === 'string') {
+                        var img = new Image();
+                        img.onload = function() {
+                          totalBytes += this.width * this.height * 4;
+                          processedCount++;
+                          if (processedCount === imageCount) {
+                            var mb = totalBytes / 1048576;
+                            _this.svgaInfo.memoryText = mb.toFixed(2) + 'M';
+                          }
+                        };
+                        img.onerror = function() {
+                          processedCount++;
+                          if (processedCount === imageCount) {
+                            var mb = totalBytes / 1048576;
+                            _this.svgaInfo.memoryText = mb.toFixed(2) + 'M';
+                          }
+                        };
+                        img.src = imgData.startsWith('data:') ? imgData : ('data:image/png;base64,' + imgData);
+                      } else {
+                        processedCount++;
+                      }
+                    });
+                    
+                    if (processedCount === imageCount && totalBytes > 0) {
+                      var mb = totalBytes / 1048576;
+                      _this.svgaInfo.memoryText = mb.toFixed(2) + 'M';
+                    } else {
+                      _this.svgaInfo.memoryText = '计算中...';
                     }
-                  });
-                  _this.svgaInfo.memoryText = _this.formatBytes(memorySize);
+                  } else {
+                    _this.svgaInfo.memoryText = '-';
+                  }
                   
                   // 提取name01和Username01素材
                   _this.extractMaterials(videoItem);
                 }, function(err) {
+                  URL.revokeObjectURL(objectUrl);
                   _this.showToast('加载SVGA失败: ' + err);
                 });
               })
@@ -1043,7 +1217,7 @@
           },
           
           // 渲染文本到Canvas（带描边效果）
-          renderTextToCanvas: function(canvas, text, offset) {
+          renderTextToCanvas: function(canvas, text, offset, scale) {
             if (!canvas) return;
             var ctx = canvas.getContext('2d');
             var style = this.textStyle;
@@ -1053,8 +1227,12 @@
             
             if (!text) return;
             
+            // 保存状态
+            ctx.save();
+            
             // 设置字体
-            ctx.font = style.fontSize + 'px ' + style.fontFamily;
+            var scaledFontSize = style.fontSize * scale;
+            ctx.font = scaledFontSize + 'px ' + style.fontFamily;
             ctx.textAlign = style.textAlign;
             ctx.textBaseline = 'middle';
             
@@ -1065,7 +1243,7 @@
             // 绘制描边
             if (style.strokeWidth > 0) {
               ctx.strokeStyle = style.strokeColor;
-              ctx.lineWidth = style.strokeWidth;
+              ctx.lineWidth = style.strokeWidth * scale;
               ctx.lineJoin = 'round';
               ctx.strokeText(text, x, y);
             }
@@ -1073,30 +1251,93 @@
             // 绘制填充
             ctx.fillStyle = style.fillColor;
             ctx.fillText(text, x, y);
+            
+            // 恢复状态
+            ctx.restore();
           },
           
           renderText1: function() {
-            this.renderTextToCanvas(this.$refs.textCanvas1, this.textInput1, this.textOffset1);
+            this.renderTextToCanvas(this.$refs.textCanvas1, this.textInput1, this.textOffset, this.textScale);
           },
           
           renderText2: function() {
-            this.renderTextToCanvas(this.$refs.textCanvas2, this.textInput2, this.textOffset2);
+            this.renderTextToCanvas(this.$refs.textCanvas2, this.textInput2, this.textOffset, this.textScale);
           },
           
           // 移动文本位置
           moveText: function(area, direction) {
-            var offset = area === 1 ? this.textOffset1 : this.textOffset2;
             switch(direction) {
-              case 'up': offset.y -= 1; break;
-              case 'down': offset.y += 1; break;
-              case 'left': offset.x -= 1; break;
-              case 'right': offset.x += 1; break;
+              case 'up': this.textOffset.y -= 1; break;
+              case 'down': this.textOffset.y += 1; break;
+              case 'left': this.textOffset.x -= 1; break;
+              case 'right': this.textOffset.x += 1; break;
             }
-            if (area === 1) {
-              this.renderText1();
+            // 同时更新两个区域
+            this.renderText1();
+            this.renderText2();
+          },
+          
+          // 缩放文本
+          scaleText: function(area, direction) {
+            if (direction === 'up') {
+              this.textScale += 0.1;
             } else {
+              this.textScale = Math.max(0.1, this.textScale - 0.1);
+            }
+            // 同时更新两个区域
+            this.renderText1();
+            this.renderText2();
+          },
+          
+          // 开始拖拽文本1
+          startDragText1: function(e) {
+            this.draggingText = true;
+            this.dragStartPos = { x: e.clientX, y: e.clientY };
+            e.preventDefault();
+          },
+          
+          // 开始拖拽文本2
+          startDragText2: function(e) {
+            this.draggingText = true;
+            this.dragStartPos = { x: e.clientX, y: e.clientY };
+            e.preventDefault();
+          },
+          
+          // 拖拽移动
+          onDragMove: function(e) {
+            if (this.draggingText) {
+              var dx = (e.clientX - this.dragStartPos.x) / 1.2;
+              var dy = (e.clientY - this.dragStartPos.y) / 1.2;
+              this.textOffset.x += dx;
+              this.textOffset.y += dy;
+              this.dragStartPos = { x: e.clientX, y: e.clientY };
+              // 同时更新两个区域
+              this.renderText1();
               this.renderText2();
             }
+          },
+          
+          // 结束拖拽
+          onDragEnd: function() {
+            this.draggingText = false;
+          },
+          
+          // 恢复文本1
+          resetText1: function() {
+            this.textInput1 = '';
+            this.textOffset = { x: 0, y: 0 };
+            this.textScale = 1;
+            this.renderText1();
+            this.renderText2();
+          },
+          
+          // 恢复文本2
+          resetText2: function() {
+            this.textInput2 = '';
+            this.textOffset = { x: 0, y: 0 };
+            this.textScale = 1;
+            this.renderText1();
+            this.renderText2();
           },
           
           // 应用文本到素材
@@ -1106,7 +1347,8 @@
               return;
             }
             var dataUrl = this.$refs.textCanvas1.toDataURL('image/png');
-            this.replacedImages.name01 = dataUrl;
+            // 使用Vue.set确保响应式更新
+            this.$set(this.replacedImages, 'name01', dataUrl);
             this.applyToSVGA('name01', dataUrl);
             this.showToast('已应用到 name01');
           },
@@ -1117,7 +1359,8 @@
               return;
             }
             var dataUrl = this.$refs.textCanvas2.toDataURL('image/png');
-            this.replacedImages.Username01 = dataUrl;
+            // 使用Vue.set确保响应式更新
+            this.$set(this.replacedImages, 'Username01', dataUrl);
             this.applyToSVGA('Username01', dataUrl);
             this.showToast('已应用到 Username01');
           },
@@ -1154,7 +1397,8 @@
               var material = _this.materials[key];
               if (material) {
                 _this.scaleImageToSize(dataUrl, material.width, material.height, function(scaledDataUrl) {
-                  _this.replacedImages[key] = scaledDataUrl;
+                  // 使用Vue.set确保响应式更新
+                  _this.$set(_this.replacedImages, key, scaledDataUrl);
                   _this.applyToSVGA(key, scaledDataUrl);
                   _this.showToast('已替换 ' + key);
                 });
@@ -1199,7 +1443,8 @@
           
           // 恢复素材
           restoreMaterial: function(key) {
-            delete this.replacedImages[key];
+            // 使用Vue.delete确保响应式更新
+            this.$delete(this.replacedImages, key);
             // 重新加载原始SVGA
             if (this.currentFrame) {
               this.loadSVGA(this.currentFrame);
