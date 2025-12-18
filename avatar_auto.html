@@ -5,8 +5,10 @@
     <title>大R头像框自助</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <!-- Vue 2 -->
-    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.min.js"></script>
+    <!-- 多语言字体：Google Fonts Noto Sans 系列 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Sans+Arabic:wght@400;500;700&family=Noto+Sans+Thai:wght@400;500;700&family=Noto+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 
     <style>
       * {
@@ -15,13 +17,18 @@
         box-sizing: border-box;
       }
 
-      html,
-      body {
+      html, body {
         width: 100%;
         height: 100%;
-        font-family: 'Segoe UI', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+        font-family: 'Noto Sans', 'Noto Sans SC', 'Noto Sans Arabic', 'Noto Sans Thai', 
+                     'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
         overflow: hidden;
         background-color: #fcfcfc;
+        transition: background-color 0.3s;
+      }
+
+      body.dark-mode {
+        background-color: #1a1a1a;
       }
 
       #app {
@@ -31,7 +38,7 @@
         flex-direction: column;
       }
 
-      /* 顶部导航栏 */
+      /* ==================== 顶部导航栏 ==================== */
       .header-navbar {
         width: 100%;
         height: 36px;
@@ -40,22 +47,31 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 0 24px;
+        padding: 0 16px;
         position: relative;
         z-index: 100;
+        transition: background-color 0.3s, border-color 0.3s;
+      }
+
+      body.dark-mode .header-navbar {
+        background-color: #2a2a2a;
+        border-bottom-color: #404040;
       }
 
       .header-navbar-title {
-        font-family: 'Noto Sans SC', sans-serif;
-        font-weight: 900;
+        font-weight: 700;
         font-size: 12px;
-        line-height: 1.2;
         color: #2c3e50;
+        transition: color 0.3s;
+      }
+
+      body.dark-mode .header-navbar-title {
+        color: #e0e0e0;
       }
 
       .back-link {
         position: absolute;
-        left: 24px;
+        left: 16px;
         font-size: 12px;
         color: #409eff;
         text-decoration: none;
@@ -66,20 +82,514 @@
         text-decoration: underline;
       }
 
-      /* 主内容区域 */
-      .main-page {
+      body.dark-mode .back-link {
+        color: #66b1ff;
+      }
+
+      .theme-toggle {
+        position: absolute;
+        right: 16px;
+        width: 24px;
+        height: 24px;
+        border: none;
+        background: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .theme-toggle svg {
+        width: 18px;
+        height: 18px;
+        fill: #2c3e50;
+        transition: fill 0.3s;
+      }
+
+      body.dark-mode .theme-toggle svg {
+        fill: #e0e0e0;
+      }
+
+      /* ==================== 主内容区域 ==================== */
+      .main-content {
         flex: 1;
+        overflow-y: auto;
+        padding: 24px;
+      }
+
+      /* 头像框列表 */
+      .frame-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 16px;
+        max-width: 900px;
+        margin: 0 auto;
+      }
+
+      .frame-item {
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: center;
-        padding: 40px;
+        padding: 12px;
+        background: #ffffff;
+        border: 1px solid #e3e3e3;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.2s;
       }
 
-      .placeholder-text {
-        font-size: 18px;
-        color: #666;
+      .frame-item:hover {
+        background: #f5f5f5;
+        border-color: #409eff;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      }
+
+      body.dark-mode .frame-item {
+        background: #2a2a2a;
+        border-color: #404040;
+      }
+
+      body.dark-mode .frame-item:hover {
+        background: #333333;
+        border-color: #409eff;
+      }
+
+      .frame-icon {
+        width: 80px;
+        height: 80px;
+        object-fit: contain;
+        margin-bottom: 8px;
+      }
+
+      .frame-name {
+        font-size: 12px;
+        color: #333333;
         text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+      }
+
+      body.dark-mode .frame-name {
+        color: #e0e0e0;
+      }
+
+      /* 加载提示 */
+      .loading-tip {
+        text-align: center;
+        padding: 40px;
+        color: #999;
+        font-size: 14px;
+      }
+
+      /* ==================== 蒙层弹窗 ==================== */
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s, visibility 0.3s;
+      }
+
+      .modal-overlay.show {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      body.dark-mode .modal-overlay {
+        background: rgba(0, 0, 0, 0.7);
+      }
+
+      .modal-container {
+        display: flex;
+        width: 90%;
+        max-width: 1000px;
+        height: 80%;
+        max-height: 700px;
+        background: #ffffff;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+      }
+
+      body.dark-mode .modal-container {
+        background: #2a2a2a;
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+      }
+
+      /* 左侧效果预览区 */
+      .preview-section {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        padding: 24px;
+        border-right: 1px solid #e3e3e3;
+      }
+
+      body.dark-mode .preview-section {
+        border-right-color: #404040;
+      }
+
+      .preview-player {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f5f5f5;
+        border-radius: 12px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      body.dark-mode .preview-player {
+        background: #1a1a1a;
+      }
+
+      #svgaContainer {
+        width: 100%;
+        height: 100%;
+      }
+
+      .preview-info {
+        margin-top: 16px;
+        padding: 12px;
+        background: #f5f5f5;
+        border-radius: 8px;
+      }
+
+      body.dark-mode .preview-info {
+        background: #1a1a1a;
+      }
+
+      .info-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        font-size: 12px;
+      }
+
+      .info-item {
+        display: flex;
+        gap: 4px;
+      }
+
+      .info-label {
+        color: #999;
+      }
+
+      .info-value {
+        color: #333;
+        font-weight: 500;
+      }
+
+      body.dark-mode .info-value {
+        color: #e0e0e0;
+      }
+
+      /* 右侧设置面板 */
+      .settings-panel {
+        width: 360px;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+      }
+
+      .panel-section {
+        padding: 20px;
+        border-bottom: 1px solid #e3e3e3;
+      }
+
+      body.dark-mode .panel-section {
+        border-bottom-color: #404040;
+      }
+
+      .panel-section:last-child {
+        border-bottom: none;
+      }
+
+      .section-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 12px;
+      }
+
+      body.dark-mode .section-title {
+        color: #e0e0e0;
+      }
+
+      /* 素材卡片 */
+      .material-card {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px;
+        background: #f5f5f5;
+        border-radius: 8px;
+        margin-bottom: 12px;
+      }
+
+      body.dark-mode .material-card {
+        background: #1a1a1a;
+      }
+
+      .material-thumb {
+        width: 48px;
+        height: 48px;
+        background: #fff;
+        border: 1px solid #e3e3e3;
+        border-radius: 4px;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      body.dark-mode .material-thumb {
+        background: #2a2a2a;
+        border-color: #404040;
+      }
+
+      .material-thumb img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+      }
+
+      .material-info {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .material-name {
+        font-size: 12px;
+        color: #333;
+        margin-bottom: 4px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      body.dark-mode .material-name {
+        color: #e0e0e0;
+      }
+
+      .material-btns {
+        display: flex;
+        gap: 8px;
+      }
+
+      /* 按钮样式 */
+      .btn {
+        height: 28px;
+        padding: 0 12px;
+        border: 1px solid #e3e3e3;
+        border-radius: 8px;
+        background: #ffffff;
+        color: #333;
+        font-size: 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+      }
+
+      .btn:hover {
+        background: #f5f5f5;
+        border-color: #d0d0d0;
+      }
+
+      body.dark-mode .btn {
+        background: #2a2a2a;
+        border-color: #404040;
+        color: #e0e0e0;
+      }
+
+      body.dark-mode .btn:hover {
+        background: #333333;
+        border-color: #505050;
+      }
+
+      .btn-primary {
+        background: #409eff;
+        border-color: #409eff;
+        color: #fff;
+      }
+
+      .btn-primary:hover {
+        background: #66b1ff;
+        border-color: #66b1ff;
+      }
+
+      .btn-success {
+        background: #67c23a;
+        border-color: #67c23a;
+        color: #fff;
+      }
+
+      .btn-success:hover {
+        background: #85ce61;
+        border-color: #85ce61;
+      }
+
+      .btn-icon {
+        width: 28px;
+        padding: 0;
+      }
+
+      .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      /* 文本效果区域 */
+      .text-effect-area {
+        margin-bottom: 16px;
+      }
+
+      .text-canvas-wrapper {
+        width: 100%;
+        height: 60px;
+        background: #1a1a1a;
+        border-radius: 8px;
+        overflow: hidden;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .text-canvas {
+        max-width: 100%;
+        max-height: 100%;
+      }
+
+      .text-input {
+        width: 100%;
+        height: 32px;
+        padding: 0 12px;
+        border: 1px solid #e3e3e3;
+        border-radius: 8px;
+        background: #ffffff;
+        color: #333;
+        font-size: 13px;
+        margin-bottom: 12px;
+      }
+
+      .text-input:focus {
+        outline: none;
+        border-color: #409eff;
+      }
+
+      body.dark-mode .text-input {
+        background: #1a1a1a;
+        border-color: #404040;
+        color: #e0e0e0;
+      }
+
+      /* 位置微调按钮组 */
+      .position-controls {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+
+      .position-label {
+        font-size: 12px;
+        color: #999;
+        min-width: 60px;
+      }
+
+      .position-btns {
+        display: flex;
+        gap: 4px;
+      }
+
+      .pos-btn {
+        width: 28px;
+        height: 28px;
+        padding: 0;
+        border: 1px solid #e3e3e3;
+        border-radius: 6px;
+        background: #ffffff;
+        color: #333;
+        font-size: 14px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+      }
+
+      .pos-btn:hover {
+        background: #f5f5f5;
+        border-color: #409eff;
+        color: #409eff;
+      }
+
+      body.dark-mode .pos-btn {
+        background: #2a2a2a;
+        border-color: #404040;
+        color: #e0e0e0;
+      }
+
+      body.dark-mode .pos-btn:hover {
+        background: #333;
+        border-color: #409eff;
+        color: #409eff;
+      }
+
+      /* 底部导出按钮 */
+      .export-section {
+        padding: 20px;
+        border-top: 1px solid #e3e3e3;
+        margin-top: auto;
+      }
+
+      body.dark-mode .export-section {
+        border-top-color: #404040;
+      }
+
+      .export-btn {
+        width: 100%;
+        height: 40px;
+        font-size: 14px;
+        font-weight: 500;
+      }
+
+      /* Toast 提示 */
+      .toast {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0, 0, 0, 0.8);
+        color: #fff;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-size: 14px;
+        z-index: 9999;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s, visibility 0.3s;
+      }
+
+      .toast.show {
+        opacity: 1;
+        visibility: visible;
       }
     </style>
   </head>
@@ -90,26 +600,738 @@
       <div class="header-navbar">
         <a href="index.html" class="back-link">← 返回主页</a>
         <div class="header-navbar-title">大R头像框自助</div>
+        <button class="theme-toggle" @click="toggleTheme" title="切换主题">
+          <svg v-if="!isDarkMode" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"/>
+            <line x1="12" y1="1" x2="12" y2="3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <line x1="12" y1="21" x2="12" y2="23" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <line x1="1" y1="12" x2="3" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <line x1="21" y1="12" x2="23" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <svg v-else viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+        </button>
       </div>
 
-      <!-- 主页面 -->
-      <div class="main-page">
-        <div class="placeholder-text">
-          页面内容开发中...
+      <!-- 主内容区域：头像框列表 -->
+      <div class="main-content">
+        <div v-if="loading" class="loading-tip">正在加载头像框列表...</div>
+        <div v-else-if="frameList.length === 0" class="loading-tip">暂无头像框，请将SVGA文件放入 assets/dar_svga 目录</div>
+        <div v-else class="frame-grid">
+          <div 
+            v-for="(item, index) in frameList" 
+            :key="item.name"
+            class="frame-item"
+            @click="openFrame(item)"
+          >
+            <img 
+              :src="'assets/dar_svga/' + item.icon" 
+              :alt="item.name" 
+              class="frame-icon"
+              @error="onIconError($event)"
+            />
+            <div class="frame-name">{{ item.name }}</div>
+          </div>
         </div>
       </div>
+
+      <!-- 蒙层弹窗 -->
+      <div class="modal-overlay" :class="{show: showModal}" @click.self="closeModal">
+        <div class="modal-container" v-if="currentFrame">
+          <!-- 左侧效果预览区 -->
+          <div class="preview-section">
+            <div class="preview-player">
+              <div id="svgaContainer"></div>
+            </div>
+            <div class="preview-info">
+              <div class="info-row">
+                <div class="info-item">
+                  <span class="info-label">文件名：</span>
+                  <span class="info-value">{{ currentFrame.name }}.svga</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">文件大小：</span>
+                  <span class="info-value">{{ svgaInfo.sizeText }}</span>
+                </div>
+              </div>
+              <div class="info-row" style="margin-top: 8px;">
+                <div class="info-item">
+                  <span class="info-label">尺寸：</span>
+                  <span class="info-value">{{ svgaInfo.width }}×{{ svgaInfo.height }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">帧率：</span>
+                  <span class="info-value">{{ svgaInfo.fps }} FPS</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">内存占用：</span>
+                  <span class="info-value">{{ svgaInfo.memoryText }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 右侧设置面板 -->
+          <div class="settings-panel">
+            <!-- name01 素材 -->
+            <div class="panel-section" v-if="materials.name01">
+              <div class="section-title">素材：name01</div>
+              <div class="material-card">
+                <div class="material-thumb">
+                  <img :src="materials.name01.previewUrl" v-if="materials.name01.previewUrl" />
+                </div>
+                <div class="material-info">
+                  <div class="material-name">{{ materials.name01.sizeText }}</div>
+                </div>
+                <div class="material-btns">
+                  <button class="btn" @click="replaceMaterial('name01')">替换</button>
+                  <button class="btn btn-icon" @click="downloadMaterial('name01')" title="下载">↓</button>
+                  <button class="btn btn-icon" v-if="replacedImages.name01" @click="restoreMaterial('name01')" title="恢复">↺</button>
+                </div>
+              </div>
+
+              <!-- 文本效果区域01 -->
+              <div class="text-effect-area">
+                <div class="section-title" style="font-size: 12px; margin-bottom: 8px;">文本效果区域01</div>
+                <div class="text-canvas-wrapper">
+                  <canvas ref="textCanvas1" class="text-canvas" width="300" height="50"></canvas>
+                </div>
+                <input 
+                  type="text" 
+                  class="text-input" 
+                  v-model="textInput1" 
+                  placeholder="输入文字，支持emoji 😊"
+                  @input="renderText1"
+                />
+                <div class="position-controls">
+                  <span class="position-label">位置微调：</span>
+                  <div class="position-btns">
+                    <button class="pos-btn" @click="moveText(1, 'up')">↑</button>
+                    <button class="pos-btn" @click="moveText(1, 'down')">↓</button>
+                    <button class="pos-btn" @click="moveText(1, 'left')">←</button>
+                    <button class="pos-btn" @click="moveText(1, 'right')">→</button>
+                  </div>
+                </div>
+                <button class="btn btn-primary" style="width: 100%;" @click="applyText1">确定</button>
+              </div>
+            </div>
+
+            <!-- Username01 素材 -->
+            <div class="panel-section" v-if="materials.Username01">
+              <div class="section-title">素材：Username01</div>
+              <div class="material-card">
+                <div class="material-thumb">
+                  <img :src="materials.Username01.previewUrl" v-if="materials.Username01.previewUrl" />
+                </div>
+                <div class="material-info">
+                  <div class="material-name">{{ materials.Username01.sizeText }}</div>
+                </div>
+                <div class="material-btns">
+                  <button class="btn" @click="replaceMaterial('Username01')">替换</button>
+                  <button class="btn btn-icon" @click="downloadMaterial('Username01')" title="下载">↓</button>
+                  <button class="btn btn-icon" v-if="replacedImages.Username01" @click="restoreMaterial('Username01')" title="恢复">↺</button>
+                </div>
+              </div>
+
+              <!-- 文本效果区域02 -->
+              <div class="text-effect-area">
+                <div class="section-title" style="font-size: 12px; margin-bottom: 8px;">文本效果区域02</div>
+                <div class="text-canvas-wrapper">
+                  <canvas ref="textCanvas2" class="text-canvas" width="300" height="50"></canvas>
+                </div>
+                <input 
+                  type="text" 
+                  class="text-input" 
+                  v-model="textInput2" 
+                  placeholder="输入文字，支持emoji 😊"
+                  @input="renderText2"
+                />
+                <div class="position-controls">
+                  <span class="position-label">位置微调：</span>
+                  <div class="position-btns">
+                    <button class="pos-btn" @click="moveText(2, 'up')">↑</button>
+                    <button class="pos-btn" @click="moveText(2, 'down')">↓</button>
+                    <button class="pos-btn" @click="moveText(2, 'left')">←</button>
+                    <button class="pos-btn" @click="moveText(2, 'right')">→</button>
+                  </div>
+                </div>
+                <button class="btn btn-primary" style="width: 100%;" @click="applyText2">确定</button>
+              </div>
+            </div>
+
+            <!-- 无素材提示 -->
+            <div class="panel-section" v-if="!materials.name01 && !materials.Username01">
+              <div class="loading-tip">未检测到 name01 或 Username01 素材</div>
+            </div>
+
+            <!-- 导出按钮 -->
+            <div class="export-section">
+              <button 
+                class="btn btn-success export-btn" 
+                :disabled="!canExport"
+                @click="exportSVGA"
+              >
+                导出新SVGA
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Toast 提示 -->
+      <div class="toast" :class="{show: toastVisible}">{{ toastMessage }}</div>
+
+      <!-- 隐藏的文件输入框 -->
+      <input type="file" ref="fileInput" accept="image/*" style="display:none" @change="handleFileSelect" />
     </div>
+
+    <!-- Vue.js -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.min.js"></script>
+    <!-- SVGA播放器 -->
+    <script src="https://cdn.jsdelivr.net/npm/svgaplayerweb@2.3.1/build/svga.min.js"></script>
+    <!-- Protobuf.js -->
+    <script src="https://cdn.jsdelivr.net/npm/protobufjs@7.2.5/dist/protobuf.min.js"></script>
+    <!-- Pako -->
+    <script src="https://cdn.jsdelivr.net/npm/pako@2.0.4/dist/pako.min.js"></script>
 
     <script>
       new Vue({
         el: '#app',
         data: function () {
           return {
-            // 数据将在后续添加
+            // 主题
+            isDarkMode: false,
+            
+            // 加载状态
+            loading: true,
+            
+            // 头像框列表
+            frameList: [],
+            
+            // 弹窗状态
+            showModal: false,
+            currentFrame: null,
+            
+            // SVGA相关
+            svgaPlayer: null,
+            svgaParser: null,
+            svgaVideoItem: null,
+            svgaFile: null,
+            svgaInfo: {
+              width: 0,
+              height: 0,
+              fps: 0,
+              sizeText: '',
+              memoryText: ''
+            },
+            
+            // 素材
+            materials: {
+              name01: null,
+              Username01: null
+            },
+            
+            // 替换的图片 {imageKey: base64}
+            replacedImages: {},
+            
+            // 文本输入
+            textInput1: '',
+            textInput2: '',
+            textOffset1: { x: 0, y: 0 },
+            textOffset2: { x: 0, y: 0 },
+            
+            // 文本样式配置（默认描边样式）
+            textStyle: {
+              fontSize: 24,
+              fontFamily: "'Noto Sans', 'Noto Sans SC', 'Noto Sans Arabic', 'Noto Sans Thai', sans-serif",
+              fillColor: '#ffffff',
+              strokeColor: '#000000',
+              strokeWidth: 2,
+              textAlign: 'center'
+            },
+            
+            // 当前替换目标
+            currentReplaceTarget: null,
+            
+            // Toast
+            toastVisible: false,
+            toastMessage: ''
           };
         },
+        computed: {
+          canExport: function() {
+            return Object.keys(this.replacedImages).length > 0;
+          }
+        },
+        mounted: function() {
+          var _this = this;
+          // 初始化主题
+          var savedTheme = localStorage.getItem('dar_theme');
+          if (savedTheme === 'dark') {
+            this.isDarkMode = true;
+            document.body.classList.add('dark-mode');
+          }
+          // 加载头像框列表
+          this.loadFrameList();
+        },
         methods: {
-          // 方法将在后续添加
+          // 切换主题
+          toggleTheme: function() {
+            this.isDarkMode = !this.isDarkMode;
+            document.body.classList.toggle('dark-mode');
+            localStorage.setItem('dar_theme', this.isDarkMode ? 'dark' : 'light');
+          },
+          
+          // 加载头像框列表
+          loadFrameList: function() {
+            var _this = this;
+            // 尝试从file-list.json加载，如果没有则扫描目录
+            fetch('assets/dar_svga/file-list.json')
+              .then(function(res) { return res.json(); })
+              .then(function(list) {
+                _this.frameList = list.map(function(name) {
+                  var baseName = name.replace(/\.svga$/i, '');
+                  return {
+                    name: baseName,
+                    svga: name,
+                    icon: baseName + '.png'
+                  };
+                });
+                _this.loading = false;
+              })
+              .catch(function() {
+                // 如果没有file-list.json，显示空列表
+                _this.frameList = [];
+                _this.loading = false;
+              });
+          },
+          
+          // 图标加载失败时使用默认图标
+          onIconError: function(e) {
+            e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iODAiIGhlaWdodD0iODAiIGZpbGw9IiNmMGYwZjAiLz48dGV4dCB4PSI0MCIgeT0iNDUiIGZvbnQtc2l6ZT0iMTIiIGZpbGw9IiM5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiPlNWR0E8L3RleHQ+PC9zdmc+';
+          },
+          
+          // 打开头像框
+          openFrame: function(item) {
+            var _this = this;
+            _this.currentFrame = item;
+            _this.showModal = true;
+            _this.materials = { name01: null, Username01: null };
+            _this.replacedImages = {};
+            _this.textInput1 = '';
+            _this.textInput2 = '';
+            _this.textOffset1 = { x: 0, y: 0 };
+            _this.textOffset2 = { x: 0, y: 0 };
+            
+            // 加载SVGA
+            _this.$nextTick(function() {
+              _this.loadSVGA(item);
+            });
+          },
+          
+          // 关闭弹窗
+          closeModal: function() {
+            this.showModal = false;
+            if (this.svgaPlayer) {
+              this.svgaPlayer.clear();
+            }
+            this.currentFrame = null;
+          },
+          
+          // 加载SVGA文件
+          loadSVGA: function(item) {
+            var _this = this;
+            var svgaUrl = 'assets/dar_svga/' + item.svga;
+            
+            // 初始化播放器
+            if (!_this.svgaPlayer) {
+              _this.svgaPlayer = new SVGA.Player('#svgaContainer');
+              _this.svgaParser = new SVGA.Parser('#svgaContainer');
+            }
+            
+            // 同时获取文件大小
+            fetch(svgaUrl)
+              .then(function(res) {
+                var size = res.headers.get('content-length');
+                _this.svgaInfo.sizeText = _this.formatBytes(parseInt(size) || 0);
+                return res.arrayBuffer();
+              })
+              .then(function(arrayBuffer) {
+                // 保存文件数据用于导出
+                _this.svgaFile = new Blob([arrayBuffer], { type: 'application/octet-stream' });
+                
+                _this.svgaParser.load(arrayBuffer, function(videoItem) {
+                  _this.svgaVideoItem = videoItem;
+                  _this.svgaPlayer.setVideoItem(videoItem);
+                  _this.svgaPlayer.loops = 0; // 循环播放
+                  _this.svgaPlayer.startAnimation();
+                  
+                  // 更新信息
+                  _this.svgaInfo.width = videoItem.videoSize.width;
+                  _this.svgaInfo.height = videoItem.videoSize.height;
+                  _this.svgaInfo.fps = videoItem.FPS;
+                  
+                  // 计算内存占用
+                  var memorySize = 0;
+                  var images = videoItem.images || {};
+                  Object.keys(images).forEach(function(key) {
+                    var img = images[key];
+                    if (img && img.width && img.height) {
+                      memorySize += img.width * img.height * 4;
+                    }
+                  });
+                  _this.svgaInfo.memoryText = _this.formatBytes(memorySize);
+                  
+                  // 提取name01和Username01素材
+                  _this.extractMaterials(videoItem);
+                }, function(err) {
+                  _this.showToast('加载SVGA失败: ' + err);
+                });
+              })
+              .catch(function(err) {
+                _this.showToast('获取文件失败: ' + err);
+              });
+          },
+          
+          // 提取素材
+          extractMaterials: function(videoItem) {
+            var _this = this;
+            var images = videoItem.images || {};
+            
+            ['name01', 'Username01'].forEach(function(key) {
+              if (images[key]) {
+                var imgData = images[key];
+                var previewUrl = '';
+                
+                if (typeof imgData === 'string') {
+                  previewUrl = imgData.startsWith('data:') ? imgData : ('data:image/png;base64,' + imgData);
+                }
+                
+                // 获取尺寸
+                var img = new Image();
+                img.onload = function() {
+                  _this.materials[key] = {
+                    previewUrl: previewUrl,
+                    width: this.width,
+                    height: this.height,
+                    sizeText: this.width + '×' + this.height
+                  };
+                  _this.$forceUpdate();
+                  
+                  // 初始化Canvas尺寸
+                  _this.$nextTick(function() {
+                    if (key === 'name01' && _this.$refs.textCanvas1) {
+                      _this.$refs.textCanvas1.width = _this.materials.name01.width;
+                      _this.$refs.textCanvas1.height = _this.materials.name01.height;
+                      _this.renderText1();
+                    }
+                    if (key === 'Username01' && _this.$refs.textCanvas2) {
+                      _this.$refs.textCanvas2.width = _this.materials.Username01.width;
+                      _this.$refs.textCanvas2.height = _this.materials.Username01.height;
+                      _this.renderText2();
+                    }
+                  });
+                };
+                img.src = previewUrl;
+              }
+            });
+          },
+          
+          // 渲染文本到Canvas（带描边效果）
+          renderTextToCanvas: function(canvas, text, offset) {
+            if (!canvas) return;
+            var ctx = canvas.getContext('2d');
+            var style = this.textStyle;
+            
+            // 清空画布（透明背景）
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            if (!text) return;
+            
+            // 设置字体
+            ctx.font = style.fontSize + 'px ' + style.fontFamily;
+            ctx.textAlign = style.textAlign;
+            ctx.textBaseline = 'middle';
+            
+            // 计算位置
+            var x = canvas.width / 2 + offset.x;
+            var y = canvas.height / 2 + offset.y;
+            
+            // 绘制描边
+            if (style.strokeWidth > 0) {
+              ctx.strokeStyle = style.strokeColor;
+              ctx.lineWidth = style.strokeWidth;
+              ctx.lineJoin = 'round';
+              ctx.strokeText(text, x, y);
+            }
+            
+            // 绘制填充
+            ctx.fillStyle = style.fillColor;
+            ctx.fillText(text, x, y);
+          },
+          
+          renderText1: function() {
+            this.renderTextToCanvas(this.$refs.textCanvas1, this.textInput1, this.textOffset1);
+          },
+          
+          renderText2: function() {
+            this.renderTextToCanvas(this.$refs.textCanvas2, this.textInput2, this.textOffset2);
+          },
+          
+          // 移动文本位置
+          moveText: function(area, direction) {
+            var offset = area === 1 ? this.textOffset1 : this.textOffset2;
+            switch(direction) {
+              case 'up': offset.y -= 1; break;
+              case 'down': offset.y += 1; break;
+              case 'left': offset.x -= 1; break;
+              case 'right': offset.x += 1; break;
+            }
+            if (area === 1) {
+              this.renderText1();
+            } else {
+              this.renderText2();
+            }
+          },
+          
+          // 应用文本到素材
+          applyText1: function() {
+            if (!this.$refs.textCanvas1 || !this.textInput1) {
+              this.showToast('请输入文字');
+              return;
+            }
+            var dataUrl = this.$refs.textCanvas1.toDataURL('image/png');
+            this.replacedImages.name01 = dataUrl;
+            this.applyToSVGA('name01', dataUrl);
+            this.showToast('已应用到 name01');
+          },
+          
+          applyText2: function() {
+            if (!this.$refs.textCanvas2 || !this.textInput2) {
+              this.showToast('请输入文字');
+              return;
+            }
+            var dataUrl = this.$refs.textCanvas2.toDataURL('image/png');
+            this.replacedImages.Username01 = dataUrl;
+            this.applyToSVGA('Username01', dataUrl);
+            this.showToast('已应用到 Username01');
+          },
+          
+          // 应用替换到SVGA播放器
+          applyToSVGA: function(imageKey, dataUrl) {
+            var _this = this;
+            var img = new Image();
+            img.onload = function() {
+              _this.svgaPlayer.setImage(img, imageKey);
+              _this.svgaPlayer.startAnimation();
+            };
+            img.src = dataUrl;
+          },
+          
+          // 替换素材（上传图片）
+          replaceMaterial: function(key) {
+            this.currentReplaceTarget = key;
+            this.$refs.fileInput.click();
+          },
+          
+          // 处理文件选择
+          handleFileSelect: function(e) {
+            var _this = this;
+            var file = e.target.files[0];
+            if (!file) return;
+            
+            var reader = new FileReader();
+            reader.onload = function(evt) {
+              var dataUrl = evt.target.result;
+              var key = _this.currentReplaceTarget;
+              
+              // 缩放到目标尺寸
+              var material = _this.materials[key];
+              if (material) {
+                _this.scaleImageToSize(dataUrl, material.width, material.height, function(scaledDataUrl) {
+                  _this.replacedImages[key] = scaledDataUrl;
+                  _this.applyToSVGA(key, scaledDataUrl);
+                  _this.showToast('已替换 ' + key);
+                });
+              }
+            };
+            reader.readAsDataURL(file);
+            e.target.value = '';
+          },
+          
+          // 缩放图片到指定尺寸
+          scaleImageToSize: function(dataUrl, width, height, callback) {
+            var img = new Image();
+            img.onload = function() {
+              var canvas = document.createElement('canvas');
+              canvas.width = width;
+              canvas.height = height;
+              var ctx = canvas.getContext('2d');
+              
+              // 计算缩放比例（保持比例，居中填充）
+              var scale = Math.max(width / img.width, height / img.height);
+              var scaledWidth = img.width * scale;
+              var scaledHeight = img.height * scale;
+              var x = (width - scaledWidth) / 2;
+              var y = (height - scaledHeight) / 2;
+              
+              ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
+              callback(canvas.toDataURL('image/png'));
+            };
+            img.src = dataUrl;
+          },
+          
+          // 下载素材
+          downloadMaterial: function(key) {
+            var material = this.materials[key];
+            if (!material || !material.previewUrl) return;
+            
+            var a = document.createElement('a');
+            a.href = material.previewUrl;
+            a.download = key + '.png';
+            a.click();
+          },
+          
+          // 恢复素材
+          restoreMaterial: function(key) {
+            delete this.replacedImages[key];
+            // 重新加载原始SVGA
+            if (this.currentFrame) {
+              this.loadSVGA(this.currentFrame);
+            }
+            this.showToast('已恢复 ' + key);
+          },
+          
+          // 导出新SVGA
+          exportSVGA: function() {
+            var _this = this;
+            
+            if (!_this.svgaFile || Object.keys(_this.replacedImages).length === 0) {
+              _this.showToast('请先替换至少一个素材');
+              return;
+            }
+            
+            _this.showToast('正在导出...');
+            
+            var reader = new FileReader();
+            reader.onload = function(e) {
+              try {
+                var arrayBuffer = e.target.result;
+                var uint8Array = new Uint8Array(arrayBuffer);
+                
+                // 解压缩
+                var inflatedData = pako.inflate(uint8Array);
+                
+                // 加载proto并解码
+                protobuf.load('svga.proto', function(err, root) {
+                  if (err) {
+                    _this.showToast('Proto加载失败');
+                    return;
+                  }
+                  
+                  try {
+                    var MovieEntity = root.lookupType('com.opensource.svga.MovieEntity');
+                    var movieData = MovieEntity.decode(inflatedData);
+                    
+                    // 替换图片
+                    for (var imageKey in _this.replacedImages) {
+                      if (_this.replacedImages.hasOwnProperty(imageKey) && movieData.images[imageKey]) {
+                        var base64Data = _this.replacedImages[imageKey];
+                        var base64String = base64Data.split(',')[1] || base64Data;
+                        var binaryString = atob(base64String);
+                        var bytes = new Uint8Array(binaryString.length);
+                        for (var i = 0; i < binaryString.length; i++) {
+                          bytes[i] = binaryString.charCodeAt(i);
+                        }
+                        movieData.images[imageKey] = bytes;
+                      }
+                    }
+                    
+                    // 编码并压缩
+                    var buffer = MovieEntity.encode(movieData).finish();
+                    var deflatedData = pako.deflate(buffer);
+                    
+                    // 生成文件名：日期+文件名
+                    var date = new Date();
+                    var dateStr = date.getFullYear() + 
+                      String(date.getMonth() + 1).padStart(2, '0') + 
+                      String(date.getDate()).padStart(2, '0');
+                    var fileName = dateStr + '_' + _this.currentFrame.name + '.svga';
+                    
+                    // 下载SVGA
+                    var blob = new Blob([deflatedData], { type: 'application/octet-stream' });
+                    var url = URL.createObjectURL(blob);
+                    var a = document.createElement('a');
+                    a.href = url;
+                    a.download = fileName;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    
+                    // 导出第5帧PNG
+                    _this.exportFrame5PNG(dateStr + '_' + _this.currentFrame.name);
+                    
+                    _this.showToast('导出成功！');
+                    
+                  } catch (decodeErr) {
+                    _this.showToast('编码失败: ' + decodeErr.message);
+                  }
+                });
+                
+              } catch (err) {
+                _this.showToast('处理失败: ' + err.message);
+              }
+            };
+            reader.readAsArrayBuffer(_this.svgaFile);
+          },
+          
+          // 导出第5帧PNG
+          exportFrame5PNG: function(baseName) {
+            var _this = this;
+            if (!_this.svgaPlayer) return;
+            
+            // 跳转到第5帧
+            _this.svgaPlayer.pauseAnimation();
+            _this.svgaPlayer.stepToFrame(4); // 第5帧索引是4
+            
+            // 获取canvas并导出
+            setTimeout(function() {
+              var container = document.getElementById('svgaContainer');
+              var canvas = container ? container.querySelector('canvas') : null;
+              if (canvas) {
+                var dataUrl = canvas.toDataURL('image/png');
+                var a = document.createElement('a');
+                a.href = dataUrl;
+                a.download = baseName + '_frame5.png';
+                a.click();
+              }
+              // 恢复播放
+              _this.svgaPlayer.startAnimation();
+            }, 100);
+          },
+          
+          // 格式化字节
+          formatBytes: function(bytes) {
+            if (bytes === 0) return '0 B';
+            var k = 1024;
+            var sizes = ['B', 'KB', 'MB', 'GB'];
+            var i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+          },
+          
+          // Toast提示
+          showToast: function(message) {
+            var _this = this;
+            _this.toastMessage = message;
+            _this.toastVisible = true;
+            setTimeout(function() {
+              _this.toastVisible = false;
+            }, 2000);
+          }
         }
       });
     </script>
