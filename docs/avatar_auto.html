@@ -1083,7 +1083,11 @@
           // 加载SVGA文件
           loadSVGA: function(item) {
             var _this = this;
-            var svgaUrl = item.svga;  // 直接使用远程URL
+            // 添加时间戳防止缓存（仅对远程URL）
+            var svgaUrl = item.svga;
+            if (svgaUrl.indexOf('http') === 0) {
+              svgaUrl += (svgaUrl.indexOf('?') > -1 ? '&' : '?') + '_t=' + Date.now();
+            }
             
             // 每次都重新初始化播放器（确保干净状态）
             var container = document.getElementById('svgaContainer');
@@ -1093,9 +1097,12 @@
             _this.svgaPlayer = new SVGA.Player('#svgaContainer');
             _this.svgaParser = new SVGA.Parser('#svgaContainer');
             
-            // 先获取文件大小和Blob
-            fetch(svgaUrl)
+            // 先获取文件大小和Blob（添加mode: 'cors'）
+            fetch(svgaUrl, { mode: 'cors' })
               .then(function(res) {
+                if (!res.ok) {
+                  throw new Error('HTTP ' + res.status + ': ' + res.statusText);
+                }
                 var size = res.headers.get('content-length');
                 _this.svgaInfo.sizeText = _this.formatBytes(parseInt(size) || 0);
                 return res.blob();
@@ -1169,11 +1176,19 @@
                   _this.extractMaterials(videoItem);
                 }, function(err) {
                   URL.revokeObjectURL(objectUrl);
-                  _this.showToast('加载SVGA失败: ' + err);
+                  console.error('SVGA解析错误:', err);
+                  var errMsg = err && err.message ? err.message : String(err);
+                  if (errMsg.indexOf('header check') > -1) {
+                    _this.showToast('加载SVGA失败: 文件格式错误，请检查跨域CORS配置');
+                  } else {
+                    _this.showToast('加载SVGA失败: ' + errMsg);
+                  }
                 });
               })
               .catch(function(err) {
-                _this.showToast('获取文件失败: ' + err);
+                console.error('获取文件错误:', err);
+                var errMsg = err && err.message ? err.message : String(err);
+                _this.showToast('获取文件失败: ' + errMsg + ' (请检查网络和CORS设置)');
               });
           },
           
