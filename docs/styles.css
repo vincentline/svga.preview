@@ -2790,3 +2790,463 @@ body.dark-mode .toast-message {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
 }
+
+/* ==================== SVGA转换弹窗（双通道MP4转SVGA） ==================== */
+
+.svga-panel {
+  position: fixed;
+  top: 0;
+  right: -400px;
+  width: 400px;
+  height: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  padding: 10px;
+  transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1000;
+}
+
+.svga-panel.show {
+  right: 0;
+}
+
+.svga-panel-container {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  padding: 20px;
+  gap: 16px;
+  width: 380px;
+  background: #FFFFFF;
+  border: 1px solid #E3E3E3;
+  box-shadow: 0px 10px 32px 0px rgba(51, 51, 51, 0.2);
+  border-radius: 16px;
+  overflow-y: auto;
+}
+
+body.dark-mode .svga-panel-container {
+  background: #1a1a1a;
+  border-color: #404040;
+  box-shadow: 0px 10px 32px rgba(0, 0, 0, 0.5);
+}
+
+/* 标题区 */
+.svga-panel-header {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  gap: 12px;
+}
+
+.svga-panel-title {
+  font-family: 'Segoe UI', sans-serif;
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 16px;
+  color: #818181;
+  margin: 0;
+}
+
+body.dark-mode .svga-panel-title {
+  color: #999999;
+}
+
+.svga-panel-divider {
+  width: 100%;
+  height: 1px;
+  background: #F3F3F3;
+}
+
+body.dark-mode .svga-panel-divider {
+  background: #404040;
+}
+
+/* MP4信息区 */
+.svga-info-section {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  gap: 4px;
+}
+
+.svga-info-row {
+  font-family: 'Segoe UI', sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 19px;
+  color: #333333;
+  margin: 0;
+}
+
+body.dark-mode .svga-info-row {
+  color: #cccccc;
+}
+
+.svga-compress-hint {
+  font-family: 'Segoe UI', sans-serif;
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 16px;
+  color: #AAAAAA;
+  margin: 0;
+}
+
+body.dark-mode .svga-compress-hint {
+  color: #666666;
+}
+
+/* 配置区域 */
+.svga-config-section {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  gap: 24px;
+  flex: 1;
+}
+
+.svga-config-section.disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.svga-config-item {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  align-self: stretch;
+  gap: 8px;
+}
+
+.svga-config-label {
+  font-family: 'Segoe UI', sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 21px;
+  color: #333333;
+  margin: 0;
+  flex-shrink: 0;
+  text-align: left;
+}
+
+body.dark-mode .svga-config-label {
+  color: #cccccc;
+}
+
+/* 尺寸输入 */
+.svga-size-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+}
+
+.svga-size-input-wrapper {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  padding: 0 16px;
+  gap: 4px;
+  width: 73px;
+  min-width: 50px;
+  height: 44px;
+  background: #F3F3F3;
+  border: none;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+  flex: none;
+  flex-grow: 0;
+}
+
+.svga-size-input-wrapper:hover {
+  background: #FCFCFC;
+  border: 1px solid #333333;
+  padding: 0 15px;
+}
+
+.svga-size-input-wrapper:focus-within {
+  background: #FFFFFF;
+  border: 2px solid #5B5B5B;
+  padding: 0 14px;
+}
+
+body.dark-mode .svga-size-input-wrapper {
+  background: #3a3a3a;
+  border: none;
+}
+
+body.dark-mode .svga-size-input-wrapper:hover {
+  background: #454545;
+  border: 1px solid #999999;
+  padding: 0 15px;
+}
+
+body.dark-mode .svga-size-input-wrapper:focus-within {
+  background: #3a3a3a;
+  border: 2px solid #999999;
+  padding: 0 14px;
+}
+
+.svga-size-lock {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #D3D3D3;
+}
+
+body.dark-mode .svga-size-lock {
+  color: #666666;
+}
+
+.svga-input {
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  border: none;
+  font-family: 'Segoe UI', sans-serif;
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 24px;
+  color: #333333;
+  text-align: center;
+  outline: none;
+}
+
+.svga-input::-webkit-outer-spin-button,
+.svga-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.svga-input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+body.dark-mode .svga-input {
+  color: #cccccc;
+}
+
+.svga-input:disabled {
+  color: #D3D3D3;
+}
+
+body.dark-mode .svga-input:disabled {
+  color: #666666;
+}
+
+/* 值输入容器 */
+.svga-value-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+}
+
+.svga-value-input-wrapper {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  padding: 0 16px;
+  gap: 4px;
+  width: 60px;
+  min-width: 50px;
+  height: 44px;
+  background: #F3F3F3;
+  border: none;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+  flex: none;
+  flex-grow: 0;
+}
+
+.svga-value-input-wrapper:hover {
+  background: #FCFCFC;
+  border: 1px solid #333333;
+  padding: 0 15px;
+}
+
+.svga-value-input-wrapper:focus-within {
+  background: #FFFFFF;
+  border: 2px solid #5B5B5B;
+  padding: 0 14px;
+}
+
+body.dark-mode .svga-value-input-wrapper {
+  background: #3a3a3a;
+  border: none;
+}
+
+body.dark-mode .svga-value-input-wrapper:hover {
+  background: #454545;
+  border: 1px solid #999999;
+  padding: 0 15px;
+}
+
+body.dark-mode .svga-value-input-wrapper:focus-within {
+  background: #3a3a3a;
+  border: 2px solid #999999;
+  padding: 0 14px;
+}
+
+.svga-value-unit {
+  font-family: 'Segoe UI', sans-serif;
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 24px;
+  color: #333333;
+}
+
+body.dark-mode .svga-value-unit {
+  color: #cccccc;
+}
+
+/* 静音开关 */
+.svga-mute-toggle {
+  width: 46px;
+  height: 26px;
+  background: #5B5B5B;
+  border-radius: 100px;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.svga-mute-toggle.active {
+  background: #409EFF;
+}
+
+.svga-mute-toggle.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.svga-mute-toggle-handle {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  background: #FFFFFF;
+  border-radius: 50%;
+  top: 1px;
+  left: 1px;
+  transition: left 0.2s ease;
+}
+
+.svga-mute-toggle.active .svga-mute-toggle-handle {
+  left: 21px;
+}
+
+body.dark-mode .svga-mute-toggle {
+  background: #404040;
+}
+
+body.dark-mode .svga-mute-toggle.active {
+  background: #409EFF;
+}
+
+body.dark-mode .svga-mute-toggle-handle {
+  background: #cccccc;
+}
+
+/* 预估对比区域 */
+.svga-estimate-section {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  gap: 8px;
+}
+
+.svga-estimate-box {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  gap: 4px;
+  padding: 10px;
+  background: #FCFCFC;
+  border: 1px solid #F3F3F3;
+  border-radius: 8px;
+}
+
+body.dark-mode .svga-estimate-box {
+  background: #2a2a2a;
+  border-color: #404040;
+}
+
+.svga-estimate-title {
+  font-family: 'Segoe UI', sans-serif;
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 16px;
+  color: #818181;
+  margin: 0;
+}
+
+body.dark-mode .svga-estimate-title {
+  color: #999999;
+}
+
+.svga-estimate-row {
+  font-family: 'Segoe UI', sans-serif;
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 16px;
+  color: #818181;
+  margin: 0;
+}
+
+body.dark-mode .svga-estimate-row {
+  color: #999999;
+}
+
+/* 底部按钮 */
+.svga-panel-footer {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  align-items: center;
+  align-self: stretch;
+  gap: 12px;
+}
+
+.svga-btn-cancel {
+  border-color: #ff4444 !important;
+}
+
+.svga-btn-converting {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(90deg, #5B5B5B var(--progress, 0%), #F3F3F3 var(--progress, 0%)) !important;
+}
+
+body.dark-mode .svga-btn-converting {
+  background: linear-gradient(90deg, #5B5B5B var(--progress, 0%), #3a3a3a var(--progress, 0%)) !important;
+}
+
+.svga-btn-converting::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, #5B5B5B calc(var(--progress, 0) * 1%), transparent calc(var(--progress, 0) * 1%));
+  z-index: 0;
+}
+
+.svga-progress-text {
+  font-weight: 600;
+  margin-right: 4px;
+}
+
+.svga-stage-text {
+  font-size: 12px;
+  opacity: 0.8;
+}

@@ -132,6 +132,21 @@ function initApp() {
             ffmpegLoaded: false,
             ffmpegLoading: false,
             
+            // SVGA 转换配置（双通道MP4转SVGA）
+            showSVGAPanel: false,
+            svgaConfig: {
+              width: 0,
+              height: 0,
+              quality: 80, // 1-100 压缩质量
+              fps: 30, // 1-60 帧率
+              muted: false
+            },
+            isConvertingSVGA: false,
+            svgaConvertProgress: 0,
+            svgaConvertStage: '', // 'loading' | 'extracting' | 'building' | 'encoding' | 'done'
+            svgaConvertMessage: '',
+            svgaConvertCancelled: false,
+            
             // Toast提示
             toastVisible: false,
             toastMessage: '',
@@ -1042,7 +1057,6 @@ function initApp() {
             if (this.currentModule === 'svga') {
               if (typeof Howler !== 'undefined') {
                 Howler.mute(this.isMuted);
-                console.log('Howler全局静音设置为:', this.isMuted);
               }
             }
           },
@@ -1697,11 +1711,6 @@ function initApp() {
                     
                     if (Object.keys(audioData).length > 0) {
                       _this.svgaAudioData = audioData;
-                      console.log('=== SVGA音频数据提取成功 ===');
-                      console.log('音频数量:', Object.keys(audioData).length);
-                      console.log('音频key:', Object.keys(audioData));
-                    } else {
-                      console.log('=== SVGA没有提取到音频数据 ===');
                     }
                   }
                 } catch (decodeErr) {
@@ -2600,6 +2609,434 @@ function initApp() {
             this.showMP4Panel = false;
           },
 
+          /* SVGA 转换功能（双通道MP4转SVGA） */
+          openSVGAPanel: function () {
+            if (!this.yyevaVideo || !this.yyeva.hasFile) {
+              alert('请先加载双通道 MP4 文件');
+              return;
+            }
+
+            // 切换侧边栏显示状态：如果已打开则关闭，否则打开
+            if (this.showSVGAPanel) {
+              this.showSVGAPanel = false;
+              return;
+            }
+
+            // 初始化配置：使用YYEVA视频的原始尺寸（显示尺寸，即宽度/2）
+            this.svgaConfig.width = this.yyeva.displayWidth || Math.floor(this.yyeva.originalWidth / 2);
+            this.svgaConfig.height = this.yyeva.displayHeight || this.yyeva.originalHeight;
+            
+            // 使用视频帧率，限制在1-60范围
+            var videoFps = this.yyeva.fileInfo.fps || 30;
+            this.svgaConfig.fps = Math.min(60, Math.max(1, Math.round(parseFloat(videoFps))));
+            
+            // 读取localStorage中保存的配置
+            try {
+              var savedQuality = localStorage.getItem('svga_quality');
+              if (savedQuality !== null) {
+                this.svgaConfig.quality = parseInt(savedQuality);
+              }
+            } catch (e) {}
+
+            this.showSVGAPanel = true;
+            
+            // 预加载protobuf和pako库
+            var _this = this;
+            this.loadLibrary(['protobuf', 'pako'], true)
+              .then(function() {
+                console.log('Protobuf和Pako加载完成');
+              })
+              .catch(function(error) {
+                console.warn('Protobuf/Pako加载失败:', error);
+              });
+          },
+
+          closeSVGAPanel: function () {
+            if (this.isConvertingSVGA) {
+              if (!confirm('正在转换中，确定要取消吗？')) {
+                return;
+              }
+              this.isConvertingSVGA = false;
+              this.svgaConvertProgress = 0;
+              this.svgaConvertCancelled = true;
+            }
+            this.showSVGAPanel = false;
+          },
+
+          cancelSVGAConversion: function () {
+            this.svgaConvertCancelled = true;
+            this.isConvertingSVGA = false;
+            this.svgaConvertProgress = 0;
+            this.svgaConvertStage = '';
+            this.svgaConvertMessage = '';
+          },
+
+          onSVGAWidthChange: function () {
+            // 保持比例，修改高度
+            var originalWidth = this.yyeva.displayWidth || Math.floor(this.yyeva.originalWidth / 2);
+            var originalHeight = this.yyeva.displayHeight || this.yyeva.originalHeight;
+            if (!originalWidth || !originalHeight) return;
+            
+            var ratio = originalHeight / originalWidth;
+            var newWidth = Math.max(1, Math.min(3000, parseInt(this.svgaConfig.width) || 0));
+            var newHeight = Math.floor(newWidth * ratio);
+            
+            this.svgaConfig.width = newWidth;
+            this.svgaConfig.height = newHeight;
+          },
+
+          onSVGAHeightChange: function () {
+            // 保持比例，修改宽度
+            var originalWidth = this.yyeva.displayWidth || Math.floor(this.yyeva.originalWidth / 2);
+            var originalHeight = this.yyeva.displayHeight || this.yyeva.originalHeight;
+            if (!originalWidth || !originalHeight) return;
+            
+            var ratio = originalWidth / originalHeight;
+            var newHeight = Math.max(1, Math.min(3000, parseInt(this.svgaConfig.height) || 0));
+            var newWidth = Math.floor(newHeight * ratio);
+            
+            this.svgaConfig.width = newWidth;
+            this.svgaConfig.height = newHeight;
+          },
+
+          // 开始转SVGA转换
+          startSVGAConversion: async function () {
+            var _this = this;
+
+            // 前置检查
+            if (!this.yyevaVideo || !this.yyeva.hasFile) {
+              alert('请先加载双通道 MP4 文件');
+              return;
+            }
+
+            // 参数验证
+            var width = this.svgaConfig.width;
+            var height = this.svgaConfig.height;
+            var quality = this.svgaConfig.quality;
+            var fps = this.svgaConfig.fps;
+
+            if (width < 1 || width > 3000) {
+              alert('宽度超出范围！\n\n合法范围：1-3000 像素\n当前值：' + width);
+              return;
+            }
+
+            if (height < 1 || height > 3000) {
+              alert('高度超出范围！\n\n合法范围：1-3000 像素\n当前值：' + height);
+              return;
+            }
+
+            if (quality < 1 || quality > 100) {
+              alert('压缩质量超出范围！\n\n合法范围：1-100\n当前值：' + quality);
+              return;
+            }
+
+            if (fps < 1 || fps > 60) {
+              alert('帧率超出范围！\n\n合法范围：1-60 fps\n当前值：' + fps);
+              return;
+            }
+
+            // 保存配置到localStorage
+            try {
+              localStorage.setItem('svga_quality', this.svgaConfig.quality);
+            } catch (e) {}
+
+            this.isConvertingSVGA = true;
+            this.svgaConvertProgress = 0;
+            this.svgaConvertCancelled = false;
+            this.svgaConvertStage = 'loading';
+            this.svgaConvertMessage = '正在加载库...';
+
+            try {
+              // 1. 加载 protobuf 和 pako
+              await this.loadLibrary(['protobuf', 'pako'], true);
+              if (this.svgaConvertCancelled) throw new Error('用户取消转换');
+
+              // 2. 提取序列帧
+              this.svgaConvertStage = 'extracting';
+              this.svgaConvertMessage = '正在提取序列帧...';
+              var frameData = await this.extractYyevaFrames();
+              if (this.svgaConvertCancelled) throw new Error('用户取消转换');
+
+              // 3. 构建SVGA文件
+              this.svgaConvertStage = 'building';
+              this.svgaConvertMessage = '正在构建SVGA...';
+              var svgaBlob = await this.buildSVGAFile(frameData);
+              if (this.svgaConvertCancelled) throw new Error('用户取消转换');
+
+              // 4. 下载文件
+              this.svgaConvertStage = 'done';
+              this.svgaConvertMessage = '转换完成！';
+              this.svgaConvertProgress = 100;
+
+              var url = URL.createObjectURL(svgaBlob);
+              var originalName = this.yyeva.fileInfo.name.replace(/\.mp4$/i, '');
+              var a = document.createElement('a');
+              a.href = url;
+              a.download = originalName + '.svga';
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              setTimeout(function() { URL.revokeObjectURL(url); }, 100);
+
+              alert('✅ 转换完成！\n\n已成功生成SVGA文件。');
+
+            } catch (error) {
+              if (error.message !== '用户取消转换') {
+                console.error('SVGA转换失败:', error);
+                alert('转换失败：' + error.message);
+              }
+            } finally {
+              this.isConvertingSVGA = false;
+              this.svgaConvertProgress = 0;
+              this.svgaConvertStage = '';
+              this.svgaConvertMessage = '';
+            }
+          },
+
+          // 从双通道MP4提取序列帧
+          extractYyevaFrames: async function () {
+            var _this = this;
+            var video = this.yyevaVideo;
+            var fps = this.svgaConfig.fps;
+            var targetWidth = this.svgaConfig.width;
+            var targetHeight = this.svgaConfig.height;
+            var quality = this.svgaConfig.quality || 100;
+            
+            // 根据质量参数计算缩小后的尺寸
+            var scaleFactor = quality / 100;
+            var scaledWidth = Math.round(targetWidth * scaleFactor);
+            var scaledHeight = Math.round(targetHeight * scaleFactor);
+            
+            // 确保尺寸至少为1
+            scaledWidth = Math.max(1, scaledWidth);
+            scaledHeight = Math.max(1, scaledHeight);
+            
+            var duration = video.duration;
+            var totalFrames = Math.ceil(duration * fps);
+            
+            // 暫停视频以便提取帧
+            video.pause();
+            
+            // 获取视频尺寸
+            var videoWidth = video.videoWidth;
+            var videoHeight = video.videoHeight;
+            var halfWidth = Math.floor(videoWidth / 2);
+            var alphaPosition = this.yyeva.alphaPosition;
+            
+            // 创建工作画布
+            var srcCanvas = document.createElement('canvas');
+            srcCanvas.width = videoWidth;
+            srcCanvas.height = videoHeight;
+            var srcCtx = srcCanvas.getContext('2d');
+            
+            // 创建结果画布（缩小后的尺寸）
+            var dstCanvas = document.createElement('canvas');
+            dstCanvas.width = scaledWidth;
+            dstCanvas.height = scaledHeight;
+            var dstCtx = dstCanvas.getContext('2d');
+            
+            var frames = [];
+            
+            for (var i = 0; i < totalFrames; i++) {
+              if (_this.svgaConvertCancelled) break;
+              
+              // 跳转到指定时间
+              var time = i / fps;
+              video.currentTime = time;
+              
+              // 等待视频寻址完成
+              await new Promise(function(resolve) {
+                var onSeeked = function() {
+                  video.removeEventListener('seeked', onSeeked);
+                  resolve();
+                };
+                video.addEventListener('seeked', onSeeked);
+                // 超时处理
+                setTimeout(resolve, 500);
+              });
+              
+              // 绘制视频帧到源画布
+              srcCtx.drawImage(video, 0, 0);
+              
+              // 提取左右通道数据
+              var colorX = alphaPosition === 'right' ? 0 : halfWidth;
+              var alphaX = alphaPosition === 'right' ? halfWidth : 0;
+              
+              // 获取彩色和Alpha数据
+              var colorData = srcCtx.getImageData(colorX, 0, halfWidth, videoHeight);
+              var alphaData = srcCtx.getImageData(alphaX, 0, halfWidth, videoHeight);
+              
+              // 合成带透明度的图像（处理预乘Alpha）
+              for (var j = 0; j < colorData.data.length; j += 4) {
+                var alpha = alphaData.data[j]; // 使用Alpha通道的R值作为透明度
+                
+                if (alpha > 0) {
+                  // 反预乘：将预乘的RGB值还原
+                  colorData.data[j] = Math.min(255, (colorData.data[j] * 255) / alpha);
+                  colorData.data[j + 1] = Math.min(255, (colorData.data[j + 1] * 255) / alpha);
+                  colorData.data[j + 2] = Math.min(255, (colorData.data[j + 2] * 255) / alpha);
+                }
+                
+                // 设置透明度
+                colorData.data[j + 3] = alpha;
+              }
+              
+              // 绘制到目标尺寸画布
+              var tempCanvas = document.createElement('canvas');
+              tempCanvas.width = halfWidth;
+              tempCanvas.height = videoHeight;
+              var tempCtx = tempCanvas.getContext('2d');
+              tempCtx.putImageData(colorData, 0, 0);
+              
+              dstCtx.clearRect(0, 0, scaledWidth, scaledHeight);
+              dstCtx.drawImage(tempCanvas, 0, 0, halfWidth, videoHeight, 0, 0, scaledWidth, scaledHeight);
+              
+              // 转换为PNG Blob
+              var pngBlob = await new Promise(function(resolve) {
+                dstCanvas.toBlob(function(blob) {
+                  resolve(blob);
+                }, 'image/png');
+              });
+              
+              // 读取为ArrayBuffer
+              var arrayBuffer = await pngBlob.arrayBuffer();
+              frames.push(new Uint8Array(arrayBuffer));
+              
+              // 更新进度
+              _this.svgaConvertProgress = Math.round((i + 1) / totalFrames * 50); // 占50%进度
+              
+              // 让出UI线程
+              await new Promise(function(resolve) { setTimeout(resolve, 0); });
+            }
+            
+            // 返回帧数据和缩放信息
+            return {
+              frames: frames,
+              scaledWidth: scaledWidth,
+              scaledHeight: scaledHeight,
+              displayWidth: targetWidth,
+              displayHeight: targetHeight,
+              scaleFactor: scaleFactor
+            };
+          },
+
+          // 构建SVGA文件
+          buildSVGAFile: async function (frameData) {
+            var _this = this;
+            // 从 frameData 中提取信息
+            var pngFrames = frameData.frames;
+            var scaledWidth = frameData.scaledWidth;
+            var scaledHeight = frameData.scaledHeight;
+            var displayWidth = frameData.displayWidth;
+            var displayHeight = frameData.displayHeight;
+            var scaleFactor = frameData.scaleFactor;
+            
+            // 计算放大比例（显示尺寸 / 实际图片尺寸）
+            var scaleUp = 1 / scaleFactor;
+            
+            var fps = this.svgaConfig.fps;
+            var muted = this.svgaConfig.muted;
+            var totalFrames = pngFrames.length;
+            
+            return new Promise(function(resolve, reject) {
+              protobuf.load('svga.proto', function(err, root) {
+                if (err) {
+                  reject(new Error('Proto加载失败: ' + err.message));
+                  return;
+                }
+                
+                try {
+                  var MovieEntity = root.lookupType('com.opensource.svga.MovieEntity');
+                  
+                  // 构建images字典
+                  var images = {};
+                  for (var i = 0; i < totalFrames; i++) {
+                    var imageKey = 'img_' + i;
+                    images[imageKey] = pngFrames[i];
+                    
+                    _this.svgaConvertProgress = 50 + Math.round((i + 1) / totalFrames * 40); // 50-90%进度
+                  }
+                  
+                  // 构建sprites数组（每帧一个sprite）
+                  var sprites = [];
+                  for (var i = 0; i < totalFrames; i++) {
+                    var imageKey = 'img_' + i;
+                    
+                    // 每个sprite只在对应帧显示
+                    var spriteFrames = [];
+                    for (var f = 0; f < totalFrames; f++) {
+                      if (f === i) {
+                        // 当前帧显示，使用缩小后的图片尺寸，通过transform放大到显示尺寸
+                        spriteFrames.push({
+                          alpha: 1.0,
+                          layout: {
+                            x: 0,
+                            y: 0,
+                            width: scaledWidth,
+                            height: scaledHeight
+                          },
+                          transform: {
+                            a: scaleUp, b: 0, c: 0, d: scaleUp, tx: 0, ty: 0
+                          }
+                        });
+                      } else {
+                        // 其他帧隐藏（alpha=0）
+                        spriteFrames.push({
+                          alpha: 0
+                        });
+                      }
+                    }
+                    
+                    sprites.push({
+                      imageKey: imageKey,
+                      frames: spriteFrames
+                    });
+                  }
+                  
+                  // 构建MovieEntity，viewBox使用显示尺寸
+                  var movieData = {
+                    version: '2.0',
+                    params: {
+                      viewBoxWidth: displayWidth,
+                      viewBoxHeight: displayHeight,
+                      fps: fps,
+                      frames: totalFrames
+                    },
+                    images: images,
+                    sprites: sprites,
+                    audios: []
+                  };
+                  
+                  // 如果需要音频且有音频数据，添加音频（待实现）
+                  // TODO: 从视频中提取音频并添加到SVGA
+                  
+                  // 编码protobuf
+                  var errMsg = MovieEntity.verify(movieData);
+                  if (errMsg) {
+                    reject(new Error('MovieEntity验证失败: ' + errMsg));
+                    return;
+                  }
+                  
+                  var message = MovieEntity.create(movieData);
+                  var buffer = MovieEntity.encode(message).finish();
+                  
+                  // 使用pako压缩
+                  _this.svgaConvertProgress = 95;
+                  var deflatedData = pako.deflate(buffer);
+                  
+                  // 创建Blob
+                  var blob = new Blob([deflatedData], { type: 'application/octet-stream' });
+                  _this.svgaConvertProgress = 100;
+                  
+                  resolve(blob);
+                  
+                } catch (buildErr) {
+                  reject(new Error('SVGA构建失败: ' + buildErr.message));
+                }
+              });
+            });
+          },
+
           toggleChannelModeDropdown: function () {
             // 切换下拉菜单显示状态
             this.showChannelModeDropdown = !this.showChannelModeDropdown;
@@ -3491,6 +3928,85 @@ function initApp() {
               return 'assets/img/one2one_dark.png';
             }
             return 'assets/img/one2one.png';
+          },
+          
+          // SVGA转换预估计算
+          svgaEstimate: function () {
+            // 获取配置参数
+            var width = this.svgaConfig.width || 0;
+            var height = this.svgaConfig.height || 0;
+            var fps = this.svgaConfig.fps || 30;
+            var quality = this.svgaConfig.quality || 80;
+            var muted = this.svgaConfig.muted;
+            
+            // 根据质量参数计算缩小后的尺寸
+            var scaleFactor = quality / 100;
+            var scaledWidth = Math.round(width * scaleFactor);
+            var scaledHeight = Math.round(height * scaleFactor);
+            
+            // 获取视频时长（秒）
+            var duration = 0;
+            if (this.yyevaVideo) {
+              duration = this.yyevaVideo.duration || 0;
+            }
+            
+            // 计算帧数
+            var frames = Math.ceil(duration * fps);
+            
+            // 计算内存占用（转换前：MP4视频内存，转换后：SVGA帧数据）
+            // 转换前：MP4视频文件大小的约3-5倍作为解码内存
+            var beforeMemoryMB = 0;
+            if (this.yyeva.fileInfo && this.yyeva.fileInfo.size) {
+              beforeMemoryMB = (this.yyeva.fileInfo.size * 4 / 1024 / 1024).toFixed(1);
+            }
+            
+            // 转换后内存占用：缩小后的宽×高×帧数×4字节(RGBA) / 1024 / 1024
+            var afterMemoryMB = (scaledWidth * scaledHeight * frames * 4 / 1024 / 1024).toFixed(1);
+            
+            // 计算文件大小预估
+            // 转换前：MP4文件大小
+            var beforeFileSizeKB = 0;
+            var beforeFileSizeText = '0kb';
+            if (this.yyeva.fileInfo && this.yyeva.fileInfo.size) {
+              beforeFileSizeKB = this.yyeva.fileInfo.size / 1024;
+              if (beforeFileSizeKB >= 1024) {
+                beforeFileSizeText = (beforeFileSizeKB / 1024).toFixed(2) + 'M';
+              } else {
+                beforeFileSizeText = beforeFileSizeKB.toFixed(0) + 'kb';
+              }
+            }
+            
+            // 转换后文件大小预估：
+            // 使用缩小后的尺寸计算，SVGA使用PNG压缩，预估每帧大小 = 缩小宽×缩小高×0.5
+            // 然后再经过pako压缩，大约压缩到70%
+            var estimatedFrameSizeBytes = scaledWidth * scaledHeight * 0.5;
+            var estimatedTotalBytes = estimatedFrameSizeBytes * frames * 0.7; // pako压缩后
+            
+            // 如果有音频，加上音频大小预估
+            if (!muted && this.yyevaHasAudio) {
+              // 音频约占视频时长 * 16kbps
+              var audioSizeBytes = duration * 16 * 1024 / 8;
+              estimatedTotalBytes += audioSizeBytes;
+            }
+            
+            var afterFileSizeKB = estimatedTotalBytes / 1024;
+            var afterFileSizeText = '？';
+            if (frames > 0) {
+              if (afterFileSizeKB >= 1024) {
+                afterFileSizeText = (afterFileSizeKB / 1024).toFixed(2) + 'M';
+              } else {
+                afterFileSizeText = afterFileSizeKB.toFixed(0) + 'kb';
+              }
+            }
+            
+            return {
+              frames: frames,
+              duration: duration,
+              beforeMemory: beforeMemoryMB + 'M',
+              afterMemory: afterMemoryMB + 'M',
+              beforeFileSize: beforeFileSizeText,
+              afterFileSize: afterFileSizeText
+            };
           },
           
           viewerContainerStyle: function () {
