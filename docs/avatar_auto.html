@@ -1022,16 +1022,15 @@
           // 加载头像框列表
           loadFrameList: function() {
             var _this = this;
-            // 尝试从file-list.json加载，如果没有则扫描目录
+            // 从file-list.json加载
             fetch('assets/dar_svga/file-list.json')
               .then(function(res) { return res.json(); })
               .then(function(list) {
-                _this.frameList = list.map(function(name) {
-                  var baseName = name.replace(/\.svga$/i, '');
+                _this.frameList = list.map(function(item) {
                   return {
-                    name: baseName,
-                    svga: name,
-                    icon: baseName + '.png'
+                    name: item.name,
+                    svga: item.svga,  // 远程URL
+                    icon: item.name + '.png'  // 本地PNG图标
                   };
                 });
                 _this.loading = false;
@@ -1084,7 +1083,7 @@
           // 加载SVGA文件
           loadSVGA: function(item) {
             var _this = this;
-            var svgaUrl = 'assets/dar_svga/' + item.svga;
+            var svgaUrl = item.svga;  // 直接使用远程URL
             
             // 每次都重新初始化播放器（确保干净状态）
             var container = document.getElementById('svgaContainer');
