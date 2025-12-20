@@ -51,7 +51,7 @@ function initApp() {
               }
             },
 
-            // YYEVA 状态
+            // 双通道MP4 状态
             yyeva: {
               hasFile: false,
               file: null,
@@ -70,7 +70,7 @@ function initApp() {
               displayHeight: 0   // 显示高度
             },
             
-            // YYEVA 播放器实例
+            // 双通道MP4 播放器实例
             yyevaVideo: null,
             yyevaCanvas: null,
             yyevaCtx: null,
@@ -154,7 +154,7 @@ function initApp() {
             
             // 静音控制
             isMuted: false,
-            yyevaHasAudio: false, // YYEVA视频是否包含音频轨道
+            yyevaHasAudio: false, // 双通道MP4视频是否包含音频轨道
             
             // 库加载管理
             libraryLoader: {
@@ -166,7 +166,191 @@ function initApp() {
           };
         },
         methods: {
-          /* 库加载管理器 */
+          /* ==================== 模式切换与任务管理 ==================== */
+          
+          /**
+           * 获取当前正在进行的任务列表
+           * @returns {Array<{name: string, key: string, mode: string}>} 任务列表
+           */
+          getOngoingTasks: function() {
+            var tasks = [];
+            
+            // GIF导出（SVGA和双通道MP4模式都支持）
+            if (this.isExportingGIF) {
+              tasks.push({ 
+                name: 'GIF导出', 
+                key: 'gif',
+                mode: this.currentModule
+              });
+            }
+            
+            // SVGA转MP4（SVGA模式）
+            if (this.isConvertingMP4) {
+              tasks.push({ 
+                name: 'SVGA转MP4', 
+                key: 'mp4',
+                mode: 'svga'
+              });
+            }
+            
+            // 双通道MP4转SVGA（双通道MP4模式）
+            if (this.isConvertingSVGA) {
+              tasks.push({ 
+                name: '转SVGA', 
+                key: 'svga',
+                mode: 'yyeva'
+              });
+            }
+            
+            return tasks;
+          },
+          
+          /**
+           * 取消所有正在进行的任务
+           * @param {boolean} silent - 是否静默取消（不显示toast）
+           * @returns {Array<string>} 被取消的任务名称列表
+           */
+          cancelOngoingTasks: function(silent) {
+            var cancelledTasks = [];
+            
+            // 取消GIF导出
+            if (this.isExportingGIF) {
+              this.isExportingGIF = false;
+              this.gifExportProgress = 0;
+              cancelledTasks.push('GIF导出');
+            }
+            
+            // 取消MP4转换
+            if (this.isConvertingMP4) {
+              this.isConvertingMP4 = false;
+              this.mp4ConvertProgress = 0;
+              this.mp4ConvertCancelled = true;
+              cancelledTasks.push('SVGA转MP4');
+            }
+            
+            // 取消SVGA转换
+            if (this.isConvertingSVGA) {
+              this.isConvertingSVGA = false;
+              this.svgaConvertProgress = 0;
+              this.svgaConvertCancelled = true;
+              cancelledTasks.push('转SVGA');
+            }
+            
+            // 显示取消提示
+            if (!silent && cancelledTasks.length > 0) {
+              this.showToast('已取消：' + cancelledTasks.join('、'));
+            }
+            
+            return cancelledTasks;
+          },
+          
+          /**
+           * 检查是否有正在进行的任务，并弹窗确认
+           * @param {string} action - 操作名称（如："播放新文件"、"清空画布"、"导出GIF"）
+           * @param {string} actionType - 操作类型（'load' | 'clear' | 'task'）
+           * @returns {boolean} 用户是否确认继续
+           */
+          confirmIfHasOngoingTasks: function(action, actionType) {
+            var tasks = this.getOngoingTasks();
+            if (tasks.length === 0) return true;
+            
+            var taskNames = tasks.map(function(t) { return t.name; }).join('、');
+            var message = '';
+            
+            // 根据操作类型生成不同的提示文案
+            if (actionType === 'load') {
+              // 加载文件
+              message = '您的' + taskNames + '还在进行中，立即播放将退出' + taskNames + '。\n\n确定继续吗？';
+            } else if (actionType === 'clear') {
+              // 清空画布
+              message = '您的' + taskNames + '还在进行中，清空画布将退出' + taskNames + '。\n\n确定继续吗？';
+            } else if (actionType === 'task') {
+              // 开始新任务
+              message = '您的' + taskNames + '还在进行中，立即' + action + '可能造成卡顿。\n\n确定继续吗？';
+            }
+            
+            return confirm(message);
+          },
+          
+          /**
+           * 关闭所有侧边弹窗
+           */
+          closeAllPanels: function() {
+            // 右侧弹窗
+            this.showMaterialPanel = false;
+            this.showMP4Panel = false;
+            this.showSVGAPanel = false;
+            
+            // 未来的左侧弹窗...
+          },
+          
+          /**
+           * 打开/关闭右侧弹窗（互斥，同时只能打开一个）
+           * @param {string} panelName - 弹窗变量名（showMaterialPanel | showMP4Panel | showSVGAPanel）
+           */
+          openRightPanel: function(panelName) {
+            // 如果目标弹窗已打开，则关闭它
+            if (this[panelName] === true) {
+              this[panelName] = false;
+              return;
+            }
+            
+            // 否则关闭所有右侧弹窗，然后打开目标弹窗
+            this.showMaterialPanel = false;
+            this.showMP4Panel = false;
+            this.showSVGAPanel = false;
+            this[panelName] = true;
+          },
+          
+          /**
+           * 统一的模式切换函数
+           * @param {string} targetMode - 目标模式（'svga' | 'yyeva' | 'lottie'）
+           * @param {Object} options - 选项 { skipCleanup: boolean }
+           */
+          switchMode: function(targetMode, options) {
+            options = options || {};
+            var fromMode = this.currentModule;
+            
+            // 如果已经是目标模式，且不需要清理，则直接返回
+            if (fromMode === targetMode && options.skipCleanup) {
+              return;
+            }
+            
+            // 1. 取消正在进行的任务（静默取消）
+            this.cancelOngoingTasks(true);
+            
+            // 2. 清理资源（根据模式决定清理哪些）
+            if (!options.skipCleanup) {
+              // 同模式切换：只清理当前模式资源
+              if (fromMode === targetMode) {
+                if (targetMode === 'svga') {
+                  this.cleanupSvga();
+                } else if (targetMode === 'yyeva') {
+                  this.cleanupYyeva();
+                }
+              } else {
+                // 跨模式切换：清理旧模式资源
+                if (fromMode === 'svga') {
+                  this.cleanupSvga();
+                } else if (fromMode === 'yyeva') {
+                  this.cleanupYyeva();
+                }
+              }
+            }
+            
+            // 3. 关闭所有弹窗
+            this.closeAllPanels();
+            
+            // 4. 切换模式
+            this.currentModule = targetMode;
+            
+            // 5. 重置视图状态
+            this.viewerScale = 1;
+            this.viewerOffsetX = 0;
+            this.viewerOffsetY = 0;
+          },
+          
+          /* ==================== 库加载管理器 ==================== */
           
           // 获取库配置
           getLibraryConfig: function() {
@@ -543,18 +727,23 @@ function initApp() {
           },
 
           /* 清空画布 */
+          /**
+           * 清空画布，返回首页
+           */
           clearAll: function () {
             var _this = this;
+            
+            // 检查是否有正在进行的任务
+            if (!this.confirmIfHasOngoingTasks('清空画布', 'clear')) {
+              return; // 用户取消
+            }
             
             // 先隐藏内容
             this.footerContentVisible = false;
             this.footerTransitioning = true;
             
-            // 清理SVGA资源
-            this.cleanupSvga();
-            
-            // 清理 YYEVA 资源
-            this.cleanupYyeva();
+            // 使用统一的模式切换函数
+            this.switchMode('svga');
             
             // 重置Lottie状态
             this.lottie = {
@@ -568,13 +757,6 @@ function initApp() {
             };
 
             this.bgColorKey = 'pattern';
-            
-            // 关闭侧边栏
-            this.showMaterialPanel = false;
-            this.showMP4Panel = false;
-            
-            // 重置模块状态
-            this.currentModule = 'svga';
             
             // 等待400ms过渡动画完成后，重新初始化空状态的随机SVGA动画
             setTimeout(function() {
@@ -604,31 +786,6 @@ function initApp() {
               _this.toastVisible = false;
               _this.toastTimer = null;
             }, 3000);
-          },
-          
-          /* 取消正在进行的任务 */
-          cancelOngoingTasks: function() {
-            var cancelledTasks = [];
-            
-            // 检查并取消GIF导出
-            if (this.isExportingGIF) {
-              this.isExportingGIF = false;
-              this.gifExportProgress = 0;
-              cancelledTasks.push('GIF导出');
-            }
-            
-            // 检查并取消MP4转换
-            if (this.isConvertingMP4) {
-              this.isConvertingMP4 = false;
-              this.mp4ConvertProgress = 0;
-              this.mp4ConvertCancelled = true;
-              cancelledTasks.push('转换MP4');
-            }
-            
-            // 如果有取消的任务，显示toast
-            if (cancelledTasks.length > 0) {
-              this.showToast('已取消：' + cancelledTasks.join('、'));
-            }
           },
 
           loadHelpContent: function () {
@@ -700,10 +857,14 @@ function initApp() {
               });
           },
 
+          /**
+           * 加载SVGA文件
+           * @param {File} file - SVGA文件对象
+           */
           loadSvga: function (file) {
             var _this = this;
             
-            // 预验证SVGA文件
+            // 预验证SVGA文件（先验证再确认，避免错误文件影响当前播放）
             var tempReader = new FileReader();
             tempReader.onload = function (e) {
               var arrayBuffer = e.target.result;
@@ -720,33 +881,22 @@ function initApp() {
                   // 解析成功，清理临时资源
                   URL.revokeObjectURL(tempObjectUrl);
                   
-                  // 现在才开始清理旧内容并加载新内容
-                  _this.currentModule = 'svga';
+                  // 文件验证通过，现在检查任务并确认
+                  if (!_this.confirmIfHasOngoingTasks('播放新文件', 'load')) {
+                    return; // 用户取消，不加载新文件
+                  }
                   
-                  // 刷新侧边弹窗：如果有打开的弹窗，先关闭再重新打开，确保内容刷新
-                  var wasMP4PanelOpen = _this.showMP4Panel;
-                  var wasMaterialPanelOpen = _this.showMaterialPanel;
-                  if (wasMP4PanelOpen) _this.showMP4Panel = false;
-                  if (wasMaterialPanelOpen) _this.showMaterialPanel = false;
-                  
-                  // SVGA模式不关闭任何弹窗，保持当前状态
-                  // 但需要检查并取消正在进行的任务（如果是从其他模式切换过来）
-                  // 注：如果是同模式内切换，不会进行任务取消
-                  
-                  // 清理YYEVA资源（如果正在播放MP4）
-                  _this.cleanupYyeva();
+                  // 使用统一的模式切换函数（切换到SVGA模式）
+                  _this.switchMode('svga');
 
-                  // 重置视图状态（垂直位置会在加载完成后动态计算）
-                  _this.viewerScale = 1;
-                  _this.viewerOffsetX = 0;
-                  _this.viewerOffsetY = 0;
-
+                  // 设置文件信息
                   _this.svga.hasFile = true;
                   _this.svga.file = file;
                   _this.svga.fileInfo.name = file.name;
                   _this.svga.fileInfo.size = file.size;
                   _this.svga.fileInfo.sizeText = _this.formatBytes(file.size);
 
+                  // 重置播放状态
                   _this.progress = 0;
                   _this.currentFrame = 0;
                   _this.totalFrames = 0;
@@ -772,12 +922,6 @@ function initApp() {
                       _this.svgaObjectUrl,
                       function (videoItem) {
                         _this.onSvgaLoaded(videoItem);
-                        
-                        // 恢复之前打开的弹窗（延迟执行，确保播放器初始化完成）
-                        setTimeout(function() {
-                          if (wasMP4PanelOpen) _this.showMP4Panel = true;
-                          if (wasMaterialPanelOpen) _this.showMaterialPanel = true;
-                        }, 100);
                       },
                       function () {
                         alert('SVGA 解析失败');
@@ -1003,7 +1147,7 @@ function initApp() {
           },
 
           togglePlay: function () {
-            // YYEVA 模式
+            // 双通道MP4 模式
             if (this.currentModule === 'yyeva' && this.yyeva.hasFile && this.yyevaVideo) {
               if (this.isPlaying) {
                 this.yyevaVideo.pause();
@@ -1047,7 +1191,7 @@ function initApp() {
             
             this.isMuted = !this.isMuted;
             
-            // YYEVA 模式
+            // 双通道MP4 模式
             if (this.currentModule === 'yyeva' && this.yyevaVideo) {
               this.yyevaVideo.muted = this.isMuted;
             }
@@ -1087,7 +1231,7 @@ function initApp() {
             p = Math.max(0, Math.min(1, p));
             this.progress = Math.round(p * 100);
             
-            // YYEVA 模式
+            // 双通道MP4 模式
             if (this.currentModule === 'yyeva' && this.yyeva.hasFile && this.yyevaVideo) {
               var duration = this.yyevaVideo.duration || 1;
               this.yyevaVideo.currentTime = p * duration;
@@ -1108,33 +1252,32 @@ function initApp() {
             } catch (e) {}
           },
 
-          /* Lottie / YYEVA 阶段1占位逻辑 */
+          /* Lottie / 双通道MP4 阶段1占位逻辑 */
 
+          /**
+           * 加载Lottie文件（占位实现）
+           * @param {File} file - Lottie JSON文件
+           */
           loadLottiePlaceholder: function (file) {
             var _this = this;
-            // 清理SVGA资源（如果正在播放SVGA）
-            this.cleanupSvga();
-            // 清理YYEVA资源（如果正在播放MP4）
-            this.cleanupYyeva();
             
-            // 切换到Lottie模式，关闭SVGA特有的弹窗
-            this.showMaterialPanel = false;
-            this.showMP4Panel = false;
+            // 检查是否有正在进行的任务
+            if (!this.confirmIfHasOngoingTasks('播放新文件', 'load')) {
+              return; // 用户取消
+            }
             
-            // 取消正在进行的任务
-            this.cancelOngoingTasks();
+            // 使用统一的模式切换函数
+            this.switchMode('lottie');
             
-            // 重置视图状态
-            this.viewerScale = 1;
-            this.viewerOffsetX = 0;
+            // 重置视图位置
             this.centerViewer();
 
+            // 设置文件信息
             this.lottie.hasFile = true;
             this.lottie.file = file;
             this.lottie.fileInfo.name = file.name;
             this.lottie.fileInfo.size = file.size;
             this.lottie.fileInfo.sizeText = this.formatBytes(file.size);
-            this.currentModule = 'lottie';
             
             // 启动过渡
             this.footerTransitioning = true;
@@ -1166,35 +1309,27 @@ function initApp() {
               if (videoWidth < videoHeight * 0.8) {
                 // 不支持的格式，清理临时资源
                 URL.revokeObjectURL(tempObjectUrl);
-                alert('不支持的视频格式，请上传左右并排布局的YYEVA-MP4文件');
+                alert('不支持的视频格式，请上传左右并排布局的双通道MP4文件');
                 return; // 直接返回，不影响当前播放内容
               }
               
               // 验证通过，清理临时资源
               URL.revokeObjectURL(tempObjectUrl);
               
-              // 现在才清理旧内容，开始加载新内容
-              _this.cleanupSvga(); // 清理SVGA资源
-              _this.cleanupYyeva(); // 清理YYEVA资源
+              // 文件验证通过，现在检查任务并确认
+              if (!_this.confirmIfHasOngoingTasks('播放新文件', 'load')) {
+                return; // 用户取消，不加载新文件
+              }
               
-              // 切换到YYEVA模式，关闭SVGA特有的弹窗
-              _this.showMaterialPanel = false;
-              _this.showMP4Panel = false;
-              
-              // 取消正在进行的任务
-              _this.cancelOngoingTasks();
-              
-              // 重置视图状态
-              _this.viewerScale = 1;
-              _this.viewerOffsetX = 0;
-              _this.viewerOffsetY = 0;
+              // 使用统一的模式切换函数（切换到双通道MP4模式）
+              _this.switchMode('yyeva');
 
+              // 设置文件信息
               _this.yyeva.hasFile = true;
               _this.yyeva.file = file;
               _this.yyeva.fileInfo.name = file.name;
               _this.yyeva.fileInfo.size = file.size;
               _this.yyeva.fileInfo.sizeText = _this.formatBytes(file.size);
-              _this.currentModule = 'yyeva';
               
               // 创建正式objectUrl
               _this.yyevaObjectUrl = URL.createObjectURL(file);
@@ -1250,7 +1385,7 @@ function initApp() {
                       _this.isPlaying = true;
                       _this.startYyevaRenderLoop();
                     }).catch(function(err) {
-                      console.error('YYEVA播放失败:', err);
+                      console.error('双通道MP4播放失败:', err);
                     });
                   }, 50);
                 }, 400);
@@ -1258,7 +1393,9 @@ function initApp() {
               
               video.onerror = function() {
                 alert('视频加载失败，请检查文件格式');
+                // 加载失败，清理资源并返回首页
                 _this.cleanupYyeva();
+                _this.clearAll();
               };
               
               video.load();
@@ -1316,7 +1453,7 @@ function initApp() {
             return variance;
           },
           
-          // 初始化 YYEVA Canvas
+          // 初始化 双通道MP4 Canvas
           initYyevaCanvas: function() {
             var container = this.$refs.svgaContainer;
             if (!container) return;
@@ -1336,7 +1473,7 @@ function initApp() {
             this.yyevaCtx = canvas.getContext('2d');
           },
           
-          // YYEVA 渲染循环
+          // 双通道MP4 渲染循环
           startYyevaRenderLoop: function() {
             var _this = this;
             
@@ -1354,7 +1491,7 @@ function initApp() {
             render();
           },
           
-          // 渲染 YYEVA 帧
+          // 渲染 双通道MP4 帧
           renderYyevaFrame: function() {
             var video = this.yyevaVideo;
             var canvas = this.yyevaCanvas;
@@ -1401,7 +1538,7 @@ function initApp() {
             ctx.putImageData(colorData, 0, 0);
           },
           
-          // 更新 YYEVA 进度
+          // 更新 双通道MP4 进度
           updateYyevaProgress: function() {
             if (!this.yyevaVideo) return;
             
@@ -1413,7 +1550,9 @@ function initApp() {
             this.currentFrame = Math.round(currentTime * 30); // 假设30fps
           },
           
-          // 清理 YYEVA 资源
+          /**
+           * 清理SVGA资源
+           */
           cleanupSvga: function() {
             // 停止并清理SVGA播放器
             if (this.svgaPlayer) {
@@ -1473,6 +1612,9 @@ function initApp() {
             this.totalFrames = 0;
           },
           
+          /**
+           * 清理双通道MP4资源
+           */
           cleanupYyeva: function() {
             if (this.yyevaAnimationId) {
               cancelAnimationFrame(this.yyevaAnimationId);
@@ -1496,7 +1638,7 @@ function initApp() {
             this.yyevaCanvas = null;
             this.yyevaCtx = null;
             
-            // 清空容器内容（移除YYEVA的Canvas）
+            // 清空容器内容（移除双通道MP4的Canvas）
             var container = this.$refs.svgaContainer;
             if (container) {
               container.innerHTML = '';
@@ -1520,7 +1662,7 @@ function initApp() {
               displayHeight: 0
             };
             
-            // 重置YYEVA音频状态
+            // 重置双通道MP4音频状态
             this.yyevaHasAudio = false;
           },
 
@@ -1627,14 +1769,18 @@ function initApp() {
 
           /* 素材替换功能 */
 
+          /**
+           * 打开素材替换弹窗（SVGA模式右侧弹窗）
+           */
           openMaterialPanel: function () {
             if (!this.svga.hasFile || !this.originalVideoItem) return;
-            // 关闭MP4弹窗（互斥显示）
-            this.showMP4Panel = false;
-            // 切换侧边栏显示状态：如果已打开则关闭，否则打开
-            this.showMaterialPanel = !this.showMaterialPanel;
+            // 使用统一的右侧弹窗管理
+            this.openRightPanel('showMaterialPanel');
           },
 
+          /**
+           * 关闭素材替换弹窗
+           */
           closeMaterialPanel: function () {
             this.showMaterialPanel = false;
           },
@@ -2165,12 +2311,20 @@ function initApp() {
 
           /* GIF 导出功能 */
 
+          /**
+           * 导出SVGA为GIF动图
+           */
           exportGIF: async function () {
             var _this = this;
             
             if (!this.svgaPlayer || !this.svga.hasFile || !this.originalVideoItem) {
               alert('请先加载 SVGA 文件');
               return;
+            }
+            
+            // 检查是否有其他正在进行的任务
+            if (!this.confirmIfHasOngoingTasks('导出GIF', 'task')) {
+              return; // 用户取消
             }
             
             // 添加确认弹窗
@@ -2345,13 +2499,18 @@ function initApp() {
             captureFrame();
           },
 
-          // YYEVA GIF 导出
+          // 双通道MP4 GIF 导出
           exportYyevaGIF: async function() {
             var _this = this;
             
             if (!this.yyevaVideo || !this.yyeva.hasFile || !this.yyevaCanvas) {
-              alert('请先加载 YYEVA-MP4 文件');
+              alert('请先加载 双通道MP4 文件');
               return;
+            }
+            
+            // 检查是否有其他正在进行的任务
+            if (!this.confirmIfHasOngoingTasks('导出GIF', 'task')) {
+              return; // 用户取消
             }
             
             // 添加确认弹窗
@@ -2437,7 +2596,7 @@ function initApp() {
             var captureFrame = function() {
               if (currentFrameIndex >= totalFrames) {
                 // 所有帧都添加完毕，开始渲染 GIF
-                console.log('开始编码 YYEVA GIF...');
+                console.log('开始编码 双通道MP4 GIF...');
                 _this.gifExportProgress = 50;
                 
                 setTimeout(function() {
@@ -2491,7 +2650,7 @@ function initApp() {
                 tempCtx.fillStyle = bgColor;
                 tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
                 
-                // 将 YYEVA 画布绘制到临时 canvas 上
+                // 将 双通道MP4 画布绘制到临时 canvas 上
                 tempCtx.drawImage(canvas, 0, 0);
                 
                 // 添加到 GIF
@@ -2531,7 +2690,7 @@ function initApp() {
             });
             
             // 开始捕获
-            console.log('开始捕获 YYEVA 帧，总帧数:', totalFrames);
+            console.log('开始捕获 双通道MP4 帧，总帧数:', totalFrames);
             captureFrame();
           },
 
@@ -2546,18 +2705,13 @@ function initApp() {
           },
 
           /* MP4 转换功能 */
+          
+          /**
+           * 打开转MP4弹窗（SVGA模式右侧弹窗）
+           */
           openMP4Panel: function () {
             if (!this.svgaPlayer || !this.svga.hasFile || !this.originalVideoItem) {
               alert('请先加载 SVGA 文件');
-              return;
-            }
-
-            // 关闭素材图弹窗（互斥显示）
-            this.showMaterialPanel = false;
-            
-            // 切换侧边栏显示状态：如果已打开则关闭，否则打开
-            if (this.showMP4Panel) {
-              this.showMP4Panel = false;
               return;
             }
 
@@ -2583,7 +2737,8 @@ function initApp() {
               }
             } catch (e) {}
 
-            this.showMP4Panel = true;
+            // 使用统一的右侧弹窗管理
+            this.openRightPanel('showMP4Panel');
             
             // 预加载FFmpeg库（高优先级插队）
             if (!this.libraryLoader.loadedLibs['ffmpeg']) {
@@ -2598,6 +2753,9 @@ function initApp() {
             }
           },
 
+          /**
+           * 关闭转MP4弹窗
+           */
           closeMP4Panel: function () {
             if (this.isConvertingMP4) {
               if (!confirm('正在转换中，确定要取消吗？')) {
@@ -2610,19 +2768,17 @@ function initApp() {
           },
 
           /* SVGA 转换功能（双通道MP4转SVGA） */
+          
+          /**
+           * 打开转SVGA弹窗（双通道MP4模式右侧弹窗）
+           */
           openSVGAPanel: function () {
             if (!this.yyevaVideo || !this.yyeva.hasFile) {
               alert('请先加载双通道 MP4 文件');
               return;
             }
 
-            // 切换侧边栏显示状态：如果已打开则关闭，否则打开
-            if (this.showSVGAPanel) {
-              this.showSVGAPanel = false;
-              return;
-            }
-
-            // 初始化配置：使用YYEVA视频的原始尺寸（显示尺寸，即宽度/2）
+            // 初始化配置：使用双通道MP4视频的原始尺寸（显示尺寸，即宽度/2）
             this.svgaConfig.width = this.yyeva.displayWidth || Math.floor(this.yyeva.originalWidth / 2);
             this.svgaConfig.height = this.yyeva.displayHeight || this.yyeva.originalHeight;
             
@@ -2638,7 +2794,8 @@ function initApp() {
               }
             } catch (e) {}
 
-            this.showSVGAPanel = true;
+            // 使用统一的右侧弹窗管理
+            this.openRightPanel('showSVGAPanel');
             
             // 预加载protobuf和pako库
             var _this = this;
@@ -2651,6 +2808,9 @@ function initApp() {
               });
           },
 
+          /**
+           * 关闭转SVGA弹窗
+           */
           closeSVGAPanel: function () {
             if (this.isConvertingSVGA) {
               if (!confirm('正在转换中，确定要取消吗？')) {
@@ -2707,6 +2867,11 @@ function initApp() {
             if (!this.yyevaVideo || !this.yyeva.hasFile) {
               alert('请先加载双通道 MP4 文件');
               return;
+            }
+            
+            // 检查是否有其他正在进行的任务
+            if (!this.confirmIfHasOngoingTasks('转SVGA', 'task')) {
+              return; // 用户取消
             }
 
             // 参数验证
@@ -3101,6 +3266,11 @@ function initApp() {
             if (!this.svgaPlayer || !this.svga.hasFile || !this.originalVideoItem) {
               alert('请先加载 SVGA 文件');
               return;
+            }
+            
+            // 检查是否有其他正在进行的任务
+            if (!this.confirmIfHasOngoingTasks('SVGA转MP4', 'task')) {
+              return; // 用户取消
             }
 
             // 参数验证
@@ -3629,10 +3799,14 @@ function initApp() {
           encodeToMP4: async function (jpegFrames) {
             var _this = this;
             var ffmpeg = this.ffmpeg;
-            var fps = this.mp4Config.fps || 30;
+            var outputFps = this.mp4Config.fps || 30;  // 用户设置的输出帧率
             var quality = this.mp4Config.quality || 80;
             var muted = this.mp4Config.muted;
             var frameCount = jpegFrames.length;
+            
+            // 获取SVGA原始帧率作为输入帧率
+            var videoItem = this.originalVideoItem;
+            var inputFps = videoItem.FPS || videoItem.fps || 30;
           
             // CRF值：quality 100 对应 CRF 18（最高质量），quality 0 对应 CRF 51（最低质量）
             var crf = Math.round(51 - (quality / 100) * 33);
@@ -3687,7 +3861,7 @@ function initApp() {
 
               var ffmpegArgs = [
                 '-thread_queue_size', '512',  // 增大线程队列，避免阻塞（必须在-i前面）
-                '-framerate', String(fps),
+                '-framerate', String(inputFps),  // 输入帧率：SVGA原始帧率
                 '-i', 'frame_%04d.jpg'
               ];
               
@@ -3698,6 +3872,7 @@ function initApp() {
               
               ffmpegArgs.push(
                 // 已在JPG生成时加了黑底，无需滚镜处理
+                '-r', String(outputFps),  // 输出帧率：用户设置的帧率
                 '-c:v', 'libx264',
                 '-profile:v', 'high',
                 '-level', '4.0',
@@ -3880,7 +4055,7 @@ function initApp() {
               return this.svgaAudioData !== null || 
                      (this.svgaMovieData && this.svgaMovieData.audios && this.svgaMovieData.audios.length > 0);
             } else if (this.currentModule === 'yyeva') {
-              // YYEVA: 检查视频是否有音频轨道
+              // 双通道MP4: 检查视频是否有音频轨道
               return this.yyevaHasAudio;
             } else if (this.currentModule === 'lottie') {
               // Lottie: 通常不包含音频

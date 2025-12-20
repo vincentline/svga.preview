@@ -2,7 +2,7 @@
 <html lang="zh-CN">
   <head>
     <meta charset="utf-8" />
-    <title>SVGA、带通道MP4、Lottie动画在线预览</title>
+    <title>SVGA、双通道MP4、Lottie动画在线预览</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     
     <!-- COI Service Worker for SharedArrayBuffer support on GitHub Pages -->
@@ -60,7 +60,7 @@
       <div class="header-navbar">
         <a href="avatar_auto.html" class="nav-link">大R头像框自助</a>
         <div class="header-navbar-title">
-          SVGA、带通道MP4、Lottie动画在线预览
+          SVGA、双通道MP4、Lottie动画在线预览
         </div>
         <button class="theme-toggle tooltip" @click="toggleTheme">
           <span class="tooltip-text">{{ isDarkMode ? '切换到白天模式' : '切换到暗黑模式' }}</span>
@@ -413,9 +413,9 @@
         </div>
       </div>
 
-      <!-- 素材弹窗 -->
-      <div class="material-overlay" :class="{'show': showMaterialPanel}" @click="closeMaterialPanel"></div>
-      <div class="material-panel" :class="{'show': showMaterialPanel}">
+      <!-- 素材弹窗（SVGA模式右侧弹窗） -->
+      <div class="material-overlay" :class="{'show': showMaterialPanel && currentModule === 'svga'}" @click="closeMaterialPanel"></div>
+      <div class="material-panel" :class="{'show': showMaterialPanel && currentModule === 'svga'}">
         <div class="material-panel-container">
           <!-- 顶部统计信息 -->
           <div class="material-panel-stats">
@@ -461,7 +461,7 @@
                       </svg>
                     </button>
                   </div>
-                  <div class="material-meta">文件大小：{{ item.fileSizeText }}</div>
+                  <div class="material-meta">内存占用：{{ item.fileSizeText }}</div>
                   <div class="material-meta">尺寸：{{ item.sizeText }}</div>
                 </div>
                 <div class="material-actions">
@@ -508,12 +508,12 @@
         </div>
       </div>
 
-      <!-- MP4转换弹窗 -->
-      <div class="mp4-panel" :class="{'show': showMP4Panel}">
+      <!-- MP4转换弹窗（SVGA模式右侧弹窗） -->
+      <div class="mp4-panel" :class="{'show': showMP4Panel && currentModule === 'svga'}">
         <div class="mp4-panel-container">
           <!-- 标题区 -->
           <div class="mp4-panel-header">
-            <h3 class="mp4-panel-title">转换为带通道的MP4格式</h3>
+            <h3 class="mp4-panel-title">转换为双通道MP4格式</h3>
             <div class="mp4-panel-divider"></div>
           </div>
           
@@ -680,8 +680,8 @@
         </div>
       </div>
 
-      <!-- SVGA转换弹窗（双通道MP4转SVGA） -->
-      <div class="svga-panel" :class="{'show': showSVGAPanel}">
+      <!-- SVGA转换弹窗（双通道MP4转SVGA，双通道MP4模式右侧弹窗） -->
+      <div class="svga-panel" :class="{'show': showSVGAPanel && currentModule === 'yyeva'}">
         <div class="svga-panel-container">
           <!-- 标题区 -->
           <div class="svga-panel-header">
@@ -779,8 +779,8 @@
           <!-- 预估对比区域 -->
           <div class="svga-estimate-section">
             <div class="svga-estimate-box">
-              <div class="svga-estimate-title">预估转换前后对比：</div>
-              <div class="svga-estimate-row">内存占用：{{ svgaEstimate.beforeMemory }}  →  {{ svgaEstimate.afterMemory }}</div>
+              <div class="svga-estimate-title">预估转换前后：</div>
+              <div class="svga-estimate-row">内存占用： {{ svgaEstimate.afterMemory }}</div>
               <div class="svga-estimate-row">文件大小：{{ svgaEstimate.beforeFileSize }}  →  {{ svgaEstimate.afterFileSize }}</div>
             </div>
           </div>

@@ -2683,6 +2683,471 @@ _this.svgaConvertProgress = 100;
 
 ---
 
-*最后更新：2025-12-20*
-*SVGA转MP4性能优化完成日期：2025-12-18*
-*双通道MP4转SVGA功能完成日期：2025-12-20*
+## 12. 多模式架构重构与任务管理系统 🏗️
+
+### 12.1 功能概述
+**实现时间**：2025-12-21
+
+**重构目标**：
+- 统一模式切换逻辑，提升代码可维护性
+- 完善任务冲突检测与用户确认机制
+- 规范化侧边弹窗管理（左右互斥，模式绑定）
+- 优化用户体验，防止意外丢失任务进度
+
+---
+
+### 12.2 核心架构设计
+
+#### 模式类型定义
+```javascript
+currentModule: 'svga' | 'yyeva' | 'lottie'
+```
+
+#### 任务状态管理
+```javascript
+// 任务类型
+- isExportingGIF       // GIF导出（SVGA、双通道MP4）
+- isConvertingMP4      // SVGA转MP4（SVGA专用）
+- isConvertingSVGA     // 双通道MP4转SVGA（双通道MP4专用）
+```
+
+---
+
+### 12.3 统一管理函数
+
+#### 1. 任务检测与确认
+
+**getOngoingTasks()**
+```javascript
+/**
+ * 获取当前正在进行的任务列表
+ * @returns {Array<{name, key, mode}>} 任务列表
+ */
+getOngoingTasks: function() {
+  var tasks = [];
+  if (this.isExportingGIF) tasks.push({name: 'GIF导出', key: 'gif', mode: this.currentModule});
+  if (this.isConvertingMP4) tasks.push({name: 'SVGA转MP4', key: 'mp4', mode: 'svga'});
+  if (this.isConvertingSVGA) tasks.push({name: '转SVGA', key: 'svga', mode: 'yyeva'});
+  return tasks;
+}
+```
+
+**confirmIfHasOngoingTasks(action, actionType)**
+```javascript
+/**
+ * 检查是否有正在进行的任务，并弹窗确认
+ * @param {string} action - 操作名称
+ * @param {string} actionType - 'load' | 'clear' | 'task'
+ * @returns {boolean} 用户是否确认继续
+ */
+
+// 文案示例：
+// load: "您的GIF导出还在进行中，立即播放将退出GIF导出。"
+// clear: "您的SVGA转MP4还在进行中，清空画布将退出SVGA转MP4。"
+// task: "您的GIF导出还在进行中，立即转SVGA可能造成卡顿。"
+```
+
+#### 2. 模式切换管理
+
+**switchMode(targetMode, options)**
+```javascript
+/**
+ * 统一的模式切换函数
+ * @param {string} targetMode - 目标模式
+ * @param {Object} options - {skipCleanup: boolean}
+ */
+switchMode: function(targetMode, options) {
+  // 1. 取消正在进行的任务（静默）
+  this.cancelOngoingTasks(true);
+  
+  // 2. 清理资源
+  if (fromMode === targetMode) {
+    // 同模式切换：只清理当前模式资源
+  } else {
+    // 跨模式切换：清理旧模式资源
+  }
+  
+  // 3. 关闭所有弹窗
+  this.closeAllPanels();
+  
+  // 4. 切换模式
+  this.currentModule = targetMode;
+  
+  // 5. 重置视图状态
+}
+```
+
+#### 3. 弹窗管理
+
+**openRightPanel(panelName)**
+```javascript
+/**
+ * 打开右侧弹窗（互斥，同时只能打开一个）
+ * 自动关闭其他右侧弹窗
+ */
+openRightPanel: function(panelName) {
+  // 关闭所有右侧弹窗
+  this.showMaterialPanel = false;
+  this.showMP4Panel = false;
+  this.showSVGAPanel = false;
+  
+  // 打开目标弹窗
+  this[panelName] = true;
+}
+```
+
+---
+
+### 12.4 文件加载流程重构
+
+#### 统一加载流程
+
+```javascript
+// 1. 先验证文件格式（不破坏当前状态）
+tempParser.load(tempFile, function(success) {
+  
+  // 2. 验证通过，检查任务并确认
+  if (!confirmIfHasOngoingTasks('播放新文件', 'load')) {
+    return; // 用户取消，不加载
+  }
+  
+  // 3. 使用统一切换函数
+  switchMode(targetMode);
+  
+  // 4. 加载新文件
+  loadFile();
+  
+}, function(error) {
+  // 验证失败，不影响当前播放
+  alert('文件格式错误');
+});
+```
+
+#### 错误处理优化
+
+```javascript
+// 视频加载失败
+video.onerror = function() {
+  alert('视频加载失败，请检查文件格式');
+  _this.cleanupYyeva();
+  _this.clearAll();  // 返回首页
+};
+```
+
+---
+
+### 12.5 侧边弹窗规范
+
+#### 弹窗模式绑定
+
+**模板更新**：
+```html
+<!-- SVGA模式右侧弹窗 -->
+<div class="material-panel" :class="{'show': showMaterialPanel && currentModule === 'svga'}">
+<div class="mp4-panel" :class="{'show': showMP4Panel && currentModule === 'svga'}">
+
+<!-- 双通道MP4模式右侧弹窗 -->
+<div class="svga-panel" :class="{'show': showSVGAPanel && currentModule === 'yyeva'}">
+```
+
+**弹窗管理规则**：
+- ✅ 左侧弹窗互斥（同时只能存在一个）
+- ✅ 右侧弹窗互斥（同时只能存在一个）
+- ✅ 弹窗绑定特定模式（只在对应模式显示）
+- ✅ 模式切换时自动关闭所有弹窗
+
+#### 当前弹窗分布
+
+| 模式 | 位置 | 弹窗 | 变量名 |
+|------|------|------|--------|
+| SVGA | 右侧 | 素材替换 | showMaterialPanel |
+| SVGA | 右侧 | 转MP4 | showMP4Panel |
+| 双通道MP4 | 右侧 | 转SVGA | showSVGAPanel |
+| Lottie | - | 暂无 | - |
+
+---
+
+### 12.6 任务确认触发点
+
+#### 场景1：加载新文件
+```javascript
+// 触发点：拖入任意文件
+loadSvga(file)
+loadYyevaPlaceholder(file)
+loadLottiePlaceholder(file)
+
+// 确认逻辑：
+if (hasOngoingTasks) {
+  confirm("您的xxx还在进行中，立即播放将退出xxx。");
+}
+```
+
+#### 场景2：清空画布
+```javascript
+// 触发点：点击清空按钮
+clearAll()
+
+// 确认逻辑：
+if (hasOngoingTasks) {
+  confirm("您的xxx还在进行中，清空画布将退出xxx。");
+}
+```
+
+#### 场景3：开始新任务
+```javascript
+// 触发点：
+exportGIF()           // SVGA导出GIF
+exportYyevaGIF()      // 双通道MP4导出GIF
+startMP4Conversion()  // SVGA转MP4
+startSVGAConversion() // 双通道MP4转SVGA
+
+// 确认逻辑：
+if (hasOngoingTasks) {
+  confirm("您的xxx还在进行中，立即yyy可能造成卡顿。");
+}
+```
+
+---
+
+### 12.7 关键技术细节
+
+#### 1. 资源清理策略
+
+**同模式切换**：
+```javascript
+// SVGA → SVGA：只清理SVGA资源
+if (fromMode === 'svga' && targetMode === 'svga') {
+  this.cleanupSvga();
+}
+```
+
+**跨模式切换**：
+```javascript
+// SVGA → 双通道MP4：只清理SVGA资源
+if (fromMode === 'svga') {
+  this.cleanupSvga();
+}
+```
+
+#### 2. 静默取消任务
+
+```javascript
+// 模式切换时静默取消（不显示toast）
+cancelOngoingTasks(true);
+
+// 用户主动取消时显示提示
+cancelOngoingTasks(false); // 显示"已取消：GIF导出、SVGA转MP4"
+```
+
+#### 3. 文件验证优先
+
+```javascript
+// ✅ 正确流程：先验证再确认
+验证文件 → 检查任务 → 用户确认 → 切换模式 → 加载文件
+
+// ❌ 错误流程：先切换再验证
+切换模式 → 验证文件（失败） → 当前播放已被破坏
+```
+
+---
+
+### 12.8 代码质量提升
+
+#### 1. 函数注释规范
+
+**JSDoc格式**：
+```javascript
+/**
+ * 统一的模式切换函数
+ * @param {string} targetMode - 目标模式（'svga' | 'yyeva' | 'lottie'）
+ * @param {Object} options - 选项 { skipCleanup: boolean }
+ */
+switchMode: function(targetMode, options) { ... }
+```
+
+#### 2. 代码组织优化
+
+**分组注释**：
+```javascript
+/* ==================== 模式切换与任务管理 ==================== */
+getOngoingTasks()
+confirmIfHasOngoingTasks()
+switchMode()
+...
+
+/* ==================== 库加载管理器 ==================== */
+loadLibrary()
+...
+```
+
+#### 3. 删除重复代码
+
+- ✅ 删除旧的`cancelOngoingTasks()`函数（25行）
+- ✅ 合并弹窗打开逻辑到`openRightPanel()`
+- ✅ 统一模式切换逻辑到`switchMode()`
+
+---
+
+### 12.9 测试场景覆盖
+
+#### 场景1：拖入文件冲突
+```
+1. SVGA模式，正在转MP4
+2. 拖入新的SVGA文件
+3. 弹窗："您的SVGA转MP4还在进行中，立即播放将退出SVGA转MP4。"
+4. 确定 → 取消任务 → 加载新文件
+5. 取消 → 保持当前状态
+```
+
+#### 场景2：跨模式切换
+```
+1. SVGA模式，打开素材替换弹窗
+2. 拖入双通道MP4文件
+3. 弹窗确认 → 切换到双通道MP4模式
+4. 素材替换弹窗自动关闭
+5. 转SVGA弹窗不会显示（模式绑定）
+```
+
+#### 场景3：任务冲突
+```
+1. SVGA模式，正在导出GIF
+2. 点击"转MP4"按钮
+3. 弹窗："您的GIF导出还在进行中，立即SVGA转MP4可能造成卡顿。"
+4. 确定 → 继续开始转MP4（两个任务并发）
+```
+
+#### 场景4：文件格式错误
+```
+1. SVGA模式，正在转MP4
+2. 拖入错误格式的文件
+3. 验证失败 → 弹窗提示格式错误
+4. 当前播放和转MP4任务不受影响
+```
+
+---
+
+### 12.10 性能优化
+
+#### 资源清理时机
+
+| 场景 | 清理时机 | 清理内容 |
+|------|---------|----------|
+| 同模式切换 | 用户确认后 | 当前模式资源 |
+| 跨模式切换 | 用户确认后 | 旧模式资源 |
+| 返回首页 | 用户确认后 | 所有模式资源 |
+| 加载失败 | 立即 | 当前模式资源 + 返回首页 |
+
+#### 内存管理
+
+```javascript
+// objectUrl管理
+if (this.svgaObjectUrl) {
+  URL.revokeObjectURL(this.svgaObjectUrl);
+  this.svgaObjectUrl = null;
+}
+
+// 播放器清理
+if (this.svgaPlayer) {
+  this.svgaPlayer.stopAnimation();
+  this.svgaPlayer.clear();
+  this.svgaPlayer = null;
+}
+```
+
+---
+
+### 12.11 用户体验优化
+
+#### 动态文案生成
+
+```javascript
+var taskNames = tasks.map(function(t) { return t.name; }).join('、');
+
+// 单任务："您的GIF导出还在进行中..."
+// 多任务："您的GIF导出、SVGA转MP4还在进行中..."
+```
+
+#### 操作不可逆提示
+
+- ✅ 加载新文件："将退出xxx"
+- ✅ 清空画布："将退出xxx"
+- ✅ 开始新任务："可能造成卡顿"
+
+---
+
+### 12.12 文件变更记录
+
+**app.js 主要变更**：
+```javascript
+// 新增函数（6个）
++ getOngoingTasks()              // 获取任务列表
++ confirmIfHasOngoingTasks()     // 任务确认
++ closeAllPanels()               // 关闭所有弹窗
++ openRightPanel()               // 打开右侧弹窗
++ switchMode()                   // 统一模式切换
++ cancelOngoingTasks()           // 取消任务（重写）
+
+// 更新函数（12个）
++ clearAll()                     // 添加任务确认
++ loadSvga()                     // 重构流程
++ loadYyevaPlaceholder()         // 重构流程
++ loadLottiePlaceholder()        // 重构流程
++ openMaterialPanel()            // 使用统一弹窗管理
++ openMP4Panel()                 // 使用统一弹窗管理
++ openSVGAPanel()                // 使用统一弹窗管理
++ exportGIF()                    // 添加任务确认
++ exportYyevaGIF()               // 添加任务确认
++ startMP4Conversion()           // 添加任务确认
++ startSVGAConversion()          // 添加任务确认
++ video.onerror                  // 添加返回首页
+
+// 完善注释（20+处）
++ cleanupSvga()                  // 修正注释错误
++ cleanupYyeva()                 // 添加注释
++ 所有核心函数添加JSDoc注释
+```
+
+**index.html 模板变更**：
+```html
+<!-- 弹窗模式绑定 -->
++ showMaterialPanel && currentModule === 'svga'
++ showMP4Panel && currentModule === 'svga'
++ showSVGAPanel && currentModule === 'yyeva'
+```
+
+---
+
+### 12.13 技术亮点
+
+1. **统一架构**：集中管理模式切换，降低维护成本
+2. **用户友好**：多层确认机制，防止意外丢失进度
+3. **模块化设计**：功能函数职责清晰，易于扩展
+4. **防御性编程**：文件验证优先，错误隔离
+5. **代码质量**：完善注释，删除冗余，提升可读性
+
+---
+
+### 12.14 未来扩展
+
+#### 新增模式
+```javascript
+// 添加新模式只需：
+1. 定义 currentModule 值
+2. 创建 cleanup 函数
+3. 在 switchMode 中添加清理逻辑
+4. 绑定弹窗模式检查
+```
+
+#### 新增弹窗
+```javascript
+// 添加左侧弹窗：
+1. 定义状态变量（如 showLeftPanel）
+2. 创建 openLeftPanel() 函数
+3. 在 closeAllPanels() 中添加关闭逻辑
+4. 模板中添加模式绑定
+```
+
+---
+
+*最后更新：2025-12-21*
+*多模式架构重构完成日期：2025-12-21*
