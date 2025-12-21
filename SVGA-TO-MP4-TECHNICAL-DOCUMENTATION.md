@@ -1,8 +1,8 @@
 # SVGA转MP4功能技术文档
 
-> **文档版本**: v1.0  
+> **文档版本**: v1.1  
 > **创建日期**: 2025-12-18  
-> **最后更新**: 2025-12-18  
+> **最后更新**: 2025-12-21  
 > **文档状态**: ✅ 已完成
 
 ---
@@ -19,6 +19,7 @@
 8. [兼容性](#8-兼容性)
 9. [测试验证](#9-测试验证)
 10. [已知问题](#10-已知问题)
+11. [**NEW** SVGA文本样式系统](#11-svga文本样式系统)
 
 ---
 
@@ -1577,8 +1578,150 @@ A:
 ✅ **性能优化**: 10-20倍编码速度提升  
 ✅ **错误处理**: 多层捕获和用户友好提示  
 ✅ **兼容性**: 支持主流现代浏览器  
+✅ **文本样式**: 支持渐变、多重阴影、描边等Canvas样式渲染  
 
 该功能已在生产环境稳定运行，为用户提供了高效、便捷的SVGA到YYEVA-MP4格式转换服务。
+
+---
+
+## 11. SVGA文本样式系统
+
+### 11.1 功能概述
+
+在SVGA头像框自助工具中，支持为文本元素（name01/Username01）配置自定义样式，包括渐变、阴影、描边等效果。
+
+### 11.2 数据结构
+
+**file-list.json 配置格式**:
+
+```json
+{
+  "name": "D02",
+  "svga": "https://example.com/D02.svga",
+  "textStyle": {
+    "name01": {
+      "fontWeight": "700",
+      "gradient": {
+        "colors": ["#FFFFFF", "#FFFFFF", "#FDEA91", "#FDEA91"],
+        "positions": [0, 0.1971, 0.7981, 1]
+      },
+      "textShadow": "0px 2px 1.5px #694D41"
+    },
+    "Username01": {
+      "fontWeight": "700",
+      "fillColor": "#FFFFFF",
+      "strokeColor": "#633434",
+      "strokeWidth": 1,
+      "textShadow": "0px 0px 3px #FFFFFF"
+    }
+  }
+}
+```
+
+### 11.3 支持的样式属性
+
+| 属性 | 类型 | 说明 | 示例 |
+|------|------|------|------|
+| `fontWeight` | String | 字体粗细 | `"700"`, `"normal"` |
+| `fillColor` | String | 填充颜色（纯色） | `"#FFFFFF"` |
+| `gradient` | Object | 渐变填充 | `{colors: [...], positions: [...]}` |
+| `strokeColor` | String | 描边颜色 | `"#000000"` |
+| `strokeWidth` | Number | 描边宽度 | `1.5` |
+| `textShadow` | String | 单个阴影 | `"0px 2px 1.5px #694D41"` |
+| `multiShadow` | Array | 多重阴影 | `["0px 1px 0px #BB3000", ...]` |
+
+### 11.4 渲染逻辑
+
+**关键代码逻辑**:
+
+```javascript
+// 1. 加载列表时保留textStyle
+list.map(function(item) {
+  return { 
+    name: item.name, 
+    svga: item.svga, 
+    icon: item.name + '.png',
+    textStyle: item.textStyle || null  // 关键！
+  };
+});
+
+// 2. 打开弹窗时初始化customTextStyle
+if (item.textStyle) {
+  this.dar.customTextStyle = {
+    name01: item.textStyle.name01 || null,
+    Username01: item.textStyle.Username01 || null
+  };
+}
+
+// 3. 渲染时应用样式
+var customStyle = targetKey && this.dar.customTextStyle[targetKey] 
+  ? this.dar.customTextStyle[targetKey] 
+  : null;
+
+// 应用渐变
+if (customStyle && customStyle.gradient) {
+  var gradient = ctx.createLinearGradient(x, 0, x, canvas.height);
+  for (var k = 0; k < customStyle.gradient.colors.length; k++) {
+    gradient.addColorStop(
+      customStyle.gradient.positions[k], 
+      customStyle.gradient.colors[k]
+    );
+  }
+  ctx.fillStyle = gradient;
+}
+
+// 应用多重阴影
+if (customStyle && customStyle.multiShadow) {
+  for (var i = 0; i < customStyle.multiShadow.length; i++) {
+    // 解析阴影参数并分层绘制
+    ctx.shadowOffsetX = ...;
+    ctx.shadowOffsetY = ...;
+    ctx.shadowBlur = ...;
+    ctx.shadowColor = ...;
+    ctx.fillText(text, x, y);
+  }
+}
+```
+
+### 11.5 技术要点
+
+1. **CSS到Canvas的转换**:
+   - CSS `linear-gradient` → Canvas `createLinearGradient`
+   - CSS `text-shadow` → Canvas `shadowOffsetX/Y/Blur/Color`
+   - CSS `border` → Canvas `strokeText`
+
+2. **渐变方向**:
+   - 使用垂直渐变：`createLinearGradient(x, 0, x, canvas.height)`
+   - 位置值范围：0-1（百分比转小数）
+
+3. **多重阴影**:
+   - 每个阴影分层绘制
+   - 绘制后清空阴影参数避免影响后续绘制
+
+4. **描边与填充顺序**:
+   - 先绘制阴影
+   - 再绘制描边（`strokeText`）
+   - 最后绘制填充（`fillText`）
+
+### 11.6 默认样式
+
+当 `textStyle` 未配置时，使用默认白字黑边样式：
+
+```javascript
+textStyle: {
+  fontSize: 24,
+  fontFamily: "'Noto Sans', 'Noto Sans SC', sans-serif",
+  fillColor: '#ffffff',
+  strokeColor: '#000000',
+  strokeWidth: 2,
+  textAlign: 'center'
+}
+```
+
+### 11.7 文件覆盖
+
+- `docs/assets/dar_svga/file-list.json` - 头像框列表配置
+- `docs/sth_auto.html` - 统一的素材自助页面
 
 ---
 

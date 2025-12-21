@@ -939,7 +939,7 @@
     </style>
   </head>
   <body>
-    <div id="app">
+    <div id="app" @mousemove="onDragMove" @mouseup="onDragEnd">
       <!-- 顶部导航栏 -->
       <div class="header-navbar">
         <a href="index.html" class="back-link">← 返回</a>
@@ -1082,7 +1082,7 @@
                 <div class="text-canvas-wrapper" @mousedown="darStartDragText" @wheel="darHandleWheel">
                   <canvas ref="darTextCanvas1" class="text-canvas" width="300" height="50"></canvas>
                 </div>
-                <input type="text" class="text-input" v-model="dar.textInput1" placeholder="输入文字，支持emoji 😊" @input="darRenderText1" />
+                <input type="text" class="text-input" v-model="dar.textInput1" placeholder="输入文字，支持emoji 😊" @input="darRenderText" />
                 <div class="position-controls">
                   <div class="position-btns">
                     <button class="pos-btn" @click="darMoveText('up')">↑</button>
@@ -1094,31 +1094,20 @@
                   </div>
                 </div>
                 <div style="display: flex; gap: 8px;">
-                  <button class="btn" style="flex: 1;" @click="darResetText1">恢复</button>
-                  <button class="btn btn-primary" style="flex: 2;" @click="darApplyText1">确定</button>
+                  <button class="btn" style="flex: 1;" @click="darResetText">恢复</button>
+                  <button class="btn btn-primary" style="flex: 2;" @click="darApplyText1">替换"name01"</button>
                 </div>
               </div>
             </div>
             <div class="panel-section" v-if="dar.materials.Username01">
               <div class="section-title">文本效果区域02</div>
               <div class="text-effect-area">
-                <div class="text-canvas-wrapper" @mousedown="darStartDragText" @wheel="darHandleWheel">
+                <div class="text-canvas-wrapper">
                   <canvas ref="darTextCanvas2" class="text-canvas" width="300" height="50"></canvas>
                 </div>
-                <input type="text" class="text-input" v-model="dar.textInput2" placeholder="输入文字，支持emoji 😊" @input="darRenderText2" />
-                <div class="position-controls">
-                  <div class="position-btns">
-                    <button class="pos-btn" @click="darMoveText('up')">↑</button>
-                    <button class="pos-btn" @click="darMoveText('down')">↓</button>
-                    <button class="pos-btn" @click="darMoveText('left')">←</button>
-                    <button class="pos-btn" @click="darMoveText('right')">→</button>
-                    <button class="pos-btn" @click="darScaleText('down')" title="缩小">-</button>
-                    <button class="pos-btn" @click="darScaleText('up')" title="放大">+</button>
-                  </div>
-                </div>
                 <div style="display: flex; gap: 8px;">
-                  <button class="btn" style="flex: 1;" @click="darResetText2">恢复</button>
-                  <button class="btn btn-primary" style="flex: 2;" @click="darApplyText2">确定</button>
+                  <button class="btn" style="flex: 1;" @click="darResetText">恢复</button>
+                  <button class="btn btn-primary" style="flex: 2;" @click="darApplyText2">替换"Username01"</button>
                 </div>
               </div>
             </div>
@@ -1244,7 +1233,6 @@
               materials: { name01: null, Username01: null },
               replacedImages: {},
               textInput1: '',
-              textInput2: '',
               textOffset: { x: 0, y: 0 },
               textScale: 1,
               draggingText: false,
@@ -1257,6 +1245,7 @@
                 strokeWidth: 2,
                 textAlign: 'center'
               },
+              customTextStyle: { name01: null, Username01: null },
               currentReplaceTarget: null,
               showModal: false,
               isExporting: false
@@ -1436,7 +1425,12 @@
               .then(function(res) { return res.json(); })
               .then(function(list) {
                 _this.dar.frameList = list.map(function(item) {
-                  return { name: item.name, svga: item.svga, icon: item.name + '.png' };
+                  return { 
+                    name: item.name, 
+                    svga: item.svga, 
+                    icon: item.name + '.png',
+                    textStyle: item.textStyle || null
+                  };
                 });
                 _this.dar.loading = false;
               })
@@ -1450,9 +1444,16 @@
             this.dar.materials = { name01: null, Username01: null };
             this.dar.replacedImages = {};
             this.dar.textInput1 = '';
-            this.dar.textInput2 = '';
             this.dar.textOffset = { x: 0, y: 0 };
             this.dar.textScale = 1;
+            if (item.textStyle) {
+              this.dar.customTextStyle = {
+                name01: item.textStyle.name01 || null,
+                Username01: item.textStyle.Username01 || null
+              };
+            } else {
+              this.dar.customTextStyle = { name01: null, Username01: null };
+            }
             this.$nextTick(function() { this.loadDarSVGA(item); }.bind(this));
           },
           
@@ -1482,13 +1483,12 @@
                     if (key === 'name01' && _this.$refs.darTextCanvas1) {
                       _this.$refs.darTextCanvas1.width = _this.dar.materials.name01.width;
                       _this.$refs.darTextCanvas1.height = _this.dar.materials.name01.height;
-                      _this.darRenderText1();
                     }
                     if (key === 'Username01' && _this.$refs.darTextCanvas2) {
                       _this.$refs.darTextCanvas2.width = _this.dar.materials.Username01.width;
                       _this.$refs.darTextCanvas2.height = _this.dar.materials.Username01.height;
-                      _this.darRenderText2();
                     }
+                    _this.darRenderText();
                   });
                 };
                 img.src = previewUrl;
@@ -1496,32 +1496,84 @@
             });
           },
           
-          darRenderTextToCanvas: function(canvas, text, offset, scale) {
+          darRenderTextToCanvas: function(canvas, text, offset, scale, targetKey) {
             if (!canvas) return;
             var ctx = canvas.getContext('2d');
-            var style = this.dar.textStyle;
+            var baseStyle = this.dar.textStyle;
+            var customStyle = targetKey && this.dar.customTextStyle[targetKey] ? this.dar.customTextStyle[targetKey] : null;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             if (!text) return;
             ctx.save();
-            var scaledFontSize = style.fontSize * scale;
-            ctx.font = scaledFontSize + 'px ' + style.fontFamily;
-            ctx.textAlign = style.textAlign;
+            var fontSize = baseStyle.fontSize * scale;
+            var fontWeight = (customStyle && customStyle.fontWeight) || 'normal';
+            ctx.font = fontWeight + ' ' + fontSize + 'px ' + baseStyle.fontFamily;
+            ctx.textAlign = baseStyle.textAlign;
             ctx.textBaseline = 'middle';
             var x = canvas.width / 2 + offset.x;
             var y = canvas.height / 2 + offset.y;
-            if (style.strokeWidth > 0) {
-              ctx.strokeStyle = style.strokeColor;
-              ctx.lineWidth = style.strokeWidth * scale;
+            
+            if (customStyle && customStyle.multiShadow) {
+              for (var i = 0; i < customStyle.multiShadow.length; i++) {
+                var parts = customStyle.multiShadow[i].match(/([\d.-]+)px\s+([\d.-]+)px\s+([\d.-]+)px\s+([^\)]+(?:\([^\)]+\))?)/i);
+                if (parts) {
+                  ctx.shadowOffsetX = parseFloat(parts[1]);
+                  ctx.shadowOffsetY = parseFloat(parts[2]);
+                  ctx.shadowBlur = parseFloat(parts[3]);
+                  ctx.shadowColor = parts[4].trim();
+                  if (customStyle.gradient) {
+                    var grad = ctx.createLinearGradient(x, 0, x, canvas.height);
+                    for (var j = 0; j < customStyle.gradient.colors.length; j++) {
+                      grad.addColorStop(customStyle.gradient.positions[j], customStyle.gradient.colors[j]);
+                    }
+                    ctx.fillStyle = grad;
+                  } else {
+                    ctx.fillStyle = customStyle.fillColor || baseStyle.fillColor;
+                  }
+                  ctx.fillText(text, x, y);
+                }
+              }
+              ctx.shadowOffsetX = 0;
+              ctx.shadowOffsetY = 0;
+              ctx.shadowBlur = 0;
+            } else if (customStyle && customStyle.textShadow) {
+              var shadowParts = customStyle.textShadow.match(/([\d.-]+)px\s+([\d.-]+)px\s+([\d.-]+)px\s+([^\)]+(?:\([^\)]+\))?)/i);
+              if (shadowParts) {
+                ctx.shadowOffsetX = parseFloat(shadowParts[1]);
+                ctx.shadowOffsetY = parseFloat(shadowParts[2]);
+                ctx.shadowBlur = parseFloat(shadowParts[3]);
+                ctx.shadowColor = shadowParts[4].trim();
+              }
+            } else {
+              ctx.shadowOffsetX = 0;
+              ctx.shadowOffsetY = 0;
+              ctx.shadowBlur = 0;
+            }
+            
+            var strokeW = customStyle && customStyle.strokeWidth !== undefined ? customStyle.strokeWidth : baseStyle.strokeWidth;
+            if (strokeW > 0) {
+              ctx.strokeStyle = (customStyle && customStyle.strokeColor) || baseStyle.strokeColor;
+              ctx.lineWidth = strokeW * scale;
               ctx.lineJoin = 'round';
               ctx.strokeText(text, x, y);
             }
-            ctx.fillStyle = style.fillColor;
+            
+            if (customStyle && customStyle.gradient) {
+              var gradient = ctx.createLinearGradient(x, 0, x, canvas.height);
+              for (var k = 0; k < customStyle.gradient.colors.length; k++) {
+                gradient.addColorStop(customStyle.gradient.positions[k], customStyle.gradient.colors[k]);
+              }
+              ctx.fillStyle = gradient;
+            } else {
+              ctx.fillStyle = (customStyle && customStyle.fillColor) || baseStyle.fillColor;
+            }
             ctx.fillText(text, x, y);
             ctx.restore();
           },
           
-          darRenderText1: function() { this.darRenderTextToCanvas(this.$refs.darTextCanvas1, this.dar.textInput1, this.dar.textOffset, this.dar.textScale); },
-          darRenderText2: function() { this.darRenderTextToCanvas(this.$refs.darTextCanvas2, this.dar.textInput2, this.dar.textOffset, this.dar.textScale); },
+          darRenderText: function() {
+            this.darRenderTextToCanvas(this.$refs.darTextCanvas1, this.dar.textInput1, this.dar.textOffset, this.dar.textScale, 'name01');
+            this.darRenderTextToCanvas(this.$refs.darTextCanvas2, this.dar.textInput1, this.dar.textOffset, this.dar.textScale, 'Username01');
+          },
           
           darMoveText: function(direction) {
             switch(direction) {
@@ -1530,20 +1582,20 @@
               case 'left': this.dar.textOffset.x -= 1; break;
               case 'right': this.dar.textOffset.x += 1; break;
             }
-            this.darRenderText1(); this.darRenderText2();
+            this.darRenderText();
           },
           
           darScaleText: function(direction) {
             if (direction === 'up') this.dar.textScale += 0.1;
             else this.dar.textScale = Math.max(0.1, this.dar.textScale - 0.1);
-            this.darRenderText1(); this.darRenderText2();
+            this.darRenderText();
           },
           
           darHandleWheel: function(e) {
             e.preventDefault();
             var delta = e.deltaY > 0 ? -0.05 : 0.05;
             this.dar.textScale = Math.max(0.1, Math.min(5, this.dar.textScale + delta));
-            this.darRenderText1(); this.darRenderText2();
+            this.darRenderText();
           },
           
           darStartDragText: function(e) {
@@ -1552,42 +1604,11 @@
             e.preventDefault();
           },
           
-          onDragMove: function(e) {
-            if (this.dar.draggingText) {
-              var dx = (e.clientX - this.dar.dragStartPos.x) / 1.2;
-              var dy = (e.clientY - this.dar.dragStartPos.y) / 1.2;
-              this.dar.textOffset.x += dx;
-              this.dar.textOffset.y += dy;
-              this.dar.dragStartPos = { x: e.clientX, y: e.clientY };
-              this.darRenderText1(); this.darRenderText2();
-            }
-            if (this.gift.cropDragging) {
-              var dx2 = e.clientX - this.gift.cropDragStart.x;
-              var dy2 = e.clientY - this.gift.cropDragStart.y;
-              this.gift.cropImageOffset.x += dx2;
-              this.gift.cropImageOffset.y += dy2;
-              this.gift.cropDragStart = { x: e.clientX, y: e.clientY };
-              this.giftRenderCropCanvas();
-            }
-          },
-          
-          onDragEnd: function() {
-            this.dar.draggingText = false;
-            this.gift.cropDragging = false;
-          },
-          
-          darResetText1: function() {
+          darResetText: function() {
             this.dar.textInput1 = '';
             this.dar.textOffset = { x: 0, y: 0 };
             this.dar.textScale = 1;
-            this.darRenderText1(); this.darRenderText2();
-          },
-          
-          darResetText2: function() {
-            this.dar.textInput2 = '';
-            this.dar.textOffset = { x: 0, y: 0 };
-            this.dar.textScale = 1;
-            this.darRenderText1(); this.darRenderText2();
+            this.darRenderText();
           },
           
           darApplyText1: function() {
@@ -1599,7 +1620,7 @@
           },
           
           darApplyText2: function() {
-            if (!this.$refs.darTextCanvas2 || !this.dar.textInput2) { this.showToast('请输入文字'); return; }
+            if (!this.$refs.darTextCanvas2 || !this.dar.textInput1) { this.showToast('请输入文字'); return; }
             var dataUrl = this.$refs.darTextCanvas2.toDataURL('image/png');
             this.$set(this.dar.replacedImages, 'Username01', dataUrl);
             this.darApplyToSVGA('Username01', dataUrl);
@@ -1815,6 +1836,30 @@
           giftStartCropDrag: function(e) {
             this.gift.cropDragging = true;
             this.gift.cropDragStart = { x: e.clientX, y: e.clientY };
+          },
+          
+          onDragMove: function(e) {
+            if (this.dar.draggingText) {
+              var dx = (e.clientX - this.dar.dragStartPos.x) / 1.2;
+              var dy = (e.clientY - this.dar.dragStartPos.y) / 1.2;
+              this.dar.textOffset.x += dx;
+              this.dar.textOffset.y += dy;
+              this.dar.dragStartPos = { x: e.clientX, y: e.clientY };
+              this.darRenderText();
+            }
+            if (this.gift.cropDragging) {
+              var dx2 = e.clientX - this.gift.cropDragStart.x;
+              var dy2 = e.clientY - this.gift.cropDragStart.y;
+              this.gift.cropImageOffset.x += dx2;
+              this.gift.cropImageOffset.y += dy2;
+              this.gift.cropDragStart = { x: e.clientX, y: e.clientY };
+              this.giftRenderCropCanvas();
+            }
+          },
+          
+          onDragEnd: function() {
+            this.dar.draggingText = false;
+            this.gift.cropDragging = false;
           },
           
           giftHandleCropWheel: function(e) {
