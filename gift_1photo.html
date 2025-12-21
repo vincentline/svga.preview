@@ -138,6 +138,12 @@
         transition: all 0.2s;
       }
 
+      .frame-item.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        pointer-events: none;
+      }
+
       .frame-item:hover {
         background: #f5f5f5;
         border-color: #409eff;
@@ -253,6 +259,11 @@
       .modal-close-btn:hover {
         background: rgba(0, 0, 0, 0.2);
         transform: scale(1.1);
+      }
+
+      .modal-close-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
       }
 
       body.dark-mode .modal-close-btn {
@@ -473,12 +484,6 @@
       .material-btns {
         display: flex;
         gap: 8px;
-        opacity: 0;
-        transition: opacity 0.2s;
-      }
-
-      .material-card:hover .material-btns {
-        opacity: 1;
       }
 
       /* 按钮样式 */
@@ -690,6 +695,210 @@
         opacity: 1;
         visibility: visible;
       }
+
+      /* 图标生成效果 */
+      .icon-generator {
+        display: flex;
+        justify-content: center;
+        padding: 16px 0;
+      }
+
+      .icon-preview {
+        display: block;
+        width: 300px;
+        height: 300px;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        background: #f9f9f9;
+      }
+
+      body.dark-mode .icon-preview {
+        border-color: #404040;
+        background: #2a2a2a;
+      }
+
+      /* 裁剪弹窗 */
+      .crop-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+      }
+
+      .crop-modal-content {
+        background: #fff;
+        border-radius: 12px;
+        width: 90%;
+        max-width: 600px;
+        max-height: 90vh;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+
+      body.dark-mode .crop-modal-content {
+        background: #2a2a2a;
+      }
+
+      .crop-modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 20px;
+        border-bottom: 1px solid #e0e0e0;
+      }
+
+      body.dark-mode .crop-modal-header {
+        border-bottom-color: #404040;
+      }
+
+      .crop-modal-header h3 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 500;
+      }
+
+      .close-btn {
+        background: none;
+        border: none;
+        font-size: 28px;
+        color: #666;
+        cursor: pointer;
+        padding: 0;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+        transition: background-color 0.2s;
+      }
+
+      .close-btn:hover {
+        background: #f0f0f0;
+      }
+
+      body.dark-mode .close-btn {
+        color: #999;
+      }
+
+      body.dark-mode .close-btn:hover {
+        background: #404040;
+      }
+
+      .crop-modal-body {
+        padding: 20px;
+        flex: 1;
+        overflow: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .crop-container {
+        position: relative;
+        width: 100%;
+        height: 500px;
+        background: #f5f5f5;
+        border-radius: 8px;
+        overflow: hidden;
+        cursor: move;
+      }
+
+      body.dark-mode .crop-container {
+        background: #1a1a1a;
+      }
+
+      .crop-controls {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 0;
+      }
+
+      .crop-controls label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        color: #333;
+      }
+
+      body.dark-mode .crop-controls label {
+        color: #e0e0e0;
+      }
+
+      .crop-scale-slider {
+        width: 400px;
+        height: 4px;
+        -webkit-appearance: none;
+        appearance: none;
+        background: #ddd;
+        outline: none;
+        border-radius: 2px;
+      }
+
+      .crop-scale-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 16px;
+        height: 16px;
+        background: #007bff;
+        cursor: pointer;
+        border-radius: 50%;
+      }
+
+      .crop-scale-slider::-moz-range-thumb {
+        width: 16px;
+        height: 16px;
+        background: #007bff;
+        cursor: pointer;
+        border-radius: 50%;
+        border: none;
+      }
+
+      body.dark-mode .crop-scale-slider {
+        background: #404040;
+      }
+
+      .crop-scale-value {
+        min-width: 50px;
+        font-weight: 500;
+        color: #007bff;
+      }
+
+      body.dark-mode .crop-scale-value {
+        color: #4a9eff;
+      }
+
+      .crop-canvas {
+        width: 100%;
+        height: 100%;
+      }
+
+      .crop-tips {
+        text-align: center;
+        color: #999;
+        font-size: 13px;
+      }
+
+      .crop-modal-footer {
+        padding: 16px 20px;
+        border-top: 1px solid #e0e0e0;
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+      }
+
+      body.dark-mode .crop-modal-footer {
+        border-top-color: #404040;
+      }
     </style>
   </head>
 
@@ -723,10 +932,11 @@
         <div v-else-if="frameList.length === 0" class="loading-tip">暂无礼物，请将SVGA文件放入 assets/mingren_gift_1photo 目录</div>
         <div v-else class="frame-grid">
           <div 
-            v-for="(item, index) in frameList" 
+            v-for="(item, index) in frameList"
             :key="item.name"
             class="frame-item"
-            @click="openFrame(item)"
+            :class="{ 'disabled': isExporting || isConvertingMP4 }"
+            @click="!isExporting && !isConvertingMP4 && openFrame(item)"
           >
             <img 
               :src="'assets/mingren_gift_1photo/' + item.icon" 
@@ -743,7 +953,7 @@
       <div class="modal-overlay" :class="{show: showModal}">
         <div class="modal-container" v-if="currentFrame">
           <!-- 关闭按钮 -->
-          <button class="modal-close-btn" @click="closeModal" title="关闭">
+          <button class="modal-close-btn" :disabled="isExporting || isConvertingMP4" @click="closeModal" title="关闭">
             <svg viewBox="0 0 24 24" fill="none">
               <path d="M18 6L6 18M6 6l12 12" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
@@ -792,9 +1002,9 @@
                     <div class="material-name">{{ materials.zaky.sizeText }}</div>
                   </div>
                   <div class="material-btns">
-                    <button class="btn" @click="replaceMaterial('zaky')">替换</button>
-                    <button class="btn btn-icon" @click="downloadMaterial('zaky')" title="下载">↓</button>
-                    <button class="btn btn-icon" v-if="replacedImages.zaky" @click="restoreMaterial('zaky')" title="恢复">↺</button>
+                    <button class="btn" :disabled="isExporting || isConvertingMP4" @click="replaceMaterial('zaky')">替换</button>
+                    <button class="btn btn-icon" :disabled="isExporting || isConvertingMP4" @click="downloadMaterial('zaky')" title="下载">↓</button>
+                    <button class="btn btn-icon" :disabled="isExporting || isConvertingMP4" v-if="replacedImages.zaky" @click="restoreMaterial('zaky')" title="恢复">↺</button>
                   </div>
                 </div>
               </div>
@@ -803,38 +1013,11 @@
 
           <!-- 右侧设置面板 -->
           <div class="settings-panel">
-            <!-- 文本效果区域 -->
+            <!-- 图标生成效果 -->
             <div class="panel-section" v-if="materials.zaky">
-              <div class="section-title">文本效果区域</div>
-              <div class="text-effect-area">
-                <div 
-                  class="text-canvas-wrapper"
-                  @mousedown="startDragText1"
-                  @wheel="handleWheel($event, 1)"
-                >
-                  <canvas ref="textCanvas1" class="text-canvas" width="300" height="50"></canvas>
-                </div>
-                <input 
-                  type="text" 
-                  class="text-input" 
-                  v-model="textInput1" 
-                  placeholder="输入文字，支持emoji 😊"
-                  @input="renderText1"
-                />
-                <div class="position-controls">
-                  <div class="position-btns">
-                    <button class="pos-btn" @click="moveText(1, 'up')">↑</button>
-                    <button class="pos-btn" @click="moveText(1, 'down')">↓</button>
-                    <button class="pos-btn" @click="moveText(1, 'left')">←</button>
-                    <button class="pos-btn" @click="moveText(1, 'right')">→</button>
-                    <button class="pos-btn" @click="scaleText(1, 'down')" title="缩小">-</button>
-                    <button class="pos-btn" @click="scaleText(1, 'up')" title="放大">+</button>
-                  </div>
-                </div>
-                <div style="display: flex; gap: 8px;">
-                  <button class="btn" style="flex: 1;" @click="resetText1">恢复</button>
-                  <button class="btn btn-primary" style="flex: 2;" @click="applyText1">确定</button>
-                </div>
+              <div class="section-title">图标生成效果</div>
+              <div class="icon-generator">
+                <canvas ref="iconCanvas" width="300" height="300" class="icon-preview"></canvas>
               </div>
             </div>
 
@@ -847,10 +1030,19 @@
             <div class="export-section">
               <button 
                 class="btn btn-success export-btn" 
-                :disabled="!canExport"
-                @click="exportSVGA"
+                :disabled="!canExportMP4 || isConvertingMP4 || isExporting"
+                @click="exportMP4AndIcon"
               >
-                导出新SVGA
+                <span v-if="!isConvertingMP4">导出双通道MP4和PNG图标</span>
+                <span v-else>{{ mp4ConvertStage }} {{ mp4ConvertProgress }}%</span>
+              </button>
+              <button 
+                class="btn btn-success export-btn" 
+                style="margin-top: 8px;"
+                :disabled="!canExport || isExporting"
+                @click="exportAll"
+              >
+                导出新SVGA和PNG图标
               </button>
             </div>
           </div>
@@ -859,6 +1051,43 @@
 
       <!-- Toast 提示 -->
       <div class="toast" :class="{show: toastVisible}">{{ toastMessage }}</div>
+
+      <!-- 裁剪图片弹窗 -->
+      <div class="crop-modal" v-if="showCropModal" @click.self="!isExporting && !isConvertingMP4 && closeCropModal">
+        <div class="crop-modal-content">
+          <div class="crop-modal-header">
+            <h3>裁剪图片（322×423）</h3>
+            <button class="close-btn" :disabled="isExporting || isConvertingMP4" @click="closeCropModal">×</button>
+          </div>
+          <div class="crop-modal-body">
+            <div class="crop-container">
+              <canvas ref="cropCanvas" class="crop-canvas"></canvas>
+            </div>
+            <div class="crop-controls">
+              <label>
+                缩放：
+                <input 
+                  type="range" 
+                  min="0.1" 
+                  max="4" 
+                  step="0.0025" 
+                  v-model.number="cropImageScale" 
+                  @input="renderCropCanvas"
+                  class="crop-scale-slider"
+                />
+                <span class="crop-scale-value">{{ Math.round(cropImageScale * 100) }}%</span>
+              </label>
+            </div>
+            <div class="crop-tips">
+              拖动调整图片位置，滚轮或滑块缩放图片
+            </div>
+          </div>
+          <div class="crop-modal-footer">
+            <button class="btn" :disabled="isExporting || isConvertingMP4" @click="closeCropModal">取消</button>
+            <button class="btn btn-primary" :disabled="isExporting || isConvertingMP4" @click="confirmCrop">确认裁剪</button>
+          </div>
+        </div>
+      </div>
 
       <!-- 隐藏的文件输入框 -->
       <input type="file" ref="fileInput" accept="image/*" style="display:none" @change="handleFileSelect" />
@@ -912,24 +1141,22 @@
             // 替换的图片 {imageKey: base64}
             replacedImages: {},
             
-            // 文本输入
-            textInput1: '',
-            textOffset: { x: 0, y: 0 },  // 共享的位置
-            textScale: 1,  // 共享的缩放
+            // 裁剪相关
+            showCropModal: false,
+            cropImage: null,  // 当前裁剪的图片
+            cropImageScale: 1,
+            cropImageOffset: { x: 0, y: 0 },
+            cropDragging: false,
+            cropDragStart: { x: 0, y: 0 },
+            croppedImageData: null,  // 裁剪后的图片数据
             
-            // 文本拖拽状态
-            draggingText: false,
-            dragStartPos: { x: 0, y: 0 },
+            // MP4转换状态
+            isConvertingMP4: false,
+            mp4ConvertProgress: 0,
+            mp4ConvertStage: '',
             
-            // 文本样式配置（默认描边样式）
-            textStyle: {
-              fontSize: 24,
-              fontFamily: "'Noto Sans', 'Noto Sans SC', 'Noto Sans Arabic', 'Noto Sans Thai', sans-serif",
-              fillColor: '#ffffff',
-              strokeColor: '#000000',
-              strokeWidth: 2,
-              textAlign: 'center'
-            },
+            // 导出状态
+            isExporting: false,
             
             // 当前替换目标
             currentReplaceTarget: null,
@@ -942,6 +1169,9 @@
         computed: {
           canExport: function() {
             return Object.keys(this.replacedImages).length > 0;
+          },
+          canExportMP4: function() {
+            return this.svgaVideoItem !== null;
           },
           isMemoryHigh: function() {
             // 判断内存是否超过8M
@@ -969,13 +1199,13 @@
           // 加载头像框列表
           this.loadFrameList();
           
-          // 监听全局鼠标事件用于拖拽
-          document.addEventListener('mousemove', this.onDragMove);
-          document.addEventListener('mouseup', this.onDragEnd);
+          // 监听全局鼠标事件用于裁剪拖拽
+          document.addEventListener('mousemove', this.onCropDragMove);
+          document.addEventListener('mouseup', this.onCropDragEnd);
         },
         beforeDestroy: function() {
-          document.removeEventListener('mousemove', this.onDragMove);
-          document.removeEventListener('mouseup', this.onDragEnd);
+          document.removeEventListener('mousemove', this.onCropDragMove);
+          document.removeEventListener('mouseup', this.onCropDragEnd);
         },
         methods: {
           // 切换主题
@@ -1202,124 +1432,6 @@
             });
           },
           
-          // 渲染文本到Canvas（带描边效果）
-          renderTextToCanvas: function(canvas, text, offset, scale) {
-            if (!canvas) return;
-            var ctx = canvas.getContext('2d');
-            var style = this.textStyle;
-            
-            // 清空画布（透明背景）
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            if (!text) return;
-            
-            // 保存状态
-            ctx.save();
-            
-            // 设置字体
-            var scaledFontSize = style.fontSize * scale;
-            ctx.font = scaledFontSize + 'px ' + style.fontFamily;
-            ctx.textAlign = style.textAlign;
-            ctx.textBaseline = 'middle';
-            
-            // 计算位置
-            var x = canvas.width / 2 + offset.x;
-            var y = canvas.height / 2 + offset.y;
-            
-            // 绘制描边
-            if (style.strokeWidth > 0) {
-              ctx.strokeStyle = style.strokeColor;
-              ctx.lineWidth = style.strokeWidth * scale;
-              ctx.lineJoin = 'round';
-              ctx.strokeText(text, x, y);
-            }
-            
-            // 绘制填充
-            ctx.fillStyle = style.fillColor;
-            ctx.fillText(text, x, y);
-            
-            // 恢复状态
-            ctx.restore();
-          },
-          
-          renderText1: function() {
-            this.renderTextToCanvas(this.$refs.textCanvas1, this.textInput1, this.textOffset, this.textScale);
-          },
-          
-          // 移动文本位置
-          moveText: function(area, direction) {
-            switch(direction) {
-              case 'up': this.textOffset.y -= 1; break;
-              case 'down': this.textOffset.y += 1; break;
-              case 'left': this.textOffset.x -= 1; break;
-              case 'right': this.textOffset.x += 1; break;
-            }
-            this.renderText1();
-          },
-          
-          // 缩放文本
-          scaleText: function(area, direction) {
-            if (direction === 'up') {
-              this.textScale += 0.1;
-            } else {
-              this.textScale = Math.max(0.1, this.textScale - 0.1);
-            }
-            this.renderText1();
-          },
-          
-          // 滚轮缩放
-          handleWheel: function(e, area) {
-            e.preventDefault();
-            var delta = e.deltaY > 0 ? -0.05 : 0.05;
-            this.textScale = Math.max(0.1, Math.min(5, this.textScale + delta));
-            this.renderText1();
-          },
-          
-          // 开始拖拽文本1
-          startDragText1: function(e) {
-            this.draggingText = true;
-            this.dragStartPos = { x: e.clientX, y: e.clientY };
-            e.preventDefault();
-          },
-          
-          // 拖拽移动
-          onDragMove: function(e) {
-            if (this.draggingText) {
-              var dx = (e.clientX - this.dragStartPos.x) / 1.2;
-              var dy = (e.clientY - this.dragStartPos.y) / 1.2;
-              this.textOffset.x += dx;
-              this.textOffset.y += dy;
-              this.dragStartPos = { x: e.clientX, y: e.clientY };
-              this.renderText1();
-            }
-          },
-          
-          // 结束拖拽
-          onDragEnd: function() {
-            this.draggingText = false;
-          },
-          
-          // 恢复文本
-          resetText1: function() {
-            this.textInput1 = '';
-            this.textOffset = { x: 0, y: 0 };
-            this.textScale = 1;
-            this.renderText1();
-          },
-          
-          // 应用文本到素材
-          applyText1: function() {
-            if (!this.$refs.textCanvas1 || !this.textInput1) {
-              this.showToast('请输入文字');
-              return;
-            }
-            var dataUrl = this.$refs.textCanvas1.toDataURL('image/png');
-            // 使用Vue.set确保响应式更新
-            this.$set(this.replacedImages, 'zaky', dataUrl);
-            this.applyToSVGA('zaky', dataUrl);
-            this.showToast('已应用到 zaky');
-          },
-          
           // 应用替换到SVGA播放器
           applyToSVGA: function(imageKey, dataUrl) {
             var _this = this;
@@ -1331,13 +1443,13 @@
             img.src = dataUrl;
           },
           
-          // 替换素材（上传图片）
+          // 替换素材（打开裁剪弹窗）
           replaceMaterial: function(key) {
             this.currentReplaceTarget = key;
             this.$refs.fileInput.click();
           },
           
-          // 处理文件选择
+          // 处理文件选择（打开裁剪弹窗）
           handleFileSelect: function(e) {
             var _this = this;
             var file = e.target.files[0];
@@ -1345,22 +1457,20 @@
             
             var reader = new FileReader();
             reader.onload = function(evt) {
-              var dataUrl = evt.target.result;
-              var key = _this.currentReplaceTarget;
-              
-              // 缩放到目标尺寸
-              var material = _this.materials[key];
-              if (material) {
-                _this.scaleImageToSize(dataUrl, material.width, material.height, function(scaledDataUrl) {
-                  // 使用Vue.set确保响应式更新
-                  _this.$set(_this.replacedImages, key, scaledDataUrl);
-                  _this.applyToSVGA(key, scaledDataUrl);
-                  _this.showToast('已替换 ' + key);
+              var img = new Image();
+              img.onload = function() {
+                _this.cropImage = img;
+                _this.showCropModal = true;
+                _this.cropImageScale = 1;
+                _this.cropImageOffset = { x: 0, y: 0 };
+                _this.$nextTick(function() {
+                  _this.initCropCanvas();
                 });
-              }
+              };
+              img.src = evt.target.result;
             };
             reader.readAsDataURL(file);
-            e.target.value = '';
+            e.target.value = '';  // 清空，允许选择同一文件
           },
           
           // 缩放图片到指定尺寸
@@ -1385,6 +1495,623 @@
             img.src = dataUrl;
           },
           
+          // ========== 裁剪功能 ==========
+          
+          // 初始化裁剪画布
+          initCropCanvas: function() {
+            var _this = this;
+            var canvas = this.$refs.cropCanvas;
+            if (!canvas) return;
+            
+            // 设置画布尺寸
+            var container = canvas.parentElement;
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            
+            this.renderCropCanvas();
+            
+            // 添加事件监听
+            canvas.addEventListener('mousedown', this.startCropDrag);
+            canvas.addEventListener('wheel', this.handleCropWheel);
+          },
+          
+          // 渲染裁剪画布
+          renderCropCanvas: function() {
+            var canvas = this.$refs.cropCanvas;
+            if (!canvas || !this.cropImage) return;
+            
+            var ctx = canvas.getContext('2d');
+            var cw = canvas.width;
+            var ch = canvas.height;
+            
+            // 清空
+            ctx.clearRect(0, 0, cw, ch);
+            
+            // 绘制图片
+            var img = this.cropImage;
+            var scale = this.cropImageScale;
+            var offset = this.cropImageOffset;
+            
+            var imgW = img.width * scale;
+            var imgH = img.height * scale;
+            var imgX = (cw - imgW) / 2 + offset.x;
+            var imgY = (ch - imgH) / 2 + offset.y;
+            
+            ctx.drawImage(img, imgX, imgY, imgW, imgH);
+            
+            // 绘制裁剪框 322x423
+            var cropW = 322;
+            var cropH = 423;
+            var cropX = (cw - cropW) / 2;
+            var cropY = (ch - cropH) / 2;
+            
+            // 遮罩层
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.fillRect(0, 0, cw, cropY);
+            ctx.fillRect(0, cropY, cropX, cropH);
+            ctx.fillRect(cropX + cropW, cropY, cw - cropX - cropW, cropH);
+            ctx.fillRect(0, cropY + cropH, cw, ch - cropY - cropH);
+            
+            // 裁剪框边框
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(cropX, cropY, cropW, cropH);
+            
+            // 裁剪框尺寸文字
+            ctx.fillStyle = '#fff';
+            ctx.font = '14px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('322 × 423', cw / 2, cropY - 10);
+          },
+          
+          // 开始拖拽
+          startCropDrag: function(e) {
+            this.cropDragging = true;
+            this.cropDragStart = { x: e.clientX, y: e.clientY };
+          },
+          
+          // 拖拽移动
+          onCropDragMove: function(e) {
+            if (!this.cropDragging) return;
+            
+            var dx = e.clientX - this.cropDragStart.x;
+            var dy = e.clientY - this.cropDragStart.y;
+            
+            this.cropImageOffset.x += dx;
+            this.cropImageOffset.y += dy;
+            this.cropDragStart = { x: e.clientX, y: e.clientY };
+            
+            this.renderCropCanvas();
+          },
+          
+          // 结束拖拽
+          onCropDragEnd: function() {
+            this.cropDragging = false;
+          },
+          
+          // 滚轮缩放
+          handleCropWheel: function(e) {
+            e.preventDefault();
+            var delta = e.deltaY > 0 ? -0.05 : 0.05;  // 缩放倍率改小
+            this.cropImageScale = Math.max(0.1, Math.min(5, this.cropImageScale + delta));
+            this.renderCropCanvas();
+          },
+          
+          // 关闭裁剪弹窗
+          closeCropModal: function() {
+            this.showCropModal = false;
+            this.cropImage = null;
+            this.cropImageScale = 1;
+            this.cropImageOffset = { x: 0, y: 0 };
+          },
+          
+          // 确认裁剪
+          confirmCrop: function() {
+            var _this = this;
+            var canvas = this.$refs.cropCanvas;
+            if (!canvas || !this.cropImage) return;
+            
+            // 创建临时画布裁剪
+            var cropCanvas = document.createElement('canvas');
+            cropCanvas.width = 322;
+            cropCanvas.height = 423;
+            var cropCtx = cropCanvas.getContext('2d');
+            
+            var cw = canvas.width;
+            var ch = canvas.height;
+            var cropX = (cw - 322) / 2;
+            var cropY = (ch - 423) / 2;
+            
+            // 复制裁剪区域
+            var img = this.cropImage;
+            var scale = this.cropImageScale;
+            var offset = this.cropImageOffset;
+            
+            var imgW = img.width * scale;
+            var imgH = img.height * scale;
+            var imgX = (cw - imgW) / 2 + offset.x;
+            var imgY = (ch - imgH) / 2 + offset.y;
+            
+            // 计算裁剪区域在原图片上的位置
+            var sx = (cropX - imgX) / scale;
+            var sy = (cropY - imgY) / scale;
+            var sw = 322 / scale;
+            var sh = 423 / scale;
+            
+            cropCtx.drawImage(img, sx, sy, sw, sh, 0, 0, 322, 423);
+            
+            var croppedDataUrl = cropCanvas.toDataURL('image/png');
+            this.croppedImageData = croppedDataUrl;
+            
+            // 应用到SVGA
+            var key = this.currentReplaceTarget;
+            this.$set(this.replacedImages, key, croppedDataUrl);
+            this.applyToSVGA(key, croppedDataUrl);
+            
+            // 生成图标
+            this.generateIcon();
+            
+            this.closeCropModal();
+            this.showToast('已裁剪并应用到 ' + key);
+          },
+          
+          // ========== 图标生成 ==========
+          
+          // 生成图标
+          generateIcon: function() {
+            var _this = this;
+            var canvas = this.$refs.iconCanvas;
+            if (!canvas) return;
+            
+            var ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, 300, 300);
+            
+            // 等待所有图片加载完成
+            var loadCount = 0;
+            var colorImg = null;
+            var zakyImg = null;
+            var maskImg = null;
+            
+            function checkComplete() {
+              loadCount++;
+              if (loadCount === 3) {
+                drawIcon();
+              }
+            }
+            
+            function drawIcon() {
+              // 1. 先在临时画布上绘制 zaky 并应用遮罩
+              var maskedZakyCanvas = null;
+              if (zakyImg) {
+                var zakyW = 155.57;
+                var zakyH = 204.36;
+                
+                // 创建 300x300 的临时画布（和遮罩一样大）
+                var tempCanvas = document.createElement('canvas');
+                tempCanvas.width = 300;
+                tempCanvas.height = 300;
+                var tempCtx = tempCanvas.getContext('2d');
+                
+                // 在临时画布上绘制旋转的 zaky
+                var zakyX = 76.82;
+                var zakyY = 42.71;
+                tempCtx.save();
+                tempCtx.translate(zakyX + zakyW/2, zakyY + zakyH/2);
+                tempCtx.rotate(15 * Math.PI / 180);
+                tempCtx.drawImage(zakyImg, -zakyW/2, -zakyH/2, zakyW, zakyH);
+                tempCtx.restore();
+                
+                // 应用遮罩（在临时画布上）
+                if (maskImg) {
+                  tempCtx.globalCompositeOperation = 'destination-in';
+                  tempCtx.drawImage(maskImg, 0, 0, 300, 300);
+                }
+                
+                maskedZakyCanvas = tempCanvas;
+              }
+              
+              // 2. 绘制到主画布
+              if (maskedZakyCanvas) {
+                ctx.drawImage(maskedZakyCanvas, 0, 0, 300, 300);
+              }
+              
+              // 3. 上层：color 图标 (300x300) - 最后绘制，盖住 zaky
+              if (colorImg) {
+                ctx.drawImage(colorImg, 0, 0, 300, 300);
+              }
+            }
+            
+            // 加载 zaky 裁剪图
+            if (this.croppedImageData) {
+              var zakyImage = new Image();
+              zakyImage.onload = function() {
+                zakyImg = zakyImage;
+                checkComplete();
+              };
+              zakyImage.onerror = checkComplete;
+              zakyImage.src = this.croppedImageData;
+            } else {
+              checkComplete();
+            }
+            
+            // 加载 musk 遮罩
+            var maskImage = new Image();
+            maskImage.onload = function() {
+              maskImg = maskImage;
+              checkComplete();
+            };
+            maskImage.onerror = checkComplete;
+            maskImage.src = 'assets/img/icon_musk.png';
+            
+            // 加载 color 图标
+            if (this.currentFrame && this.currentFrame.icon) {
+              var colorImage = new Image();
+              colorImage.onload = function() {
+                colorImg = colorImage;
+                checkComplete();
+              };
+              colorImage.onerror = checkComplete;
+              colorImage.src = 'assets/mingren_gift_1photo/' + this.currentFrame.icon;
+            } else {
+              checkComplete();
+            }
+          },
+          
+          // 生成带时间戳的文件名
+          getTimestampFilename: function(baseName, ext) {
+            var now = new Date();
+            var year = now.getFullYear();
+            var month = String(now.getMonth() + 1).padStart(2, '0');
+            var day = String(now.getDate()).padStart(2, '0');
+            var hour = String(now.getHours()).padStart(2, '0');
+            var minute = String(now.getMinutes()).padStart(2, '0');
+            var second = String(now.getSeconds()).padStart(2, '0');
+            var timestamp = '' + year + month + day + hour + minute + second;
+            return timestamp + '_' + baseName + '.' + ext;
+          },
+          
+          // 导出 SVGA 和 PNG 图标
+          exportAll: function() {
+            this.isExporting = true;
+            
+            try {
+              // 导出 SVGA
+              this.exportSVGA();
+              
+              // 延迟50ms后导出PNG，避免同时下载问题
+              var _this = this;
+              setTimeout(function() {
+                _this.exportIconPNG();
+                _this.isExporting = false;
+              }, 50);
+            } catch (err) {
+              console.error('导出错误:', err);
+              this.isExporting = false;
+            }
+          },
+          
+          // 导出 PNG 图标
+          exportIconPNG: function() {
+            var canvas = this.$refs.iconCanvas;
+            if (canvas) {
+              var baseName = this.currentFrame ? this.currentFrame.name : 'icon';
+              var filename = this.getTimestampFilename(baseName + '_icon', 'png');
+              
+              var dataUrl = canvas.toDataURL('image/png');
+              var a = document.createElement('a');
+              a.href = dataUrl;
+              a.download = filename;
+              a.click();
+            }
+          },
+          
+          // 导出 MP4 和 PNG 图标
+          exportMP4AndIcon: async function() {
+            var _this = this;
+            
+            if (!this.svgaVideoItem) {
+              this.showToast('请先选择一个礼物');
+              return;
+            }
+            
+            this.isExporting = true;
+            
+            try {
+              // 先导出PNG图标
+              this.exportIconPNG();
+              
+              // 延迟50ms后导出MP4
+              await new Promise(function(r) { setTimeout(r, 50); });
+              await this.convertToMP4();
+            } catch (err) {
+              console.error('MP4导出错误:', err);
+              this.showToast('MP4导出失败: ' + err.message);
+            } finally {
+              this.isExporting = false;
+            }
+          },
+          
+          // 转换为MP4（双通道）
+          convertToMP4: async function() {
+            var _this = this;
+            
+            _this.isConvertingMP4 = true;
+            _this.mp4ConvertProgress = 0;
+            
+            try {
+              // 获取SVGA信息
+              var width = _this.svgaInfo.width || 0;
+              var height = _this.svgaInfo.height || 0;
+              var fps = _this.svgaInfo.fps || 30;
+              
+              if (width === 0 || height === 0) {
+                _this.showToast('SVGA尺寸信息错误');
+                _this.isConvertingMP4 = false;
+                return;
+              }
+              
+              // 1. 加载FFmpeg
+              _this.mp4ConvertStage = '加载转换器';
+              _this.mp4ConvertProgress = 5;
+              await _this.loadFFmpegForGift();
+              
+              // 2. 提取序列帧
+              _this.mp4ConvertStage = '提取序列帧';
+              _this.mp4ConvertProgress = 15;
+              var frames = await _this.extractFramesForMP4(width, height);
+              
+              // 3. 合成双通道
+              _this.mp4ConvertStage = '合成双通道';
+              _this.mp4ConvertProgress = 45;
+              var dualFrames = await _this.composeDualChannelFrames(frames, width, height);
+              
+              // 4. 编码MP4
+              _this.mp4ConvertStage = '编码MP4';
+              _this.mp4ConvertProgress = 70;
+              var mp4Blob = await _this.encodeToMP4(dualFrames, width, height, fps, 70);
+              
+              // 5. 下载
+              _this.mp4ConvertProgress = 95;
+              var baseName = _this.currentFrame ? _this.currentFrame.name : 'gift';
+              var filename = _this.getTimestampFilename(baseName + '_dual', 'mp4');
+              
+              var url = URL.createObjectURL(mp4Blob);
+              var a = document.createElement('a');
+              a.href = url;
+              a.download = filename;
+              a.click();
+              URL.revokeObjectURL(url);
+              
+              _this.mp4ConvertProgress = 100;
+              _this.showToast('MP4导出成功');
+              
+            } catch (err) {
+              console.error('MP4转换错误:', err);
+              _this.showToast('MP4转换失败: ' + err.message);
+            } finally {
+              _this.isConvertingMP4 = false;
+              _this.mp4ConvertStage = '';
+              _this.mp4ConvertProgress = 0;
+            }
+          },
+          
+          // 加载FFmpeg
+          loadFFmpegForGift: async function() {
+            if (window.ffmpegInstance && window.ffmpegLoaded) {
+              return window.ffmpegInstance;
+            }
+            
+            // 加载FFmpeg脚本
+            if (!window.FFmpeg) {
+              await new Promise(function(resolve, reject) {
+                var script = document.createElement('script');
+                script.src = 'https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js';
+                script.onload = resolve;
+                script.onerror = reject;
+                document.head.appendChild(script);
+              });
+            }
+            
+            var ffmpeg = window.FFmpeg.createFFmpeg({ log: false });
+            await ffmpeg.load();
+            
+            window.ffmpegInstance = ffmpeg;
+            window.ffmpegLoaded = true;
+            
+            return ffmpeg;
+          },
+          
+          // 提取序列帧
+          extractFramesForMP4: async function(targetWidth, targetHeight) {
+            var _this = this;
+            var frames = [];
+            var totalFrames = _this.svgaVideoItem.frames;
+            var player = _this.svgaPlayer;
+            
+            // 保存原始播放状态
+            var wasPlaying = !player.paused;
+            if (wasPlaying) {
+              player.pauseAnimation();
+            }
+            
+            // 获取SVGA播放器的canvas元素
+            var container = document.getElementById('svgaContainer');
+            var canvas = container.querySelector('canvas');
+            
+            if (!canvas) {
+              throw new Error('未找到SVGA canvas元素');
+            }
+            
+            for (var i = 0; i < totalFrames; i++) {
+              player.stepToFrame(i);
+              
+              // 等待渲染完成
+              await new Promise(function(r) { setTimeout(r, 16); }); // ~1帧的时间
+              
+              var tempCanvas = document.createElement('canvas');
+              tempCanvas.width = targetWidth;
+              tempCanvas.height = targetHeight;
+              var ctx = tempCanvas.getContext('2d');
+              ctx.imageSmoothingEnabled = false;
+              ctx.drawImage(canvas, 0, 0, targetWidth, targetHeight);
+              
+              var imageData = ctx.getImageData(0, 0, targetWidth, targetHeight);
+              frames.push(imageData);
+              
+              if (i % 5 === 0) {
+                await new Promise(function(r) { setTimeout(r, 0); });
+              }
+            }
+            
+            // 恢复播放状态
+            if (wasPlaying) {
+              player.startAnimation();
+            } else {
+              player.stepToFrame(0);
+            }
+            
+            return frames;
+          },
+          
+          // 合成双通道帧
+          composeDualChannelFrames: async function(frames, width, height) {
+            var dualFrames = [];
+            
+            for (var i = 0; i < frames.length; i++) {
+              var dualCanvas = this.composeDualChannel(frames[i], true);
+              dualFrames.push(dualCanvas);
+              
+              if (i % 5 === 0) {
+                await new Promise(function(r) { setTimeout(r, 0); });
+              }
+            }
+            
+            return dualFrames;
+          },
+          
+          // 单帧双通道合成
+          composeDualChannel: function(imageData, isColorLeftAlphaRight) {
+            var width = imageData.width;
+            var height = imageData.height;
+            
+            var dualCanvas = document.createElement('canvas');
+            dualCanvas.width = width * 2;
+            dualCanvas.height = height;
+            var dualCtx = dualCanvas.getContext('2d', { alpha: true, willReadFrequently: true });
+            dualCtx.imageSmoothingEnabled = false;
+            dualCtx.clearRect(0, 0, width * 2, height);
+            
+            var leftData = dualCtx.createImageData(width, height);
+            var rightData = dualCtx.createImageData(width, height);
+            
+            for (var i = 0; i < imageData.data.length; i += 4) {
+              var r = imageData.data[i + 0];
+              var g = imageData.data[i + 1];
+              var b = imageData.data[i + 2];
+              var a = imageData.data[i + 3];
+              
+              var finalR = r, finalG = g, finalB = b;
+              if (a > 0 && a < 255) {
+                finalR = Math.min(255, Math.round(r * 255 / a));
+                finalG = Math.min(255, Math.round(g * 255 / a));
+                finalB = Math.min(255, Math.round(b * 255 / a));
+              } else if (a === 0) {
+                finalR = finalG = finalB = 0;
+              }
+              
+              if (isColorLeftAlphaRight) {
+                leftData.data[i + 0] = finalR;
+                leftData.data[i + 1] = finalG;
+                leftData.data[i + 2] = finalB;
+                leftData.data[i + 3] = a;
+                
+                rightData.data[i + 0] = a;
+                rightData.data[i + 1] = a;
+                rightData.data[i + 2] = a;
+                rightData.data[i + 3] = 255;
+              }
+            }
+            
+            dualCtx.putImageData(leftData, 0, 0);
+            dualCtx.putImageData(rightData, width, 0);
+            
+            return dualCanvas;
+          },
+          
+          // 编码为MP4
+          encodeToMP4: async function(dualFrames, width, height, fps, quality) {
+            var _this = this;
+            var ffmpeg = window.ffmpegInstance;
+            
+            // 写入帧数据
+            for (var i = 0; i < dualFrames.length; i++) {
+              var canvas = dualFrames[i];
+              
+              // 加黑底
+              var blackCanvas = document.createElement('canvas');
+              blackCanvas.width = width * 2;
+              blackCanvas.height = height;
+              var blackCtx = blackCanvas.getContext('2d');
+              var dualData = canvas.getContext('2d').getImageData(0, 0, width * 2, height);
+              var blackData = blackCtx.createImageData(width * 2, height);
+              
+              for (var j = 0; j < dualData.data.length; j += 4) {
+                blackData.data[j + 0] = dualData.data[j + 0];
+                blackData.data[j + 1] = dualData.data[j + 1];
+                blackData.data[j + 2] = dualData.data[j + 2];
+                blackData.data[j + 3] = 255;
+              }
+              blackCtx.putImageData(blackData, 0, 0);
+              
+              // 转为JPEG
+              var blob = await new Promise(function(resolve) {
+                blackCanvas.toBlob(resolve, 'image/jpeg', 0.6);
+              });
+              
+              var data = new Uint8Array(await blob.arrayBuffer());
+              var filename = 'frame_' + String(i).padStart(4, '0') + '.jpg';
+              ffmpeg.FS('writeFile', filename, data);
+              
+              if (i % 5 === 0) {
+                await new Promise(function(r) { setTimeout(r, 0); });
+              }
+            }
+            
+            // FFmpeg命令
+            var crf = Math.round(18 + (100 - quality) * 0.33);
+            var args = [
+              '-framerate', String(fps),
+              '-i', 'frame_%04d.jpg',
+              '-c:v', 'libx264',
+              '-profile:v', 'high',
+              '-level', '4.0',
+              '-pix_fmt', 'yuv420p',
+              '-crf', String(crf),
+              '-preset', 'medium',
+              '-movflags', '+faststart',
+              '-an',
+              'output.mp4'
+            ];
+            
+            await ffmpeg.run.apply(ffmpeg, args);
+            
+            // 读取输出
+            var mp4Data = ffmpeg.FS('readFile', 'output.mp4');
+            var mp4Blob = new Blob([mp4Data.buffer], { type: 'video/mp4' });
+            
+            // 清理
+            for (var k = 0; k < dualFrames.length; k++) {
+              try {
+                ffmpeg.FS('unlink', 'frame_' + String(k).padStart(4, '0') + '.jpg');
+              } catch (e) {}
+            }
+            try {
+              ffmpeg.FS('unlink', 'output.mp4');
+            } catch (e) {}
+            
+            return mp4Blob;
+          },
+          
           // 下载素材
           downloadMaterial: function(key) {
             var material = this.materials[key];
@@ -1400,9 +2127,17 @@
           restoreMaterial: function(key) {
             // 使用Vue.delete确保响应式更新
             this.$delete(this.replacedImages, key);
+            // 清空裁剪数据
+            this.croppedImageData = null;
             // 重新加载原始SVGA
             if (this.currentFrame) {
               this.loadSVGA(this.currentFrame);
+            }
+            // 清空图标生成效果
+            var canvas = this.$refs.iconCanvas;
+            if (canvas) {
+              var ctx = canvas.getContext('2d');
+              ctx.clearRect(0, 0, 300, 300);
             }
             this.showToast('已恢复 ' + key);
           },
@@ -1456,12 +2191,9 @@
                     var buffer = MovieEntity.encode(movieData).finish();
                     var deflatedData = pako.deflate(buffer);
                     
-                    // 生成文件名：日期+文件名
-                    var date = new Date();
-                    var dateStr = date.getFullYear() + 
-                      String(date.getMonth() + 1).padStart(2, '0') + 
-                      String(date.getDate()).padStart(2, '0');
-                    var fileName = dateStr + '_' + _this.currentFrame.name + '.svga';
+                    // 生成文件名：时间戳_文件名
+                    var baseName = _this.currentFrame ? _this.currentFrame.name : 'gift';
+                    var fileName = _this.getTimestampFilename(baseName, 'svga');
                     
                     // 下载SVGA
                     var blob = new Blob([deflatedData], { type: 'application/octet-stream' });
@@ -1471,9 +2203,6 @@
                     a.download = fileName;
                     a.click();
                     URL.revokeObjectURL(url);
-                    
-                    // 导出第5帧PNG
-                    _this.exportFrame5PNG(dateStr + '_' + _this.currentFrame.name);
                     
                     _this.showToast('导出成功！');
                     
