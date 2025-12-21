@@ -1,22 +1,85 @@
 <!DOCTYPE html>
-<html lang="en-US">
+<html lang="zh-CN">
   <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>SVGA、Lottie动画在线预览</title>
-    <meta name="generator" content="VuePress 1.9.10">
-    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/svgaplayerweb@2.3.1/build/svga.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.7.6/lottie.min.js"></script>
-    <meta name="description" content="SVGA、Lottie动画在线预览">
+    <meta charset="utf-8" />
+    <title>404 - 页面未找到 | SVGA、双通道MP4、Lottie动画在线预览</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="SVGA、双通道MP4、Lottie动画在线预览工具" />
     
-    <link rel="preload" href="/assets/css/0.styles.bb8e42db.css" as="style"><link rel="preload" href="/assets/js/app.6aca426c.js" as="script"><link rel="preload" href="/assets/js/7.c4a311d8.js" as="script"><link rel="prefetch" href="/assets/js/1.51c0e5f5.js"><link rel="prefetch" href="/assets/js/10.7ab2dec3.js"><link rel="prefetch" href="/assets/js/11.79b40700.js"><link rel="prefetch" href="/assets/js/12.94aedb2b.js"><link rel="prefetch" href="/assets/js/13.932f9a2f.js"><link rel="prefetch" href="/assets/js/14.c317155d.js"><link rel="prefetch" href="/assets/js/15.fcd34931.js"><link rel="prefetch" href="/assets/js/16.f1201753.js"><link rel="prefetch" href="/assets/js/17.48e5e093.js"><link rel="prefetch" href="/assets/js/18.b052e966.js"><link rel="prefetch" href="/assets/js/19.c7d749b7.js"><link rel="prefetch" href="/assets/js/2.6c07cdfc.js"><link rel="prefetch" href="/assets/js/20.033c8e83.js"><link rel="prefetch" href="/assets/js/21.3ac9af3a.js"><link rel="prefetch" href="/assets/js/22.063ac5d4.js"><link rel="prefetch" href="/assets/js/23.d15b974b.js"><link rel="prefetch" href="/assets/js/3.b92d1c43.js"><link rel="prefetch" href="/assets/js/4.d1e67669.js"><link rel="prefetch" href="/assets/js/5.836cad27.js"><link rel="prefetch" href="/assets/js/6.72a2f4bc.js"><link rel="prefetch" href="/assets/js/vendors~docsearch.0226c45e.js">
-    <link rel="stylesheet" href="/assets/css/0.styles.bb8e42db.css">
+    <!-- COI Service Worker for SharedArrayBuffer support on GitHub Pages -->
+    <script src="coi-serviceworker.js?v=5"></script>
+
+    <!-- 外部样式表（优先加载） -->
+    <link rel="stylesheet" href="assets/css/styles.css" />
+    
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+        background: var(--bg-color, #f5f5f5);
+      }
+      
+      .error-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        padding: 20px;
+        text-align: center;
+      }
+      
+      .error-code {
+        font-size: 120px;
+        font-weight: bold;
+        color: #666;
+        margin: 0;
+        line-height: 1;
+      }
+      
+      .error-message {
+        font-size: 24px;
+        color: #999;
+        margin: 20px 0 40px;
+      }
+      
+      .home-button {
+        display: inline-block;
+        padding: 12px 32px;
+        background: #007bff;
+        color: white;
+        text-decoration: none;
+        border-radius: 6px;
+        font-size: 16px;
+        transition: background 0.3s;
+      }
+      
+      .home-button:hover {
+        background: #0056b3;
+      }
+      
+      /* 暗黑模式支持 */
+      @media (prefers-color-scheme: dark) {
+        body {
+          background: #1a1a1a;
+        }
+        
+        .error-code {
+          color: #999;
+        }
+        
+        .error-message {
+          color: #666;
+        }
+      }
+    </style>
   </head>
   <body>
-    <div id="app" data-server-rendered="true"><div class="theme-container"><div class="theme-default-content"><h1>404</h1> <blockquote>There's nothing here.</blockquote> <a href="/" class="router-link-active">
-      Take me home.
-    </a></div></div><div class="global-ui"></div></div>
-    <script src="/assets/js/app.6aca426c.js" defer></script><script src="/assets/js/7.c4a311d8.js" defer></script>
+    <div class="error-container">
+      <h1 class="error-code">404</h1>
+      <p class="error-message">页面不存在</p>
+      <a href="./index.html" class="home-button">返回首页</a>
+    </div>
   </body>
 </html>

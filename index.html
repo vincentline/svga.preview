@@ -9,7 +9,7 @@
     <script src="coi-serviceworker.js?v=5"></script>
 
     <!-- 外部样式表（优先加载） -->
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="assets/css/styles.css" />
     
     <!-- ===== 所有库统一由 app.js 中的库加载管理系统动态加载 ===== -->
     <!-- Vue.js - 核心框架，优先级最高 -->
@@ -49,11 +49,6 @@
         <div style="color: #666; font-size: 14px;">加载中...</div>
       </div>
     </div>
-    <style>
-      @keyframes spin {
-        to { transform: rotate(360deg); }
-      }
-    </style>
     
     <div id="app">
       <!-- 顶部导航栏 -->
@@ -692,7 +687,7 @@
           <!-- MP4信息 -->
           <div class="svga-info-section">
             <div class="svga-info-row">当前MP4尺寸：{{ yyeva.fileInfo.sizeWH }}    帧率：{{ yyeva.fileInfo.fps }}    时长：{{ yyeva.fileInfo.duration }}</div>
-            <div class="svga-compress-hint">注意：帧率过高文件将巨大， 内存占用将巨大。</div>
+            <div class="svga-compress-hint">注意：帧率过高文件将巨大， 内存占用将巨大。双通道MP4转换位SVGA，是序列帧形式，内存占用会比普通SVGA高很多。</div>
           </div>
 
           <!-- 配置区域 -->
@@ -872,6 +867,6 @@
     </script>
     
     <!-- 应用主逻辑 -->
-    <script src="app.js"></script>
+    <script src="assets/js/app.js"></script>
   </body>
 </html>

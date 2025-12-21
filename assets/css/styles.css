@@ -6,6 +6,11 @@
   box-sizing: border-box;
 }
 
+/* 骨架屏加载动画 */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 html,
 body {
   width: 100%;

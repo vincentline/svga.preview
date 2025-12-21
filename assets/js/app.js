@@ -2487,7 +2487,7 @@ function initApp() {
               quality: 10,
               width: canvas.width,
               height: canvas.height,
-              workerScript: 'gif.worker.js'  // 使用本地 worker 文件
+              workerScript: 'assets/js/gif.worker.js'  // 使用本地 worker 文件
             });
 
             // 监听进度
@@ -2662,7 +2662,7 @@ function initApp() {
               quality: 10,
               width: canvas.width,
               height: canvas.height,
-              workerScript: 'gif.worker.js'
+              workerScript: 'assets/js/gif.worker.js'
             });
 
             // 监听进度
