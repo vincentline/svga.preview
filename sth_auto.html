@@ -1521,7 +1521,9 @@
                   ctx.shadowBlur = parseFloat(parts[3]);
                   ctx.shadowColor = parts[4].trim();
                   if (customStyle.gradient) {
-                    var grad = ctx.createLinearGradient(x, 0, x, canvas.height);
+                    var textMetrics = ctx.measureText(text);
+                    var textHeight = fontSize;
+                    var grad = ctx.createLinearGradient(x, y - textHeight/2, x, y + textHeight/2);
                     for (var j = 0; j < customStyle.gradient.colors.length; j++) {
                       grad.addColorStop(customStyle.gradient.positions[j], customStyle.gradient.colors[j]);
                     }
@@ -1558,7 +1560,9 @@
             }
             
             if (customStyle && customStyle.gradient) {
-              var gradient = ctx.createLinearGradient(x, 0, x, canvas.height);
+              var textMetrics = ctx.measureText(text);
+              var textHeight = fontSize;
+              var gradient = ctx.createLinearGradient(x, y - textHeight/2, x, y + textHeight/2);
               for (var k = 0; k < customStyle.gradient.colors.length; k++) {
                 gradient.addColorStop(customStyle.gradient.positions[k], customStyle.gradient.colors[k]);
               }
