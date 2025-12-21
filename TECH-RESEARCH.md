@@ -2782,19 +2782,30 @@ switchMode: function(targetMode, options) {
 **openRightPanel(panelName)**
 ```javascript
 /**
- * 打开右侧弹窗（互斥，同时只能打开一个）
- * 自动关闭其他右侧弹窗
+ * 打开/关闭右侧弹窗（互斥，同时只能打开一个）
+ * 支持点击同一按钮切换开关状态
+ * @param {string} panelName - 弹窗变量名（showMaterialPanel | showMP4Panel | showSVGAPanel）
  */
 openRightPanel: function(panelName) {
-  // 关闭所有右侧弹窗
+  // 如果目标弹窗已打开，则关闭它
+  if (this[panelName] === true) {
+    this[panelName] = false;
+    return; // 直接返回，不执行后续逻辑
+  }
+  
+  // 否则关闭所有右侧弹窗，然后打开目标弹窗
   this.showMaterialPanel = false;
   this.showMP4Panel = false;
   this.showSVGAPanel = false;
-  
-  // 打开目标弹窗
   this[panelName] = true;
 }
 ```
+
+**特性**：
+- ✅ 点击按钮打开弹窗
+- ✅ 再次点击同一按钮关闭弹窗
+- ✅ 右侧弹窗互斥（同时只能打开一个）
+- ✅ 不影响进行中的任务
 
 ---
 
@@ -3151,3 +3162,331 @@ var taskNames = tasks.map(function(t) { return t.name; }).join('、');
 
 *最后更新：2025-12-21*
 *多模式架构重构完成日期：2025-12-21*
+
+---
+
+## 13. 代码组织优化与文件结构重构 📚
+
+### 13.1 功能概述
+**实现时间**：2025-12-21
+
+**优化目标**：
+- 解决app.js代码4400+行臃胀问题，提升可维护性
+- 清理旧VuePress遗留文件，减少无用资源
+- 优化文件结构，统一管理静态资源
+- 修复404页面，确保正确跳转
+- 修复protobuf加载问题
+
+---
+
+### 13.2 代码模块化整理
+
+#### 问题分析
+- **app.js过4400+行**：功能混杂，难以快速定位
+- **缺少索引**：新功能不知道该放哪里
+- **逻辑分散**：相关功能没有聚合
+
+#### 解决方案
+
+**1. 添加完整模块索引**
+```javascript
+/*
+ * ==================== SVGA Preview 应用主文件 ====================
+ * 
+ * 模块索引（按代码中顺序排列）：
+ * 
+ * 1. 【全局状态管理】
+ * 2. 【模式切换与任务管理】
+ * 3. 【侧边弹窗管理】
+ * 4. 【库加载管理器】
+ * 5. 【文件加载与拖拽上传】
+ * 6. 【资源清理】
+ * 7. 【工具函数】
+ * 8. 【SVGA加载与播放】
+ * 9. 【播放控制】
+ * 10. 【双通道MP4加载与播放】
+ * 11. 【UI交互】
+ * 12. 【素材替换功能】
+ * 13. 【导出GIF功能】
+ * 14. 【格式转换：MP4转SVGA】
+ * 15. 【格式转换：SVGA转MP4】
+ */
+```
+
+**2. 添加清晰分区标记**
+```javascript
+/* ==================== 模式切换与任务管理 ==================== */
+/* ==================== 侧边弹窗管理 ==================== */
+/* ==================== 库加载管理器 ==================== */
+/* ==================== 文件加载与拖拽上传 ==================== */
+// ... 共15个分区
+```
+
+**3. 代码组织优化**
+- ✅ 相关函数聚合在一起
+- ✅ 统一注释风格
+- ✅ 删除重复的小标题
+
+---
+
+### 13.3 清理旧VuePress文件
+
+#### 问题分析
+- **404页面问题**：点击"Take me home"跳转到旧VuePress页面
+- **无用资源**：1.5MB的VuePress JS/CSS文件无人引用
+- **目录混乱**：assets目录同时存在新旧文件
+
+#### 删除文件清单
+
+**1. VuePress JavaScript (23个文件)**
+```
+assets/js/app.6aca426c.js (961.5KB)
+assets/js/vendors~docsearch.0226c45e.js (113.5KB)
+assets/js/1.51c0e5f5.js ~ 23.d15b974b.js (21个分块)
+```
+
+**2. VuePress CSS (1个文件)**
+```
+assets/css/0.styles.bb8e42db.css (253.2KB)
+```
+
+**3. Element UI字体 (2个文件)**
+```
+assets/fonts/element-icons.535877f5.woff (27.5KB)
+assets/fonts/element-icons.732389de.ttf (54.6KB)
+```
+
+**总计节省空间**：约1.5MB
+
+---
+
+### 13.4 404页面重构
+
+#### 问题原因
+旧404.html是VuePress生成的，包含：
+- VuePress路由系统（`href="/"`）
+- 旧的JS/CSS资源引用
+- 旧标题"梦幻西游动画在线预览"
+
+#### 解决方案
+
+**新404页面特性**：
+```html
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <title>404 - 页面未找到 | SVGA、双通道MP4、Lottie动画在线预览</title>
+    <link rel="stylesheet" href="assets/css/styles.css" />
+  </head>
+  <body>
+    <div class="error-container">
+      <h1 class="error-code">404</h1>
+      <p class="error-message">页面不存在</p>
+      <a href="./index.html" class="home-button">返回首页</a>
+    </div>
+  </body>
+</html>
+```
+
+**优化点**：
+- ✅ 简洁现代的设计
+- ✅ 支持暗黑模式
+- ✅ 响应式布局
+- ✅ 直接跳转到`index.html`
+
+---
+
+### 13.5 文件结构优化
+
+#### 优化前
+```
+docs/
+├── styles.css         // 根目录
+├── app.js             // 根目录
+├── gif.worker.js      // 根目录
+├── svga-web.js        // 根目录
+└── assets/
+    ├── css/           // 有VuePress旧文件
+    ├── js/            // 有VuePress旧文件
+    └── fonts/         // 有Element UI字体
+```
+
+#### 优化后
+```
+docs/
+├── index.html
+├── 404.html
+└── assets/
+    ├── css/
+    │   └── styles.css          ✅ 统一样式文件
+    ├── js/
+    │   ├── app.js              ✅ 主逻辑
+    │   ├── gif.worker.js       ✅ GIF导出worker
+    │   └── svga-web.js         ✅ SVGA工具库
+    ├── img/                    ✅ 图片资源
+    ├── svga/                   ✅ SVGA示例
+    └── dar_svga/               ✅ SVGA示例
+```
+
+#### 更新引用路径
+```html
+<!-- index.html -->
+<link rel="stylesheet" href="assets/css/styles.css" />
+<script src="assets/js/app.js"></script>
+
+<!-- 404.html -->
+<link rel="stylesheet" href="assets/css/styles.css" />
+```
+
+```javascript
+// app.js 内部
+workerScript: 'assets/js/gif.worker.js'  // 2处更新
+```
+
+---
+
+### 13.6 Protobuf加载路径修复
+
+#### 问题描述
+导出新SVGA时报错：
+```
+编解码失败: no such type: com.opensource.svga.MovieEntity
+```
+
+#### 原因分析
+protobuf.js加载`.proto`文件时路径不正确：
+```javascript
+// 错误
+protobuf.load('svga.proto', ...)
+
+// 正确
+protobuf.load('./svga.proto', ...)
+```
+
+#### 修复方案
+
+**1. 修正proto路径（3处）**
+```javascript
+// 位置1：SVGA文件信息提取
+protobuf.load('./svga.proto', ...)
+
+// 位置2：导出新SVGA（素材替换）
+protobuf.load('./svga.proto', ...)
+
+// 位置3：双通道MP4转SVGA
+protobuf.load('./svga.proto', ...)
+```
+
+**2. 增强错误检查**
+```javascript
+protobuf.load('./svga.proto', function(err, root) {
+  if (err) {
+    console.error('Proto加载错误:', err);
+    alert('加载 proto 定义失败: ' + err.message);
+    return;
+  }
+  
+  // 检查root是否有效
+  if (!root) {
+    alert('Proto根对象为空');
+    return;
+  }
+  
+  // 获取MovieEntity类型
+  var MovieEntity = root.lookupType('com.opensource.svga.MovieEntity');
+  
+  if (!MovieEntity) {
+    alert('MovieEntity类型未找到，请检查proto文件');
+    return;
+  }
+  
+  // 继续处理...
+});
+```
+
+---
+
+### 13.7 样式整合
+
+#### 问题
+- index.html内有内联`<style>`标签（spin动画）
+- 样式分散在多个地方
+
+#### 解决
+
+**将spin动画移到styles.css**
+```css
+/* styles.css */
+/* 骨架屏加载动画 */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+```
+
+**删除index.html中的内联样式**
+```html
+<!-- 删除 -->
+<style>
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+</style>
+```
+
+---
+
+### 13.8 优化成果统计
+
+#### 代码组织
+- ✅ 添加66行模块索引
+- ✅ 添加15个分区标记
+- ✅ 统一注释风格
+- ✅ 删除重复小标题
+
+#### 文件清理
+- ✅ 删除26个VuePress文件
+- ✅ 节省空间约1.5MB
+- ✅ 清空3个无用目录
+
+#### 结构优化
+- ✅ CSS/JS移入assets目录
+- ✅ 更新5处引用路径
+- ✅ 样式全部集中到styles.css
+
+#### Bug修复
+- ✅ 404页面跳转问题
+- ✅ Protobuf加载失败问题
+- ✅ Worker路径问题
+
+---
+
+### 13.9 技术亮点
+
+1. **模块化索引**：66行索引注释，快速定位功能
+2. **清晰分区**：15个分区标记，相关功能聚合
+3. **资源优化**：删除1.5MB无用文件，提升加载速度
+4. **统一管理**：静态资源集中到assets目录
+5. **防御性编程**：多层proto加载检查，避免错误
+
+---
+
+### 13.10 未来优化方向
+
+#### 短期
+- ✅ 已完成：代码分区整理
+- ✅ 已完成：文件结构优化
+
+#### 中期（如果代码继续臃胀）
+- 抽取「库加载管理器」为`library-loader.js`
+- 抽取「格式转换」为`converters.js`
+- 抽取「导出功能」为`exporters.js`
+
+#### 长期
+- 使用Vue CLI构建工具
+- 引入TypeScript
+- 组件化拆分
+
+---
+
+*最后更新：2025-12-21*
+*代码组织优化完成日期：2025-12-21*

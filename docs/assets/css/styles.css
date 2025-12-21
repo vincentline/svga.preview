@@ -253,13 +253,30 @@ body.dark-mode .library-loading-indicator .loading-text {
   width: 40px;
   height: 40px;
   border: none;
-  background: none;
   cursor: pointer;
   outline: none;
   position: fixed;
   right: 8px;
   top: 44px;
   z-index: 1000;
+  background: none;
+  background-image: url('../img/help.png');
+  background-size: 40px 40px;
+  background-position: center;
+  background-repeat: no-repeat;
+  transition: opacity 0.2s;
+}
+
+.help-button:hover {
+  background-image: url('../img/help_hover.png');
+}
+
+body.dark-mode .help-button {
+  background-image: url('../img/help_dark.png');
+}
+
+body.dark-mode .help-button:hover {
+  background-image: url('../img/help_hover_dark.png');
 }
 
 .help-button:hover .help-popup {

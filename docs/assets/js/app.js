@@ -1330,9 +1330,17 @@ function initApp() {
             
             // 双通道MP4 模式
             if (this.currentModule === 'yyeva' && this.yyeva.hasFile && this.yyevaVideo) {
+              var _this = this;
               var duration = this.yyevaVideo.duration || 1;
               this.yyevaVideo.currentTime = p * duration;
               this.currentFrame = Math.round(p * this.totalFrames);
+              
+              // 立即渲染一帧，确保暂停时也能更新画面
+              // 使用setTimeout等待video.currentTime生效
+              setTimeout(function() {
+                _this.renderYyevaFrame();
+              }, 50);
+              
               return;
             }
             
