@@ -1,3 +1,84 @@
+/*
+ * ==================== SVGA Preview 应用主文件 ====================
+ * 
+ * 模块索引（按代码中顺序排列）：
+ * 
+ * 1. 【全局状态管理】 - data() - 所有状态变量定义
+ * 
+ * 2. 【模式切换与任务管理】
+ *    - getOngoingTasks() - 获取进行中任务列表
+ *    - cancelOngoingTasks() - 取消所有任务
+ *    - confirmIfHasOngoingTasks() - 任务确认提示
+ *    - switchMode() - 统一模式切换
+ * 
+ * 3. 【侧边弹窗管理】
+ *    - closeAllPanels() - 关闭所有弹窗
+ *    - openRightPanel() - 打开/关闭右侧弹窗
+ *    - openMaterialPanel() - 素材替换弹窗
+ *    - openMP4Panel() - SVGA转MP4弹窗
+ *    - openSVGAPanel() - MP4转SVGA弹窗
+ * 
+ * 4. 【库加载管理器】
+ *    - getLibraryConfig() - 库配置
+ *    - loadLibrary() - 加载库
+ *    - loadScript() - 通用脚本加载器
+ * 
+ * 5. 【文件加载与拖拽上传】
+ *    - handleFile() - 文件分发器
+ *    - onDragOver/onDrop - 拖拽上传
+ *    - triggerFileUpload() - 触发文件选择
+ * 
+ * 6. 【资源清理】
+ *    - clearAll() - 清空画布
+ *    - cleanupSvga() - 清理SVGA资源
+ *    - cleanupYyeva() - 清理MP4资源
+ * 
+ * 7. 【工具函数】
+ *    - showToast() - 提示消息
+ *    - loadHelpContent() - 加载帮助文档
+ * 
+ * 8. 【SVGA加载与播放】
+ *    - initSvgaPlayer() - 初始化SVGA播放器
+ *    - loadSvga() - 加载SVGA文件
+ *    - cleanupSvga() - 清理SVGA资源
+ * 
+ * 9. 【播放控制】
+ *    - togglePlay() - 播放/暂停
+ *    - seekTo() - 跳转进度
+ *    - updateProgress() - 更新进度
+ * 
+ * 10. 【双通道MP4加载与播放】
+ *     - loadYyevaPlaceholder() - 加载双通道MP4
+ *     - renderYyevaFrame() - 渲染帧
+ *     - cleanupYyeva() - 清理MP4资源
+ * 
+ * 11. 【UI交互】
+ *     - toggleTheme() - 切换主题
+ *     - applyCanvasBackground() - 应用背景
+ *     - zoomIn/zoomOut - 缩放控制
+ * 
+ * 12. 【素材替换功能】
+ *     - openMaterialPanel() - 打开素材弹窗
+ *     - replaceMaterial() - 替换素材
+ *     - resetMaterial() - 重置素材
+ * 
+ * 13. 【导出GIF功能】
+ *     - exportGIF() - SVGA导出GIF
+ *     - exportYyevaGIF() - MP4导出GIF
+ * 
+ * 14. 【格式转换：MP4转SVGA】
+ *     - startSVGAConversion() - 开始转换
+ *     - extractYyevaFrames() - 提取帧
+ *     - buildSVGAFile() - 构建SVGA
+ * 
+ * 15. 【格式转换：SVGA转MP4】
+ *     - startMP4Conversion() - 开始转换
+ *     - extractFrames() - 提取帧
+ *     - composeDualChannelFrames() - 合成双通道
+ * 
+ * ====================================================================
+ */
+
 // 启动应用：先加载Vue和SVGA播放器，再创建Vue实例
 function initApp() {
   new Vue({
@@ -271,6 +352,8 @@ function initApp() {
             
             return confirm(message);
           },
+          
+          /* ==================== 侧边弹窗管理 ==================== */
           
           /**
            * 关闭所有侧边弹窗
@@ -630,7 +713,7 @@ function initApp() {
             );
           },
 
-          /* 拖拽上传 */
+          /* ==================== 文件加载与拖拽上传 ==================== */
 
           onDragOver: function () {
             this.dropHover = true;
@@ -726,7 +809,8 @@ function initApp() {
             event.target.value = '';
           },
 
-          /* 清空画布 */
+          /* ==================== 资源清理 ==================== */
+          
           /**
            * 清空画布，返回首页
            */
@@ -767,9 +851,12 @@ function initApp() {
             }, 400);
           },
 
-          /* SVGA 加载与播放 */
+          /* ==================== 工具函数 ==================== */
           
-          /* Toast提示 */
+          /**
+           * 显示Toast提示消息
+           * @param {string} message - 提示消息
+           */
           showToast: function(message) {
             var _this = this;
             // 清除之前的定时器
@@ -803,6 +890,11 @@ function initApp() {
             });
           },
 
+          /* ==================== SVGA加载与播放 ==================== */
+
+          /**
+           * 初始化SVGA播放器
+           */
           initSvgaPlayer: function () {
             var container = this.$refs.svgaContainer;
             if (!container) return;
@@ -1146,6 +1238,11 @@ function initApp() {
             });
           },
 
+          /* ==================== 播放控制 ==================== */
+
+          /**
+           * 切换播放/暂停状态
+           */
           togglePlay: function () {
             // 双通道MP4 模式
             if (this.currentModule === 'yyeva' && this.yyeva.hasFile && this.yyevaVideo) {
@@ -1290,6 +1387,12 @@ function initApp() {
             }, 400);
           },
 
+          /* ==================== 双通道MP4加载与播放 ==================== */
+
+          /**
+           * 加载双通道MP4文件
+           * @param {File} file - MP4文件对象
+           */
           loadYyevaPlaceholder: function (file) {
             var _this = this;
             
@@ -1666,8 +1769,11 @@ function initApp() {
             this.yyevaHasAudio = false;
           },
 
-          /* 主题切换 */
+          /* ==================== UI交互 ==================== */
 
+          /**
+           * 切换主题模式
+           */
           toggleTheme: function () {
             this.isDarkMode = !this.isDarkMode;
             if (this.isDarkMode) {
@@ -1767,7 +1873,7 @@ function initApp() {
             }
           },
 
-          /* 素材替换功能 */
+          /* ==================== 素材替换功能 ==================== */
 
           /**
            * 打开素材替换弹窗（SVGA模式右侧弹窗）
@@ -1825,7 +1931,7 @@ function initApp() {
               var uint8Array = new Uint8Array(arrayBuffer);
               var inflatedData = pako.inflate(uint8Array);
               
-              protobuf.load('svga.proto', function(err, root) {
+              protobuf.load('./svga.proto', function(err, root) {
                 if (err) return;
                 
                 try {
@@ -2216,15 +2322,27 @@ function initApp() {
                   var inflatedData = pako.inflate(uint8Array);
                   
                   // 使用 protobuf.js 动态加载 proto 并解码
-                  protobuf.load('svga.proto', function(err, root) {
+                  protobuf.load('./svga.proto', function(err, root) {
                     if (err) {
+                      console.error('Proto加载错误:', err);
                       alert('加载 proto 定义失败: ' + err.message);
+                      return;
+                    }
+                    
+                    // 检查root是否有效
+                    if (!root) {
+                      alert('Proto根对象为空');
                       return;
                     }
                     
                     try {
                       // 获取 MovieEntity 类型
                       var MovieEntity = root.lookupType('com.opensource.svga.MovieEntity');
+                      
+                      if (!MovieEntity) {
+                        alert('MovieEntity类型未找到，请检查proto文件');
+                        return;
+                      }
                       
                       // 解码（直接操作 protobuf 消息对象）
                       var movieData = MovieEntity.decode(inflatedData);
@@ -2309,7 +2427,7 @@ function initApp() {
             }
           },
 
-          /* GIF 导出功能 */
+          /* ==================== 导出GIF功能 ==================== */
 
           /**
            * 导出SVGA为GIF动图
@@ -2859,7 +2977,11 @@ function initApp() {
             this.svgaConfig.height = newHeight;
           },
 
-          // 开始转SVGA转换
+          /* ==================== 格式转换：MP4转SVGA ==================== */
+
+          /**
+           * 开始双通道MP4转SVGA转换
+           */
           startSVGAConversion: async function () {
             var _this = this;
 
@@ -3104,7 +3226,7 @@ function initApp() {
             var totalFrames = pngFrames.length;
             
             return new Promise(function(resolve, reject) {
-              protobuf.load('svga.proto', function(err, root) {
+              protobuf.load('./svga.proto', function(err, root) {
                 if (err) {
                   reject(new Error('Proto加载失败: ' + err.message));
                   return;
@@ -3259,6 +3381,11 @@ function initApp() {
             this.mp4Config.height = newHeight;
           },
 
+          /* ==================== 格式转换：SVGA转MP4 ==================== */
+
+          /**
+           * 开始 SVGA 转 MP4 转换
+           */
           startMP4Conversion: async function () {
             var _this = this;
 
