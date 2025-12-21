@@ -2300,11 +2300,13 @@ body.dark-mode .mp4-size-input-wrapper:focus-within {
 .mp4-input::-webkit-outer-spin-button,
 .mp4-input::-webkit-inner-spin-button {
   -webkit-appearance: none;
+  -moz-appearance: none;
   appearance: none;
   margin: 0;
 }
 
 .mp4-input[type=number] {
+  -webkit-appearance: textfield;
   -moz-appearance: textfield;
   appearance: textfield;
 }
@@ -3021,11 +3023,15 @@ body.dark-mode .svga-size-lock {
 .svga-input::-webkit-outer-spin-button,
 .svga-input::-webkit-inner-spin-button {
   -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
   margin: 0;
 }
 
 .svga-input[type="number"] {
+  -webkit-appearance: textfield;
   -moz-appearance: textfield;
+  appearance: textfield;
 }
 
 body.dark-mode .svga-input {
