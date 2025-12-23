@@ -98,14 +98,6 @@
         <div class="help-popup" v-html="helpContent"></div>
       </div>
 
-      <!-- 模式名称显示 -->
-      <div class="mode-indicator" v-if="!isEmpty">
-        <template v-if="currentModule === 'svga'">SVGA</template>
-        <template v-else-if="currentModule === 'yyeva'">双通道MP4</template>
-        <template v-else-if="currentModule === 'mp4'">MP4</template>
-        <template v-else>Lottie</template>
-      </div>
-
       <!-- 主页面 -->
       <div class="main-page">
         <!-- 播放区域 -->
@@ -125,6 +117,15 @@
             class="viewer-container"
             :style="viewerContainerStyle"
           >
+            <!-- 文件名显示（在播放器上方） -->
+            <div class="viewer-filename" v-if="!isEmpty && currentFileInfo.name" :style="viewerFilenameStyle">
+              {{ currentFileInfo.name }} / 
+              <template v-if="currentModule === 'svga'">SVGA</template>
+              <template v-else-if="currentModule === 'yyeva'">双通道MP4</template>
+              <template v-else-if="currentModule === 'mp4'">MP4</template>
+              <template v-else>Lottie</template>
+            </div>
+            
             <div
               ref="svgaContainer"
               class="viewer-canvas"
@@ -160,8 +161,13 @@
           <div class="footer-main-wrapper">
             <!-- 右上角清空按钮区域 -->
             <div class="footer-top-actions" v-if="!isEmpty">
-              <div class="file-name-box">
-                <span class="file-name-label">{{ currentFileInfo.name || '' }}</span>
+              <div class="mode-name-box">
+                <span class="mode-name-label">
+                  <template v-if="currentModule === 'svga'">SVGA</template>
+                  <template v-else-if="currentModule === 'yyeva'">双通道MP4</template>
+                  <template v-else-if="currentModule === 'mp4'">MP4</template>
+                  <template v-else>Lottie</template>
+                </span>
               </div>
               <button class="clear-canvas-btn" @click="clearAll" title="清空画布">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

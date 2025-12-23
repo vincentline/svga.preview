@@ -4862,6 +4862,33 @@ function initApp() {
             }
             
             return style;
+          },
+          
+          viewerFilenameStyle: function () {
+            var scale = this.viewerScale;
+            var inverseScale = 1 / scale;
+            
+            var style = {
+              // 反向缩放抵消父容器的scale，保持字体大小不变
+              transform: 'scale(' + inverseScale + ')',
+              transformOrigin: 'left bottom',
+              // 调整margin-bottom来补偿缩放，保持距离为8px
+              marginBottom: (8 * scale) + 'px'
+            };
+            
+            // 根据当前模块设置文件名最大宽度（跟随播放器宽度）
+            if (this.currentModule === 'svga' && this.svga.hasFile) {
+              var sizeWH = this.svga.fileInfo.sizeWH;
+              if (sizeWH) {
+                var parts = sizeWH.split(' × ');
+                if (parts.length === 2) {
+                  // 最大宽度也需要乘以scale来补偿反向缩放
+                  style.maxWidth = (parts[0] * scale) + 'px';
+                }
+              }
+            }
+            
+            return style;
           }
         },
         watch: {
