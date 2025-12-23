@@ -128,9 +128,11 @@
             <div class="empty-state-icon">
               <div ref="emptyStateSvgaContainer" style="width: 300px; height: 300px;"></div>
             </div>
-            <div class="empty-state-text" @click="triggerFileUpload" style="cursor: pointer;">
-              将文件拖到此处预览动画,或<em>点击上传</em>
+            <div class="empty-state-text">
+              <div class="empty-state-tip-line1">支持文件包括：SVGA、双通道MP4、普通MP4、Lottie的jason格式</div>
+              <div class="empty-state-tip-line2">你可以，导出GIF；SVGA素材图替换；转双通道MP4；转SVGA...</div>
             </div>
+            
             <input
               ref="fileInput"
               type="file"
@@ -166,9 +168,8 @@
             <!-- 空状态 -->
             <template v-if="isEmpty">
               <div class="footer-empty-tip">
-                <div class="footer-empty-tip-main">请将文件拖到上面</div>
                 <div class="footer-empty-tip-sub">
-                  支持文件包括：SVGA、双通道MP4、Lottie的jason格式
+                  请将文件拖到上面，或<br><span class="click-upload-text" @click="triggerFileUpload">点击上传</span>
                 </div>
               </div>
             </template>
