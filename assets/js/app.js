@@ -4169,14 +4169,18 @@ function initApp() {
           /**
            * 打开绿幕抠图弹窗
            */
+          /**
+           * 打开/关闭绿幕抠图弹窗 (openChromaKeyPanel)
+           * 功能：切换绿幕抠图弹窗显示状态
+           */
           openChromaKeyPanel: function() {
             if (!this.mp4Video || !this.mp4.hasFile) {
               alert('请先加载 MP4 文件');
               return;
             }
             
-            // 使用统一的弹窗管理（左侧弹窗）
-            this.showChromaKeyPanel = true;
+            // 切换弹窗显示状态
+            this.showChromaKeyPanel = !this.showChromaKeyPanel;
           },
           
           /**
