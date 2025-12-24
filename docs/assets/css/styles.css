@@ -341,32 +341,52 @@ body.dark-mode .help-popup {
 }
 
 /* 播放区域 */
+/* 播放区域 - 主容器
+ * 结构：占据除顶栏外的所有空间，使用 Flexbox 布局
+ * 布局控制：
+ *   - align-items: flex-start → 子元素从顶部开始排列，不自动垂直居中
+ *   - justify-content: center → 子元素水平居中
+ *   - padding-bottom: 154px → 为底部的 .footer-bar 留出空间，确保拖拽虚线边界不超出屏幕
+ * 位置控制：子元素 .viewer-container 的垂直位置由 JS 的 offsetY 控制（通过 transform: translateY）
+ */
 .viewer-area {
   flex: 1;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  padding: 0px 200px 20px;
+  padding: 0px 200px 154px;
   position: relative;
 }
 
 .viewer-area.drag-hover {
-  outline: 2px dashed #5b5b5b;
-  outline-offset: -10px;
+  outline: 2px dashed #5b5b5b;  /* 拖拽时显示的虚线边框 */
+  outline-offset: -10px;        /* 边框向内偏移10px */
 }
 
+/* 播放器容器
+ * 结构：包裹文件名 + 播放器画布，大小由 JS 动态设置为原始尺寸（如 1080x1920）
+ * 缩放机制：
+ *   - transform-origin: top center → 缩放原点在顶部中心，缩放时视觉顶部保持在y=0处
+ *   - transform: translate + scale → 由 JS 动态设置，translate 控制位置，scale 控制缩放比例
+ * 关键设计：
+ *   - 使用 top center 而非 center center，避免缩放后视觉顶部位置偏移导致内容显示偏下
+ *   - width/height 为原始尺寸，缩放通过 transform: scale() 实现，保证布局计算正确
+ */
 .viewer-container {
   position: relative;
-  transform-origin: center center;
+  transform-origin: top center;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  /* transform 动态注入 */
-  /* width 和 height 通过 style 动态设置 */
+  justify-content: flex-start;
 }
 
 /* 播放器上方文件名 */
+/* 播放器上方文件名
+ * 位置：绝对定位于 .viewer-container 的顶部上方（bottom: 100%）
+ * 缩放补偿：父容器缩放时，文件名通过 JS 设置反向 scale 保持字体大小不变
+ * 显示控制：最大宽度跟随播放器宽度，超出部分显示省略号
+ */
 .viewer-filename {
   position: absolute;
   bottom: 100%;
@@ -390,6 +410,10 @@ body.dark-mode .viewer-filename {
   color: #999999;
 }
 
+/* 播放器画布
+ * 结构：填充父容器的 100% 宽高，内部由 SVGA/Lottie/MP4 播放器创建 canvas 元素
+ * 布局：Flexbox 居中对齐，确保 canvas 在画布内居中显示
+ */
 .viewer-canvas {
   width: 100%;
   height: 100%;

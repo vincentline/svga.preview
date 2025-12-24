@@ -830,9 +830,9 @@ function initApp() {
             
             // 配置参数
             var CONFIG = {
-              pureBlackThreshold: 0.05,      // 饱和度<0.05判定为纯黑（alpha通道）
-              saturationDiffThreshold: 0.08, // 左右饱和度差异>0.08判定为双通道
-              brightnessDiffThreshold: 0.15, // 左右亮度差异>0.15判定为双通道
+              pureBlackThreshold: 0.015,     // 饱和度<0.015判定为纯黑（alpha通道），降低阈值更严格
+              saturationDiffThreshold: 0.02, // 饱和度差异>0.02判定为双通道，提高阈值避免误判
+              brightnessDiffThreshold: 0.03, // 亮度差异>0.03判定为双通道，提高阈值避免误判
               checkFramePositions: [0.3, 0.7] // 检测30%和70%位置的帧
             };
             
@@ -895,6 +895,19 @@ function initApp() {
                 var satDiff = Math.abs(leftMetrics.saturation - rightMetrics.saturation);
                 var brightDiff = Math.abs(leftMetrics.brightness - rightMetrics.brightness);
                 
+                // 调试日志：输出检测指标
+                console.log('[MP4双通道检测] 帧' + frameIndex + ':', {
+                  '左侧饱和度': leftMetrics.saturation.toFixed(3),
+                  '右侧饱和度': rightMetrics.saturation.toFixed(3),
+                  '饱和度差异': satDiff.toFixed(3),
+                  '左侧亮度': leftMetrics.brightness.toFixed(3),
+                  '右侧亮度': rightMetrics.brightness.toFixed(3),
+                  '亮度差异': brightDiff.toFixed(3),
+                  '有黑边': (leftMetrics.saturation < CONFIG.pureBlackThreshold || rightMetrics.saturation < CONFIG.pureBlackThreshold),
+                  '饱和度达标': satDiff > CONFIG.saturationDiffThreshold,
+                  '亮度达标': brightDiff > CONFIG.brightnessDiffThreshold
+                });
+                
                 // 判断逻辑：
                 // 1. 一边是纯黑（alpha通道，饱和度极低）
                 // 2. 另一边饱和度明显更高（有彩色内容）
@@ -904,7 +917,19 @@ function initApp() {
                 var hasSaturationDiff = satDiff > CONFIG.saturationDiffThreshold;
                 var hasBrightnessDiff = brightDiff > CONFIG.brightnessDiffThreshold;
                 
-                return hasBlackSide && (hasSaturationDiff || hasBrightnessDiff);
+                // 特殊处理：当两边都极暗时（两者都<0.015），放宽差异阈值
+                var bothVeryDark = leftMetrics.saturation < CONFIG.pureBlackThreshold && 
+                                   rightMetrics.saturation < CONFIG.pureBlackThreshold;
+                if (bothVeryDark) {
+                  // 极暗场景：只要有微小差异就判定为双通道
+                  hasSaturationDiff = satDiff > 0.003;
+                  hasBrightnessDiff = brightDiff > 0.003;
+                }
+                
+                var result = hasBlackSide && (hasSaturationDiff || hasBrightnessDiff);
+                console.log('[MP4双通道检测] 判定结果:', result ? '双通道✓' : '普通MP4✗');
+                
+                return result;
               }
               
               // 检测下一帧
@@ -1430,10 +1455,16 @@ function initApp() {
 
             this.applyCanvasBackground();
             
-            // 动态计算居中位置
-            _this.$nextTick(function() {
+            // 计算初始缩放比例（使高度为屏幕的75%）
+            if (videoItem.videoSize) {
+              var initialScale = _this.calculateInitialScale(
+                videoItem.videoSize.width,
+                videoItem.videoSize.height
+              );
+              _this.viewerScale = initialScale;
+              // 立即计算居中位置（同步，确保使用最新的scale）
               _this.centerViewer();
-            });
+            }
           },
 
           /* ==================== 播放控制 ==================== */
@@ -1733,9 +1764,6 @@ function initApp() {
             // 使用统一的模式切换函数
             this.switchMode('lottie');
             
-            // 重置视图位置
-            this.centerViewer();
-            
             // 提取Lottie信息
             var width = animationData.w || 0;
             var height = animationData.h || 0;
@@ -1829,6 +1857,17 @@ function initApp() {
             // 应用背景色
             this.$nextTick(function() {
               _this.applyCanvasBackground();
+              
+              // 计算初始缩放比例（使高度为屏幕的75%）
+              if (_this.lottie.originalWidth && _this.lottie.originalHeight) {
+                var initialScale = _this.calculateInitialScale(
+                  _this.lottie.originalWidth,
+                  _this.lottie.originalHeight
+                );
+                _this.viewerScale = initialScale;
+                // 立即计算居中位置（同步，确保使用最新的scale）
+                _this.centerViewer();
+              }
             });
           },
           
@@ -1915,7 +1954,7 @@ function initApp() {
             var captureCanvas = document.createElement('canvas');
             captureCanvas.width = width;
             captureCanvas.height = height;
-            var captureCtx = captureCanvas.getContext('2d');
+            var captureCtx = captureCanvas.getContext('2d', { willReadFrequently: true });
 
             // 创建 GIF 编码器
             var gif = new GIF({
@@ -1977,7 +2016,7 @@ function initApp() {
                 var tempCanvas = document.createElement('canvas');
                 tempCanvas.width = width;
                 tempCanvas.height = height;
-                var tempCtx = tempCanvas.getContext('2d');
+                var tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
                 
                 // 填充背景色
                 var bgColor = '#ffffff';
@@ -2105,6 +2144,14 @@ function initApp() {
                 // 初始化Canvas
                 _this.initYyevaCanvas();
                 
+                // 计算初始缩放比例（使高度为屏幕的75%）
+                var initialScale = _this.calculateInitialScale(
+                  _this.yyeva.displayWidth,
+                  _this.yyeva.displayHeight
+                );
+                _this.viewerScale = initialScale;
+                _this.centerViewer();
+                
                 // 启动过渡：先显示宽度变化，400ms后显示内容并开始播放
                 _this.footerTransitioning = true;
                 _this.footerContentVisible = false;
@@ -2149,7 +2196,7 @@ function initApp() {
           // 检测 alpha 通道位置
           detectAlphaPosition: function(video) {
             var canvas = document.createElement('canvas');
-            var ctx = canvas.getContext('2d');
+            var ctx = canvas.getContext('2d', { willReadFrequently: true });
             var halfWidth = Math.floor(video.videoWidth / 2);
             var height = video.videoHeight;
             
@@ -2205,7 +2252,7 @@ function initApp() {
             container.appendChild(canvas);
             
             this.yyevaCanvas = canvas;
-            this.yyevaCtx = canvas.getContext('2d');
+            this.yyevaCtx = canvas.getContext('2d', { willReadFrequently: true });
           },
           
           // 双通道MP4 渲染循环
@@ -2245,7 +2292,7 @@ function initApp() {
             var tempCanvas = document.createElement('canvas');
             tempCanvas.width = video.videoWidth;
             tempCanvas.height = height;
-            var tempCtx = tempCanvas.getContext('2d');
+            var tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
             tempCtx.drawImage(video, 0, 0);
             
             // 提取彩色和Alpha数据
@@ -2462,6 +2509,14 @@ function initApp() {
                 container.appendChild(video);
               }
               
+              // 计算初始缩放比例（使高度为屏幕的75%）
+              var initialScale = _this.calculateInitialScale(
+                _this.mp4.originalWidth,
+                _this.mp4.originalHeight
+              );
+              _this.viewerScale = initialScale;
+              _this.centerViewer();
+              
               // 启动过渡
               _this.footerTransitioning = true;
               _this.footerContentVisible = false;
@@ -2584,15 +2639,19 @@ function initApp() {
 
           /* 缩放 + 平移 */
 
+          /**
+           * 滚轮缩放 (onWheel)
+           * 功能：支持鼠标滚轮或 Ctrl+滚轮缩放，围绕播放器中心点缩放
+           */
           onWheel: function (event) {
-            // 支持鼠标滚轮直接缩放，或 Ctrl+滚轮缩放
             event.preventDefault();
+            var oldScale = this.viewerScale;
             var delta = event.deltaY || event.wheelDelta;
             var step = delta > 0 ? -0.1 : 0.1;
-            var next = this.viewerScale + step;
-            if (next < 0.2) next = 0.2;
-            if (next > 5) next = 5;
-            this.viewerScale = next;
+            var newScale = oldScale + step;
+            if (newScale < 0.2) newScale = 0.2;
+            if (newScale > 5) newScale = 5;
+            this.applyZoomWithCenterPoint(oldScale, newScale);
           },
 
           onMouseDown: function (event) {
@@ -2624,32 +2683,123 @@ function initApp() {
             this.centerViewer();
           },
           
-          // 动态计算播放器垂直居中位置，避免被底部浮层遮挡
-          centerViewer: function () {
-            var viewerArea = document.querySelector('.viewer-area');
-            var footerBar = document.querySelector('.footer-bar');
+          // 计算初始缩放比例，使播放器高度为屏幕高度的75%
+          calculateInitialScale: function(contentWidth, contentHeight) {
+            if (!contentWidth || !contentHeight) return 1;
             
-            if (!viewerArea || !footerBar) {
-              // DOM未准备好时使用默认值
-              this.viewerOffsetY = -100;
-              return;
+            var windowHeight = window.innerHeight;
+            var targetHeight = windowHeight * 0.75; // 75%屏幕高度
+            
+            // 根据内容高度计算缩放比例
+            var scale = targetHeight / contentHeight;
+            
+            // 限制最小缩放比例，避免过度缩小
+            if (scale < 0.1) scale = 0.1;
+            // 限制最大缩放比例，避免过度放大
+            if (scale > 2) scale = 2;
+            
+            return scale;
+          },
+          
+          /**
+           * 获取当前播放器内容的原始尺寸 (getContentOriginalSize)
+           * 返回值：{width, height} 或 null
+           * 用途：统一获取各模式（SVGA/Lottie/YYEVA/MP4）的内容原始尺寸
+           */
+          getContentOriginalSize: function () {
+            if (this.currentModule === 'svga' && this.svga.hasFile) {
+              var sizeWH = this.svga.fileInfo.sizeWH;
+              if (sizeWH) {
+                var parts = sizeWH.split(' × ');
+                if (parts.length === 2) {
+                  return { width: parseInt(parts[0]), height: parseInt(parts[1]) };
+                }
+              }
+            } else if (this.currentModule === 'lottie' && this.lottie.hasFile) {
+              return { width: this.lottie.originalWidth, height: this.lottie.originalHeight };
+            } else if (this.currentModule === 'yyeva' && this.yyeva.hasFile) {
+              return { width: this.yyeva.displayWidth, height: this.yyeva.displayHeight };
+            } else if (this.currentModule === 'mp4' && this.mp4.hasFile) {
+              return { width: this.mp4.originalWidth, height: this.mp4.originalHeight };
+            }
+            return null;
+          },
+          
+          /**
+           * 居中播放器 (centerViewer)
+           * 调用时机：拖入文件、点击 1:1 按钮时
+           * 功能：计算 offsetY 让播放器在可用区域内垂直居中
+           * 布局基础：
+           *   - .viewer-area 使用 align-items: flex-start，内容从 y=0 开始
+           *   - .viewer-area 的 padding-bottom: 154px 为底部浮层留空
+           *   - .viewer-container 使用 transform-origin: top center，缩放从顶部开始
+           * 计算逻辑：
+           *   1. 可用高度 = 窗口高度 - 底部浮层高度(154px)
+           *   2. 内容高度 = 原始高度 * viewerScale
+           *   3. 如果内容 < 可用高度：offsetY = (可用高度 - 内容高度) / 2
+           *   4. 如果内容 >= 可用高度：offsetY = 0（顶部对齐）
+           */
+          centerViewer: function () {
+            var footerHeight = 154;
+            var availableHeight = window.innerHeight - footerHeight;
+            
+            var size = this.getContentOriginalSize();
+            var contentHeight = size ? size.height * this.viewerScale : 0;
+            
+            // 重置水平偏移
+            this.viewerOffsetX = 0;
+            
+            // 计算垂直偏移
+            if (contentHeight > 0 && contentHeight < availableHeight) {
+              this.viewerOffsetY = (availableHeight - contentHeight) / 2;
+            } else {
+              this.viewerOffsetY = 0;
+            }
+          },
+          
+          /**
+           * 放大 (zoomIn)
+           * 功能：每次增加 10% 缩放，围绕播放器中心点缩放
+           * 实现：调整 offsetY 补偿 transform-origin: top center 的效果
+           */
+          zoomIn: function () {
+            var oldScale = this.viewerScale;
+            var newScale = Math.min(oldScale + 0.1, 5);
+            this.applyZoomWithCenterPoint(oldScale, newScale);
+          },
+          
+          /**
+           * 缩小 (zoomOut)
+           * 功能：每次减少 10% 缩放，围绕播放器中心点缩放
+           * 实现：调整 offsetY 补偿 transform-origin: top center 的效果
+           */
+          zoomOut: function () {
+            var oldScale = this.viewerScale;
+            var newScale = Math.max(oldScale - 0.1, 0.1);
+            this.applyZoomWithCenterPoint(oldScale, newScale);
+          },
+          
+          /**
+           * 应用缩放并保持中心点不动 (applyZoomWithCenterPoint)
+           * 原理：
+           *   - transform-origin: top center 让缩放从顶部开始，缩放时底部会移动
+           *   - 要让视觉上从中心缩放（中心点相对屏幕位置不变），需要调整 offsetY
+           *   - 缩放后，内容高度变化了，但顶部固定，所以中心点下移了 heightDiff/2
+           *   - 需要向上移动 offsetY -= heightDiff/2 来补偿
+           */
+          applyZoomWithCenterPoint: function (oldScale, newScale) {
+            var size = this.getContentOriginalSize();
+            
+            if (size && size.height > 0) {
+              var oldHeight = size.height * oldScale;
+              var newHeight = size.height * newScale;
+              var heightDiff = newHeight - oldHeight;
+              
+              // 向上调整 offsetY，让中心点保持不动
+              this.viewerOffsetY -= heightDiff / 2;
             }
             
-            var footerHeight = footerBar.offsetHeight || 160; // 底部浮层高度
-            
-            // 将播放器向上偏移，使其在有效可视区域内居中
-            // 偏移量 = 底部浮层高度 / 2
-            this.viewerOffsetY = -footerHeight / 2;
-          },
-          
-          zoomIn: function () {
-            // 放大，每次增加 10%，围绕播放器中心点缩放
-            this.viewerScale = Math.min(this.viewerScale + 0.1, 5);
-          },
-          
-          zoomOut: function () {
-            // 缩小，每次减少 10%，围绕播放器中心点缩放
-            this.viewerScale = Math.max(this.viewerScale - 0.1, 0.1);
+            this.viewerScale = newScale;
           },
 
           applyCanvasBackground: function () {
@@ -2828,7 +2978,7 @@ function initApp() {
             var canvas = document.createElement('canvas');
             canvas.width = targetWidth;
             canvas.height = targetHeight;
-            var ctx = canvas.getContext('2d');
+            var ctx = canvas.getContext('2d', { willReadFrequently: true });
             
             var sourceWidth = sourceImg.width;
             var sourceHeight = sourceImg.height;
@@ -3857,7 +4007,7 @@ function initApp() {
             var captureCanvas = document.createElement('canvas');
             captureCanvas.width = videoWidth;
             captureCanvas.height = videoHeight;
-            var captureCtx = captureCanvas.getContext('2d');
+            var captureCtx = captureCanvas.getContext('2d', { willReadFrequently: true });
             
             // 获取视频信息
             var duration = video.duration;
@@ -3952,7 +4102,7 @@ function initApp() {
                 var tempCanvas = document.createElement('canvas');
                 tempCanvas.width = videoWidth;
                 tempCanvas.height = videoHeight;
-                var tempCtx = tempCanvas.getContext('2d');
+                var tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
                 
                 // 填充背景色
                 var bgColor = '#ffffff';
@@ -4468,13 +4618,13 @@ function initApp() {
             var srcCanvas = document.createElement('canvas');
             srcCanvas.width = videoWidth;
             srcCanvas.height = videoHeight;
-            var srcCtx = srcCanvas.getContext('2d');
+            var srcCtx = srcCanvas.getContext('2d', { willReadFrequently: true });
             
             // 创建结果画布（缩小后的尺寸）
             var dstCanvas = document.createElement('canvas');
             dstCanvas.width = scaledWidth;
             dstCanvas.height = scaledHeight;
-            var dstCtx = dstCanvas.getContext('2d');
+            var dstCtx = dstCanvas.getContext('2d', { willReadFrequently: true });
             
             var frames = [];
             
@@ -5649,62 +5799,53 @@ function initApp() {
             };
           },
           
+          /**
+           * 播放器容器样式 (viewerContainerStyle)
+           * 返回值：绑定到 .viewer-container 的 :style 属性
+           * 内容：
+           *   - width/height: 原始尺寸（如 1080x1920），通过 getContentOriginalSize() 获取
+           *   - transform: translate(offsetX, offsetY) scale(viewerScale)
+           *       - translate: 控制播放器位置（拖拽偏移 + 垂直居中偏移）
+           *       - scale: 控制缩放比例
+           *   - cursor: 拖拽时显示 grabbing，其他时候显示 grab
+           */
           viewerContainerStyle: function () {
             var style = {
               transform: 'translate(' + this.viewerOffsetX + 'px, ' + this.viewerOffsetY + 'px) scale(' + this.viewerScale + ')',
               cursor: this.dragging ? 'grabbing' : 'grab'
             };
             
-            // 根据当前模块设置容器尺寸
-            if (this.currentModule === 'svga' && this.svga.hasFile) {
-              // SVGA 使用实际尺寸
-              var sizeWH = this.svga.fileInfo.sizeWH;
-              if (sizeWH) {
-                var parts = sizeWH.split(' × ');
-                if (parts.length === 2) {
-                  style.width = parts[0] + 'px';
-                  style.height = parts[1] + 'px';
-                }
-              }
+            var size = this.getContentOriginalSize();
+            if (size) {
+              style.width = size.width + 'px';
+              style.height = size.height + 'px';
             }
             
             return style;
           },
           
+          /**
+           * 文件名样式 (viewerFilenameStyle)
+           * 返回值：绑定到 .viewer-filename 的 :style 属性
+           * 功能：父容器 .viewer-container 缩放时，文件名需要保持字体大小不变
+           * 实现：
+           *   - transform: scale(1/viewerScale) → 反向缩放抵消父容器的 scale
+           *   - marginBottom: 8 * viewerScale → 补偿缩放后的边距，保持视觉距离 8px
+           *   - maxWidth: 播放器宽度 * viewerScale → 跟随播放器宽度，超出显示省略号
+           */
           viewerFilenameStyle: function () {
             var scale = this.viewerScale;
             var inverseScale = 1 / scale;
             
             var style = {
-              // 反向缩放抵消父容器的scale，保持字体大小不变
               transform: 'scale(' + inverseScale + ')',
               transformOrigin: 'left bottom',
-              // 调整margin-bottom来补偿缩放，保持距离为8px
               marginBottom: (8 * scale) + 'px'
             };
             
-            // 根据当前模块设置文件名最大宽度(跟随播放器宽度)
-            var widthValue = null;
-            
-            if (this.currentModule === 'svga' && this.svga.hasFile) {
-              var sizeWH = this.svga.fileInfo.sizeWH;
-              if (sizeWH) {
-                var parts = sizeWH.split(' × ');
-                if (parts.length === 2) {
-                  widthValue = parseInt(parts[0]);
-                }
-              }
-            } else if (this.currentModule === 'lottie' && this.lottie.hasFile) {
-              widthValue = this.lottie.originalWidth;
-            } else if (this.currentModule === 'yyeva' && this.yyeva.hasFile) {
-              widthValue = this.yyeva.displayWidth;
-            } else if (this.currentModule === 'mp4' && this.mp4.hasFile) {
-              widthValue = this.mp4.originalWidth;
-            }
-            
-            // 设置最大宽度（需要乘以scale来补偿反向缩放）
-            if (widthValue) {
-              style.maxWidth = (widthValue * scale) + 'px';
+            var size = this.getContentOriginalSize();
+            if (size) {
+              style.maxWidth = (size.width * scale) + 'px';
             }
             
             return style;
