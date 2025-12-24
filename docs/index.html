@@ -333,6 +333,15 @@
                       <span v-if="!svga.hasFile" class="tooltip-text">请先拖入 SVGA 文件</span>
                       {{ isExportingGIF ? '导出中 ' + gifExportProgress + '%' : '导出GIF' }}
                     </button>
+                    <button 
+                      class="btn-primary"
+                      :class="{'tooltip': !svga.hasFile}"
+                      :disabled="!svga.hasFile || isExportingLottie"
+                      @click="exportLottie"
+                    >
+                      <span v-if="!svga.hasFile" class="tooltip-text">请先拖入 SVGA 文件</span>
+                      {{ isExportingLottie ? '导出中 ' + lottieExportProgress + '%' : '导出Lottie(实验性)' }}
+                    </button>
                     <button class="btn-primary" @click="openMaterialPanel" v-if="svga.hasFile">
                       素材图替换
                     </button>
@@ -417,9 +426,22 @@
                     </button>
                   </div>
                   <div class="footer-actions">
-                    <button class="btn-primary tooltip">
+                    <button 
+                      class="btn-primary"
+                      :class="{'tooltip': !lottie.hasFile}"
+                      :disabled="!lottie.hasFile || isExportingGIF"
+                      @click="exportLottieGIF"
+                    >
+                      <span v-if="!lottie.hasFile" class="tooltip-text">请先拖入 Lottie 文件</span>
+                      {{ isExportingGIF ? '导出中 ' + gifExportProgress + '%' : '导出GIF' }}
+                    </button>
+                    <button class="btn-secondary tooltip">
                       <span class="tooltip-text">正在开发中...</span>
-                      导出GIF
+                      转SVGA
+                    </button>
+                    <button class="btn-secondary tooltip">
+                      <span class="tooltip-text">正在开发中...</span>
+                      转双通道MP4
                     </button>
                   </div>
                 </template>

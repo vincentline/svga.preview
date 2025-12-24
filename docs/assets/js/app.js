@@ -158,17 +158,29 @@ function initApp() {
             yyevaAnimationId: null,
             yyevaObjectUrl: null,
 
-            // Lottie 状态（阶段1占位）
+            // Lottie 状态
             lottie: {
               hasFile: false,
               file: null,
               fileInfo: {
                 name: '',
                 size: 0,
-                sizeText: ''
-              }
+                sizeText: '',
+                fps: null,
+                sizeWH: '',
+                duration: ''
+              },
+              originalWidth: 0,
+              originalHeight: 0,
+              animationData: null
             },
             
+            // Lottie 播放器实例
+            lottiePlayer: null,
+            lottieCanvas: null,
+            lottieCtx: null,
+            lottieAnimationId: null,
+
             // 普通MP4 状态
             mp4: {
               hasFile: false,
@@ -213,6 +225,10 @@ function initApp() {
             // GIF 导出状态
             isExportingGIF: false,
             gifExportProgress: 0,
+            
+            // Lottie 导出状态
+            isExportingLottie: false,
+            lottieExportProgress: 0,
 
             // MP4 转换配置
             showMP4Panel: false,
@@ -433,6 +449,8 @@ function initApp() {
                   this.cleanupYyeva();
                 } else if (targetMode === 'mp4') {
                   this.cleanupMp4();
+                } else if (targetMode === 'lottie') {
+                  this.cleanupLottie();
                 }
               } else {
                 // 跨模式切换：清理旧模式资源
@@ -442,6 +460,8 @@ function initApp() {
                   this.cleanupYyeva();
                 } else if (fromMode === 'mp4') {
                   this.cleanupMp4();
+                } else if (fromMode === 'lottie') {
+                  this.cleanupLottie();
                 }
               }
             }
@@ -771,7 +791,7 @@ function initApp() {
 
             if (name.endsWith('.svga')) {
               this.loadSvga(file);
-            } else if (name.endsWith('.json')) {
+            } else if (name.endsWith('.json') || name.endsWith('.lottie')) {
               this.loadLottiePlaceholder(file);
             } else if (name.endsWith('.mp4')) {
               // 判断MP4类型：双通道 or 普通
@@ -783,7 +803,7 @@ function initApp() {
                 }
               });
             } else {
-              alert('不支持的文件类型，只支持 .svga / .json / .mp4');
+              alert('不支持的文件类型，只支持 .svga / .json / .lottie / .mp4');
             }
           },
           
@@ -1413,6 +1433,18 @@ function initApp() {
            * 切换播放/暂停状态
            */
           togglePlay: function () {
+            // Lottie 模式
+            if (this.currentModule === 'lottie' && this.lottie.hasFile && this.lottiePlayer) {
+              if (this.isPlaying) {
+                this.lottiePlayer.pause();
+                this.isPlaying = false;
+              } else {
+                this.lottiePlayer.play();
+                this.isPlaying = true;
+              }
+              return;
+            }
+            
             // 双通道MP4 模式
             if (this.currentModule === 'yyeva' && this.yyeva.hasFile && this.yyevaVideo) {
               if (this.isPlaying) {
@@ -1517,6 +1549,14 @@ function initApp() {
             p = Math.max(0, Math.min(1, p));
             this.progress = Math.round(p * 100);
             
+            // Lottie 模式
+            if (this.currentModule === 'lottie' && this.lottie.hasFile && this.lottiePlayer) {
+              var targetFrame = Math.round(p * this.totalFrames);
+              this.currentFrame = targetFrame;
+              this.lottiePlayer.goToAndStop(targetFrame, true);
+              return;
+            }
+            
             // 双通道MP4 模式
             if (this.currentModule === 'yyeva' && this.yyeva.hasFile && this.yyevaVideo) {
               var _this = this;
@@ -1554,13 +1594,126 @@ function initApp() {
             } catch (e) {}
           },
 
-          /* Lottie / 双通道MP4 阶段1占位逻辑 */
+          /* ==================== Lottie加载与播放 ==================== */
 
           /**
-           * 加载Lottie文件（占位实现）
-           * @param {File} file - Lottie JSON文件
+           * 加载Lottie文件
+           * @param {File} file - Lottie JSON/.lottie文件
            */
           loadLottiePlaceholder: function (file) {
+            var _this = this;
+            var fileName = (file.name || '').toLowerCase();
+            
+            // .lottie 文件是ZIP格式，需要解压
+            if (fileName.endsWith('.lottie')) {
+              this.loadDotLottieFile(file);
+            } else {
+              // .json 文件直接解析
+              var reader = new FileReader();
+              reader.onload = function(e) {
+                try {
+                  var animationData = JSON.parse(e.target.result);
+                  _this.loadLottieWithData(file, animationData);
+                } catch (err) {
+                  alert('无法解析Lottie JSON文件: ' + err.message);
+                }
+              };
+              reader.onerror = function() {
+                alert('读取文件失败');
+              };
+              reader.readAsText(file);
+            }
+          },
+          
+          /**
+           * 加载.lottie文件（ZIP格式）
+           * @param {File} file - .lottie文件
+           */
+          loadDotLottieFile: async function(file) {
+            var _this = this;
+            
+            try {
+              // 加载JSZip库
+              if (typeof JSZip === 'undefined') {
+                var script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js';
+                await new Promise(function(resolve, reject) {
+                  script.onload = resolve;
+                  script.onerror = function() {
+                    reject(new Error('JSZip加载失败'));
+                  };
+                  document.head.appendChild(script);
+                });
+              }
+              
+              // 读取ZIP文件
+              var arrayBuffer = await file.arrayBuffer();
+              var zip = await JSZip.loadAsync(arrayBuffer);
+              
+              // 查找 data.json 或 manifest.json
+              var dataJsonFile = zip.file('data.json');
+              var manifestFile = zip.file('manifest.json');
+              
+              var animationData = null;
+              
+              // 如果有manifest.json，说明是新版本.lottie格式
+              if (manifestFile) {
+                var manifestText = await manifestFile.async('text');
+                var manifest = JSON.parse(manifestText);
+                
+                // 从 manifest 中获取第一个动画的文件名
+                if (manifest.animations && manifest.animations.length > 0) {
+                  var firstAnim = manifest.animations[0];
+                  var animFileName = 'animations/' + firstAnim.id + '.json';
+                  
+                  var animFile = zip.file(animFileName);
+                  if (animFile) {
+                    var animText = await animFile.async('text');
+                    animationData = JSON.parse(animText);
+                  } else {
+                    alert('无法在.lottie文件中找到动画数据: ' + animFileName);
+                    return;
+                  }
+                } else {
+                  alert('.lottie manifest中未找到动画列表');
+                  return;
+                }
+              }
+              // 旧版本格式，直接有data.json
+              else if (dataJsonFile) {
+                var jsonText = await dataJsonFile.async('text');
+                animationData = JSON.parse(jsonText);
+              }
+              // 尝试查找其他JSON文件
+              else {
+                var jsonFiles = Object.keys(zip.files).filter(function(name) {
+                  return name.endsWith('.json') && !name.startsWith('__MACOSX');
+                });
+                
+                if (jsonFiles.length === 0) {
+                  alert('.lottie文件中未找到JSON数据');
+                  return;
+                }
+                
+                var firstJsonFile = zip.file(jsonFiles[0]);
+                var jsonText = await firstJsonFile.async('text');
+                animationData = JSON.parse(jsonText);
+              }
+              
+              _this.loadLottieWithData(file, animationData);
+              
+            } catch (err) {
+              console.error('.lottie文件解析错误:', err);
+              alert('.lottie文件解析失败: ' + err.message);
+            }
+          },
+          
+          /**
+           * 使用解析后的数据加载Lottie
+           * @param {File} file - 原始文件
+           * @param {Object} animationData - 解析后的JSON数据
+           */
+          loadLottieWithData: function(file, animationData) {
             var _this = this;
             
             // 检查是否有正在进行的任务
@@ -1573,23 +1726,288 @@ function initApp() {
             
             // 重置视图位置
             this.centerViewer();
-
+            
+            // 提取Lottie信息
+            var width = animationData.w || 0;
+            var height = animationData.h || 0;
+            var frameRate = animationData.fr || 30;
+            var inFrame = animationData.ip || 0;
+            var outFrame = animationData.op || 0;
+            var totalFramesCount = outFrame - inFrame;
+            var duration = totalFramesCount / frameRate;
+            
+            // 检查必要字段
+            if (!width || !height) {
+              alert('Lottie文件缺少尺寸信息，可能文件格式不正确');
+              return;
+            }
+            
             // 设置文件信息
             this.lottie.hasFile = true;
             this.lottie.file = file;
+            this.lottie.animationData = animationData;
+            this.lottie.originalWidth = width;
+            this.lottie.originalHeight = height;
             this.lottie.fileInfo.name = file.name;
             this.lottie.fileInfo.size = file.size;
             this.lottie.fileInfo.sizeText = this.formatBytes(file.size);
+            this.lottie.fileInfo.fps = frameRate + ' FPS';
+            this.lottie.fileInfo.sizeWH = width + 'x' + height;
+            this.lottie.fileInfo.duration = duration.toFixed(2) + 's';
+            
+            // 设置帧数
+            this.totalFrames = totalFramesCount;
+            this.currentFrame = 0;
+            this.progress = 0;
+            this.isPlaying = false;
             
             // 启动过渡
             this.footerTransitioning = true;
             this.footerContentVisible = false;
             
-            setTimeout(function() {
+            // 加载lottie-web库
+            this.loadLibrary('lottie', true).then(function() {
+              // 初始化Lottie播放器
+              _this.initLottiePlayer();
+              
+              setTimeout(function() {
+                _this.footerTransitioning = false;
+                _this.footerContentVisible = true;
+                // 自动播放
+                _this.togglePlay();
+              }, 400);
+            }).catch(function(err) {
+              alert('加载Lottie播放器失败: ' + err.message);
               _this.footerTransitioning = false;
               _this.footerContentVisible = true;
-              alert('Lottie 模块将在后续阶段实现播放逻辑');
-            }, 400);
+            });
+          },
+          
+          /**
+           * 初始化Lottie播放器
+           */
+          initLottiePlayer: function() {
+            var _this = this;
+            var container = this.$refs.svgaContainer;
+            
+            if (!container) return;
+            
+            // 清空容器
+            container.innerHTML = '';
+            
+            // 直接让lottie-web创建canvas，不手动创建
+            this.lottiePlayer = lottie.loadAnimation({
+              container: container,
+              renderer: 'canvas',
+              loop: true,
+              autoplay: false,
+              animationData: this.lottie.animationData
+            });
+            
+            // 监听帧更新
+            this.lottiePlayer.addEventListener('enterFrame', function(e) {
+              _this.currentFrame = Math.floor(e.currentTime);
+              _this.progress = Math.round((e.currentTime / _this.totalFrames) * 100);
+            });
+            
+            // 监听循环完成
+            this.lottiePlayer.addEventListener('loopComplete', function() {
+              // 循环播放，重置帧数
+              _this.currentFrame = 0;
+              _this.progress = 0;
+            });
+            
+            // 应用背景色
+            this.$nextTick(function() {
+              _this.applyCanvasBackground();
+            });
+          },
+          
+          /**
+           * 清理Lottie资源
+           */
+          cleanupLottie: function() {
+            if (this.lottiePlayer) {
+              this.lottiePlayer.destroy();
+              this.lottiePlayer = null;
+            }
+            
+            this.lottieCanvas = null;
+            this.lottieCtx = null;
+            
+            // 清空容器内容
+            var container = this.$refs.svgaContainer;
+            if (container) {
+              container.innerHTML = '';
+            }
+            
+            this.lottie = {
+              hasFile: false,
+              file: null,
+              fileInfo: {
+                name: '',
+                size: 0,
+                sizeText: '',
+                fps: null,
+                sizeWH: '',
+                duration: ''
+              },
+              originalWidth: 0,
+              originalHeight: 0,
+              animationData: null
+            };
+            
+            // 重置播放状态
+            this.isPlaying = false;
+            this.progress = 0;
+            this.currentFrame = 0;
+            this.totalFrames = 0;
+          },
+          
+          /**
+           * 导出Lottie为GIF
+           */
+          exportLottieGIF: async function() {
+            var _this = this;
+            
+            if (!this.lottiePlayer || !this.lottie.hasFile) {
+              alert('请先加载 Lottie 文件');
+              return;
+            }
+            
+            // 检查是否有其他正在进行的任务
+            if (!this.confirmIfHasOngoingTasks('导出GIF', 'task')) {
+              return;
+            }
+            
+            // 添加确认弹窗
+            if (!confirm('确认要导出GIF吗？')) {
+              return;
+            }
+
+            // 动态加载 GIF.js
+            try {
+              await this.loadLibrary('gif', true);
+            } catch (err) {
+              alert('GIF导出库加载失败，请检查网络');
+              return;
+            }
+
+            this.isExportingGIF = true;
+            this.gifExportProgress = 0;
+
+            var width = this.lottie.originalWidth;
+            var height = this.lottie.originalHeight;
+            var totalFrames = this.totalFrames;
+            var fps = parseInt(this.lottie.fileInfo.fps) || 30;
+            var frameDelay = Math.round(1000 / fps);
+
+            // 创建临时canvas用于捕获帧
+            var captureCanvas = document.createElement('canvas');
+            captureCanvas.width = width;
+            captureCanvas.height = height;
+            var captureCtx = captureCanvas.getContext('2d');
+
+            // 创建 GIF 编码器
+            var gif = new GIF({
+              workers: 2,
+              quality: 10,
+              width: width,
+              height: height,
+              workerScript: 'assets/js/gif.worker.js'
+            });
+
+            // 监听进度
+            gif.on('progress', function(p) {
+              _this.gifExportProgress = 50 + Math.floor(p * 50);
+            });
+
+            // 完成时触发
+            gif.on('finished', function(blob) {
+              _this.isExportingGIF = false;
+              _this.gifExportProgress = 0;
+
+              // 下载 GIF
+              var url = URL.createObjectURL(blob);
+              var a = document.createElement('a');
+              a.href = url;
+              a.download = (_this.lottie.fileInfo.name.replace(/\.json$/i, '') || 'lottie') + '.gif';
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              
+              setTimeout(function() {
+                URL.revokeObjectURL(url);
+              }, 100);
+
+              alert('GIF 导出成功！大小: ' + (_this.formatBytes(blob.size)));
+            });
+
+            // 错误处理
+            gif.on('abort', function() {
+              _this.isExportingGIF = false;
+              _this.gifExportProgress = 0;
+              alert('GIF 导出已取消');
+            });
+
+            // 暂停当前播放
+            var wasPlaying = this.isPlaying;
+            this.lottiePlayer.pause();
+            this.isPlaying = false;
+
+            // 逐帧捕获
+            try {
+              for (var i = 0; i < totalFrames; i++) {
+                // 跳转到指定帧
+                this.lottiePlayer.goToAndStop(i, true);
+                
+                // 等待渲染
+                await new Promise(function(resolve) { setTimeout(resolve, 20); });
+                
+                // 创建临时canvas用于合成背景色
+                var tempCanvas = document.createElement('canvas');
+                tempCanvas.width = width;
+                tempCanvas.height = height;
+                var tempCtx = tempCanvas.getContext('2d');
+                
+                // 填充背景色
+                var bgColor = '#ffffff';
+                if (this.bgColorKey && this.bgColorKey !== 'pattern') {
+                  var computedBgColor = this.currentBgColor;
+                  if (computedBgColor !== 'transparent' && computedBgColor !== '#000000') {
+                    bgColor = computedBgColor;
+                  }
+                }
+                tempCtx.fillStyle = bgColor;
+                tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+                
+                // 获取Lottie的canvas并绘制
+                var lottieCanvas = this.$refs.svgaContainer.querySelector('canvas');
+                if (lottieCanvas) {
+                  tempCtx.drawImage(lottieCanvas, 0, 0);
+                }
+                
+                // 添加到 GIF
+                gif.addFrame(tempCanvas, {copy: true, delay: frameDelay});
+                
+                this.gifExportProgress = Math.floor((i / totalFrames) * 50);
+              }
+              
+              this.gifExportProgress = 50;
+              gif.render();
+              
+            } catch (err) {
+              console.error('GIF 导出失败:', err);
+              this.isExportingGIF = false;
+              this.gifExportProgress = 0;
+              alert('GIF 导出失败: ' + err.message);
+              
+              // 恢复播放状态
+              if (wasPlaying) {
+                this.lottiePlayer.play();
+                this.isPlaying = true;
+              }
+            }
           },
 
           /* ==================== 双通道MP4加载与播放 ==================== */
@@ -2973,8 +3391,216 @@ function initApp() {
             };
 
             // 开始捕获
-            console.log('开始捕获帧，总帧数:', totalFrames);
+            console.log('开始捕莹帧，总帧数:', totalFrames);
             captureFrame();
+          },
+                    
+          /**
+           * 导出Lottie（逐帧关键帧版本）
+           * 注意：这是实验性功能，生成的Lottie文件每帧都是静态关键帧
+           */
+          exportLottie: async function() {
+            var _this = this;
+                      
+            if (!this.svgaPlayer || !this.svga.hasFile || !this.originalVideoItem) {
+              alert('请先加载 SVGA 文件');
+              return;
+            }
+                      
+            // 检查是否有其他正在进行的任务
+            if (!this.confirmIfHasOngoingTasks('导出Lottie', 'task')) {
+              return;
+            }
+                      
+            // 警告用户这是实验性功能
+            if (!confirm('警告：这是实验性功能。\n\n生成的Lottie文件将每帧都作为静态关键帧导出，类似“定格动画”效果。\n原动画不会有平滑的运动曲线。\n\n生成的JSON文件可能很大（数MB），但能导入After Effects进行编辑。\n\n是否继续？')) {
+              return;
+            }
+                      
+            this.isExportingLottie = true;
+            this.lottieExportProgress = 0;
+                      
+            try {
+              // 获取 canvas 元素
+              var container = this.$refs.svgaContainer;
+              if (!container) {
+                throw new Error('无法获取画布元素');
+              }
+              var canvas = container.querySelector('canvas');
+              if (!canvas) {
+                throw new Error('无法获取 canvas 元素');
+              }
+                        
+              // 获取 SVGA 信息
+              var videoItem = this.originalVideoItem;
+              var totalFrames = this.totalFrames;
+              var fps = parseFloat(this.svga.fileInfo.fps) || 20;
+              var width = this.svga.originalWidth;
+              var height = this.svga.originalHeight;
+                        
+              // 保存播放状态
+              var wasPlaying = this.isPlaying;
+              if (wasPlaying) {
+                this.svgaPlayer.pauseAnimation();
+              }
+                        
+              // 提取每帧数据
+              var frames = [];
+                        
+              for (var i = 0; i < totalFrames; i++) {
+                // 跳转到指定帧
+                this.svgaPlayer.stepToFrame(i, false);
+                          
+                // 等待渲染
+                await new Promise(function(resolve) { setTimeout(resolve, 50); });
+                          
+                // 提取帧数据（位置、透明度等）
+                // 这里我们先捕获图像，后续转换为base64
+                var tempCanvas = document.createElement('canvas');
+                tempCanvas.width = width;
+                tempCanvas.height = height;
+                var tempCtx = tempCanvas.getContext('2d', { alpha: true });
+                tempCtx.clearRect(0, 0, width, height);
+                tempCtx.drawImage(canvas, 0, 0);
+                          
+                // 转为base64图像
+                var frameDataUrl = tempCanvas.toDataURL('image/png');
+                          
+                frames.push({
+                  index: i,
+                  dataUrl: frameDataUrl
+                });
+                          
+                // 更新进度（0-50%）
+                this.lottieExportProgress = Math.floor((i + 1) / totalFrames * 50);
+                          
+                // 让出线程
+                if (i % 5 === 0) {
+                  await new Promise(function(resolve) { setTimeout(resolve, 0); });
+                }
+              }
+                        
+              // 构建Lottie JSON
+              this.lottieExportProgress = 55;
+              var lottieData = this.buildLottieFromFrames(frames, width, height, fps, totalFrames);
+                        
+              this.lottieExportProgress = 90;
+                        
+              // 导出 JSON 文件
+              var jsonString = JSON.stringify(lottieData, null, 2);
+              var blob = new Blob([jsonString], { type: 'application/json' });
+              var url = URL.createObjectURL(blob);
+              var a = document.createElement('a');
+              a.href = url;
+              a.download = (this.svga.fileInfo.name.replace(/\.svga$/i, '') || 'animation') + '.json';
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+                        
+              setTimeout(function() {
+                URL.revokeObjectURL(url);
+              }, 100);
+                        
+              this.lottieExportProgress = 100;
+                        
+              setTimeout(function() {
+                _this.isExportingLottie = false;
+                _this.lottieExportProgress = 0;
+                alert('Lottie 导出成功！\n\n文件大小: ' + _this.formatBytes(blob.size) + '\n\n请将JSON文件导入After Effects进行编辑。');
+              }, 300);
+                        
+              // 恢复播放状态
+              if (wasPlaying && this.svgaPlayer && this.currentModule === 'svga') {
+                this.svgaPlayer.startAnimation();
+              }
+                        
+            } catch (err) {
+              console.error('Lottie导出失败:', err);
+              this.isExportingLottie = false;
+              this.lottieExportProgress = 0;
+              alert('Lottie导出失败: ' + err.message);
+            }
+          },
+                    
+          /**
+           * 构建Lottie JSON结构（逐帧关键帧版本）
+           */
+          buildLottieFromFrames: function(frames, width, height, fps, totalFrames) {
+            // 计算时长（秒）
+            var durationInSeconds = totalFrames / fps;
+                      
+            // Lottie基本结构
+            var lottieData = {
+              v: '5.7.0',  // Bodymovin版本
+              fr: fps,     // 帧率
+              ip: 0,       // inPoint
+              op: totalFrames, // outPoint
+              w: width,
+              h: height,
+              nm: 'SVGA to Lottie Export', // 名称
+              ddd: 0,      // 3D支持（0=二维）
+              assets: [],  // 资产列表
+              layers: []   // 图层列表
+            };
+                      
+            // 将每帧作为单独的图像资产
+            frames.forEach(function(frame, index) {
+              var assetId = 'image_' + index;
+                        
+              // 添加到assets
+              lottieData.assets.push({
+                id: assetId,
+                w: width,
+                h: height,
+                u: '',  // 路径
+                p: frame.dataUrl,  // base64图像
+                e: 0    // 是否嵌入
+              });
+            });
+                      
+            // 为每帧创建一个图层
+            frames.forEach(function(frame, index) {
+              var assetId = 'image_' + index;
+              var startTime = index;      // 当前帧开始时间
+              var endTime = index + 1;    // 下一帧开始时间
+                        
+              lottieData.layers.push({
+                ddd: 0,
+                ind: index + 1,  // 图层索引
+                ty: 2,           // 图层类型（2=图像）
+                nm: 'Frame ' + index,  // 图层名称
+                refId: assetId,  // 引用的资产ID
+                sr: 1,           // 时间拉伸
+                ks: {            // 变换属性
+                  o: {           // 透明度
+                    a: 1,        // 动画化
+                    k: [
+                      {
+                        i: { x: [1], y: [1] },
+                        o: { x: [0], y: [0] },
+                        t: startTime,
+                        s: [100]   // 当前帧显示（100%不透明）
+                      },
+                      {
+                        t: endTime,
+                        s: [0]     // 下一帧隐藏（0%不透明=完全透明）
+                      }
+                    ]
+                  },
+                  r: { a: 0, k: 0 },      // 旋转
+                  p: { a: 0, k: [width/2, height/2, 0] },  // 位置（居中）
+                  a: { a: 0, k: [width/2, height/2, 0] },  // 锚点
+                  s: { a: 0, k: [100, 100, 100] }          // 缩放
+                },
+                ao: 0,
+                ip: startTime,   // 入点
+                op: endTime,     // 出点
+                st: startTime,   // 开始时间
+                bm: 0            // 混合模式
+              });
+            });
+                      
+            return lottieData;
           },
 
           // 双通道MP4 GIF 导出
@@ -4876,16 +5502,28 @@ function initApp() {
               marginBottom: (8 * scale) + 'px'
             };
             
-            // 根据当前模块设置文件名最大宽度（跟随播放器宽度）
+            // 根据当前模块设置文件名最大宽度(跟随播放器宽度)
+            var widthValue = null;
+            
             if (this.currentModule === 'svga' && this.svga.hasFile) {
               var sizeWH = this.svga.fileInfo.sizeWH;
               if (sizeWH) {
                 var parts = sizeWH.split(' × ');
                 if (parts.length === 2) {
-                  // 最大宽度也需要乘以scale来补偿反向缩放
-                  style.maxWidth = (parts[0] * scale) + 'px';
+                  widthValue = parseInt(parts[0]);
                 }
               }
+            } else if (this.currentModule === 'lottie' && this.lottie.hasFile) {
+              widthValue = this.lottie.originalWidth;
+            } else if (this.currentModule === 'yyeva' && this.yyeva.hasFile) {
+              widthValue = this.yyeva.displayWidth;
+            } else if (this.currentModule === 'mp4' && this.mp4.hasFile) {
+              widthValue = this.mp4.originalWidth;
+            }
+            
+            // 设置最大宽度（需要乘以scale来补偿反向缩放）
+            if (widthValue) {
+              style.maxWidth = (widthValue * scale) + 'px';
             }
             
             return style;
