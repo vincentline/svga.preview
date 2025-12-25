@@ -222,9 +222,21 @@ function initApp() {
             svgaAudioData: null, // { audioKey: Uint8Array }
             svgaMovieData: null, // protobuf解析后的MovieEntity
 
-            // GIF 导出状态
+            // GIF 导出状态和配置
+            showGifPanel: false,
+            gifConfig: {
+              width: 0,
+              height: 0,
+              fps: 30,           // 1-60
+              transparent: false, // 透明底
+              dither: false,      // 杂色边
+              ditherColor: '#ffffff' // 杂色边颜色
+            },
             isExportingGIF: false,
             gifExportProgress: 0,
+            gifExportStage: '',   // 'loading' | 'capturing' | 'encoding' | 'done'
+            gifExportMessage: '',
+            gifExportCancelled: false,
             
             // Lottie 导出状态
             isExportingLottie: false,
@@ -295,15 +307,7 @@ function initApp() {
             
             // 静音控制
             isMuted: false,
-            yyevaHasAudio: false, // 双通道MP4视频是否包含音频轨道
-            
-            // 库加载管理
-            libraryLoader: {
-              queue: [], // 加载队列
-              loading: false, // 是否正在加载
-              currentLib: null, // 当前加载的库 { name, url, progress }
-              loadedLibs: {} // 已加载的库 { libName: true }
-            }
+            yyevaHasAudio: false // 双通道MP4视频是否包含音频轨道
           };
         },
         methods: {
@@ -441,6 +445,7 @@ function initApp() {
             this.showMP4Panel = false;
             this.showSVGAPanel = false;
             this.showMp4ToSvgaPanel = false;
+            this.showGifPanel = false;
             
             // 左侧弹窗
             this.showChromaKeyPanel = false;
@@ -448,7 +453,7 @@ function initApp() {
           
           /**
            * 打开/关闭右侧弹窗（互斥，同时只能打开一个）
-           * @param {string} panelName - 弹窗变量名（showMaterialPanel | showMP4Panel | showSVGAPanel）
+           * @param {string} panelName - 弹窗变量名
            */
           openRightPanel: function(panelName) {
             // 如果目标弹窗已打开，则关闭它
@@ -462,6 +467,7 @@ function initApp() {
             this.showMP4Panel = false;
             this.showSVGAPanel = false;
             this.showMp4ToSvgaPanel = false;
+            this.showGifPanel = false;
             this[panelName] = true;
           },
           
@@ -524,281 +530,23 @@ function initApp() {
           /* ==================== 库加载管理器 ==================== */
           
           // 获取库配置
-          getLibraryConfig: function() {
-            return {
-              'vue': {
-                name: 'Vue.js',
-                url: 'https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.min.js',
-                checkFn: function() { return typeof Vue !== 'undefined'; },
-                priority: 0, // 核心库，已预加载
-                preload: true
-              },
-              'svgaplayer': {
-                name: 'SVGA播放器',
-                url: 'https://cdn.jsdelivr.net/npm/svgaplayerweb@2.3.1/build/svga.min.js',
-                checkFn: function() { return typeof SVGA !== 'undefined'; },
-                priority: 1, // 核心库，已预加载
-                preload: true
-              },
-              'lottie': {
-                name: 'Lottie播放器',
-                url: 'https://cdn.jsdelivr.net/npm/lottie-web@5.7.6/build/player/lottie.min.js',
-                checkFn: function() { return typeof lottie !== 'undefined'; },
-                priority: 5
-              },
-              'howler': {
-                name: 'Howler音频',
-                url: 'https://cdn.jsdelivr.net/npm/howler@2.0.15/dist/howler.core.min.js',
-                checkFn: function() { return typeof Howl !== 'undefined'; },
-                priority: 5
-              },
-              'marked': {
-                name: '帮助文档',
-                url: 'https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js',
-                checkFn: function() { return typeof marked !== 'undefined'; },
-                priority: 10
-              },
-              'gif': {
-                name: 'GIF导出',
-                url: 'https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.js',
-                checkFn: function() { return typeof GIF !== 'undefined'; },
-                priority: 20
-              },
-              'protobuf': {
-                name: 'Protobuf',
-                url: 'https://cdn.jsdelivr.net/npm/protobufjs@7.2.5/dist/protobuf.min.js',
-                checkFn: function() { return typeof protobuf !== 'undefined'; },
-                priority: 20
-              },
-              'pako': {
-                name: 'Pako',
-                url: 'https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js',
-                checkFn: function() { return typeof pako !== 'undefined'; },
-                priority: 20
-              },
-              'svgaweb': {
-                name: 'SVGA-Web',
-                url: 'https://cdn.jsdelivr.net/npm/svga-web@1.0.3/dist/svga-web.min.js',
-                checkFn: function() { return typeof SVGAWeb !== 'undefined'; },
-                priority: 20
-              },
-              'ffmpeg': {
-                name: 'FFmpeg',
-                url: 'https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js',
-                checkFn: function() { return typeof FFmpeg !== 'undefined'; },
-                priority: 30
-              }
-            };
-          },
+          /* ==================== 库加载管理（包装全局 libraryLoader） ==================== */
           
-          // 加载单个库
-          loadSingleLibrary: function(libKey, highPriority) {
-            var _this = this;
-            var config = this.getLibraryConfig()[libKey];
-            
-            if (!config) {
-              return Promise.reject(new Error('未知的库: ' + libKey));
-            }
-            
-            // 如果已加载，直接返回
-            if (this.libraryLoader.loadedLibs[libKey] || (config.checkFn && config.checkFn())) {
-              this.libraryLoader.loadedLibs[libKey] = true;
-              return Promise.resolve();
-            }
-            
-            return new Promise(function(resolve, reject) {
-              _this.libraryLoader.currentLib = {
-                name: config.name,
-                url: config.url,
-                progress: 0
-              };
-              
-              var script = document.createElement('script');
-              script.src = config.url;
-              
-              script.onload = function() {
-                _this.libraryLoader.currentLib.progress = 50;
-                
-                // 等待全局变量可用
-                var maxWait = 30;
-                var check = function() {
-                  if (!config.checkFn || config.checkFn()) {
-                    _this.libraryLoader.currentLib.progress = 100;
-                    setTimeout(function() {
-                      _this.libraryLoader.currentLib = null;
-                      _this.libraryLoader.loadedLibs[libKey] = true;
-                      resolve();
-                    }, 300); // 显示100%后稍等
-                  } else if (maxWait-- > 0) {
-                    var progress = 50 + (30 - maxWait) * 1.5;
-                    _this.libraryLoader.currentLib.progress = Math.min(99, Math.round(progress));
-                    setTimeout(check, 100);
-                  } else {
-                    _this.libraryLoader.currentLib = null;
-                    reject(new Error('库加载超时: ' + libKey));
-                  }
-                };
-                check();
-              };
-              
-              script.onerror = function() {
-                _this.libraryLoader.currentLib = null;
-                reject(new Error('加载失败: ' + config.url));
-              };
-              
-              document.head.appendChild(script);
-            });
-          },
-          
-          // 加载库（统一入口）
+          /**
+           * 加载库（统一入口）
+           * @param {string|Array<string>} libKeys - 库的键名或键名数组
+           * @param {boolean} highPriority - 是否高优先级
+           * @returns {Promise}
+           */
           loadLibrary: function(libKeys, highPriority) {
-            var _this = this;
-            if (typeof libKeys === 'string') {
-              libKeys = [libKeys];
-            }
-            
-            return new Promise(function(resolve, reject) {
-              var loadTask = {
-                libs: libKeys,
-                priority: highPriority ? 0 : 10,
-                resolve: resolve,
-                reject: reject
-              };
-              
-              // 高优先级插队到队列最前面
-              if (highPriority) {
-                _this.libraryLoader.queue.unshift(loadTask);
-              } else {
-                _this.libraryLoader.queue.push(loadTask);
-              }
-              
-              _this.processLibraryQueue();
-            });
+            return window.libraryLoader.load(libKeys, highPriority);
           },
           
-          // 处理加载队列
-          processLibraryQueue: function() {
-            var _this = this;
-            
-            // 如果正在加载，不重复处理
-            if (this.libraryLoader.loading || this.libraryLoader.queue.length === 0) {
-              return;
-            }
-            
-            this.libraryLoader.loading = true;
-            
-            // 按优先级排序
-            this.libraryLoader.queue.sort(function(a, b) {
-              return a.priority - b.priority;
-            });
-            
-            var task = this.libraryLoader.queue.shift();
-            
-            // 顺序加载所有库
-            var loadChain = Promise.resolve();
-            
-            task.libs.forEach(function(libKey) {
-              loadChain = loadChain.then(function() {
-                return _this.loadSingleLibrary(libKey, task.priority === 0);
-              });
-            });
-            
-            loadChain
-              .then(function() {
-                task.resolve();
-                _this.libraryLoader.loading = false;
-                _this.processLibraryQueue(); // 继续处理队列
-              })
-              .catch(function(error) {
-                console.error('库加载失败:', error);
-                task.reject(error);
-                _this.libraryLoader.loading = false;
-                _this.processLibraryQueue(); // 继续处理队列
-              });
-          },
-          
-          // 预加载非关键库
+          /**
+           * 预加载非关键库
+           */
           preloadLibraries: function() {
-            var _this = this;
-            // Lottie 和 Howler 是次要功能，优先级较高
-            this.loadLibrary(['lottie', 'howler'], false)
-              .then(function() {
-                console.log('Lottie 和 Howler 加载完成');
-              })
-              .catch(function(error) {
-                console.warn('部分库加载失败:', error);
-              });
-          },
-          
-          /* 动态加载库文件 */
-          
-          loadScript: function(url, checkFn) {
-            return new Promise(function(resolve, reject) {
-              // 如果已加载，直接返回
-              if (checkFn && checkFn()) {
-                resolve();
-                return;
-              }
-              var script = document.createElement('script');
-              script.src = url;
-              script.onload = function() {
-                // 等待全局变量可用
-                var maxWait = 30;
-                var check = function() {
-                  if (!checkFn || checkFn()) {
-                    resolve();
-                  } else if (maxWait-- > 0) {
-                    setTimeout(check, 100);
-                  } else {
-                    reject(new Error('库加载超时'));
-                  }
-                };
-                check();
-              };
-              script.onerror = function() {
-                reject(new Error('加载失败: ' + url));
-              };
-              document.head.appendChild(script);
-            });
-          },
-          
-          // 加载Marked.js
-          loadMarked: function() {
-            return this.loadScript(
-              'https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js',
-              function() { return typeof marked !== 'undefined'; }
-            );
-          },
-          
-          // 加载GIF.js
-          loadGifJs: function() {
-            return this.loadScript(
-              'https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.js',
-              function() { return typeof GIF !== 'undefined'; }
-            );
-          },
-          
-          // 加载Protobuf + Pako
-          loadProtobufAndPako: function() {
-            var _this = this;
-            return Promise.all([
-              this.loadScript(
-                'https://cdn.jsdelivr.net/npm/protobufjs@7.2.5/dist/protobuf.min.js',
-                function() { return typeof protobuf !== 'undefined'; }
-              ),
-              this.loadScript(
-                'https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js',
-                function() { return typeof pako !== 'undefined'; }
-              )
-            ]);
-          },
-          
-          // 加载SVGA-Web（用于帧提取）
-          loadSvgaWeb: function() {
-            return this.loadScript(
-              'https://cdn.jsdelivr.net/npm/svga-web@2.4.2/svga-web.min.js',
-              function() { return typeof SVGA !== 'undefined' && SVGA.Downloader; }
-            );
+            window.libraryLoader.preload();
           },
 
           /* ==================== 文件加载与拖拽上传 ==================== */
@@ -1947,149 +1695,12 @@ function initApp() {
           },
           
           /**
-           * 导出Lottie为GIF
+           * 导出Lottie为GIF（已废弃）
+           * @deprecated 请使用 openGifPanel() 统一导出入口
            */
           exportLottieGIF: async function() {
-            var _this = this;
-            
-            if (!this.lottiePlayer || !this.lottie.hasFile) {
-              alert('请先加载 Lottie 文件');
-              return;
-            }
-            
-            // 检查是否有其他正在进行的任务
-            if (!this.confirmIfHasOngoingTasks('导出GIF', 'task')) {
-              return;
-            }
-            
-            // 添加确认弹窗
-            if (!confirm('确认要导出GIF吗？')) {
-              return;
-            }
-
-            // 动态加载 GIF.js
-            try {
-              await this.loadLibrary('gif', true);
-            } catch (err) {
-              alert('GIF导出库加载失败，请检查网络');
-              return;
-            }
-
-            this.isExportingGIF = true;
-            this.gifExportProgress = 0;
-
-            var width = this.lottie.originalWidth;
-            var height = this.lottie.originalHeight;
-            var totalFrames = this.totalFrames;
-            var fps = parseInt(this.lottie.fileInfo.fps) || 30;
-            var frameDelay = Math.round(1000 / fps);
-
-            // 创建临时canvas用于捕获帧
-            var captureCanvas = document.createElement('canvas');
-            captureCanvas.width = width;
-            captureCanvas.height = height;
-            var captureCtx = captureCanvas.getContext('2d', { willReadFrequently: true });
-
-            // 创建 GIF 编码器
-            var gif = new GIF({
-              workers: 2,
-              quality: 10,
-              width: width,
-              height: height,
-              workerScript: 'assets/js/gif.worker.js'
-            });
-
-            // 监听进度
-            gif.on('progress', function(p) {
-              _this.gifExportProgress = 50 + Math.floor(p * 50);
-            });
-
-            // 完成时触发
-            gif.on('finished', function(blob) {
-              _this.isExportingGIF = false;
-              _this.gifExportProgress = 0;
-
-              // 下载 GIF
-              var url = URL.createObjectURL(blob);
-              var a = document.createElement('a');
-              a.href = url;
-              a.download = (_this.lottie.fileInfo.name.replace(/\.json$/i, '') || 'lottie') + '.gif';
-              document.body.appendChild(a);
-              a.click();
-              document.body.removeChild(a);
-              
-              setTimeout(function() {
-                URL.revokeObjectURL(url);
-              }, 100);
-
-              alert('GIF 导出成功！大小: ' + (_this.formatBytes(blob.size)));
-            });
-
-            // 错误处理
-            gif.on('abort', function() {
-              _this.isExportingGIF = false;
-              _this.gifExportProgress = 0;
-              alert('GIF 导出已取消');
-            });
-
-            // 暂停当前播放
-            var wasPlaying = this.isPlaying;
-            this.lottiePlayer.pause();
-            this.isPlaying = false;
-
-            // 逐帧捕获
-            try {
-              for (var i = 0; i < totalFrames; i++) {
-                // 跳转到指定帧
-                this.lottiePlayer.goToAndStop(i, true);
-                
-                // 等待渲染
-                await new Promise(function(resolve) { setTimeout(resolve, 20); });
-                
-                // 创建临时canvas用于合成背景色
-                var tempCanvas = document.createElement('canvas');
-                tempCanvas.width = width;
-                tempCanvas.height = height;
-                var tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
-                
-                // 填充背景色
-                var bgColor = '#ffffff';
-                if (this.bgColorKey && this.bgColorKey !== 'pattern') {
-                  var computedBgColor = this.currentBgColor;
-                  if (computedBgColor !== 'transparent' && computedBgColor !== '#000000') {
-                    bgColor = computedBgColor;
-                  }
-                }
-                tempCtx.fillStyle = bgColor;
-                tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-                
-                // 获取Lottie的canvas并绘制
-                var lottieCanvas = this.$refs.svgaContainer.querySelector('canvas');
-                if (lottieCanvas) {
-                  tempCtx.drawImage(lottieCanvas, 0, 0);
-                }
-                
-                // 添加到 GIF
-                gif.addFrame(tempCanvas, {copy: true, delay: frameDelay});
-                
-                this.gifExportProgress = Math.floor((i / totalFrames) * 50);
-              }
-              
-              this.gifExportProgress = 50;
-              gif.render();
-              
-            } catch (err) {
-              console.error('GIF 导出失败:', err);
-              this.isExportingGIF = false;
-              this.gifExportProgress = 0;
-              alert('GIF 导出失败: ' + err.message);
-              
-              // 恢复播放状态
-              if (wasPlaying) {
-                this.lottiePlayer.play();
-                this.isPlaying = true;
-              }
-            }
+            console.warn('此方法已废弃,请使用 openGifPanel()');
+            this.openGifPanel();
           },
 
           /* ==================== 双通道MP4加载与播放 ==================== */
@@ -3411,7 +3022,475 @@ function initApp() {
           /* ==================== 导出GIF功能 ==================== */
 
           /**
-           * 导出SVGA为GIF动图
+           * 打开GIF导出弹窗（所有模式通用）
+           */
+          openGifPanel: function() {
+            // 检查当前模式是否有文件
+            var hasFile = false;
+            if (this.currentModule === 'svga') hasFile = this.svga.hasFile;
+            else if (this.currentModule === 'yyeva') hasFile = this.yyeva.hasFile;
+            else if (this.currentModule === 'mp4') hasFile = this.mp4.hasFile;
+            else if (this.currentModule === 'lottie') hasFile = this.lottie.hasFile;
+            
+            if (!hasFile) {
+              alert('请先加载文件');
+              return;
+            }
+            
+            // 初始化配置：使用当前模式的原始尺寸和帧率
+            var sourceInfo = this.getGifSourceInfo();
+            this.gifConfig.width = sourceInfo.width || 300;
+            this.gifConfig.height = sourceInfo.height || 300;
+            this.gifConfig.fps = Math.min(60, Math.max(1, sourceInfo.fps || 30));
+            
+            // 使用统一的弹窗管理
+            this.openRightPanel('showGifPanel');
+            
+            // 预加载GIF.js库
+            this.loadLibrary('gif', true).catch(function(err) {
+              console.warn('GIF库预加载失败:', err);
+            });
+          },
+          
+          /**
+           * 关闭GIF导出弹窗
+           */
+          closeGifPanel: function() {
+            if (this.isExportingGIF) {
+              if (!confirm('正在导出中，确定要取消吗？')) {
+                return;
+              }
+              this.cancelGifExport();
+            }
+            this.showGifPanel = false;
+          },
+          
+          /**
+           * 取消GIF导出
+           */
+          cancelGifExport: function() {
+            this.gifExportCancelled = true;
+            this.isExportingGIF = false;
+            this.gifExportProgress = 0;
+            this.gifExportStage = '';
+            this.gifExportMessage = '';
+          },
+          
+          /**
+           * GIF宽度变化（保持比例）
+           */
+          onGifWidthChange: function() {
+            var sourceInfo = this.getGifSourceInfo();
+            if (!sourceInfo.width || !sourceInfo.height) return;
+            
+            var ratio = sourceInfo.height / sourceInfo.width;
+            var newWidth = Math.max(1, Math.min(1920, parseInt(this.gifConfig.width) || 0));
+            var newHeight = Math.floor(newWidth * ratio);
+            
+            this.gifConfig.width = newWidth;
+            this.gifConfig.height = newHeight;
+          },
+          
+          /**
+           * GIF高度变化（保持比例）
+           */
+          onGifHeightChange: function() {
+            var sourceInfo = this.getGifSourceInfo();
+            if (!sourceInfo.width || !sourceInfo.height) return;
+            
+            var ratio = sourceInfo.width / sourceInfo.height;
+            var newHeight = Math.max(1, Math.min(1920, parseInt(this.gifConfig.height) || 0));
+            var newWidth = Math.floor(newHeight * ratio);
+            
+            this.gifConfig.width = newWidth;
+            this.gifConfig.height = newHeight;
+          },
+          
+          /**
+           * 获取当前模式的帧源信息
+           */
+          getGifSourceInfo: function() {
+            var width = 0, height = 0, fps = 30, duration = 0, totalFrames = 0;
+            
+            if (this.currentModule === 'svga' && this.svga.hasFile) {
+              var sizeWH = this.svga.fileInfo.sizeWH;
+              if (sizeWH) {
+                var parts = sizeWH.split(' × ');
+                if (parts.length === 2) {
+                  width = parseInt(parts[0]);
+                  height = parseInt(parts[1]);
+                }
+              }
+              fps = this.svga.fileInfo.fps || 20;
+              totalFrames = this.totalFrames || 0;
+              duration = totalFrames / fps;
+            } else if (this.currentModule === 'yyeva' && this.yyeva.hasFile) {
+              width = this.yyeva.displayWidth || Math.floor(this.yyeva.originalWidth / 2);
+              height = this.yyeva.displayHeight || this.yyeva.originalHeight;
+              fps = parseFloat(this.yyeva.fileInfo.fps) || 30;
+              duration = this.yyevaVideo ? this.yyevaVideo.duration : 0;
+              totalFrames = Math.ceil(duration * fps);
+            } else if (this.currentModule === 'mp4' && this.mp4.hasFile) {
+              width = this.mp4.originalWidth;
+              height = this.mp4.originalHeight;
+              fps = parseFloat(this.mp4.fileInfo.fps) || 30;
+              duration = this.mp4Video ? this.mp4Video.duration : 0;
+              totalFrames = Math.ceil(duration * fps);
+            } else if (this.currentModule === 'lottie' && this.lottie.hasFile) {
+              width = this.lottie.originalWidth;
+              height = this.lottie.originalHeight;
+              fps = parseFloat(this.lottie.fileInfo.fps) || 30;
+              totalFrames = this.totalFrames || 0;
+              duration = totalFrames / fps;
+            }
+            
+            return {
+              width: width,
+              height: height,
+              fps: fps,
+              duration: duration,
+              totalFrames: totalFrames,
+              sizeWH: width + ' × ' + height
+            };
+          },
+          
+          /**
+           * 开始导出GIF（统一入口）
+           */
+          startGifExport: async function() {
+            var _this = this;
+            
+            // 检查是否有其他正在进行的任务
+            if (!this.confirmIfHasOngoingTasks('导出GIF', 'task')) {
+              return;
+            }
+            
+            // 综合提醒：文件大小超10M或时长超60秒
+            var warnings = [];
+            var estimate = this.gifEstimate;
+            var sourceInfo = this.getGifSourceInfo();
+            
+            if (estimate.fileSizeBytes > 10 * 1024 * 1024) {
+              warnings.push('预估文件大小超10M（' + estimate.fileSize + '），可能加载较慢');
+            }
+            if (sourceInfo.duration > 60) {
+              warnings.push('动画时长超60秒（' + sourceInfo.duration.toFixed(1) + '秒），导出时间可能较长');
+            }
+            
+            if (warnings.length > 0) {
+              var confirmMsg = '注意：\n\n' + warnings.join('\n') + '\n\n确定要继续导出吗？';
+              if (!confirm(confirmMsg)) {
+                return;
+              }
+            }
+            
+            try {
+              // 加载GIF.js库
+              await this.loadLibrary('gif', true);
+            } catch (err) {
+              alert('GIF导出库加载失败，请检查网络');
+              return;
+            }
+            
+            this.isExportingGIF = true;
+            this.gifExportProgress = 0;
+            this.gifExportCancelled = false;
+            this.gifExportStage = 'capturing';
+            this.gifExportMessage = '捕获帧...';
+            
+            try {
+              // 根据当前模式调用对应的导出函数
+              await this.runGifExport();
+            } catch (err) {
+              if (err.message !== '用户取消') {
+                console.error('GIF导出失败:', err);
+                alert('GIF导出失败: ' + err.message);
+              }
+            } finally {
+              this.isExportingGIF = false;
+              this.gifExportProgress = 0;
+              this.gifExportStage = '';
+              this.gifExportMessage = '';
+            }
+          },
+          
+          /**
+           * 通用GIF导出内核
+           */
+          runGifExport: async function() {
+            var _this = this;
+            var config = this.gifConfig;
+            var sourceInfo = this.getGifSourceInfo();
+            
+            // 计算帧数和延迟
+            var fps = config.fps;
+            var totalFrames = Math.ceil(sourceInfo.duration * fps);
+            var frameDelay = Math.round(1000 / fps);
+            
+            // 创建临时canvas用于缩放（必须启用alpha通道以支持透明）
+            var outputCanvas = document.createElement('canvas');
+            outputCanvas.width = config.width;
+            outputCanvas.height = config.height;
+            var outputCtx = outputCanvas.getContext('2d', { 
+              willReadFrequently: true,
+              alpha: true
+            });
+            
+            // 创建 GIF 编码器
+            var gifOptions = {
+              workers: 2,
+              quality: 10,
+              width: config.width,
+              height: config.height,
+              workerScript: 'assets/js/gif.worker.js'
+            };
+            
+            // 透明模式：设置透明色索引
+            if (config.transparent) {
+              gifOptions.transparent = 0x00000000;
+            }
+            
+            var gif = new GIF(gifOptions);
+            
+            // 创建 Promise 用于等待编码完成
+            var encodingPromise = new Promise(function(resolve, reject) {
+              gif.on('progress', function(p) {
+                _this.gifExportProgress = 50 + Math.floor(p * 50);
+              });
+              
+              gif.on('finished', function(blob) {
+                resolve(blob);
+              });
+              
+              gif.on('abort', function() {
+                reject(new Error('用户取消'));
+              });
+            });
+            
+            // 暂停播放
+            var wasPlaying = this.isPlaying;
+            await this.pauseForExport();
+            
+            try {
+              // 根据模式进行帧捕获
+              for (var i = 0; i < totalFrames; i++) {
+                if (this.gifExportCancelled) throw new Error('用户取消');
+                
+                // 跳转到指定帧
+                await this.seekToFrame(i, fps, sourceInfo);
+                
+                // 等待渲染完成
+                await new Promise(function(r) { setTimeout(r, 50); });
+                
+                // 获取当前帧的canvas
+                var sourceCanvas = this.getCurrentFrameCanvas();
+                if (!sourceCanvas) throw new Error('无法获取帧数据');
+                
+                // 清空输出画布
+                outputCtx.clearRect(0, 0, config.width, config.height);
+                
+                // 不透明模式：填充背景色
+                if (!config.transparent) {
+                  var bgColor = this.bgColorKey === 'pattern' ? '#ffffff' : this.currentBgColor;
+                  if (bgColor === 'transparent') bgColor = '#ffffff';
+                  outputCtx.fillStyle = bgColor;
+                  outputCtx.fillRect(0, 0, config.width, config.height);
+                }
+                
+                // 绘制源帧到输出画布
+                if (config.transparent) {
+                  outputCtx.globalCompositeOperation = 'source-over';
+                }
+                outputCtx.drawImage(sourceCanvas, 0, 0, config.width, config.height);
+                
+                // 透明底+杂色边：处理半透明像素
+                if (config.transparent && config.dither && config.ditherColor) {
+                  var imageData = outputCtx.getImageData(0, 0, config.width, config.height);
+                  var data = imageData.data;
+                  
+                  // 解析杂色边颜色
+                  var hexColor = config.ditherColor.replace('#', '');
+                  var ditherR = parseInt(hexColor.substr(0, 2), 16);
+                  var ditherG = parseInt(hexColor.substr(2, 2), 16);
+                  var ditherB = parseInt(hexColor.substr(4, 2), 16);
+                  
+                  // Alpha混合：半透明像素与杂色边颜色混合
+                  for (var j = 0; j < data.length; j += 4) {
+                    var alpha = data[j + 3] / 255;
+                    if (alpha > 0 && alpha < 1) {
+                      data[j] = Math.round(data[j] * alpha + ditherR * (1 - alpha));
+                      data[j + 1] = Math.round(data[j + 1] * alpha + ditherG * (1 - alpha));
+                      data[j + 2] = Math.round(data[j + 2] * alpha + ditherB * (1 - alpha));
+                      data[j + 3] = 255;
+                    }
+                  }
+                  
+                  outputCtx.putImageData(imageData, 0, 0);
+                }
+                
+                // 添加帧到GIF
+                var frameOptions = { copy: true, delay: frameDelay };
+                if (config.transparent) {
+                  frameOptions.transparent = true;
+                }
+                gif.addFrame(outputCanvas, frameOptions);
+                
+                this.gifExportProgress = Math.floor((i / totalFrames) * 50);
+                this.gifExportMessage = '捕获帧 ' + (i + 1) + '/' + totalFrames;
+              }
+              
+              // 开始编码
+              this.gifExportStage = 'encoding';
+              this.gifExportMessage = '编码中...';
+              this.gifExportProgress = 50;
+              gif.render();
+              
+              // 等待编码完成
+              var blob = await encodingPromise;
+              
+              // 下载文件
+              var fileName = this.getGifFileName();
+              var url = URL.createObjectURL(blob);
+              var a = document.createElement('a');
+              a.href = url;
+              a.download = fileName;
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              setTimeout(function() { URL.revokeObjectURL(url); }, 100);
+              
+              alert('GIF 导出成功！大小: ' + this.formatBytes(blob.size));
+              
+            } finally {
+              // 恢复播放状态
+              if (wasPlaying) {
+                this.resumeAfterExport();
+              }
+            }
+          },
+          
+          /**
+           * 获取当前帧的Canvas
+           */
+          getCurrentFrameCanvas: function() {
+            var container = this.$refs.svgaContainer;
+            if (!container) return null;
+            
+            if (this.currentModule === 'svga') {
+              return container.querySelector('canvas');
+            } else if (this.currentModule === 'yyeva') {
+              return this.yyevaCanvas;
+            } else if (this.currentModule === 'mp4') {
+              // 普通MP4需要绘制到canvas
+              if (!this.mp4Video) return null;
+              
+              // 如果启用了绿幕抠图，使用抠图后的canvas
+              if (this.chromaKeyEnabled) {
+                var chromaCanvas = container.querySelector('canvas.chromakey-canvas');
+                if (chromaCanvas) return chromaCanvas;
+              }
+              
+              // 否则从视频创建新canvas
+              var canvas = document.createElement('canvas');
+              canvas.width = this.mp4.originalWidth;
+              canvas.height = this.mp4.originalHeight;
+              var ctx = canvas.getContext('2d');
+              ctx.drawImage(this.mp4Video, 0, 0);
+              return canvas;
+            } else if (this.currentModule === 'lottie') {
+              return container.querySelector('canvas');
+            }
+            return null;
+          },
+          
+          /**
+           * 跳转到指定帧
+           */
+          seekToFrame: async function(frameIndex, fps, sourceInfo) {
+            var _this = this;
+            
+            if (this.currentModule === 'svga') {
+              // SVGA: 使用stepToFrame
+              this.svgaPlayer.stepToFrame(frameIndex, false);
+            } else if (this.currentModule === 'yyeva') {
+              // 双通道MP4: seek到指定时间
+              var time = frameIndex / fps;
+              this.yyevaVideo.currentTime = time;
+              await new Promise(function(resolve) {
+                _this.yyevaVideo.onseeked = resolve;
+              });
+              // 渲染帧
+              this.renderYyevaFrame();
+            } else if (this.currentModule === 'mp4') {
+              // 普通MP4: seek到指定时间
+              var time = frameIndex / fps;
+              this.mp4Video.currentTime = time;
+              await new Promise(function(resolve) {
+                _this.mp4Video.onseeked = resolve;
+              });
+            } else if (this.currentModule === 'lottie') {
+              // Lottie: 使用goToAndStop
+              this.lottiePlayer.goToAndStop(frameIndex, true);
+            }
+          },
+          
+          /**
+           * 暂停播放（导出前）
+           */
+          pauseForExport: async function() {
+            if (this.currentModule === 'svga' && this.svgaPlayer) {
+              this.svgaPlayer.pauseAnimation();
+            } else if (this.currentModule === 'yyeva') {
+              if (this.yyevaAnimationId) {
+                cancelAnimationFrame(this.yyevaAnimationId);
+                this.yyevaAnimationId = null;
+              }
+              if (this.yyevaVideo) this.yyevaVideo.pause();
+            } else if (this.currentModule === 'mp4') {
+              if (this.mp4Video) this.mp4Video.pause();
+            } else if (this.currentModule === 'lottie' && this.lottiePlayer) {
+              this.lottiePlayer.pause();
+            }
+            this.isPlaying = false;
+          },
+          
+          /**
+           * 恢复播放（导出后）
+           */
+          resumeAfterExport: function() {
+            if (this.currentModule === 'svga' && this.svgaPlayer) {
+              this.svgaPlayer.startAnimation();
+            } else if (this.currentModule === 'yyeva') {
+              if (this.yyevaVideo) this.yyevaVideo.play();
+              this.startYyevaRenderLoop();
+            } else if (this.currentModule === 'mp4') {
+              if (this.mp4Video) this.mp4Video.play();
+            } else if (this.currentModule === 'lottie' && this.lottiePlayer) {
+              this.lottiePlayer.play();
+            }
+            this.isPlaying = true;
+          },
+          
+          /**
+           * 获取GIF文件名
+           */
+          getGifFileName: function() {
+            var baseName = 'animation';
+            if (this.currentModule === 'svga' && this.svga.fileInfo.name) {
+              baseName = this.svga.fileInfo.name.replace(/\.svga$/i, '');
+            } else if (this.currentModule === 'yyeva' && this.yyeva.fileInfo.name) {
+              baseName = this.yyeva.fileInfo.name.replace(/\.mp4$/i, '');
+            } else if (this.currentModule === 'mp4' && this.mp4.fileInfo.name) {
+              baseName = this.mp4.fileInfo.name.replace(/\.mp4$/i, '');
+            } else if (this.currentModule === 'lottie' && this.lottie.fileInfo.name) {
+              baseName = this.lottie.fileInfo.name.replace(/\.json$/i, '');
+            }
+            return baseName + '.gif';
+          },
+
+          /**
+           * 导出SVGA为GIF动图（旧函数，保留兼容）
+           * @deprecated 请使用openGifPanel()
            */
           exportGIF: async function () {
             var _this = this;
@@ -4261,14 +4340,17 @@ function initApp() {
               container.removeChild(existingCanvas);
             }
             
-            // 创建新canvas
+            // 创建新canvas（必须启用alpha通道以支持透明抠图）
             var canvas = document.createElement('canvas');
             canvas.className = 'chromakey-canvas';
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             canvas.style.cssText = 'max-width: 100%; max-height: 100%; object-fit: contain;';
             
-            var ctx = canvas.getContext('2d', { willReadFrequently: true });
+            var ctx = canvas.getContext('2d', { 
+              willReadFrequently: true,
+              alpha: true
+            });
             
             // 隐藏video，显示canvas
             video.style.display = 'none';
@@ -6124,6 +6206,11 @@ function initApp() {
           }
         },
         computed: {
+          // 库加载管理器（引用全局实例）
+          libraryLoader: function() {
+            return window.libraryLoader;
+          },
+          
           hasReplacedMaterials: function () {
             return Object.keys(this.replacedImages).length > 0;
           },
@@ -6335,6 +6422,45 @@ function initApp() {
               afterMemory: afterMemoryMB + 'M',
               beforeFileSize: beforeFileSizeText,
               afterFileSize: afterFileSizeText
+            };
+          },
+          
+          // GIF导出源信息（供弹窗显示）
+          gifSourceInfo: function() {
+            return this.getGifSourceInfo();
+          },
+          
+          // GIF导出预估计算
+          gifEstimate: function() {
+            var config = this.gifConfig;
+            var sourceInfo = this.getGifSourceInfo();
+            
+            var width = config.width || sourceInfo.width || 100;
+            var height = config.height || sourceInfo.height || 100;
+            var fps = config.fps || 30;
+            var duration = sourceInfo.duration || 0;
+            var totalFrames = Math.ceil(duration * fps);
+            
+            // GIF文件大小预估
+            // GIF每帧大约是：宽 × 高 × 0.1（LZW压缩后）
+            // 透明底会稍微增加文件大小
+            var bytesPerFrame = width * height * (config.transparent ? 0.15 : 0.1);
+            var totalBytes = bytesPerFrame * totalFrames;
+            
+            var fileSizeText = '？';
+            if (totalFrames > 0) {
+              if (totalBytes >= 1024 * 1024) {
+                fileSizeText = (totalBytes / 1024 / 1024).toFixed(2) + 'M';
+              } else {
+                fileSizeText = Math.round(totalBytes / 1024) + 'kb';
+              }
+            }
+            
+            return {
+              frames: totalFrames,
+              duration: duration,
+              fileSize: fileSizeText,
+              fileSizeBytes: totalBytes
             };
           },
           
