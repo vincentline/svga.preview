@@ -419,10 +419,7 @@
                       <span v-if="!mp4.hasFile" class="tooltip-text">请先拖入 MP4 文件</span>
                       {{ isExportingGIF ? '导出中 ' + gifExportProgress + '%' : '导出GIF' }}
                     </button>
-                    <button class="btn-secondary tooltip">
-                      <span class="tooltip-text">正在开发中...</span>
-                      转双通道MP4
-                    </button>
+                    
                     <button 
                       class="btn-primary"
                       :class="{'tooltip': !mp4.hasFile}"
@@ -431,6 +428,15 @@
                     >
                       <span v-if="!mp4.hasFile" class="tooltip-text">请先拖入 MP4 文件</span>
                       转SVGA
+                    </button>
+                    <button 
+                      class="btn-secondary"
+                      :class="{'tooltip': !mp4.hasFile}"
+                      :disabled="!mp4.hasFile"
+                      @click="openMp4ToDualChannelPanel"
+                    >
+                      <span v-if="!mp4.hasFile" class="tooltip-text">请先拖入 MP4 文件</span>
+                      转双通道MP4
                     </button>
                   </div>
                 </template>
@@ -456,8 +462,13 @@
                       <span class="tooltip-text">正在开发中...</span>
                       转SVGA
                     </button>
-                    <button class="btn-secondary tooltip">
-                      <span class="tooltip-text">正在开发中...</span>
+                    <button 
+                      class="btn-secondary"
+                      :class="{'tooltip': !lottie.hasFile}"
+                      :disabled="!lottie.hasFile"
+                      @click="openLottieToDualChannelPanel"
+                    >
+                      <span v-if="!lottie.hasFile" class="tooltip-text">请先拖入 Lottie 文件</span>
                       转双通道MP4
                     </button>
                   </div>
@@ -727,6 +738,344 @@
               :data-progress="mp4ConvertProgress"
               :disabled="isConvertingMP4"
               @click="startMP4Conversion"
+            >
+              <template v-if="isConvertingMP4">
+                <span class="mp4-progress-text">{{ mp4ConvertProgress }}%</span>
+                <span class="mp4-stage-text">{{ mp4ConvertMessage }}</span>
+              </template>
+              <template v-else>
+                开始转换MP4
+              </template>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 普通MP4转双通道MP4弹窗（普通MP4模式右侧弹窗） -->
+      <div class="mp4-panel" :class="{'show': showMp4ToDualChannelPanel && currentModule === 'mp4'}">
+        <div class="mp4-panel-container">
+          <!-- 标题区 -->
+          <div class="mp4-panel-header">
+            <h3 class="mp4-panel-title">转换为双通道MP4格式</h3>
+            <div class="mp4-panel-divider"></div>
+          </div>
+          
+          <!-- MP4信息 -->
+          <div class="mp4-info-section">
+            <div class="mp4-info-row">MP4尺寸：{{ mp4.originalWidth }}×{{ mp4.originalHeight }}    时长：{{ mp4.fileInfo.duration }}</div>
+            <div class="mp4-compress-hint">注意：第一次转换需要加载FFmpeg（25M），请耐心等待<br>压缩质量调越低，文件就越小，画面越糊。{{ chromaKeyEnabled ? '<br>当前已启用绿幕抠图，将使用抠图后的透明通道。' : '' }}</div>
+          </div>
+
+          <!-- 配置区域 -->
+          <div class="mp4-config-section" :class="{disabled: isConvertingMP4}">
+            <!-- 遮罩位置 -->
+            <div class="mp4-config-item">
+              <div class="mp4-config-label">遮罩位置：</div>
+              <div class="mp4-select-wrapper" :class="{open: showMp4DualChannelModeDropdown, disabled: isConvertingMP4}" @click="!isConvertingMP4 && toggleMp4DualChannelModeDropdown()">
+                <div class="mp4-select-text">
+                  {{ mp4DualChannelConfig.channelMode === 'color-left-alpha-right' ? '左彩右灰' : '左灰右彩' }}
+                </div>
+                <div class="mp4-select-icon">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </div>
+                <div class="mp4-select-dropdown">
+                  <div 
+                    class="mp4-select-option"
+                    :class="{selected: mp4DualChannelConfig.channelMode === 'color-left-alpha-right'}"
+                    @click.stop="selectMp4DualChannelMode('color-left-alpha-right')"
+                  >
+                    左彩右灰（左侧彩色通道，右侧Alpha通道）
+                  </div>
+                  <div 
+                    class="mp4-select-option"
+                    :class="{selected: mp4DualChannelConfig.channelMode === 'alpha-left-color-right'}"
+                    @click.stop="selectMp4DualChannelMode('alpha-left-color-right')"
+                  >
+                    左灰右彩（左侧Alpha通道，右侧彩色通道）
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 尺寸 -->
+            <div class="mp4-config-item">
+              <div class="mp4-config-label">尺寸：</div>
+              <div class="mp4-size-container">
+                <div class="mp4-size-input-wrapper">
+                  <input 
+                    type="number" 
+                    class="mp4-input" 
+                    v-model.number="mp4DualChannelConfig.width" 
+                    @input="onMp4DualChannelWidthChange"
+                    :disabled="isConvertingMP4"
+                    min="0"
+                    max="3000"
+                  />
+                </div>
+                <div class="mp4-size-lock">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4.66667 7.33333V5.33333C4.66667 3.86057 5.86057 2.66667 7.33333 2.66667H8.66667C10.1394 2.66667 11.3333 3.86057 11.3333 5.33333V7.33333M5.33333 7.33333H10.6667C11.403 7.33333 12 7.93029 12 8.66667V12C12 12.7364 11.403 13.3333 10.6667 13.3333H5.33333C4.59695 13.3333 4 12.7364 4 12V8.66667C4 7.93029 4.59695 7.33333 5.33333 7.33333Z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </div>
+                <div class="mp4-size-input-wrapper">
+                  <input 
+                    type="number" 
+                    class="mp4-input" 
+                    v-model.number="mp4DualChannelConfig.height" 
+                    @input="onMp4DualChannelHeightChange"
+                    :disabled="isConvertingMP4"
+                    min="0"
+                    max="3000"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- 压缩到质量 -->
+            <div class="mp4-config-item">
+              <div class="mp4-config-label">压缩到质量：</div>
+              <div class="mp4-value-container">
+                <div class="mp4-value-input-wrapper">
+                  <input 
+                    type="number" 
+                    class="mp4-input" 
+                    v-model.number="mp4DualChannelConfig.quality" 
+                    :disabled="isConvertingMP4"
+                    min="1"
+                    max="100"
+                  />
+                </div>
+                <div class="mp4-value-unit">%</div>
+              </div>
+            </div>
+
+            <!-- 帧率修改 -->
+            <div class="mp4-config-item">
+              <div class="mp4-config-label">帧率修改：</div>
+              <div class="mp4-value-container">
+                <div class="mp4-value-input-wrapper">
+                  <input 
+                    type="number" 
+                    class="mp4-input" 
+                    v-model.number="mp4DualChannelConfig.fps" 
+                    :disabled="isConvertingMP4"
+                    min="1"
+                    max="120"
+                  />
+                </div>
+                <div class="mp4-value-unit">FPS</div>
+              </div>
+            </div>
+
+            <!-- 静音 -->
+            <div class="mp4-config-item">
+              <div class="mp4-config-label">静音</div>
+              <div class="mp4-mute-toggle" :class="{active: mp4DualChannelConfig.muted, disabled: isConvertingMP4}" @click="!isConvertingMP4 && (mp4DualChannelConfig.muted = !mp4DualChannelConfig.muted)">
+                <div class="mp4-mute-toggle-handle"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 底部按钮 -->
+          <div class="mp4-panel-footer">
+            <button 
+              v-if="!isConvertingMP4"
+              class="material-btn-back" 
+              @click="closeMp4ToDualChannelPanel" 
+              title="返回"
+            >
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M12 16L6 10L12 4" stroke="#333333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <button 
+              v-else
+              class="material-btn-back mp4-btn-cancel" 
+              @click="cancelMp4ToDualChannelConversion" 
+              title="取消转换"
+            >
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M5 5L15 15M15 5L5 15" stroke="#ff4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            
+            <button 
+              class="material-btn-export" 
+              :class="{'mp4-btn-converting': isConvertingMP4}"
+              :data-progress="mp4ConvertProgress"
+              :disabled="isConvertingMP4"
+              @click="startMp4ToDualChannelConversion"
+            >
+              <template v-if="isConvertingMP4">
+                <span class="mp4-progress-text">{{ mp4ConvertProgress }}%</span>
+                <span class="mp4-stage-text">{{ mp4ConvertMessage }}</span>
+              </template>
+              <template v-else>
+                开始转换MP4
+              </template>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Lottie转双通道MP4弹窗（Lottie模式右侧弹窗） -->
+      <div class="mp4-panel" :class="{'show': showLottieToDualChannelPanel && currentModule === 'lottie'}">
+        <div class="mp4-panel-container">
+          <!-- 标题区 -->
+          <div class="mp4-panel-header">
+            <h3 class="mp4-panel-title">转换为双通道MP4格式</h3>
+            <div class="mp4-panel-divider"></div>
+          </div>
+          
+          <!-- Lottie信息 -->
+          <div class="mp4-info-section">
+            <div class="mp4-info-row">Lottie尺寸：{{ lottie.fileInfo.sizeWH }}    时长：{{ lottie.fileInfo.duration }}</div>
+            <div class="mp4-compress-hint">注意：第一次转换需要加载FFmpeg（25M），请耐心等待<br>压缩质量调越低，文件就越小，画面越糊。</div>
+          </div>
+
+          <!-- 配置区域 -->
+          <div class="mp4-config-section" :class="{disabled: isConvertingMP4}">
+            <!-- 遮罩位置 -->
+            <div class="mp4-config-item">
+              <div class="mp4-config-label">遮罩位置：</div>
+              <div class="mp4-select-wrapper" :class="{open: showLottieDualChannelModeDropdown, disabled: isConvertingMP4}" @click="!isConvertingMP4 && toggleLottieDualChannelModeDropdown()">
+                <div class="mp4-select-text">
+                  {{ lottieDualChannelConfig.channelMode === 'color-left-alpha-right' ? '左彩右灰' : '左灰右彩' }}
+                </div>
+                <div class="mp4-select-icon">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </div>
+                <div class="mp4-select-dropdown">
+                  <div 
+                    class="mp4-select-option"
+                    :class="{selected: lottieDualChannelConfig.channelMode === 'color-left-alpha-right'}"
+                    @click.stop="selectLottieDualChannelMode('color-left-alpha-right')"
+                  >
+                    左彩右灰（左侧彩色通道，右侧Alpha通道）
+                  </div>
+                  <div 
+                    class="mp4-select-option"
+                    :class="{selected: lottieDualChannelConfig.channelMode === 'alpha-left-color-right'}"
+                    @click.stop="selectLottieDualChannelMode('alpha-left-color-right')"
+                  >
+                    左灰右彩（左侧Alpha通道，右侧彩色通道）
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 尺寸 -->
+            <div class="mp4-config-item">
+              <div class="mp4-config-label">尺寸：</div>
+              <div class="mp4-size-container">
+                <div class="mp4-size-input-wrapper">
+                  <input 
+                    type="number" 
+                    class="mp4-input" 
+                    v-model.number="lottieDualChannelConfig.width" 
+                    @input="onLottieDualChannelWidthChange"
+                    :disabled="isConvertingMP4"
+                    min="0"
+                    max="3000"
+                  />
+                </div>
+                <div class="mp4-size-lock">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4.66667 7.33333V5.33333C4.66667 3.86057 5.86057 2.66667 7.33333 2.66667H8.66667C10.1394 2.66667 11.3333 3.86057 11.3333 5.33333V7.33333M5.33333 7.33333H10.6667C11.403 7.33333 12 7.93029 12 8.66667V12C12 12.7364 11.403 13.3333 10.6667 13.3333H5.33333C4.59695 13.3333 4 12.7364 4 12V8.66667C4 7.93029 4.59695 7.33333 5.33333 7.33333Z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </div>
+                <div class="mp4-size-input-wrapper">
+                  <input 
+                    type="number" 
+                    class="mp4-input" 
+                    v-model.number="lottieDualChannelConfig.height" 
+                    @input="onLottieDualChannelHeightChange"
+                    :disabled="isConvertingMP4"
+                    min="0"
+                    max="3000"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- 压缩到质量 -->
+            <div class="mp4-config-item">
+              <div class="mp4-config-label">压缩到质量：</div>
+              <div class="mp4-value-container">
+                <div class="mp4-value-input-wrapper">
+                  <input 
+                    type="number" 
+                    class="mp4-input" 
+                    v-model.number="lottieDualChannelConfig.quality" 
+                    :disabled="isConvertingMP4"
+                    min="1"
+                    max="100"
+                  />
+                </div>
+                <div class="mp4-value-unit">%</div>
+              </div>
+            </div>
+
+            <!-- 帧率修改 -->
+            <div class="mp4-config-item">
+              <div class="mp4-config-label">帧率修改：</div>
+              <div class="mp4-value-container">
+                <div class="mp4-value-input-wrapper">
+                  <input 
+                    type="number" 
+                    class="mp4-input" 
+                    v-model.number="lottieDualChannelConfig.fps" 
+                    :disabled="isConvertingMP4"
+                    min="1"
+                    max="120"
+                  />
+                </div>
+                <div class="mp4-value-unit">FPS</div>
+              </div>
+            </div>
+
+            <!-- 静音 -->
+            <div class="mp4-config-item">
+              <div class="mp4-config-label">静音</div>
+              <div class="mp4-mute-toggle" :class="{active: lottieDualChannelConfig.muted, disabled: isConvertingMP4}" @click="!isConvertingMP4 && (lottieDualChannelConfig.muted = !lottieDualChannelConfig.muted)">
+                <div class="mp4-mute-toggle-handle"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 底部按钮 -->
+          <div class="mp4-panel-footer">
+            <button 
+              v-if="!isConvertingMP4"
+              class="material-btn-back" 
+              @click="closeLottieToDualChannelPanel" 
+              title="返回"
+            >
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M12 16L6 10L12 4" stroke="#333333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <button 
+              v-else
+              class="material-btn-back mp4-btn-cancel" 
+              @click="cancelLottieToDualChannelConversion" 
+              title="取消转换"
+            >
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M5 5L15 15M15 5L5 15" stroke="#ff4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            
+            <button 
+              class="material-btn-export" 
+              :class="{'mp4-btn-converting': isConvertingMP4}"
+              :data-progress="mp4ConvertProgress"
+              :disabled="isConvertingMP4"
+              @click="startLottieToDualChannelConversion"
             >
               <template v-if="isConvertingMP4">
                 <span class="mp4-progress-text">{{ mp4ConvertProgress }}%</span>

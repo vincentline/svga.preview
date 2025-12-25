@@ -277,6 +277,32 @@ function initApp() {
             svgaConvertMessage: '',
             svgaConvertCancelled: false,
             
+            // 普通MP4转双通道MP4配置
+            showMp4ToDualChannelPanel: false,
+            showMp4DualChannelModeDropdown: false,
+            mp4DualChannelConfig: {
+              channelMode: 'color-left-alpha-right',
+              width: 0,
+              height: 0,
+              quality: 80,
+              fps: 30,
+              muted: false,
+              aspectRatio: 1
+            },
+            
+            // Lottie转双通道MP4配置
+            showLottieToDualChannelPanel: false,
+            showLottieDualChannelModeDropdown: false,
+            lottieDualChannelConfig: {
+              channelMode: 'color-left-alpha-right',
+              width: 0,
+              height: 0,
+              quality: 80,
+              fps: 30,
+              muted: true, // Lottie默认静音
+              aspectRatio: 1
+            },
+            
             // 绿幕抠图配置（普通MP4）
             showChromaKeyPanel: false,
             chromaKeyEnabled: false,
@@ -467,6 +493,8 @@ function initApp() {
             this.showMP4Panel = false;
             this.showSVGAPanel = false;
             this.showMp4ToSvgaPanel = false;
+            this.showMp4ToDualChannelPanel = false;
+            this.showLottieToDualChannelPanel = false;
             this.showGifPanel = false;
             this[panelName] = true;
           },
@@ -3265,6 +3293,12 @@ function initApp() {
               gif.on('abort', function() {
                 reject(new Error('用户取消'));
               });
+              
+              // 添加错误监听
+              gif.on('error', function(error) {
+                console.error('[GIF编码错误]', error);
+                reject(new Error('GIF编码失败: ' + error.message));
+              });
             });
             
             // 暂停播放
@@ -3336,7 +3370,7 @@ function initApp() {
                 gif.addFrame(outputCanvas, frameOptions);
                 
                 this.gifExportProgress = Math.floor((i / totalFrames) * 50);
-                this.gifExportMessage = '捕获帧 ' + (i + 1) + '/' + totalFrames;
+                this.gifExportMessage = '捕捉帧 ' + (i + 1) + '/' + totalFrames;
               }
               
               // 开始编码
@@ -4507,6 +4541,712 @@ function initApp() {
               this.mp4ConvertProgress = 0;
             }
             this.showMP4Panel = false;
+          },
+
+          /* 普通MP4转双通道MP4功能 */
+          
+          /**
+           * 打开普通MP4转双通道MP4弹窗
+           */
+          openMp4ToDualChannelPanel: function () {
+            if (!this.mp4Video || !this.mp4.hasFile) {
+              alert('请先加载 MP4 文件');
+              return;
+            }
+
+            // 初始化配置
+            this.mp4DualChannelConfig.width = this.mp4.originalWidth;
+            this.mp4DualChannelConfig.height = this.mp4.originalHeight;
+            this.mp4DualChannelConfig.aspectRatio = this.mp4.originalWidth / this.mp4.originalHeight;
+            
+            // 使用视频帧率
+            var videoFps = this.mp4.fileInfo.fps || 30;
+            this.mp4DualChannelConfig.fps = Math.min(120, Math.max(1, Math.round(parseFloat(videoFps))));
+            
+            // 读取保存的配置
+            try {
+              var savedQuality = localStorage.getItem('mp4_quality');
+              if (savedQuality !== null) {
+                this.mp4DualChannelConfig.quality = parseInt(savedQuality);
+              }
+            } catch (e) {}
+
+            this.openRightPanel('showMp4ToDualChannelPanel');
+            
+            // 预加载FFmpeg
+            if (!this.libraryLoader.loadedLibs['ffmpeg']) {
+              this.loadLibrary('ffmpeg', true);
+            }
+          },
+
+          closeMp4ToDualChannelPanel: function () {
+            if (this.isConvertingMP4) {
+              if (!confirm('正在转换中，确定要取消吗？')) {
+                return;
+              }
+              this.isConvertingMP4 = false;
+              this.mp4ConvertProgress = 0;
+            }
+            this.showMp4ToDualChannelPanel = false;
+          },
+
+          toggleMp4DualChannelModeDropdown: function () {
+            this.showMp4DualChannelModeDropdown = !this.showMp4DualChannelModeDropdown;
+          },
+
+          selectMp4DualChannelMode: function (mode) {
+            this.mp4DualChannelConfig.channelMode = mode;
+            this.showMp4DualChannelModeDropdown = false;
+          },
+
+          onMp4DualChannelWidthChange: function () {
+            var w = this.mp4DualChannelConfig.width;
+            if (w > 0 && this.mp4DualChannelConfig.aspectRatio > 0) {
+              this.mp4DualChannelConfig.height = Math.round(w / this.mp4DualChannelConfig.aspectRatio);
+            }
+          },
+
+          onMp4DualChannelHeightChange: function () {
+            var h = this.mp4DualChannelConfig.height;
+            if (h > 0 && this.mp4DualChannelConfig.aspectRatio > 0) {
+              this.mp4DualChannelConfig.width = Math.round(h * this.mp4DualChannelConfig.aspectRatio);
+            }
+          },
+
+          cancelMp4ToDualChannelConversion: function () {
+            if (confirm('确定要取消转换吗？')) {
+              this.mp4ConvertCancelled = true;
+            }
+          },
+
+          /**
+           * 开始普通MP4转双通道MP4
+           */
+          startMp4ToDualChannelConversion: async function () {
+            var _this = this;
+
+            if (!this.mp4Video || !this.mp4.hasFile) {
+              alert('请先加载 MP4 文件');
+              return;
+            }
+            
+            if (!this.confirmIfHasOngoingTasks('MP4转双通道', 'task')) {
+              return;
+            }
+
+            // 参数验证
+            var config = this.mp4DualChannelConfig;
+            if (config.width < 1 || config.width > 9999) {
+              alert('宽度超出范围！\n\n合法范围：1-9999 像素');
+              return;
+            }
+            if (config.height < 1 || config.height > 9999) {
+              alert('高度超出范围！\n\n合法范围：1-9999 像素');
+              return;
+            }
+            if (config.quality < 1 || config.quality > 100) {
+              alert('压缩质量超出范围！\n\n合法范围：1-100');
+              return;
+            }
+            if (config.fps < 1 || config.fps > 120) {
+              alert('帧率超出范围！\n\n合法范围：1-120 fps');
+              return;
+            }
+
+            // 保存配置
+            try {
+              localStorage.setItem('mp4_quality', config.quality);
+            } catch (e) {}
+
+            this.isConvertingMP4 = true;
+            this.mp4ConvertProgress = 0;
+            this.mp4ConvertCancelled = false;
+            this.mp4ConvertStage = 'loading';
+            this.mp4ConvertMessage = '正在加载转换器...';
+
+            try {
+              // 1. 加载FFmpeg
+              await this.loadFFmpeg();
+              if (this.mp4ConvertCancelled) throw new Error('用户取消转换');
+
+              // 2. 提取序列帧
+              this.mp4ConvertStage = 'extracting';
+              this.mp4ConvertMessage = '正在提取序列帧...';
+              var frames = await this.extractMp4FramesForDualChannel();
+              if (this.mp4ConvertCancelled) throw new Error('用户取消转换');
+
+              // 3. 合成双通道
+              this.mp4ConvertStage = 'composing';
+              this.mp4ConvertMessage = '正在合成双通道...';
+              var dualFrames = await this.composeMp4DualChannelFrames(frames);
+              if (this.mp4ConvertCancelled) throw new Error('用户取消转换');
+
+              // 4. 编码为MP4
+              this.mp4ConvertStage = 'encoding';
+              this.mp4ConvertMessage = '正在编码为MP4...';
+              var mp4Blob = await this.encodeMp4DualChannel(dualFrames, config);
+              if (this.mp4ConvertCancelled) throw new Error('用户取消转换');
+
+              // 5. 下载
+              this.mp4ConvertStage = 'done';
+              this.mp4ConvertMessage = '转换完成！';
+              this.mp4ConvertProgress = 100;
+              this.downloadDualChannelMP4(mp4Blob, 'mp4');
+              
+              setTimeout(function() {
+                alert('✅ 转换完成！');
+              }, 500);
+              
+            } catch (error) {
+              if (error.message !== '用户取消转换') {
+                console.error('MP4转双通道失败:', error);
+                alert('转换失败：' + error.message);
+              }
+            } finally {
+              this.isConvertingMP4 = false;
+              this.mp4ConvertProgress = 0;
+              this.mp4ConvertStage = '';
+              this.mp4ConvertMessage = '';
+            }
+          },
+
+          /**
+           * 提取普通MP4的序列帧（用于双通道转换）
+           */
+          extractMp4FramesForDualChannel: async function () {
+            var _this = this;
+            var video = this.mp4Video;
+            var config = this.mp4DualChannelConfig;
+            var fps = config.fps;
+            var duration = video.duration;
+            var totalFrames = Math.ceil(duration * fps);
+            var frames = [];
+            
+            // 创建canvas
+            var canvas = document.createElement('canvas');
+            canvas.width = config.width;
+            canvas.height = config.height;
+            var ctx = canvas.getContext('2d', { willReadFrequently: true, alpha: true });
+            
+            // 是否使用绿幕抠图
+            var useChromaKey = this.chromaKeyEnabled;
+            var chromaCanvas = null;
+            var chromaCtx = null;
+            
+            if (useChromaKey) {
+              // 绿幕抠图模式：从抠图后的canvas获取
+              chromaCanvas = this.$refs.svgaContainer.querySelector('canvas.chromakey-canvas');
+            }
+            
+            // 暂停视频
+            var wasPlaying = !video.paused;
+            video.pause();
+            
+            for (var i = 0; i < totalFrames; i++) {
+              if (this.mp4ConvertCancelled) break;
+              
+              var time = i / fps;
+              video.currentTime = time;
+              
+              // 等待seek完成
+              await new Promise(function(resolve) {
+                video.onseeked = resolve;
+              });
+              
+              // 清空并绘制
+              ctx.clearRect(0, 0, config.width, config.height);
+              
+              if (useChromaKey && chromaCanvas) {
+                // 从绿幕抠图 canvas获取（需要先渲染一帧）
+                this.applyChromaKeyFrame();
+                await new Promise(function(r) { setTimeout(r, 30); });
+                ctx.drawImage(chromaCanvas, 0, 0, config.width, config.height);
+              } else {
+                // 普通模式：直接从视频绘制（不透明）
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(0, 0, config.width, config.height);
+                ctx.drawImage(video, 0, 0, config.width, config.height);
+              }
+              
+              // 获取像素数据
+              var imageData = ctx.getImageData(0, 0, config.width, config.height);
+              frames.push(imageData);
+              
+              this.mp4ConvertProgress = Math.floor((i / totalFrames) * 30);
+            }
+            
+            // 恢复播放
+            if (wasPlaying) {
+              video.play();
+            }
+            
+            return frames;
+          },
+
+          /**
+           * 应用绿幕抠图到当前帧
+           */
+          applyChromaKeyFrame: function () {
+            var video = this.mp4Video;
+            var container = this.$refs.svgaContainer;
+            var canvas = container.querySelector('canvas.chromakey-canvas');
+            if (!canvas || !video) return;
+            
+            var ctx = canvas.getContext('2d', { willReadFrequently: true, alpha: true });
+            ctx.drawImage(video, 0, 0);
+            
+            // 应用绿幕抠图效果
+            var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            var data = imageData.data;
+            var similarity = this.chromaKeySimilarity / 100;
+            var smoothness = this.chromaKeySmoothness / 100;
+            
+            for (var i = 0; i < data.length; i += 4) {
+              var r = data[i];
+              var g = data[i + 1];
+              var b = data[i + 2];
+              
+              var greenDiff = g - Math.max(r, b);
+              var threshold = similarity * 255;
+              
+              if (greenDiff > threshold * 0.5) {
+                var alpha = 1 - Math.min(1, (greenDiff - threshold * 0.5) / (threshold * smoothness + 1));
+                data[i + 3] = Math.round(alpha * 255);
+              }
+            }
+            
+            ctx.putImageData(imageData, 0, 0);
+          },
+
+          /**
+           * 合成双通道帧（普通MP4用）
+           */
+          composeMp4DualChannelFrames: async function (frames) {
+            var _this = this;
+            var config = this.mp4DualChannelConfig;
+            var isColorLeftAlphaRight = config.channelMode === 'color-left-alpha-right';
+            var jpegFrames = [];
+            
+            var dualWidth = config.width * 2;
+            var dualHeight = config.height;
+            
+            // 创建canvas
+            var canvas = document.createElement('canvas');
+            canvas.width = dualWidth;
+            canvas.height = dualHeight;
+            var ctx = canvas.getContext('2d', { willReadFrequently: true });
+            
+            for (var i = 0; i < frames.length; i++) {
+              if (this.mp4ConvertCancelled) break;
+              
+              var frame = frames[i];
+              
+              // 清空并填充黑色背景
+              ctx.fillStyle = '#000000';
+              ctx.fillRect(0, 0, dualWidth, dualHeight);
+              
+              // 创建彩色通道和Alpha通道的ImageData
+              var colorData = ctx.createImageData(config.width, config.height);
+              var alphaData = ctx.createImageData(config.width, config.height);
+              
+              for (var j = 0; j < frame.data.length; j += 4) {
+                var r = frame.data[j];
+                var g = frame.data[j + 1];
+                var b = frame.data[j + 2];
+                var a = frame.data[j + 3];
+                
+                // 彩色通道
+                colorData.data[j] = r;
+                colorData.data[j + 1] = g;
+                colorData.data[j + 2] = b;
+                colorData.data[j + 3] = 255;
+                
+                // Alpha通道（灰度）
+                alphaData.data[j] = a;
+                alphaData.data[j + 1] = a;
+                alphaData.data[j + 2] = a;
+                alphaData.data[j + 3] = 255;
+              }
+              
+              // 放置到双通道canvas
+              if (isColorLeftAlphaRight) {
+                ctx.putImageData(colorData, 0, 0);
+                ctx.putImageData(alphaData, config.width, 0);
+              } else {
+                ctx.putImageData(alphaData, 0, 0);
+                ctx.putImageData(colorData, config.width, 0);
+              }
+              
+              // 转换为JPEG
+              var jpegData = await new Promise(function(resolve) {
+                canvas.toBlob(function(blob) {
+                  var reader = new FileReader();
+                  reader.onload = function() {
+                    resolve(new Uint8Array(reader.result));
+                  };
+                  reader.readAsArrayBuffer(blob);
+                }, 'image/jpeg', 0.95);
+              });
+              
+              jpegFrames.push(jpegData);
+              
+              this.mp4ConvertProgress = 30 + Math.floor((i / frames.length) * 30);
+            }
+            
+            return jpegFrames;
+          },
+
+          /**
+           * 编码双通道MP4
+           */
+          encodeMp4DualChannel: async function (jpegFrames, config) {
+            var _this = this;
+            var ffmpeg = this.ffmpeg;
+            
+            // 写入帧数据
+            for (var i = 0; i < jpegFrames.length; i++) {
+              var frameName = 'frame' + String(i).padStart(6, '0') + '.jpg';
+              await ffmpeg.writeFile(frameName, jpegFrames[i]);
+            }
+            
+            // FFmpeg编码参数
+            var crf = Math.round(51 - (config.quality / 100) * 33);
+            var dualWidth = config.width * 2;
+            
+            var ffmpegArgs = [
+              '-framerate', String(config.fps),
+              '-i', 'frame%06d.jpg',
+              '-c:v', 'libx264',
+              '-crf', String(crf),
+              '-pix_fmt', 'yuv420p',
+              '-s', dualWidth + 'x' + config.height,
+              '-y', 'output.mp4'
+            ];
+            
+            ffmpeg.on('progress', function(p) {
+              _this.mp4ConvertProgress = 60 + Math.floor(p.progress * 40);
+            });
+            
+            await ffmpeg.exec(ffmpegArgs);
+            
+            // 读取输出
+            var data = await ffmpeg.readFile('output.mp4');
+            
+            // 清理文件
+            for (var i = 0; i < jpegFrames.length; i++) {
+              var frameName = 'frame' + String(i).padStart(6, '0') + '.jpg';
+              try { await ffmpeg.deleteFile(frameName); } catch (e) {}
+            }
+            try { await ffmpeg.deleteFile('output.mp4'); } catch (e) {}
+            
+            return new Blob([data.buffer], { type: 'video/mp4' });
+          },
+
+          /**
+           * 下载双通道MP4
+           */
+          downloadDualChannelMP4: function (blob, sourceType) {
+            var baseName = 'dual-channel';
+            if (sourceType === 'mp4' && this.mp4.fileInfo.name) {
+              baseName = this.mp4.fileInfo.name.replace(/\.mp4$/i, '');
+            } else if (sourceType === 'lottie' && this.lottie.fileInfo.name) {
+              baseName = this.lottie.fileInfo.name.replace(/\.json$/i, '');
+            }
+            
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = baseName + '_dual.mp4';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(function() { URL.revokeObjectURL(url); }, 100);
+          },
+
+          /* Lottie转双通道MP4功能 */
+          
+          /**
+           * 打开Lottie转双通道MP4弹窗
+           */
+          openLottieToDualChannelPanel: function () {
+            if (!this.lottiePlayer || !this.lottie.hasFile) {
+              alert('请先加载 Lottie 文件');
+              return;
+            }
+
+            // 初始化配置
+            var animData = this.lottie.animationData;
+            this.lottieDualChannelConfig.width = animData.w || 300;
+            this.lottieDualChannelConfig.height = animData.h || 300;
+            this.lottieDualChannelConfig.aspectRatio = this.lottieDualChannelConfig.width / this.lottieDualChannelConfig.height;
+            
+            var fr = animData.fr || 30;
+            this.lottieDualChannelConfig.fps = Math.min(120, Math.max(1, Math.round(fr)));
+            
+            try {
+              var savedQuality = localStorage.getItem('mp4_quality');
+              if (savedQuality !== null) {
+                this.lottieDualChannelConfig.quality = parseInt(savedQuality);
+              }
+            } catch (e) {}
+
+            this.openRightPanel('showLottieToDualChannelPanel');
+            
+            if (!this.libraryLoader.loadedLibs['ffmpeg']) {
+              this.loadLibrary('ffmpeg', true);
+            }
+          },
+
+          closeLottieToDualChannelPanel: function () {
+            if (this.isConvertingMP4) {
+              if (!confirm('正在转换中，确定要取消吗？')) {
+                return;
+              }
+              this.isConvertingMP4 = false;
+              this.mp4ConvertProgress = 0;
+            }
+            this.showLottieToDualChannelPanel = false;
+          },
+
+          toggleLottieDualChannelModeDropdown: function () {
+            this.showLottieDualChannelModeDropdown = !this.showLottieDualChannelModeDropdown;
+          },
+
+          selectLottieDualChannelMode: function (mode) {
+            this.lottieDualChannelConfig.channelMode = mode;
+            this.showLottieDualChannelModeDropdown = false;
+          },
+
+          onLottieDualChannelWidthChange: function () {
+            var w = this.lottieDualChannelConfig.width;
+            if (w > 0 && this.lottieDualChannelConfig.aspectRatio > 0) {
+              this.lottieDualChannelConfig.height = Math.round(w / this.lottieDualChannelConfig.aspectRatio);
+            }
+          },
+
+          onLottieDualChannelHeightChange: function () {
+            var h = this.lottieDualChannelConfig.height;
+            if (h > 0 && this.lottieDualChannelConfig.aspectRatio > 0) {
+              this.lottieDualChannelConfig.width = Math.round(h * this.lottieDualChannelConfig.aspectRatio);
+            }
+          },
+
+          cancelLottieToDualChannelConversion: function () {
+            if (confirm('确定要取消转换吗？')) {
+              this.mp4ConvertCancelled = true;
+            }
+          },
+
+          /**
+           * 开始Lottie转双通道MP4
+           */
+          startLottieToDualChannelConversion: async function () {
+            var _this = this;
+
+            if (!this.lottiePlayer || !this.lottie.hasFile) {
+              alert('请先加载 Lottie 文件');
+              return;
+            }
+            
+            if (!this.confirmIfHasOngoingTasks('Lottie转双通道', 'task')) {
+              return;
+            }
+
+            var config = this.lottieDualChannelConfig;
+            if (config.width < 1 || config.width > 9999) {
+              alert('宽度超出范围！');
+              return;
+            }
+            if (config.height < 1 || config.height > 9999) {
+              alert('高度超出范围！');
+              return;
+            }
+            if (config.quality < 1 || config.quality > 100) {
+              alert('压缩质量超出范围！');
+              return;
+            }
+            if (config.fps < 1 || config.fps > 120) {
+              alert('帧率超出范围！');
+              return;
+            }
+
+            try {
+              localStorage.setItem('mp4_quality', config.quality);
+            } catch (e) {}
+
+            this.isConvertingMP4 = true;
+            this.mp4ConvertProgress = 0;
+            this.mp4ConvertCancelled = false;
+            this.mp4ConvertStage = 'loading';
+            this.mp4ConvertMessage = '正在加载转换器...';
+
+            try {
+              await this.loadFFmpeg();
+              if (this.mp4ConvertCancelled) throw new Error('用户取消转换');
+
+              this.mp4ConvertStage = 'extracting';
+              this.mp4ConvertMessage = '正在提取序列帧...';
+              var frames = await this.extractLottieFrames();
+              if (this.mp4ConvertCancelled) throw new Error('用户取消转换');
+
+              this.mp4ConvertStage = 'composing';
+              this.mp4ConvertMessage = '正在合成双通道...';
+              var dualFrames = await this.composeLottieDualChannelFrames(frames);
+              if (this.mp4ConvertCancelled) throw new Error('用户取消转换');
+
+              this.mp4ConvertStage = 'encoding';
+              this.mp4ConvertMessage = '正在编码为MP4...';
+              var mp4Blob = await this.encodeMp4DualChannel(dualFrames, config);
+              if (this.mp4ConvertCancelled) throw new Error('用户取消转换');
+
+              this.mp4ConvertStage = 'done';
+              this.mp4ConvertMessage = '转换完成！';
+              this.mp4ConvertProgress = 100;
+              this.downloadDualChannelMP4(mp4Blob, 'lottie');
+              
+              setTimeout(function() {
+                alert('✅ 转换完成！');
+              }, 500);
+              
+            } catch (error) {
+              if (error.message !== '用户取消转换') {
+                console.error('Lottie转双通道失败:', error);
+                alert('转换失败：' + error.message);
+              }
+            } finally {
+              this.isConvertingMP4 = false;
+              this.mp4ConvertProgress = 0;
+              this.mp4ConvertStage = '';
+              this.mp4ConvertMessage = '';
+            }
+          },
+
+          /**
+           * 提取Lottie序列帧
+           */
+          extractLottieFrames: async function () {
+            var _this = this;
+            var player = this.lottiePlayer;
+            var config = this.lottieDualChannelConfig;
+            var animData = this.lottie.animationData;
+            
+            var totalFrames = animData.op - animData.ip; // Lottie总帧数
+            var frames = [];
+            
+            // 获取canvas
+            var container = this.$refs.svgaContainer;
+            var sourceCanvas = container.querySelector('canvas');
+            if (!sourceCanvas) {
+              throw new Error('无法获取Lottie渲染canvas');
+            }
+            
+            // 创建输出canvas
+            var canvas = document.createElement('canvas');
+            canvas.width = config.width;
+            canvas.height = config.height;
+            var ctx = canvas.getContext('2d', { willReadFrequently: true, alpha: true });
+            
+            // 暂停播放
+            var wasPlaying = !player.isPaused;
+            player.pause();
+            
+            for (var i = 0; i < totalFrames; i++) {
+              if (this.mp4ConvertCancelled) break;
+              
+              // 跳转到指定帧
+              player.goToAndStop(i, true);
+              
+              // 等待渲染
+              await new Promise(function(r) { setTimeout(r, 30); });
+              
+              // 清空并绘制
+              ctx.clearRect(0, 0, config.width, config.height);
+              ctx.drawImage(sourceCanvas, 0, 0, config.width, config.height);
+              
+              // 获取像素数据
+              var imageData = ctx.getImageData(0, 0, config.width, config.height);
+              frames.push(imageData);
+              
+              this.mp4ConvertProgress = Math.floor((i / totalFrames) * 30);
+            }
+            
+            // 恢复播放
+            if (wasPlaying) {
+              player.play();
+            }
+            
+            return frames;
+          },
+
+          /**
+           * 合成双通道帧（Lottie用，复用MP4的逻辑）
+           */
+          composeLottieDualChannelFrames: async function (frames) {
+            var _this = this;
+            var config = this.lottieDualChannelConfig;
+            var isColorLeftAlphaRight = config.channelMode === 'color-left-alpha-right';
+            var jpegFrames = [];
+            
+            var dualWidth = config.width * 2;
+            var dualHeight = config.height;
+            
+            var canvas = document.createElement('canvas');
+            canvas.width = dualWidth;
+            canvas.height = dualHeight;
+            var ctx = canvas.getContext('2d', { willReadFrequently: true });
+            
+            for (var i = 0; i < frames.length; i++) {
+              if (this.mp4ConvertCancelled) break;
+              
+              var frame = frames[i];
+              
+              ctx.fillStyle = '#000000';
+              ctx.fillRect(0, 0, dualWidth, dualHeight);
+              
+              var colorData = ctx.createImageData(config.width, config.height);
+              var alphaData = ctx.createImageData(config.width, config.height);
+              
+              for (var j = 0; j < frame.data.length; j += 4) {
+                var r = frame.data[j];
+                var g = frame.data[j + 1];
+                var b = frame.data[j + 2];
+                var a = frame.data[j + 3];
+                
+                colorData.data[j] = r;
+                colorData.data[j + 1] = g;
+                colorData.data[j + 2] = b;
+                colorData.data[j + 3] = 255;
+                
+                alphaData.data[j] = a;
+                alphaData.data[j + 1] = a;
+                alphaData.data[j + 2] = a;
+                alphaData.data[j + 3] = 255;
+              }
+              
+              if (isColorLeftAlphaRight) {
+                ctx.putImageData(colorData, 0, 0);
+                ctx.putImageData(alphaData, config.width, 0);
+              } else {
+                ctx.putImageData(alphaData, 0, 0);
+                ctx.putImageData(colorData, config.width, 0);
+              }
+              
+              var jpegData = await new Promise(function(resolve) {
+                canvas.toBlob(function(blob) {
+                  var reader = new FileReader();
+                  reader.onload = function() {
+                    resolve(new Uint8Array(reader.result));
+                  };
+                  reader.readAsArrayBuffer(blob);
+                }, 'image/jpeg', 0.95);
+              });
+              
+              jpegFrames.push(jpegData);
+              
+              this.mp4ConvertProgress = 30 + Math.floor((i / frames.length) * 30);
+            }
+            
+            return jpegFrames;
           },
 
           /* SVGA 转换功能（双通道MP4转SVGA） */
@@ -6442,9 +7182,14 @@ function initApp() {
             var totalFrames = Math.ceil(duration * fps);
             
             // GIF文件大小预估
-            // GIF每帧大约是：宽 × 高 × 0.1（LZW压缩后）
-            // 透明底会稍微增加文件大小
-            var bytesPerFrame = width * height * (config.transparent ? 0.15 : 0.1);
+            // GIF每帧大约是：宽 × 高 × 压缩系数（LZW压缩后）
+            // 透明底会增加文件大小，杂色边也会稍微增加
+            // 系数根据实际测试调整：透明0.16，不透明0.13
+            var compressionFactor = config.transparent ? 0.16 : 0.13;
+            if (config.transparent && config.dither) {
+              compressionFactor = 0.18; // 透明+杂色边略高
+            }
+            var bytesPerFrame = width * height * compressionFactor;
             var totalBytes = bytesPerFrame * totalFrames;
             
             var fileSizeText = '？';
