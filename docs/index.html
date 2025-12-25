@@ -11,7 +11,10 @@
     <!-- 外部样式表（优先加载） -->
     <link rel="stylesheet" href="assets/css/styles.css" />
     
-    <!-- ===== 所有库统一由 app.js 中的库加载管理系统动态加载 ===== -->
+    <!-- 库加载管理器（优先加载，独立模块） -->
+    <script src="assets/js/library-loader.js"></script>
+    
+    <!-- ===== 所有库统一由 library-loader.js 动态加载 ===== -->
     <!-- Vue.js - 核心框架，优先级最高 -->
     <!-- SVGA播放器 - 核心功能，优先级次之 -->
     <!-- Lottie、Howler - 后台加载 -->
@@ -328,7 +331,7 @@
                       class="btn-primary"
                       :class="{'tooltip': !svga.hasFile}"
                       :disabled="!svga.hasFile || isExportingGIF"
-                      @click="exportGIF"
+                      @click="openGifPanel"
                     >
                       <span v-if="!svga.hasFile" class="tooltip-text">请先拖入 SVGA 文件</span>
                       {{ isExportingGIF ? '导出中 ' + gifExportProgress + '%' : '导出GIF' }}
@@ -373,7 +376,7 @@
                       class="btn-primary"
                       :class="{'tooltip': !yyeva.hasFile}"
                       :disabled="!yyeva.hasFile || isExportingGIF"
-                      @click="exportYyevaGIF"
+                      @click="openGifPanel"
                     >
                       <span v-if="!yyeva.hasFile" class="tooltip-text">请先拖入 MP4 文件</span>
                       {{ isExportingGIF ? '导出中 ' + gifExportProgress + '%' : '导出GIF' }}
@@ -411,7 +414,7 @@
                       class="btn-primary"
                       :class="{'tooltip': !mp4.hasFile}"
                       :disabled="!mp4.hasFile || isExportingGIF"
-                      @click="exportMp4GIF"
+                      @click="openGifPanel"
                     >
                       <span v-if="!mp4.hasFile" class="tooltip-text">请先拖入 MP4 文件</span>
                       {{ isExportingGIF ? '导出中 ' + gifExportProgress + '%' : '导出GIF' }}
@@ -444,7 +447,7 @@
                       class="btn-primary"
                       :class="{'tooltip': !lottie.hasFile}"
                       :disabled="!lottie.hasFile || isExportingGIF"
-                      @click="exportLottieGIF"
+                      @click="openGifPanel"
                     >
                       <span v-if="!lottie.hasFile" class="tooltip-text">请先拖入 Lottie 文件</span>
                       {{ isExportingGIF ? '导出中 ' + gifExportProgress + '%' : '导出GIF' }}
@@ -1029,6 +1032,158 @@
               </template>
               <template v-else>
                 开始转换SVGA
+              </template>
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- GIF导出弹窗（所有模式通用右侧弹窗） -->
+      <div class="svga-panel gif-panel" :class="{'show': showGifPanel}">
+        <div class="svga-panel-container">
+          <!-- 标题区 -->
+          <div class="svga-panel-header">
+            <h3 class="svga-panel-title">导出为GIF动图</h3>
+            <div class="svga-panel-divider"></div>
+          </div>
+          
+          <!-- 当前文件信息 -->
+          <div class="svga-info-section">
+            <div class="svga-info-row">当前尺寸：{{ gifSourceInfo.sizeWH }}    帧率：{{ gifSourceInfo.fps }}FPS    时长：{{ gifSourceInfo.duration }}s</div>
+            <div class="svga-compress-hint">注意：GIF文件体积较大，建议控制尺寸和帧率。超过10M的GIF可能加载较慢。</div>
+          </div>
+
+          <!-- 配置区域 -->
+          <div class="svga-config-section" :class="{disabled: isExportingGIF}">
+            <!-- 尺寸 -->
+            <div class="svga-config-item">
+              <div class="svga-config-label">尺寸：</div>
+              <div class="svga-size-container">
+                <div class="svga-size-input-wrapper">
+                  <input 
+                    type="number" 
+                    class="svga-input" 
+                    v-model.number="gifConfig.width" 
+                    @input="onGifWidthChange"
+                    :disabled="isExportingGIF"
+                    min="1"
+                    max="1920"
+                  />
+                </div>
+                <div class="svga-size-lock">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4.66667 7.33333V5.33333C4.66667 3.86057 5.86057 2.66667 7.33333 2.66667H8.66667C10.1394 2.66667 11.3333 3.86057 11.3333 5.33333V7.33333M5.33333 7.33333H10.6667C11.403 7.33333 12 7.93029 12 8.66667V12C12 12.7364 11.403 13.3333 10.6667 13.3333H5.33333C4.59695 13.3333 4 12.7364 4 12V8.66667C4 7.93029 4.59695 7.33333 5.33333 7.33333Z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </div>
+                <div class="svga-size-input-wrapper">
+                  <input 
+                    type="number" 
+                    class="svga-input" 
+                    v-model.number="gifConfig.height" 
+                    @input="onGifHeightChange"
+                    :disabled="isExportingGIF"
+                    min="1"
+                    max="1920"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- 帧率 -->
+            <div class="svga-config-item">
+              <div class="svga-config-label">帧率：</div>
+              <div class="svga-value-container">
+                <div class="svga-value-input-wrapper">
+                  <input 
+                    type="number" 
+                    class="svga-input" 
+                    v-model.number="gifConfig.fps" 
+                    :disabled="isExportingGIF"
+                    min="1"
+                    max="60"
+                  />
+                </div>
+                <div class="svga-value-unit">FPS</div>
+              </div>
+            </div>
+
+            <!-- 透明底开关 -->
+            <div class="svga-config-item">
+              <div class="svga-config-label">透明底</div>
+              <div class="svga-mute-toggle" :class="{active: gifConfig.transparent, disabled: isExportingGIF}" @click="!isExportingGIF && (gifConfig.transparent = !gifConfig.transparent)">
+                <div class="svga-mute-toggle-handle"></div>
+              </div>
+            </div>
+
+            <!-- 杂色边开关（仅在透明底打开时显示） -->
+            <div class="svga-config-item" v-if="gifConfig.transparent">
+              <div class="svga-config-label">杂色边</div>
+              <div class="svga-mute-toggle" :class="{active: gifConfig.dither, disabled: isExportingGIF}" @click="!isExportingGIF && (gifConfig.dither = !gifConfig.dither)">
+                <div class="svga-mute-toggle-handle"></div>
+              </div>
+            </div>
+
+            <!-- 杂色边颜色选择器（仅在杂色边打开时显示） -->
+            <div class="svga-config-item" v-if="gifConfig.transparent && gifConfig.dither">
+              <div class="svga-config-label">杂色颜色：</div>
+              <div class="gif-color-picker">
+                <input 
+                  type="color" 
+                  v-model="gifConfig.ditherColor"
+                  :disabled="isExportingGIF"
+                  class="gif-color-input"
+                />
+                <span class="gif-color-value">{{ gifConfig.ditherColor }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 预估区域 -->
+          <div class="svga-estimate-section">
+            <div class="svga-estimate-box">
+              <div class="svga-estimate-title">预估导出后：</div>
+              <div class="svga-estimate-row">文件大小：{{ gifEstimate.fileSize }}</div>
+            </div>
+          </div>
+
+          <!-- 底部按钮 -->
+          <div class="svga-panel-footer">
+            <!-- 返回按钮（导出中变为取消按钮） -->
+            <button 
+              v-if="!isExportingGIF"
+              class="material-btn-back" 
+              @click="closeGifPanel" 
+              title="返回"
+            >
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M12 16L6 10L12 4" stroke="#333333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <button 
+              v-else
+              class="material-btn-back svga-btn-cancel" 
+              @click="cancelGifExport" 
+              title="取消导出"
+            >
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M5 5L15 15M15 5L5 15" stroke="#ff4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            
+            <!-- 导出按钮 -->
+            <button 
+              class="material-btn-export" 
+              :class="{'svga-btn-converting': isExportingGIF}"
+              :data-progress="gifExportProgress"
+              :disabled="isExportingGIF"
+              @click="startGifExport"
+            >
+              <template v-if="isExportingGIF">
+                <span class="svga-progress-text">{{ gifExportProgress }}%</span>
+                <span class="svga-stage-text">{{ gifExportMessage }}</span>
+              </template>
+              <template v-else>
+                开始导出GIF
               </template>
             </button>
           </div>

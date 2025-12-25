@@ -3360,6 +3360,65 @@ body.dark-mode .svga-btn-converting {
 }
 
 /* ========================================
+   GIF导出弹窗颜色选择器
+   ======================================== */
+.gif-color-picker {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.gif-color-input {
+  width: 32px;
+  height: 32px;
+  border: 2px solid #e3e3e3;
+  border-radius: 8px;
+  cursor: pointer;
+  padding: 0;
+  background: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.gif-color-input::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.gif-color-input::-webkit-color-swatch {
+  border: none;
+  border-radius: 6px;
+}
+
+.gif-color-input:hover {
+  border-color: #5b5b5b;
+}
+
+.gif-color-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+body.dark-mode .gif-color-input {
+  border-color: #404040;
+}
+
+body.dark-mode .gif-color-input:hover {
+  border-color: #606060;
+}
+
+.gif-color-value {
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 12px;
+  color: #818181;
+  text-transform: uppercase;
+}
+
+body.dark-mode .gif-color-value {
+  color: #999999;
+}
+
+/* ========================================
    绿幕抠图弹窗（普通MP4模式左侧弹窗）
    ======================================== */
 .chromakey-panel {
