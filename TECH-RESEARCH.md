@@ -4087,3 +4087,277 @@ data: {
 
 *最后更新：2025-12-25*
 *绿幕抠图功能完成日期：2025-12-24*
+
+---
+
+## 15. 普通MP4转SVGA功能 ✅
+
+### 15.1 功能概述
+
+将普通MP4视频转换为SVGA动画格式，支持绿幕抠图生成透明背景。
+
+**核心特性**：
+- ✅ 序列帧提取：按帧率逐帧提取MP4视频
+- ✅ 绿幕抠图支持：集成绿幕抠图生成半透明序列帧
+- ✅ 尺寸可调：支持自定义输出尺寸，保持宽高比
+- ✅ 质量压缩：通过质量参数缩放图片减小文件体积
+- ✅ 帧率修改：支持1-60fps帧率设置
+- ✅ 进度显示：实时显示转换进度和当前阶段
+
+---
+
+### 15.2 技术架构
+
+```
+普通MP4视频
+    │
+    ▼
+┌─────────────────┐
+│  序列帧提取         │  extractMp4Frames()
+│  video.currentTime  │  逐帧seek + canvas绘制
+└────────┬────────┘
+         │
+         ▼ (如果开启绿幕抠图)
+┌─────────────────┐
+│  绿幕抠图           │  applyChromaKeyToImageData()
+│  绿色像素→透明     │  算法与实时预览一致
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│  PNG Blob数组       │  [{index, blob}, ...]
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│  质量缩放           │  buildSVGAFromFrames()
+│  scaleFactor        │  按质量%缩放图片
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│  Protobuf编码       │  MovieEntity结构
+│  + pako压缩         │  deflate压缩
+└────────┬────────┘
+         │
+         ▼
+     SVGA文件
+```
+
+---
+
+### 15.3 核心算法
+
+#### 15.3.1 序列帧提取
+
+```javascript
+extractMp4Frames: async function () {
+  var fps = this.mp4ToSvgaConfig.fps;
+  var duration = video.duration;
+  var totalFrames = Math.ceil(duration * fps);
+  
+  for (var i = 0; i < totalFrames; i++) {
+    // seek到指定时间
+    video.currentTime = i / fps;
+    await new Promise(resolve => { video.onseeked = resolve; });
+    
+    // 绘制帧到canvas
+    ctx.drawImage(video, 0, 0);
+    
+    // 如果开启绿幕抠图，应用抠图算法
+    if (useChromaKey) {
+      var imageData = ctx.getImageData(0, 0, w, h);
+      this.applyChromaKeyToImageData(imageData);
+      ctx.putImageData(imageData, 0, 0);
+    }
+    
+    // 转为PNG blob
+    var blob = await canvas.toBlob('image/png');
+    frames.push({ index: i, blob: blob });
+  }
+}
+```
+
+#### 15.3.2 绿幕抠图算法
+
+```javascript
+applyChromaKeyToImageData: function (imageData) {
+  var similarity = this.chromaKeySimilarity / 100;
+  var smoothness = this.chromaKeySmoothness / 100;
+  
+  for (var i = 0; i < data.length; i += 4) {
+    var r = data[i], g = data[i+1], b = data[i+2];
+    
+    // 检测绿色：绿色通道明显高于红色和蓝色
+    // 与实时预览算法一致
+    var isGreen = (g > r * (1 + similarity) && g > b * (1 + similarity));
+    
+    if (isGreen) {
+      var greenStrength = (g - Math.max(r, b)) / 255;
+      var alpha = Math.max(0, 1 - greenStrength / (1 - smoothness + 0.01));
+      data[i + 3] = Math.floor(alpha * 255);
+    }
+  }
+}
+```
+
+**算法说明**：
+- `similarity`: 相似度参数，控制绿色检测的宽容度
+- `smoothness`: 平滑度参数，控制边缘过渡的柔和程度
+- `isGreen`: 判断绿色通道是否明显高于其他通道
+- `greenStrength`: 计算绿色强度，用于边缘平滑过渡
+
+**重要**：此算法与实时预览的 `renderChromaKey()` 保持一致，确保预览与导出效果相同。
+
+---
+
+### 15.4 SVGA生成逻辑
+
+#### 15.4.1 通用函数 buildSVGAFromFrames
+
+```javascript
+buildSVGAFromFrames: async function (frames, options) {
+  // 1. 质量缩放
+  var scaleFactor = quality / 100;
+  var scaledWidth = Math.round(width * scaleFactor);
+  var scaledHeight = Math.round(height * scaleFactor);
+  
+  // 2. 缩放帧并转为Uint8Array
+  for (var i = 0; i < frames.length; i++) {
+    var img = await loadImage(frames[i].blob);
+    ctx.drawImage(img, 0, 0, scaledWidth, scaledHeight);
+    var pngBlob = await canvas.toBlob('image/png');
+    pngFrames.push(new Uint8Array(await pngBlob.arrayBuffer()));
+  }
+  
+  // 3. 构建SVGA数据结构
+  var movieData = {
+    version: '2.0',
+    params: { viewBoxWidth, viewBoxHeight, fps, frames },
+    images: {},   // 图片字典 img_0, img_1...
+    sprites: [],  // 每帧一个sprite
+    audios: []
+  };
+  
+  // 4. Protobuf编码 + pako压缩
+  var buffer = MovieEntity.encode(movieData).finish();
+  var deflatedData = pako.deflate(buffer);
+  return new Blob([deflatedData]);
+}
+```
+
+#### 15.4.2 质量压缩原理
+
+- **缩放因子**: quality / 100，如 quality=80 则缩放到80%
+- **图片尺寸**: scaledWidth × scaledHeight
+- **显示尺寸**: 原始 width × height
+- **放大比例**: scaleUp = 1 / scaleFactor，在sprite的transform中应用
+
+这种方式可以显著减小SVGA文件体积，同时保持显示尺寸不变。
+
+---
+
+### 15.5 数据结构
+
+```javascript
+data: {
+  // 普通MP4转SVGA配置
+  showMp4ToSvgaPanel: false,
+  mp4ToSvgaConfig: {
+    width: 0,
+    height: 0,
+    quality: 80,
+    fps: 30,
+    muted: false
+  },
+  isConvertingMp4ToSvga: false,
+  mp4ToSvgaProgress: 0,
+  mp4ToSvgaStage: '',
+  mp4ToSvgaMessage: '',
+  mp4ToSvgaCancelled: false,
+}
+```
+
+---
+
+### 15.6 核心方法
+
+| 方法名 | 功能 | 说明 |
+|---------|------|------|
+| `openMp4ToSvgaPanel()` | 打开弹窗 | 初始化配置、预加载库 |
+| `closeMp4ToSvgaPanel()` | 关闭弹窗 | 支持转换中确认取消 |
+| `startMp4ToSvgaConversion()` | 开始转换 | 主流程函数 |
+| `extractMp4Frames()` | 提取序列帧 | 支持绿幕抠图 |
+| `applyChromaKeyToImageData()` | 抠图算法 | 与实时预览一致 |
+| `buildSVGAFromFrames()` | 构建SVGA | 通用函数，可复用 |
+| `onMp4ToSvgaWidthChange()` | 宽度联动 | 保持宽高比 |
+| `onMp4ToSvgaHeightChange()` | 高度联动 | 保持宽高比 |
+
+---
+
+### 15.7 computed属性
+
+#### mp4ToSvgaEstimate
+
+预估转换后的内存占用和文件大小：
+
+```javascript
+mp4ToSvgaEstimate: function () {
+  // 缩放后的尺寸
+  var scaledWidth = Math.round(width * quality / 100);
+  var scaledHeight = Math.round(height * quality / 100);
+  
+  // 帧数
+  var frames = Math.ceil(duration * fps);
+  
+  // 内存占用: 宽 × 高 × 帧数 × 4字节(RGBA)
+  var afterMemoryMB = (scaledWidth * scaledHeight * frames * 4 / 1024 / 1024);
+  
+  // 文件大小: PNG压缩 × pako压缩
+  var afterFileSize = scaledWidth * scaledHeight * 0.5 * frames * 0.7;
+  
+  return { afterMemory, beforeFileSize, afterFileSize };
+}
+```
+
+---
+
+### 15.8 与双通道MP4转SVGA的差异
+
+| 特性 | 普通MP4转SVGA | 双通道MP4转SVGA |
+|------|----------------|------------------|
+| 输入 | 普通MP4视频 | YYEVA双通道MP4 |
+| Alpha来源 | 绿幕抠图 | 右侧灰度通道 |
+| 帧提取 | `extractMp4Frames()` | `extractYyevaFrames()` |
+| SVGA构建 | `buildSVGAFromFrames()` | `buildSVGAFile()` |
+| 透明度 | 可选（需开启绿幕抠图） | 自动（双通道合成） |
+
+---
+
+### 15.9 文件变更
+
+#### docs/index.html
+- 新增普通MP4模式“转SVGA”按钮
+- 新增右侧转换弹窗HTML结构
+
+#### docs/assets/js/app.js
+- 新增 `mp4ToSvgaConfig` 等数据字段
+- 新增 8个相关方法
+- 新增 `mp4ToSvgaEstimate` computed属性
+- 更新 `getOngoingTasks()` 和 `cancelOngoingTasks()`
+- 更新 `closeAllPanels()` 和 `openRightPanel()`
+
+---
+
+### 15.10 技术亮点
+
+1. **绿幕抠图集成**：复用实时预览算法，确保预览与导出一致
+2. **通用SVGA构建**：`buildSVGAFromFrames()` 可复用于其他场景
+3. **质量压缩**：通过缩放因子减小文件体积，保持显示尺寸
+4. **任务管理**：集成到统一的任务管理体系
+5. **进度反馈**：实时显示提取和构建进度
+
+---
+
+*最后更新：2025-12-25*
+*普通MP4转SVGA功能完成日期：2025-12-25*
