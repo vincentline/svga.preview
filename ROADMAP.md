@@ -953,7 +953,69 @@ animation.goToAndStop(frame, true);
 }
 ```
 
-### 5.6 交互与UI优化
+### 5.6 序列帧模式
+**优先级：高**
+**状态：待开始**
+
+#### 功能描述
+- 新增序列帧作为独立输入模式，与SVGA/双通道MP4/普通MP4/Lottie并列
+- 支持拖入或打开多个图片文件（PNG/JPG）
+- 自动识别序列帧：按文件名中的数字排序（如 frame_0001.png）
+- 播放前弹窗询问帧率（1-120 fps），默认25fps
+- 底部浮层左下增加"改变帧率"按钮，支持运行时调整
+- 序列帧可导出为：SVGA、双通道MP4、GIF、普通MP4
+
+#### 技术方案
+
+**文件识别与排序**：
+```javascript
+// 从文件名提取数字，按升序排序
+function sortFrameFiles(files) {
+  return files.sort((a, b) => {
+    const numA = parseInt(a.name.match(/\d+/)?.[0] || '0');
+    const numB = parseInt(b.name.match(/\d+/)?.[0] || '0');
+    return numA - numB;
+  });
+}
+```
+
+**数据结构**：
+```javascript
+frameSequence: {
+  frames: [                    // 帧列表
+    { file: File, index: 0, url: string },
+    ...
+  ],
+  meta: {
+    width: number,             // 从第一帧获取
+    height: number,
+    totalFrames: number,
+    fps: 25,                   // 用户设置的帧率
+    hasAlpha: boolean          // 是否透明PNG
+  },
+  currentFrame: 0,
+  isPlaying: false
+}
+```
+
+**播放控制**：
+- 使用 `requestAnimationFrame` + 时间戳控制帧率
+- 计算公式：`frameIndex = Math.floor(elapsed * fps / 1000)`
+- 渲染：每帧从 File 对象创建临时 Image，绘制到 Canvas
+
+**导出复用**：
+- 导出SVGA：复用 `buildSVGAFile()`，输入改为序列帧数组
+- 导出双通道MP4：复用 `composeDualChannelFrames()` + ffmpeg
+- 导出GIF：复用 GIF导出模块（5.1）
+
+**内存优化**：
+- 不一次性加载所有帧的像素数据
+- 按需加载：播放/导出时才读取 File → Image → Canvas
+- 及时释放 ObjectURL
+
+---
+
+### 5.7 交互与UI优化
 **优先级：中**
 **状态：待开始**
 
@@ -965,10 +1027,10 @@ animation.goToAndStop(frame, true);
 - 播放进度条增加可拖动滑块，支持精确到单帧的跳转
 
 #### 技术要点
-- 保持第一行“左：播放控制+进度条，中：背景色切换”的布局规范
+- 保持第一行"左：播放控制+进度条，中：背景色切换"的布局规范
 - 顶部左右图标与现有布局协同，不挤压进度条和背景按钮
 - 播放进度滑块仅增强UI，底层时间/帧同步逻辑保持不变
-- 拖动结束时统一调用“跳转到指定帧”的渲染函数，确保帧与画面同步
+- 拖动结束时统一调用"跳转到指定帧"的渲染函数，确保帧与画面同步
 
 ---
 
@@ -981,12 +1043,14 @@ animation.goToAndStop(frame, true);
 | 普通MP4→双通道MP4 | 2天 | 极高 |
 | 普通MP4→SVGA | 1-2天 | 极高 |
 | 普通MP4→GIF | 0.5天 | 高 |
+| 序列帧模式基础实现 | 1-2天 | 高 |
 
 #### 第二阶段（3-4天）- 功能完善
 | 任务 | 工作量 | 优先级 |
 |-----|-------|-------|
 | 普通MP4扣绿幕 | 1-2天 | 高 |
 | Lottie预览播放 | 1天 | 高 |
+| 序列帧导出功能完善 | 1天 | 高 |
 | 移动端基础适配 | 1天 | 低 |
 
 ---
@@ -1013,7 +1077,7 @@ animation.goToAndStop(frame, true);
 - 抽取库加载管理器为`library-loader.js`
 - 抽取格式转换功能为`converters.js`
 - 抽取导出功能为`exporters.js`
-- PNG序列上传功能（支持zip包，衔接AI抠图工作流）
+- 序列帧高级功能：支持ZIP包导入、再导出为序列帧
 
 ### 长期目标
 - 性能优化（大文件处理、内存优化）
@@ -1023,4 +1087,4 @@ animation.goToAndStop(frame, true);
 
 ---
 
-*最后更新：2025-12-24*
+*最后更新：2025-12-26*
