@@ -126,6 +126,7 @@
               <template v-if="currentModule === 'svga'">SVGA</template>
               <template v-else-if="currentModule === 'yyeva'">双通道MP4</template>
               <template v-else-if="currentModule === 'mp4'">MP4</template>
+              <template v-else-if="currentModule === 'frames'">序列帧</template>
               <template v-else>Lottie</template>
             </div>
             
@@ -148,7 +149,8 @@
             <input
               ref="fileInput"
               type="file"
-              accept=".svga,.json,.mp4"
+              accept=".svga,.json,.lottie,.mp4,.png,.jpg,.jpeg"
+              multiple
               style="display: none;"
               @change="onFileSelect"
             />
@@ -169,6 +171,7 @@
                   <template v-if="currentModule === 'svga'">SVGA</template>
                   <template v-else-if="currentModule === 'yyeva'">双通道MP4</template>
                   <template v-else-if="currentModule === 'mp4'">MP4</template>
+                  <template v-else-if="currentModule === 'frames'">序列帧</template>
                   <template v-else>Lottie</template>
                 </span>
               </div>
@@ -213,10 +216,15 @@
                     @click="toggleMute"
                     :title="hasAudio ? (isMuted ? '取消静音' : '静音') : '无音频'"
                   ></button>
-                  <div class="progress-bar" @click="onProgressBarClick">
+                  <div class="progress-bar" ref="progressBar">
                     <div
                       class="progress-fill"
                       :style="{width: progress + '%'}"
+                    ></div>
+                    <div 
+                      class="progress-thumb"
+                      ref="progressThumb"
+                      :style="{left: progress + '%'}"
                     ></div>
                   </div>
                   <div class="progress-text">
@@ -321,7 +329,7 @@
               <div class="footer-row-tabs">
                 <!-- SVGA 模式 -->
                 <template v-if="currentModule === 'svga'">
-                  <div class="footer-actions-left">
+                  <div class="footer-actions">
                     <button class="btn-primary" @click="triggerChangePreviewFile" v-if="svga.hasFile">
                       更换预览文件
                     </button>
@@ -366,7 +374,7 @@
                 
                 <!-- 双通道MP4 模式 -->
                 <template v-else-if="currentModule === 'yyeva'">
-                  <div class="footer-actions-left">
+                  <div class="footer-actions">
                     <button class="btn-primary" @click="triggerChangePreviewFile">
                       更换预览文件
                     </button>
@@ -395,7 +403,7 @@
                 
                 <!-- 普通MP4 模式 -->
                 <template v-else-if="currentModule === 'mp4'">
-                  <div class="footer-actions-left">
+                  <div class="footer-actions">
                     <button class="btn-primary" @click="triggerChangePreviewFile">
                       更换预览文件
                     </button>
@@ -442,8 +450,8 @@
                 </template>
                 
                 <!-- Lottie 模式 -->
-                <template v-else>
-                  <div class="footer-actions-left">
+                <template v-else-if="currentModule === 'lottie'">
+                  <div class="footer-actions">
                     <button class="btn-primary" @click="triggerChangePreviewFile">
                       更换预览文件
                     </button>
@@ -458,8 +466,13 @@
                       <span v-if="!lottie.hasFile" class="tooltip-text">请先拖入 Lottie 文件</span>
                       {{ isExportingGIF ? '导出中 ' + gifExportProgress + '%' : '导出GIF' }}
                     </button>
-                    <button class="btn-secondary tooltip">
-                      <span class="tooltip-text">正在开发中...</span>
+                    <button 
+                      class="btn-secondary"
+                      :class="{'tooltip': !lottie.hasFile}"
+                      :disabled="!lottie.hasFile"
+                      @click="openLottieToSvgaPanel"
+                    >
+                      <span v-if="!lottie.hasFile" class="tooltip-text">请先拖入 Lottie 文件</span>
                       转SVGA
                     </button>
                     <button 
@@ -469,6 +482,45 @@
                       @click="openLottieToDualChannelPanel"
                     >
                       <span v-if="!lottie.hasFile" class="tooltip-text">请先拖入 Lottie 文件</span>
+                      转双通道MP4
+                    </button>
+                  </div>
+                </template>
+                
+                <!-- 序列帧模式 -->
+                <template v-else-if="currentModule === 'frames'">
+                  <div class="footer-actions">
+                    <button class="btn-primary" @click="triggerChangePreviewFile">
+                      更换预览文件
+                    </button>
+                    <button 
+                      class="btn-primary"
+                      @click="openChangeFpsDialog"
+                    >
+                      改变帧率
+                    </button>
+                  </div>
+                  <div class="footer-actions">
+                    <button 
+                      class="btn-primary"
+                      :class="{'tooltip': !frames.hasFile}"
+                      :disabled="!frames.hasFile || isExportingGIF"
+                      @click="openGifPanel"
+                    >
+                      <span v-if="!frames.hasFile" class="tooltip-text">请先拖入序列帧图片</span>
+                      {{ isExportingGIF ? '导出中 ' + gifExportProgress + '%' : '导出GIF' }}
+                    </button>
+                    <button 
+                      class="btn-secondary"
+                      :class="{'tooltip': !frames.hasFile}"
+                      :disabled="!frames.hasFile"
+                      @click="openFramesToSvgaPanel"
+                    >
+                      <span v-if="!frames.hasFile" class="tooltip-text">请先拖入序列帧图片</span>
+                      转SVGA
+                    </button>
+                    <button class="btn-secondary tooltip">
+                      <span class="tooltip-text">正在开发中...</span>
                       转双通道MP4
                     </button>
                   </div>
@@ -1188,7 +1240,7 @@
           <!-- 预估对比区域 -->
           <div class="svga-estimate-section">
             <div class="svga-estimate-box">
-              <div class="svga-estimate-title">预估转换前后：</div>
+              <div class="svga-estimate-title">预估转换后：</div>
               <div class="svga-estimate-row">内存占用： {{ svgaEstimate.afterMemory }}</div>
               <div class="svga-estimate-row">文件大小：{{ svgaEstimate.beforeFileSize }}  →  {{ svgaEstimate.afterFileSize }}</div>
             </div>
@@ -1378,6 +1430,288 @@
               <template v-if="isConvertingMp4ToSvga">
                 <span class="svga-progress-text">{{ mp4ToSvgaProgress }}%</span>
                 <span class="svga-stage-text">{{ mp4ToSvgaMessage }}</span>
+              </template>
+              <template v-else>
+                开始转换SVGA
+              </template>
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Lottie转SVGA弹窗（Lottie模式右侧弹窗） -->
+      <div class="svga-panel" :class="{'show': showLottieToSvgaPanel && currentModule === 'lottie'}">
+        <div class="svga-panel-container">
+          <!-- 标题区 -->
+          <div class="svga-panel-header">
+            <h3 class="svga-panel-title">转换为SVGA动画格式</h3>
+            <div class="svga-panel-divider"></div>
+          </div>
+          
+          <!-- Lottie信息 -->
+          <div class="svga-info-section">
+            <div class="svga-info-row">当前尺寸：{{ lottie.originalWidth }}x{{ lottie.originalHeight }}    帧率：{{ lottie.fileInfo.fps }}FPS</div>
+            <div class="svga-compress-hint">注意：Lottie转SVGA为序列帧形式，帧率过高文件将巨大，内存占用会比普通SVGA高很多。</div>
+          </div>
+
+          <!-- 配置区域 -->
+          <div class="svga-config-section" :class="{disabled: isConvertingLottieToSvga}">
+            <!-- 尺寸 -->
+            <div class="svga-config-item">
+              <div class="svga-config-label">尺寸：</div>
+              <div class="svga-size-container">
+                <div class="svga-size-input-wrapper">
+                  <input 
+                    type="number" 
+                    class="svga-input" 
+                    v-model.number="lottieToSvgaConfig.width" 
+                    @input="onLottieToSvgaWidthChange"
+                    :disabled="isConvertingLottieToSvga"
+                    min="1"
+                    max="3000"
+                  />
+                </div>
+                <div class="svga-size-lock">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4.66667 7.33333V5.33333C4.66667 3.86057 5.86057 2.66667 7.33333 2.66667H8.66667C10.1394 2.66667 11.3333 3.86057 11.3333 5.33333V7.33333M5.33333 7.33333H10.6667C11.403 7.33333 12 7.93029 12 8.66667V12C12 12.7364 11.403 13.3333 10.6667 13.3333H5.33333C4.59695 13.3333 4 12.7364 4 12V8.66667C4 7.93029 4.59695 7.33333 5.33333 7.33333Z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </div>
+                <div class="svga-size-input-wrapper">
+                  <input 
+                    type="number" 
+                    class="svga-input" 
+                    v-model.number="lottieToSvgaConfig.height" 
+                    @input="onLottieToSvgaHeightChange"
+                    :disabled="isConvertingLottieToSvga"
+                    min="1"
+                    max="3000"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- 压缩到质量 -->
+            <div class="svga-config-item">
+              <div class="svga-config-label">压缩到质量：</div>
+              <div class="svga-value-container">
+                <div class="svga-value-input-wrapper">
+                  <input 
+                    type="number" 
+                    class="svga-input" 
+                    v-model.number="lottieToSvgaConfig.quality"
+                    :disabled="isConvertingLottieToSvga"
+                    min="10"
+                    max="100"
+                  />
+                </div>
+                <div class="svga-value-unit">%</div>
+              </div>
+            </div>
+
+            <!-- 帧率修改 -->
+            <div class="svga-config-item">
+              <div class="svga-config-label">帧率修改：</div>
+              <div class="svga-value-container">
+                <div class="svga-value-input-wrapper">
+                  <input 
+                    type="number" 
+                    class="svga-input" 
+                    v-model.number="lottieToSvgaConfig.fps" 
+                    :disabled="isConvertingLottieToSvga"
+                    min="1"
+                    max="60"
+                  />
+                </div>
+                <div class="svga-value-unit">FPS</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 预估对比区域 -->
+          <div class="svga-estimate-section">
+            <div class="svga-estimate-box">
+              <div class="svga-estimate-title">预估转换后：</div>
+              <div class="svga-estimate-row">内存占用： {{ lottieToSvgaEstimate.afterMemory }}</div>
+              <div class="svga-estimate-row">文件大小：{{ lottieToSvgaEstimate.afterFileSize }}</div>
+            </div>
+          </div>
+
+          <!-- 底部按钮 -->
+          <div class="svga-panel-footer">
+            <!-- 返回按钮（转换中变为取消按钮） -->
+            <button 
+              v-if="!isConvertingLottieToSvga"
+              class="material-btn-back" 
+              @click="closeLottieToSvgaPanel" 
+              title="返回"
+            >
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M12 16L6 10L12 4" stroke="#333333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <button 
+              v-else
+              class="material-btn-back svga-btn-cancel" 
+              @click="lottieToSvgaCancelled = true; isConvertingLottieToSvga = false" 
+              title="取消转换"
+            >
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M5 5L15 15M15 5L5 15" stroke="#ff4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            
+            <!-- 转换按钮 -->
+            <button 
+              class="material-btn-export" 
+              :class="{'svga-btn-converting': isConvertingLottieToSvga}"
+              :data-progress="lottieToSvgaProgress"
+              :disabled="isConvertingLottieToSvga"
+              @click="startLottieToSvgaConversion"
+            >
+              <template v-if="isConvertingLottieToSvga">
+                <span class="svga-progress-text">{{ lottieToSvgaProgress }}%</span>
+                <span class="svga-stage-text">{{ lottieToSvgaMessage }}</span>
+              </template>
+              <template v-else>
+                开始转换SVGA
+              </template>
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 序列帧转SVGA弹窗（序列帧模式右侧弹窗） -->
+      <div class="svga-panel" :class="{'show': showFramesToSvgaPanel && currentModule === 'frames'}">
+        <div class="svga-panel-container">
+          <!-- 标题区 -->
+          <div class="svga-panel-header">
+            <h3 class="svga-panel-title">转换为SVGA动画格式</h3>
+            <div class="svga-panel-divider"></div>
+          </div>
+          
+          <!-- 序列帧信息 -->
+          <div class="svga-info-section">
+            <div class="svga-info-row">当前尺寸：{{ frames.originalWidth }}x{{ frames.originalHeight }}    帧数：{{ frames.files.length }}</div>
+            <div class="svga-compress-hint">注意：序列帧转SVGA为序列帧形式，保留原始透明度，内存占用会比普通SVGA高很多。</div>
+          </div>
+
+          <!-- 配置区域 -->
+          <div class="svga-config-section" :class="{disabled: isConvertingFramesToSvga}">
+            <!-- 尺寸 -->
+            <div class="svga-config-item">
+              <div class="svga-config-label">尺寸：</div>
+              <div class="svga-size-container">
+                <div class="svga-size-input-wrapper">
+                  <input 
+                    type="number" 
+                    class="svga-input" 
+                    v-model.number="framesToSvgaConfig.width" 
+                    @input="onFramesToSvgaWidthChange"
+                    :disabled="isConvertingFramesToSvga"
+                    min="1"
+                    max="3000"
+                  />
+                </div>
+                <div class="svga-size-lock">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4.66667 7.33333V5.33333C4.66667 3.86057 5.86057 2.66667 7.33333 2.66667H8.66667C10.1394 2.66667 11.3333 3.86057 11.3333 5.33333V7.33333M5.33333 7.33333H10.6667C11.403 7.33333 12 7.93029 12 8.66667V12C12 12.7364 11.403 13.3333 10.6667 13.3333H5.33333C4.59695 13.3333 4 12.7364 4 12V8.66667C4 7.93029 4.59695 7.33333 5.33333 7.33333Z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </div>
+                <div class="svga-size-input-wrapper">
+                  <input 
+                    type="number" 
+                    class="svga-input" 
+                    v-model.number="framesToSvgaConfig.height" 
+                    @input="onFramesToSvgaHeightChange"
+                    :disabled="isConvertingFramesToSvga"
+                    min="1"
+                    max="3000"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- 压缩到质量 -->
+            <div class="svga-config-item">
+              <div class="svga-config-label">压缩到质量：</div>
+              <div class="svga-value-container">
+                <div class="svga-value-input-wrapper">
+                  <input 
+                    type="number" 
+                    class="svga-input" 
+                    v-model.number="framesToSvgaConfig.quality"
+                    :disabled="isConvertingFramesToSvga"
+                    min="10"
+                    max="100"
+                  />
+                </div>
+                <div class="svga-value-unit">%</div>
+              </div>
+            </div>
+
+            <!-- 帧率修改 -->
+            <div class="svga-config-item">
+              <div class="svga-config-label">帧率修改：</div>
+              <div class="svga-value-container">
+                <div class="svga-value-input-wrapper">
+                  <input 
+                    type="number" 
+                    class="svga-input" 
+                    v-model.number="framesToSvgaConfig.fps" 
+                    :disabled="isConvertingFramesToSvga"
+                    min="1"
+                    max="60"
+                  />
+                </div>
+                <div class="svga-value-unit">FPS</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 预估对比区域 -->
+          <div class="svga-estimate-section">
+            <div class="svga-estimate-box">
+              <div class="svga-estimate-title">预估转换后：</div>
+              <div class="svga-estimate-row">内存占用： {{ framesToSvgaEstimate.afterMemory }}</div>
+              <div class="svga-estimate-row">文件大小：{{ framesToSvgaEstimate.afterFileSize }}</div>
+            </div>
+          </div>
+
+          <!-- 底部按钮 -->
+          <div class="svga-panel-footer">
+            <!-- 返回按钮（转换中变为取消按钮） -->
+            <button 
+              v-if="!isConvertingFramesToSvga"
+              class="material-btn-back" 
+              @click="closeFramesToSvgaPanel" 
+              title="返回"
+            >
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M12 16L6 10L12 4" stroke="#333333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <button 
+              v-else
+              class="material-btn-back svga-btn-cancel" 
+              @click="framesToSvgaCancelled = true; isConvertingFramesToSvga = false" 
+              title="取消转换"
+            >
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M5 5L15 15M15 5L5 15" stroke="#ff4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            
+            <!-- 转换按钮 -->
+            <button 
+              class="material-btn-export" 
+              :class="{'svga-btn-converting': isConvertingFramesToSvga}"
+              :data-progress="framesToSvgaProgress"
+              :disabled="isConvertingFramesToSvga"
+              @click="startFramesToSvgaConversion"
+            >
+              <template v-if="isConvertingFramesToSvga">
+                <span class="svga-progress-text">{{ framesToSvgaProgress }}%</span>
+                <span class="svga-stage-text">{{ framesToSvgaMessage }}</span>
               </template>
               <template v-else>
                 开始转换SVGA
@@ -1621,6 +1955,30 @@
         @change="handleReuploadSVGA"
       />
       
+      <!-- 序列帧帧率设置弹窗 -->
+      <div class="fps-dialog-overlay" v-if="showFramesFpsDialog" @click.self="cancelFramesFpsDialog"></div>
+      <div class="fps-dialog" v-if="showFramesFpsDialog">
+        <div class="fps-dialog-title">设置帧率</div>
+        <div class="fps-dialog-content">
+          <div class="fps-dialog-hint">请输入序列帧的播放帧率（1-120 fps）</div>
+          <div class="fps-dialog-input-row">
+            <input 
+              type="number" 
+              class="fps-dialog-input"
+              v-model.number="framesFpsInput"
+              min="1"
+              max="120"
+              @keyup.enter="confirmFramesFps"
+            />
+            <span class="fps-dialog-unit">fps</span>
+          </div>
+        </div>
+        <div class="fps-dialog-footer">
+          <button class="fps-dialog-btn fps-dialog-btn-cancel" @click="cancelFramesFpsDialog">取消</button>
+          <button class="fps-dialog-btn fps-dialog-btn-confirm" @click="confirmFramesFps">确定</button>
+        </div>
+      </div>
+      
       <!-- 隐藏的文件输入框，用于更换预览文件（支持SVGA和MP4） -->
       <input 
         type="file" 
@@ -1653,6 +2011,15 @@
         document.head.appendChild(script);
       })();
     </script>
+    
+    <!-- SVGA构建器模块 -->
+    <script src="assets/js/svga-builder.js"></script>
+    
+    <!-- GIF导出器模块 -->
+    <script src="assets/js/gif-exporter.js"></script>
+    
+    <!-- 播放控制器模块 -->
+    <script src="assets/js/player-controller.js"></script>
     
     <!-- 应用主逻辑 -->
     <script src="assets/js/app.js"></script>
