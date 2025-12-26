@@ -1072,13 +1072,13 @@ body.dark-mode .mute-btn.is-disabled:active {
   height: 16px;
   background-color: #f3f3f3;
   border-radius: 0;
-  border: 1px solid #e3e3e3;
   position: relative;
   cursor: pointer;
+  border-radius: 20px;
 }
 
 .progress-bar:hover {
-  border-color: #5b5b5b;
+  border-color: #E6E6E6;
 }
 
 .progress-fill {
@@ -1086,6 +1086,35 @@ body.dark-mode .mute-btn.is-disabled:active {
   background-color: #409eff;
   border-radius: 0;
   transition: width 0.1s;
+  pointer-events: none;
+  border-radius: 10px 0 0 10px;
+}
+
+/* 进度条滑块 */
+.progress-thumb {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 16px;
+  height: 16px;
+  background-color: #409eff;
+  
+  border-radius: 50%;
+  cursor: grab;
+  transition: left 0.1s, transform 0.1s, box-shadow 0.1s;
+  z-index: 2;
+  pointer-events: auto;
+}
+
+.progress-thumb:hover {
+  transform: translate(-50%, -50%) scale(1.2);
+  box-shadow: 0 0 0 4px rgba(64, 158, 255, 0.2);
+}
+
+.progress-thumb:active {
+  cursor: grabbing;
+  transform: translate(-50%, -50%) scale(1.3);
+  box-shadow: 0 0 0 6px rgba(64, 158, 255, 0.3);
 }
 
 .progress-text {
@@ -1382,15 +1411,23 @@ body.dark-mode .footer-empty-tip-sub {
   max-height: 100%;
   background: #FFFFFF;
   border: 1px solid #E3E3E3;
-  box-shadow: 0px 10px 32px rgba(51, 51, 51, 0.2);
+  box-shadow: none;
   border-radius: 16px;
   flex: none;
   align-self: stretch;
+  transition: box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.material-panel.show .material-panel-container {
+  box-shadow: 0px 10px 32px rgba(51, 51, 51, 0.2);
 }
 
 body.dark-mode .material-panel-container {
   background: #1a1a1a;
   border-color: #404040;
+}
+
+body.dark-mode .material-panel.show .material-panel-container {
   box-shadow: 0px 10px 32px rgba(0, 0, 0, 0.5);
 }
 
@@ -2081,14 +2118,22 @@ body.dark-mode .material-empty {
   width: 380px;
   background: #FFFFFF;
   border: 1px solid #E3E3E3;
-  box-shadow: 0px 10px 32px 0px rgba(51, 51, 51, 0.2);
+  box-shadow: none;
   border-radius: 16px;
   overflow-y: auto;
+  transition: box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mp4-panel.show .mp4-panel-container {
+  box-shadow: 0px 10px 32px 0px rgba(51, 51, 51, 0.2);
 }
 
 body.dark-mode .mp4-panel-container {
   background: #1a1a1a;
   border-color: #404040;
+}
+
+body.dark-mode .mp4-panel.show .mp4-panel-container {
   box-shadow: 0px 10px 32px rgba(0, 0, 0, 0.5);
 }
 
@@ -2172,6 +2217,7 @@ body.dark-mode .mp4-compress-hint {
   justify-content: space-between;
   align-self: stretch;
   gap: 8px;
+  height: 44px;
 }
 
 .mp4-config-label {
@@ -2924,14 +2970,22 @@ body.dark-mode .toast-message {
   width: 380px;
   background: #FFFFFF;
   border: 1px solid #E3E3E3;
-  box-shadow: 0px 10px 32px 0px rgba(51, 51, 51, 0.2);
+  box-shadow: none;
   border-radius: 16px;
   overflow-y: auto;
+  transition: box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.svga-panel.show .svga-panel-container {
+  box-shadow: 0px 10px 32px 0px rgba(51, 51, 51, 0.2);
 }
 
 body.dark-mode .svga-panel-container {
   background: #1a1a1a;
   border-color: #404040;
+}
+
+body.dark-mode .svga-panel.show .svga-panel-container {
   box-shadow: 0px 10px 32px rgba(0, 0, 0, 0.5);
 }
 
@@ -3021,6 +3075,7 @@ body.dark-mode .svga-compress-hint {
   justify-content: space-between;
   align-self: stretch;
   gap: 8px;
+  height: 44px;
 }
 
 .svga-config-label {
@@ -3448,14 +3503,22 @@ body.dark-mode .gif-color-value {
   width: 380px;
   background: #FFFFFF;
   border: 1px solid #E3E3E3;
-  box-shadow: 0px 10px 32px 0px rgba(51, 51, 51, 0.2);
+  box-shadow: none;
   border-radius: 16px;
   overflow-y: auto;
+  transition: box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.chromakey-panel.show .chromakey-panel-container {
+  box-shadow: 0px 10px 32px 0px rgba(51, 51, 51, 0.2);
 }
 
 body.dark-mode .chromakey-panel-container {
   background: #1a1a1a;
   border-color: #404040;
+}
+
+body.dark-mode .chromakey-panel.show .chromakey-panel-container {
   box-shadow: 0px 10px 32px rgba(0, 0, 0, 0.5);
 }
 
@@ -3541,6 +3604,7 @@ body.dark-mode .chromakey-performance-hint {
   justify-content: space-between;
   align-self: stretch;
   gap: 8px;
+  height: 44px;
 }
 
 .chromakey-config-label {
@@ -3655,4 +3719,141 @@ body.dark-mode .chromakey-slider::-moz-range-thumb {
   align-self: stretch;
   gap: 12px;
   margin-top: auto;
+}
+
+/* ==================== 序列帧帧率设置弹窗 ==================== */
+
+.fps-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+}
+
+.fps-dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 24px;
+  min-width: 320px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  z-index: 1001;
+}
+
+body.dark-mode .fps-dialog {
+  background: #2a2a2a;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+}
+
+.fps-dialog-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333333;
+  margin-bottom: 16px;
+}
+
+body.dark-mode .fps-dialog-title {
+  color: #e0e0e0;
+}
+
+.fps-dialog-content {
+  margin-bottom: 24px;
+}
+
+.fps-dialog-hint {
+  font-size: 14px;
+  color: #666666;
+  margin-bottom: 16px;
+}
+
+body.dark-mode .fps-dialog-hint {
+  color: #999999;
+}
+
+.fps-dialog-input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fps-dialog-input {
+  width: 120px;
+  height: 40px;
+  border: 1px solid #d0d0d0;
+  border-radius: 8px;
+  padding: 0 12px;
+  font-size: 16px;
+  color: #333333;
+  background: #ffffff;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.fps-dialog-input:focus {
+  border-color: #007AFF;
+}
+
+body.dark-mode .fps-dialog-input {
+  background: #333333;
+  border-color: #555555;
+  color: #e0e0e0;
+}
+
+body.dark-mode .fps-dialog-input:focus {
+  border-color: #0A84FF;
+}
+
+.fps-dialog-unit {
+  font-size: 14px;
+  color: #666666;
+}
+
+body.dark-mode .fps-dialog-unit {
+  color: #999999;
+}
+
+.fps-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.fps-dialog-btn {
+  height: 36px;
+  padding: 0 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s, background-color 0.2s;
+}
+
+.fps-dialog-btn:hover {
+  opacity: 0.85;
+}
+
+.fps-dialog-btn-cancel {
+  background: #f0f0f0;
+  color: #666666;
+}
+
+body.dark-mode .fps-dialog-btn-cancel {
+  background: #404040;
+  color: #cccccc;
+}
+
+.fps-dialog-btn-confirm {
+  background: #007AFF;
+  color: #ffffff;
+}
+
+body.dark-mode .fps-dialog-btn-confirm {
+  background: #0A84FF;
 }
