@@ -14,6 +14,12 @@
     <!-- 库加载管理器（优先加载，独立模块） -->
     <script src="assets/js/library-loader.js"></script>
     
+    <!-- 站点配置加载器（用于广告位控制等功能） -->
+    <script src="assets/js/site-config-loader.js"></script>
+    
+    <!-- 广告位控制器 -->
+    <script src="assets/js/ad-controller.js"></script>
+    
     <!-- ===== 所有库统一由 library-loader.js 动态加载 ===== -->
     <!-- Vue.js - 核心框架，优先级最高 -->
     <!-- SVGA播放器 - 核心功能，优先级次之 -->
@@ -154,6 +160,19 @@
               style="display: none;"
               @change="onFileSelect"
             />
+          </div>
+        </div>
+
+        <!-- 右侧广告位容器 -->
+        <div 
+          id="ad-container" 
+          class="ad-position-right" 
+          data-ad-position="right-float" 
+          style="display: none;"
+        >
+          <!-- 广告内容将在这里显示 -->
+          <div class="ad-content-placeholder">
+            广告位
           </div>
         </div>
 

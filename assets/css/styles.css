@@ -3857,3 +3857,93 @@ body.dark-mode .fps-dialog-btn-cancel {
 body.dark-mode .fps-dialog-btn-confirm {
   background: #0A84FF;
 }
+
+/* ==================== 广告位样式 ==================== */
+
+/* 右侧浮层广告位 */
+.ad-position-right {
+  position: fixed;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 160px;
+  min-height: 600px;
+  background: #ffffff;
+  border: 1px solid #e3e3e3;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  z-index: 50;
+  transition: opacity 0.3s, background-color 0.3s, border-color 0.3s;
+  overflow: hidden;
+}
+
+body.dark-mode .ad-position-right {
+  background: #2a2a2a;
+  border-color: #404040;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* 广告内容占位符 */
+.ad-content-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999999;
+  font-size: 14px;
+  padding: 20px;
+  text-align: center;
+}
+
+body.dark-mode .ad-content-placeholder {
+  color: #666666;
+}
+
+/* 广告位显示状态 */
+.ad-position-right[data-ad-visible="true"] {
+  display: block;
+  opacity: 1;
+}
+
+.ad-position-right[data-ad-visible="false"] {
+  display: none;
+  opacity: 0;
+}
+
+/* 底部浮层广告位（预留） */
+.ad-position-bottom {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 728px;
+  height: 90px;
+  background: #ffffff;
+  border: 1px solid #e3e3e3;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  z-index: 50;
+  transition: opacity 0.3s, background-color 0.3s, border-color 0.3s;
+}
+
+body.dark-mode .ad-position-bottom {
+  background: #2a2a2a;
+  border-color: #404040;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* 响应式调整 */
+@media (max-width: 1400px) {
+  .ad-position-right {
+    right: 10px;
+    width: 120px;
+    min-height: 400px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .ad-position-right {
+    display: none !important;
+  }
+}
