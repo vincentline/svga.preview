@@ -1,0 +1,10 @@
+﻿{
+  "version": "1.0.0",
+  "timestamp": 1735315567000,
+  "features": {
+    "advertisement": {
+      "enabled": false,
+      "position": "right-float"
+    }
+  }
+}
