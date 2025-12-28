@@ -43,7 +43,7 @@ body.dark-mode {
   width: 100%;
   height: 36px;
   background-color: #ffffff;
-  border-bottom: 1px solid #e3e3e3;
+  border-bottom: 1px solid #e6e6e6;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -158,7 +158,7 @@ body.dark-mode .theme-toggle svg {
   left: 50%;
   transform: translateX(-50%);
   background-color: #ffffff;
-  border: 1px solid #e3e3e3;
+  border: 1px solid #e6e6e6;
   border-radius: 8px;
   padding: 8px;
   font-family: 'Segoe UI', sans-serif;
@@ -294,7 +294,7 @@ body.dark-mode .help-button:hover {
   width: 360px;
   max-height: 70vh;
   background: #FFFFFF;
-  border: 1px solid #E3E3E3;
+  border: 1px solid #e6e6e6;
   box-shadow: 0px 2px 8px rgba(51, 51, 51, 0.2);
   border-radius: 16px;
   padding: 24px;
@@ -645,7 +645,7 @@ body.dark-mode .clear-canvas-btn:active svg path {
   max-width: fit-content;
   height: 134px;
   background-color: #ffffff;
-  border: 1px solid #e3e3e3;
+  border: 1px solid #e6e6e6;
   border-radius: 16px;
   box-shadow: 0px 10px 32px 0px rgba(51, 51, 51, 0.2);
   padding: 16px;
@@ -696,7 +696,7 @@ body.dark-mode .footer-empty-tip-sub {
 }
 
 body.dark-mode .click-upload-text {
-  color: #F5F5F5;
+  color: #f5f5f5;
 }
 
 body.dark-mode .click-upload-text:hover {
@@ -755,7 +755,7 @@ body.dark-mode .tab-btn {
 
 .tab-btn:hover {
   background-color: #fcfcfc;
-  border-color: #e3e3e3;
+  border-color: #e6e6e6;
 }
 
 body.dark-mode .tab-btn:hover {
@@ -905,7 +905,7 @@ body.dark-mode .info-item-value {
   width: 28px;
   height: 28px;
   border-radius: 16px;
-  border: 1px solid #e3e3e3;
+  border: 1px solid #e6e6e6;
   cursor: pointer;
   outline: none;
   transition: border-color 0.2s;
@@ -1091,11 +1091,21 @@ body.dark-mode .progress-bar:hover {
 
 .progress-fill {
   height: 100%;
-  background-color: #409eff;
+  background-color: #5B5B5B;
   border-radius: 0;
   transition: width 0.1s;
   pointer-events: none;
   border-radius: 10px 0 0 10px;
+}
+.progress-fill:hover {
+  background-color: #333333;
+}
+
+body.dark-mode .progress-fill {
+  background-color: #EBEBEB;
+}
+body.dark-mode .progress-fill:hover {
+  background-color: #f5f5f5;
 }
 
 /* 进度条滑块 */
@@ -1105,7 +1115,7 @@ body.dark-mode .progress-bar:hover {
   transform: translate(-50%, -50%);
   width: 16px;
   height: 16px;
-  background-color: #409eff;
+  background-color: #5B5B5B;
   
   border-radius: 50%;
   cursor: grab;
@@ -1113,28 +1123,42 @@ body.dark-mode .progress-bar:hover {
   z-index: 2;
   pointer-events: auto;
 }
+body.dark-mode .progress-thumb {
+  background-color: #EBEBEB;
+}
 
 .progress-thumb:hover {
   transform: translate(-50%, -50%) scale(1.2);
   box-shadow: 0 0 0 4px rgba(64, 158, 255, 0.2);
+  background-color: #409eff;
 }
 
 .progress-thumb:active {
   cursor: grabbing;
   transform: translate(-50%, -50%) scale(1.3);
   box-shadow: 0 0 0 6px rgba(64, 158, 255, 0.3);
+  background-color: #409eff;
 }
 
 .progress-text {
   margin-left: 8px;
-  width: 60px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-family: 'Segoe UI', sans-serif;
   font-weight: 400;
   font-size: 14px;
   line-height: 1.33;
   color: #818181;
   white-space: nowrap;
-  text-align: left;
+}
+
+.progress-time {
+  min-width: 45px;
+}
+
+.progress-frames {
+  min-width: 60px;
 }
 
 /* 通用按钮 */
@@ -1156,7 +1180,7 @@ body.dark-mode .progress-bar:hover {
 
 .btn-primary {
   background-color: #ffffff;
-  border: 1px solid #e3e3e3;
+  border: 1px solid #e6e6e6;
   color: #333333;
 }
 
@@ -1167,7 +1191,7 @@ body.dark-mode .btn-primary {
 }
 
 .btn-primary:hover {
-  background-color: #e3e3e3;
+  background-color: #e6e6e6;
   border-color: #5b5b5b;
 }
 
@@ -1301,7 +1325,7 @@ body.dark-mode .reset-scale-btn:hover {
 .clear-btn {
   width: 32px;
   height: 28px;
-  border: 1px solid #e3e3e3;
+  border: 1px solid #e6e6e6;
   border-radius: 8px;
   background-color: #ffffff;
   cursor: pointer;
@@ -1314,7 +1338,7 @@ body.dark-mode .reset-scale-btn:hover {
 }
 
 .clear-btn:hover {
-  background-color: #e3e3e3;
+  background-color: #e6e6e6;
   border-color: #5b5b5b;
 }
 
@@ -1418,7 +1442,7 @@ body.dark-mode .footer-empty-tip-sub {
   height: 100%;
   max-height: 100%;
   background: #FFFFFF;
-  border: 1px solid #E3E3E3;
+  border: 1px solid #e6e6e6;
   box-shadow: none;
   border-radius: 16px;
   flex: none;
@@ -1532,7 +1556,7 @@ body.dark-mode .stats-help {
   width: 100%;
   height: 32px;
   padding: 0 12px;
-  border: 1px solid #e3e3e3;
+  border: 1px solid #e6e6e6;
   border-radius: 8px;
   font-family: 'Segoe UI';
   font-size: 14px;
@@ -1775,7 +1799,7 @@ body.dark-mode .material-meta {
   left: 0px;
   top: 0px;
   background: #FFFFFF;
-  border: 1px solid #E3E3E3;
+  border: 1px solid #e6e6e6;
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -1838,7 +1862,7 @@ body.dark-mode .material-btn-replace:hover {
   left: 92px;
   top: 0px;
   background: #FFFFFF;
-  border: 1px solid #E3E3E3;
+  border: 1px solid #e6e6e6;
   cursor: pointer;
   transition: all 0.15s ease;
 }
@@ -1886,7 +1910,7 @@ body.dark-mode .material-btn-close:hover {
   left: 129px;  
   top: 0px;
   background: #FFFFFF;
-  border: 1px solid #E3E3E3;
+  border: 1px solid #e6e6e6;
   cursor: pointer;
   transition: all 0.15s ease;
 }
@@ -1950,7 +1974,7 @@ body.dark-mode .material-btn-new:hover {
   width: 48px;
   height: 44px;
   background: #FFFFFF;
-  border: 1px solid #E3E3E3;
+  border: 1px solid #e6e6e6;
   border-radius: 16px;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -1958,7 +1982,7 @@ body.dark-mode .material-btn-new:hover {
 }
 
 .material-btn-back:hover {
-  background: #E3E3E3;
+  background: #e6e6e6;
   border-color: #5B5B5B;
 }
 
@@ -2125,7 +2149,7 @@ body.dark-mode .material-empty {
   gap: 16px;
   width: 380px;
   background: #FFFFFF;
-  border: 1px solid #E3E3E3;
+  border: 1px solid #e6e6e6;
   box-shadow: none;
   border-radius: 16px;
   overflow-y: auto;
@@ -2751,13 +2775,13 @@ body.dark-mode .mp4-input:disabled {
 
 .mp4-btn-preview {
   background: #FFFFFF;
-  border: 1px solid #E3E3E3;
+  border: 1px solid #e6e6e6;
   color: #333333;
   flex-shrink: 0;
 }
 
 .mp4-btn-preview:hover {
-  background: #F5F5F5;
+  background: #f5f5f5;
   border-color: #CCCCCC;
 }
 
@@ -2827,7 +2851,7 @@ body.dark-mode .mp4-btn-convert:disabled {
   width: 400px;
   max-width: 90%;
   background: #ffffff;
-  border: 1px solid #e3e3e3;
+  border: 1px solid #e6e6e6;
   border-radius: 8px;
   padding: 12px 16px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
@@ -2912,7 +2936,7 @@ body.dark-mode .library-loading-indicator .loading-bar {
 
 .toast-message {
   background: #ffffff;
-  border: 1px solid #e3e3e3;
+  border: 1px solid #e6e6e6;
   border-radius: 8px;
   padding: 12px 20px;
   font-size: 14px;
@@ -2977,7 +3001,7 @@ body.dark-mode .toast-message {
   gap: 16px;
   width: 380px;
   background: #FFFFFF;
-  border: 1px solid #E3E3E3;
+  border: 1px solid #e6e6e6;
   box-shadow: none;
   border-radius: 16px;
   overflow-y: auto;
@@ -3435,7 +3459,7 @@ body.dark-mode .svga-btn-converting {
 .gif-color-input {
   width: 32px;
   height: 32px;
-  border: 2px solid #e3e3e3;
+  border: 2px solid #e6e6e6;
   border-radius: 8px;
   cursor: pointer;
   padding: 0;
@@ -3510,7 +3534,7 @@ body.dark-mode .gif-color-value {
   gap: 16px;
   width: 380px;
   background: #FFFFFF;
-  border: 1px solid #E3E3E3;
+  border: 1px solid #e6e6e6;
   box-shadow: none;
   border-radius: 16px;
   overflow-y: auto;
@@ -3639,7 +3663,7 @@ body.dark-mode .chromakey-config-label {
   position: relative;
   width: 48px;
   height: 28px;
-  background: #E3E3E3;
+  background: #e6e6e6;
   border-radius: 14px;
   transition: background 0.3s;
 }
@@ -3683,7 +3707,7 @@ body.dark-mode .chromakey-switch.active {
   height: 4px;
   -webkit-appearance: none;
   appearance: none;
-  background: #E3E3E3;
+  background: #e6e6e6;
   border-radius: 2px;
   outline: none;
 }
@@ -3729,141 +3753,119 @@ body.dark-mode .chromakey-slider::-moz-range-thumb {
   margin-top: auto;
 }
 
-/* ==================== 序列帧帧率设置弹窗 ==================== */
+/* ==================== 居中弹窗通用样式（统一管理） ==================== */
 
-.fps-dialog-overlay {
+/* 弹窗遮罩层 */
+.center-modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
   background: rgba(0, 0, 0, 0.5);
-  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
 }
 
-.fps-dialog {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+/* Vue未加载时隐藏弹窗（防止闪现） */
+[v-cloak] .center-modal-overlay {
+  display: none !important;
+}
+
+/* 弹窗容器 */
+.center-modal-dialog {
   background: #ffffff;
-  border-radius: 12px;
+  border-radius: 24px;
   padding: 24px;
   min-width: 320px;
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow-y: auto;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-  z-index: 1001;
 }
 
-body.dark-mode .fps-dialog {
+body.dark-mode .center-modal-dialog {
   background: #2a2a2a;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
 }
 
-.fps-dialog-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: #333333;
-  margin-bottom: 16px;
+/* 弹窗中的svga-panel-container使用auto（避免侧边弹窗样式干扰） */
+.center-modal-overlay .svga-panel-container {
+  align-self: auto;
 }
 
-body.dark-mode .fps-dialog-title {
-  color: #e0e0e0;
+/* 弹窗头部 */
+.center-modal-header {
+  padding: 0 0 16px 0;
+  border-bottom: 1px solid #e6e6e6;
 }
 
-.fps-dialog-content {
-  margin-bottom: 24px;
+body.dark-mode .center-modal-header {
+  border-bottom-color: #505050;
 }
 
-.fps-dialog-hint {
-  font-size: 14px;
-  color: #666666;
-  margin-bottom: 16px;
-}
-
-body.dark-mode .fps-dialog-hint {
-  color: #999999;
-}
-
-.fps-dialog-input-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.fps-dialog-input {
-  width: 120px;
-  height: 40px;
-  border: 1px solid #d0d0d0;
-  border-radius: 8px;
-  padding: 0 12px;
+.center-modal-header h3 {
+  margin: 0;
   font-size: 16px;
+  font-weight: 500;
   color: #333333;
-  background: #ffffff;
-  outline: none;
-  transition: border-color 0.2s;
 }
 
-.fps-dialog-input:focus {
-  border-color: #007AFF;
-}
-
-body.dark-mode .fps-dialog-input {
-  background: #333333;
-  border-color: #555555;
+body.dark-mode .center-modal-header h3 {
   color: #e0e0e0;
 }
 
-body.dark-mode .fps-dialog-input:focus {
-  border-color: #0A84FF;
+/* 弹窗内容区 */
+.center-modal-body {
+  padding: 24px 0;
 }
 
-.fps-dialog-unit {
-  font-size: 14px;
-  color: #666666;
-}
-
-body.dark-mode .fps-dialog-unit {
-  color: #999999;
-}
-
-.fps-dialog-footer {
+/* 弹窗底部 */
+.center-modal-footer {
+  padding: 16px 0 0 0;
   display: flex;
   justify-content: flex-end;
   gap: 12px;
 }
 
-.fps-dialog-btn {
-  height: 36px;
+/* 弹窗按钮特殊样式（复用通用按钮，只调整尺寸） */
+.center-modal-footer .btn-primary,
+.center-modal-footer .btn-secondary {
+  min-width: 110px;
+  height: 44px;
   padding: 0 20px;
-  border: none;
-  border-radius: 8px;
+  border-radius: 16px;
+}
+
+
+/* ==================== 序列帧帧率设置弹窗（复用通用样式） ==================== */
+/* 特殊样式：提示文本、水平布局、单位文本 */
+
+.fps-hint {
   font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: opacity 0.2s, background-color 0.2s;
+  color: #666666;
+  margin-bottom: 16px;
 }
 
-.fps-dialog-btn:hover {
-  opacity: 0.85;
+body.dark-mode .fps-hint {
+  color: #999999;
 }
 
-.fps-dialog-btn-cancel {
-  background: #f0f0f0;
+.fps-input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fps-unit {
+  font-size: 14px;
   color: #666666;
 }
 
-body.dark-mode .fps-dialog-btn-cancel {
-  background: #404040;
-  color: #cccccc;
-}
-
-.fps-dialog-btn-confirm {
-  background: #007AFF;
-  color: #ffffff;
-}
-
-body.dark-mode .fps-dialog-btn-confirm {
-  background: #0A84FF;
+body.dark-mode .fps-unit {
+  color: #999999;
 }
 
 /* ==================== 广告位样式 ==================== */
@@ -3877,7 +3879,7 @@ body.dark-mode .fps-dialog-btn-confirm {
   width: 160px;
   min-height: 600px;
   background: #ffffff;
-  border: 1px solid #e3e3e3;
+  border: 1px solid #e6e6e6;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   z-index: 50;
@@ -3928,7 +3930,7 @@ body.dark-mode .ad-content-placeholder {
   width: 728px;
   height: 90px;
   background: #ffffff;
-  border: 1px solid #e3e3e3;
+  border: 1px solid #e6e6e6;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   z-index: 50;
@@ -4006,26 +4008,52 @@ body.dark-mode .speed-remap-duration {
   height: 16px;
   background: #F3F3F3;
   border-radius: 2px;
-  cursor: crosshair;
-  border: 1px solid rgba(255, 255, 255, 0.6);
+  cursor: default;
+  
 }
 
 body.dark-mode .speed-remap-timeline {
   background: #3a3a3a;
-  border: 1px solid rgba(0, 0, 0, 0.6);
+  
 }
 
-/* 压缩区域可视化（灰色） */
+/* 压缩区域可视化（底色） */
 .speed-remap-timeline-range {
   position: absolute;
   top: 0;
   height: 16px;
-  background: #bbefff;
+  background: #409EFF;
   pointer-events: none;
 }
 
 body.dark-mode .speed-remap-timeline-range {
-  background: #124164;
+  background: #2a5a8a;
+}
+
+/* 每段区间的速率颜色覆盖 */
+.speed-remap-segment-overlay {
+  position: absolute;
+  top: 0;
+  height: 16px;
+  pointer-events: none;
+}
+
+/* 加速区间（深蓝色） */
+.speed-remap-segment-overlay.segment-speedup {
+  background: #094DDE;
+}
+
+body.dark-mode .speed-remap-segment-overlay.segment-speedup {
+  background: #5B8CFF;
+}
+
+/* 减速区间（浅蓝色） */
+.speed-remap-segment-overlay.segment-slowdown {
+  background: #C8F2FF;
+}
+
+body.dark-mode .speed-remap-segment-overlay.segment-slowdown {
+  background: #0a3a4a;
 }
 
 /* hover预览线 - 蓝色 */
@@ -4043,6 +4071,29 @@ body.dark-mode .speed-remap-timeline-range {
   display: block;
 }
 
+/* hover预览线上方的速率提示 */
+.speed-remap-timeline-hover-frame {
+  position: absolute;
+  top: -30px;
+  transform: translateX(-50%);
+  font-size: 11px;
+  color: #00B4FF;
+  font-weight: 500;
+  line-height: 1.4;
+  text-align: center;
+  white-space: nowrap;
+  pointer-events: none;
+  display: none;
+}
+
+.speed-remap-timeline:hover .speed-remap-timeline-hover-frame {
+  display: block;
+}
+
+body.dark-mode .speed-remap-timeline-hover-frame {
+  color: #33CCFF;
+}
+
 /* K帧节点容器 - 包含线和手柄 */
 .keyframe-node {
   position: absolute;
@@ -4056,9 +4107,16 @@ body.dark-mode .speed-remap-timeline-range {
 
 /* K帧竖线 */
 .keyframe-line {
-  width: 1px;
+  width: 3px;
   height: 16px;
-  background: #00B4FF;
+  background: #333333;
+  border-width: 0px 1px;
+  border-style: solid;
+  border-color: #f3f3f3;
+}
+body.dark-mode .keyframe-line {
+  background: #f5f5f5;
+  border-color: #3a3a3a;
 }
 
 /* K帧手柄 */
@@ -4087,7 +4145,7 @@ body.dark-mode .speed-remap-timeline-range {
   transform: translateX(-50%);
   font-family: 'Segoe UI', system-ui, sans-serif;
   font-size: 12px;
-  color: #00B4FF;
+  color: #333333;
   white-space: nowrap;
   pointer-events: auto;
   cursor: pointer;
@@ -4108,7 +4166,7 @@ body.dark-mode .frame-label-endpoint {
 }
 
 body.dark-mode .keyframe-frame-label {
-  color: #00B4FF;
+  color: #999999;
 }
 
 /* 端点节点（起点/终点） */
@@ -4117,7 +4175,10 @@ body.dark-mode .keyframe-frame-label {
 }
 
 body.dark-mode .keyframe-endpoint .keyframe-line {
-  background: #cccccc;
+  background: #f5f5f5;
+  border-width: 0px 1px;
+  border-style: solid;
+  border-color: #3a3a3a;
 }
 
 /* 端点手柄 - 左右不同 */
@@ -4226,7 +4287,7 @@ body.dark-mode .speed-remap-duration-label {
   padding: 0 12px;
   height: 28px;
   background: #FFFFFF;
-  border: 1px solid #E3E3E3;
+  border: 1px solid #e6e6e6;
   border-radius: 8px;
   font-family: 'Segoe UI', system-ui, sans-serif;
   font-size: 13px;
@@ -4343,7 +4404,7 @@ body.dark-mode .btn-speed-cancel:hover {
 
 .modal-header {
   padding: 0 0 16px 0;
-  border-bottom: 1px solid #E3E3E3;
+  border-bottom: 1px solid #e6e6e6;
 }
 
 body.dark-mode .modal-header {
