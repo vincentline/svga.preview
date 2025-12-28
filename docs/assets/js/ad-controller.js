@@ -121,8 +121,33 @@
             if (container) {
                 container.style.display = 'block';
                 container.setAttribute('data-ad-visible', 'true');
+                
+                // 初始化 Google AdSense 广告
+                this.initAdSense(container);
             } else {
                 console.warn(`[AdController] 未找到广告位容器: ${position}`);
+            }
+        }
+
+        /**
+         * 初始化 Google AdSense 广告
+         * @param {HTMLElement} container - 广告位容器
+         */
+        initAdSense(container) {
+            // 查找容器中的 AdSense 广告单元
+            const adElements = container.querySelectorAll('.adsbygoogle');
+            if (adElements.length > 0 && window.adsbygoogle) {
+                try {
+                    adElements.forEach(adElement => {
+                        // 检查是否已初始化
+                        if (!adElement.getAttribute('data-adsbygoogle-status')) {
+                            (window.adsbygoogle = window.adsbygoogle || []).push({});
+                            console.log('[AdController] AdSense 广告已初始化');
+                        }
+                    });
+                } catch (e) {
+                    console.error('[AdController] AdSense 初始化失败:', e);
+                }
             }
         }
 

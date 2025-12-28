@@ -20,6 +20,10 @@
     <!-- 广告位控制器 -->
     <script src="assets/js/ad-controller.js"></script>
     
+    <!-- Google AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9291089781078791"
+         crossorigin="anonymous"></script>
+    
     <!-- ===== 所有库统一由 library-loader.js 动态加载 ===== -->
     <!-- Vue.js - 核心框架，优先级最高 -->
     <!-- SVGA播放器 - 核心功能，优先级次之 -->
@@ -167,13 +171,14 @@
         <div 
           id="ad-container" 
           class="ad-position-right" 
-          data-ad-position="right-float" 
+          data-ad-position="right-float"
           style="display: none;"
         >
-          <!-- 广告内容将在这里显示 -->
-          <div class="ad-content-placeholder">
-            广告位
-          </div>
+          <!-- Google AdSense 广告单元 -->
+          <ins class="adsbygoogle"
+               style="display:inline-block;width:160px;height:600px"
+               data-ad-client="ca-pub-9291089781078791"
+               data-ad-slot="6512306484"></ins>
         </div>
 
         
