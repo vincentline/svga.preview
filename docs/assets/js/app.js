@@ -348,6 +348,11 @@ function initApp() {
             showEditFrameDialog: false,     // 显示编辑帧数弹窗
             editingKeyframeIndex: -1,       // 正在编辑的K帧索引
             editFrameInput: '',             // 编辑帧数输入值
+            
+            // 视频转换弹窗
+            showVideoConvertModal: false,   // 显示视频转换弹窗
+            isConverting: false,            // 是否正在转换
+            videoConvertProgress: 0,        // 转换进度 0-100
             speedRemapConfig: {
               enabled: false,               // 是否启用变速
               keyframes: [],                // 关键帧数组: [{originalFrame, position, isEndpoint}]
@@ -1492,6 +1497,7 @@ function initApp() {
                       yyevaVideo: _this.yyevaVideo,
                       yyevaAnimationId: _this.yyevaAnimationId,
                       mp4Video: _this.mp4Video,
+                      speedRemapConfig: _this.speedRemapConfig,
                       startYyevaRenderLoop: function() { _this.startYyevaRenderLoop(); },
                       startMp4ProgressLoop: function() { _this.startMp4ProgressLoop(); },
                       stopFramesPlayLoop: function() { _this.stopFramesPlayLoop(); },
@@ -2719,19 +2725,71 @@ function initApp() {
             // 缓存当前区间的速度，避免每帧重复计算
             var currentSpeed = 1.0;
             var currentSegmentIndex = -1;
+            var lastTime = -1;
+            var stuckCount = 0;
+            var maxStuckFrames = 120; // 2秒无进度视为卡死（60fps * 2）
+            var hasWarned = false; // 防止重复警告
             
             function updateProgress() {
               if (!_this.mp4Video || _this.currentModule !== 'mp4') return;
+              
+              // 检测视频是否卡住
+              if (lastTime === video.currentTime && !video.paused && !video.ended) {
+                stuckCount++;
+                if (stuckCount >= maxStuckFrames && !hasWarned) {
+                  hasWarned = true;
+                  video.pause();
+                  _this.isPlaying = false;
+                  console.error('[App] 视频解码卡死，已暂停播放。');
+                  
+                  // 显示转换确认弹窗
+                  _this.showVideoConvertModal = true;
+                  _this.videoConvertProgress = 0;
+                  _this.isConverting = false;
+                  return;
+                }
+              } else {
+                stuckCount = 0;
+              }
+              lastTime = video.currentTime;
               
               if (video.duration > 0) {
                 var fps = parseFloat(_this.mp4.fileInfo.fps) || 30;
                 var currentFrame = Math.floor(video.currentTime * fps);
                 
-                // 设置当前时间和总时长
-                _this.currentTime = video.currentTime;
-                _this.totalDuration = video.duration;
-                // progress基于时间（即使变速也匀速）
-                _this.progress = (video.currentTime / video.duration) * 100;
+                // 变速时，进度基于变速后时间轴的position（匀速）
+                if (_this.speedRemapConfig.enabled && _this.speedRemapConfig.keyframes.length >= 2) {
+                  var keyframes = _this.speedRemapConfig.keyframes;
+                  
+                  // 根据当前帧号，反向计算在变速后时间轴上的position
+                  var remappedPosition = 0;
+                  for (var i = 0; i < keyframes.length - 1; i++) {
+                    var k1 = keyframes[i];
+                    var k2 = keyframes[i + 1];
+                    if (currentFrame >= k1.originalFrame && currentFrame <= k2.originalFrame) {
+                      var frameDelta = k2.originalFrame - k1.originalFrame;
+                      if (frameDelta > 0) {
+                        var frameProgress = (currentFrame - k1.originalFrame) / frameDelta;
+                        remappedPosition = k1.position + frameProgress * (k2.position - k1.position);
+                      } else {
+                        remappedPosition = k1.position;
+                      }
+                      break;
+                    }
+                  }
+                  
+                  // 变速后总时长 = 原始时长 * 最后position（因为重新采样后帧数变化）
+                  var lastKeyframe = keyframes[keyframes.length - 1];
+                  var remappedDuration = video.duration * lastKeyframe.position;
+                  
+                  _this.progress = (remappedPosition / lastKeyframe.position) * 100;
+                  _this.currentTime = remappedPosition * video.duration;
+                  _this.totalDuration = remappedDuration;
+                } else {
+                  _this.currentTime = video.currentTime;
+                  _this.totalDuration = video.duration;
+                  _this.progress = (video.currentTime / video.duration) * 100;
+                }
                 _this.currentFrame = currentFrame;
                 
                 // 变速支持：根据当前帧号动态调整播放速度
@@ -2758,7 +2816,7 @@ function initApp() {
                     
                     if (positionDelta > 0 && frameDelta > 0) {
                       currentSpeed = frameDelta / (positionDelta * totalFrames);
-                      currentSpeed = Math.max(0.25, Math.min(4, currentSpeed));
+                      currentSpeed = Math.max(0.25, Math.min(10, currentSpeed));
                     }
                   }
                   
@@ -2832,6 +2890,191 @@ function initApp() {
             // 重置绿幕抠图状态
             this.chromaKeyEnabled = false;
             this.chromaKeyApplied = false;
+          },
+          
+          /**
+           * 确认转换视频
+           */
+          confirmConvertVideo: async function() {
+            var _this = this;
+            
+            if (this.isConverting) {
+              // 正在转换，确认是否退出
+              if (confirm('当前正在转换视频格式，是否退出转换？')) {
+                this.isConverting = false;
+                this.showVideoConvertModal = false;
+              }
+              return;
+            }
+            
+            this.isConverting = true;
+            this.videoConvertProgress = 0;
+            
+            try {
+              // 1. 加载FFmpeg
+              await this.loadFFmpeg();
+              this.videoConvertProgress = 10;
+              
+              if (!this.isConverting) throw new Error('用户取消');
+              
+              // 2. 读取原始视频文件
+              var file = this.mp4.file;
+              if (!file) throw new Error('视频文件不存在');
+              
+              var fileData = await file.arrayBuffer();
+              this.ffmpeg.FS('writeFile', 'input.mp4', new Uint8Array(fileData));
+              this.videoConvertProgress = 20;
+              
+              if (!this.isConverting) throw new Error('用户取消');
+              
+              // 3. 转换为兼容格式
+              console.log('[视频转换] 开始转换...');
+              this.ffmpeg.setProgress(function(p) {
+                // 进度 20-90%
+                _this.videoConvertProgress = 20 + Math.round(p.ratio * 70);
+              });
+              
+              // 检查视频尺寸，如果太大则缩小到1280p
+              var maxWidth = 1280;
+              var scaleFilter = '';
+              
+              // 由于无法直接获取视频尺寸，使用-vf scale限制最大宽度
+              scaleFilter = 'scale=\'min(' + maxWidth + ',iw)\':-2';
+              
+              await this.ffmpeg.run(
+                '-i', 'input.mp4',
+                '-vf', scaleFilter,
+                '-c:v', 'libx264',
+                '-profile:v', 'baseline',
+                '-level', '3.0',
+                '-crf', '28',  // 提高CRF降低码率
+                '-preset', 'ultrafast',  // 使用最快预设
+                '-c:a', 'aac',
+                '-b:a', '96k',  // 降低音频码率
+                '-max_muxing_queue_size', '1024',
+                'output.mp4'
+              );
+              
+              if (!this.isConverting) throw new Error('用户取消');
+              
+              this.videoConvertProgress = 90;
+              
+              // 4. 读取转换后的文件
+              var outputData = this.ffmpeg.FS('readFile', 'output.mp4');
+              var blob = new Blob([outputData.buffer], { type: 'video/mp4' });
+              
+              // 清理FFmpeg文件系统
+              this.ffmpeg.FS('unlink', 'input.mp4');
+              this.ffmpeg.FS('unlink', 'output.mp4');
+              
+              this.videoConvertProgress = 95;
+              
+              // 5. 重新加载视频
+              var convertedFile = new File([blob], file.name.replace(/\.mp4$/, '_converted.mp4'), { type: 'video/mp4' });
+              
+              // 清理旧视频
+              this.cleanupMp4();
+              
+              // 重新加载视频（直接使用blob）
+              this.currentModule = 'mp4';
+              this.mp4.hasFile = true;
+              this.mp4.file = convertedFile;
+              this.mp4.fileInfo.name = convertedFile.name;
+              this.mp4.fileInfo.size = convertedFile.size;
+              this.mp4.fileInfo.sizeText = this.formatBytes(convertedFile.size);
+              
+              // 创建objectUrl
+              this.mp4ObjectUrl = URL.createObjectURL(blob);
+              
+              // 创建视频元素
+              var newVideo = document.createElement('video');
+              newVideo.src = this.mp4ObjectUrl;
+              newVideo.loop = true;
+              newVideo.playsInline = true;
+              newVideo.style.cssText = 'max-width: 100%; max-height: 100%; object-fit: contain;';
+              this.mp4Video = newVideo;
+              
+              // 加载视频元数据
+              newVideo.onloadedmetadata = function() {
+                var videoWidth = newVideo.videoWidth;
+                var videoHeight = newVideo.videoHeight;
+                
+                _this.mp4.originalWidth = videoWidth;
+                _this.mp4.originalHeight = videoHeight;
+                _this.mp4.fileInfo.sizeWH = videoWidth + 'x' + videoHeight;
+                
+                var duration = newVideo.duration;
+                _this.mp4.fileInfo.duration = duration.toFixed(2) + 's';
+                _this.mp4.fileInfo.fps = '30 FPS';
+                _this.totalFrames = Math.round(duration * 30);
+                
+                _this.mp4HasAudio = _this.detectVideoHasAudio(newVideo);
+                
+                // 将视频元素添加到容器
+                var container = _this.$refs.svgaContainer;
+                if (container) {
+                  container.innerHTML = '';
+                  container.appendChild(newVideo);
+                }
+                
+                // 计算初始缩放比例
+                var initialScale = _this.calculateInitialScale(_this.mp4.originalWidth, _this.mp4.originalHeight);
+                _this.viewerScale = initialScale;
+                _this.centerViewer();
+                
+                // 启动过渡
+                _this.footerTransitioning = true;
+                _this.footerContentVisible = false;
+                
+                setTimeout(function() {
+                  _this.footerTransitioning = false;
+                  _this.footerContentVisible = true;
+                  
+                  setTimeout(function() {
+                    newVideo.play().then(function() {
+                      _this.isPlaying = true;
+                      _this.startMp4ProgressLoop();
+                    }).catch(function(err) {
+                      console.error('普通MP4播放失败:', err);
+                    });
+                  }, 50);
+                }, 400);
+              };
+              
+              this.videoConvertProgress = 100;
+              
+              console.log('[视频转换] 转换完成');
+              
+              // 延迟关闭弹窗
+              setTimeout(function() {
+                _this.showVideoConvertModal = false;
+                _this.isConverting = false;
+              }, 500);
+              
+            } catch (error) {
+              console.error('[视频转换] 失败:', error);
+              
+              if (error.message !== '用户取消') {
+                alert('视频转换失败：' + error.message);
+              }
+              
+              this.showVideoConvertModal = false;
+              this.isConverting = false;
+            }
+          },
+          
+          /**
+           * 取消转换视频
+           */
+          cancelConvertVideo: function() {
+            if (this.isConverting) {
+              if (confirm('当前正在转换视频格式，是否退出转换？')) {
+                this.isConverting = false;
+                this.showVideoConvertModal = false;
+              }
+            } else {
+              this.showVideoConvertModal = false;
+            }
           },
 
           /* ==================== UI交互 ==================== */

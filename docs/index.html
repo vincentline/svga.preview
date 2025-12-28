@@ -1446,6 +1446,43 @@
         </div>
       </div>
       
+      <!-- 视频转换弹窗（使用通用居中弹窗样式） -->
+      <div class="center-modal-overlay" v-if="showVideoConvertModal">
+        <div class="center-modal-dialog" style="width: 480px;">
+          <div class="center-modal-header">
+            <h3>视频播放异常</h3>
+          </div>
+          <div class="center-modal-body">
+            <div style="margin-bottom: 16px; line-height: 1.6; color: #666;">
+              <template v-if="!isConverting">
+                检测到该MP4视频的编码格式可能不兼容，导致浏览器解码卡死。<br><br>
+                <strong>原因：</strong>视频编码参数不符合浏览器解码器要求<br>
+                <strong>建议：</strong>转换为兼容格式后再播放<br><br>
+                是否立即转换为兼容格式？
+              </template>
+              <template v-else>
+                正在转换视频格式，请稍候...
+              </template>
+            </div>
+            
+            <!-- 转换进度条 -->
+            <div v-if="isConverting" style="margin-top: 20px;">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px; color: #666;">
+                <span>转换进度</span>
+                <span>{{ videoConvertProgress }}%</span>
+              </div>
+              <div style="width: 100%; height: 6px; background: #f0f0f0; border-radius: 3px; overflow: hidden;">
+                <div style="height: 100%; background: #409EFF; border-radius: 3px; transition: width 0.3s;" :style="{ width: videoConvertProgress + '%' }"></div>
+              </div>
+            </div>
+          </div>
+          <div class="center-modal-footer">
+            <button class="btn-primary" @click="cancelConvertVideo">否</button>
+            <button class="btn-secondary" @click="confirmConvertVideo" :disabled="isConverting">是</button>
+          </div>
+        </div>
+      </div>
+      
       <!-- 普通MP4转SVGA弹窗（普通MP4模式右侧弹窗） -->
       <div class="svga-panel" :class="{'show': showMp4ToSvgaPanel && currentModule === 'mp4'}">
         <div class="svga-panel-container">

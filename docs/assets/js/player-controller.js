@@ -45,7 +45,7 @@
     var state = this.getPlayerState();
     var mode = state.mode;
     var isPlaying = state.isPlaying;
-    
+      
     // Lottie 模式
     if (mode === 'lottie' && state.hasFile && state.lottiePlayer) {
       if (isPlaying) {
@@ -57,8 +57,8 @@
       }
       return;
     }
-    
-    // 双通道MP4 模式
+      
+    // 双通MP4 模式
     if (mode === 'yyeva' && state.hasFile && state.yyevaVideo) {
       if (isPlaying) {
         state.yyevaVideo.pause();
@@ -80,7 +80,7 @@
       }
       return;
     }
-    
+      
     // 普通MP4 模式
     if (mode === 'mp4' && state.hasFile && state.mp4Video) {
       if (isPlaying) {
@@ -174,8 +174,41 @@
     // 普通MP4 模式
     if (mode === 'mp4' && state.hasFile && state.mp4Video) {
       var duration = state.mp4Video.duration || 1;
-      state.mp4Video.currentTime = percentage * duration;
-      var currentFrame = Math.round(percentage * state.totalFrames);
+      var fps = 30;
+      var actualPercentage = percentage;
+      
+      // 变速时，需要将变速后位置映射回原始视频位置
+      if (state.speedRemapConfig && state.speedRemapConfig.enabled && state.speedRemapConfig.keyframes && state.speedRemapConfig.keyframes.length >= 2) {
+        var keyframes = state.speedRemapConfig.keyframes;
+        var totalFrames = state.speedRemapConfig.originalTotalFrames || state.totalFrames;
+        var lastKeyframe = keyframes[keyframes.length - 1];
+        
+        // percentage是相对于变速后总时长的百分比，转换为position
+        var targetPosition = percentage * lastKeyframe.position;
+        
+        // 根据position计算原始帧号
+        var originalFrame = 0;
+        for (var i = 0; i < keyframes.length - 1; i++) {
+          var k1 = keyframes[i];
+          var k2 = keyframes[i + 1];
+          if (targetPosition >= k1.position && targetPosition <= k2.position) {
+            var posDelta = k2.position - k1.position;
+            if (posDelta > 0) {
+              var posProgress = (targetPosition - k1.position) / posDelta;
+              originalFrame = k1.originalFrame + posProgress * (k2.originalFrame - k1.originalFrame);
+            } else {
+              originalFrame = k1.originalFrame;
+            }
+            break;
+          }
+        }
+        
+        // 计算原始视频的实际位置
+        actualPercentage = originalFrame / totalFrames;
+      }
+      
+      state.mp4Video.currentTime = actualPercentage * duration;
+      var currentFrame = Math.round(actualPercentage * state.totalFrames);
       this.onProgressChange(progress, currentFrame);
       return;
     }
