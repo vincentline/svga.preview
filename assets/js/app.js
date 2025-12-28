@@ -5090,10 +5090,10 @@ function initApp() {
             var _this = this;
             var ffmpeg = this.ffmpeg;
             
-            // 写入帧数据
+            // 写入帧数据（使用v0.11.6 API）
             for (var i = 0; i < jpegFrames.length; i++) {
               var frameName = 'frame' + String(i).padStart(6, '0') + '.jpg';
-              await ffmpeg.writeFile(frameName, jpegFrames[i]);
+              ffmpeg.FS('writeFile', frameName, jpegFrames[i]);
             }
             
             // FFmpeg编码参数
@@ -5110,21 +5110,21 @@ function initApp() {
               '-y', 'output.mp4'
             ];
             
-            ffmpeg.on('progress', function(p) {
-              _this.mp4ConvertProgress = 60 + Math.floor(p.progress * 40);
+            ffmpeg.setProgress(function(p) {
+              _this.mp4ConvertProgress = 60 + Math.floor(p.ratio * 40);
             });
             
-            await ffmpeg.exec(ffmpegArgs);
+            await ffmpeg.run.apply(ffmpeg, ffmpegArgs);
             
-            // 读取输出
-            var data = await ffmpeg.readFile('output.mp4');
+            // 读取输出（使用v0.11.6 API）
+            var data = ffmpeg.FS('readFile', 'output.mp4');
             
             // 清理文件
             for (var i = 0; i < jpegFrames.length; i++) {
               var frameName = 'frame' + String(i).padStart(6, '0') + '.jpg';
-              try { await ffmpeg.deleteFile(frameName); } catch (e) {}
+              try { ffmpeg.FS('unlink', frameName); } catch (e) {}
             }
-            try { await ffmpeg.deleteFile('output.mp4'); } catch (e) {}
+            try { ffmpeg.FS('unlink', 'output.mp4'); } catch (e) {}
             
             return new Blob([data.buffer], { type: 'video/mp4' });
           },
