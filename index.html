@@ -1393,8 +1393,8 @@
         </div>
       </div>
       
-      <!-- 编辑K帧帧数弹窗 -->
-      <div class="modal-overlay" v-if="showEditFrameDialog" @click.self="cancelEditFrame">
+      <!-- 编辑K帧帧数弹窗（只在MP4模式下显示） -->
+      <div class="modal-overlay" v-if="showEditFrameDialog && currentModule === 'mp4'" @click.self="cancelEditFrame">
         <div class="svga-panel-container" style="width: 400px;">
           <div class="modal-header">
             <h3>编辑K帧帧数</h3>
