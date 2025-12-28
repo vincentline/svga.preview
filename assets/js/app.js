@@ -5096,19 +5096,74 @@ function initApp() {
               ffmpeg.FS('writeFile', frameName, jpegFrames[i]);
             }
             
+            // 检查是否需要添加音频
+            var hasAudio = false;
+            var needAudio = !config.muted && this.mp4HasAudio && this.mp4.file;
+            var audioSpeedRatio = 1.0;  // 音频变速比例
+            
+            if (needAudio) {
+              try {
+                // 读取原始MP4文件数据
+                var originalMp4Data = new Uint8Array(await this.mp4.file.arrayBuffer());
+                ffmpeg.FS('writeFile', 'original.mp4', originalMp4Data);
+                
+                // 计算音频变速比例（如果启用了变速）
+                if (this.speedRemapConfig.enabled && this.speedRemapConfig.keyframes && this.speedRemapConfig.keyframes.length >= 2) {
+                  var originalDuration = this.mp4Video.duration;
+                  var outputFrames = jpegFrames.length;
+                  var outputDuration = outputFrames / config.fps;
+                  audioSpeedRatio = originalDuration / outputDuration;
+                }
+                
+                hasAudio = true;
+              } catch (e) {
+                console.warn('无法读取原始MP4音频:', e);
+              }
+            }
+            
             // FFmpeg编码参数
             var crf = Math.round(51 - (config.quality / 100) * 33);
             var dualWidth = config.width * 2;
             
-            var ffmpegArgs = [
-              '-framerate', String(config.fps),
-              '-i', 'frame%06d.jpg',
-              '-c:v', 'libx264',
-              '-crf', String(crf),
-              '-pix_fmt', 'yuv420p',
-              '-s', dualWidth + 'x' + config.height,
-              '-y', 'output.mp4'
-            ];
+            var ffmpegArgs = [];
+            
+            if (hasAudio) {
+              // 有音频：从原始文件提取音频，从序列帧生成视频，然后合并
+              ffmpegArgs = [
+                '-framerate', String(config.fps),
+                '-i', 'frame%06d.jpg',       // 视频输入（序列帧）
+                '-i', 'original.mp4',         // 音频输入（原始MP4）
+                '-map', '0:v',                // 使用第一个输入的视频流
+                '-map', '1:a',                // 使用第二个输入的音频流
+                '-c:v', 'libx264',
+                '-crf', String(crf),
+                '-pix_fmt', 'yuv420p',
+                '-s', dualWidth + 'x' + config.height,
+                '-c:a', 'aac',                // 音频编码为AAC
+                '-b:a', '128k'                // 音频比特率
+              ];
+              
+              // 如果有变速，对音频应用atempo滤镜
+              if (Math.abs(audioSpeedRatio - 1.0) > 0.01) {
+                // atempo范围是0.5-2.0，如果超出需要链式处理
+                var tempoFilter = this.buildAudioTempoFilter(audioSpeedRatio);
+                ffmpegArgs.push('-af', tempoFilter);
+              }
+              
+              ffmpegArgs.push('-shortest');  // 使用最短流的长度
+              ffmpegArgs.push('-y', 'output.mp4');
+            } else {
+              // 无音频：只编码视频
+              ffmpegArgs = [
+                '-framerate', String(config.fps),
+                '-i', 'frame%06d.jpg',
+                '-c:v', 'libx264',
+                '-crf', String(crf),
+                '-pix_fmt', 'yuv420p',
+                '-s', dualWidth + 'x' + config.height,
+                '-y', 'output.mp4'
+              ];
+            }
             
             ffmpeg.setProgress(function(p) {
               _this.mp4ConvertProgress = 60 + Math.floor(p.ratio * 40);
@@ -5125,8 +5180,42 @@ function initApp() {
               try { ffmpeg.FS('unlink', frameName); } catch (e) {}
             }
             try { ffmpeg.FS('unlink', 'output.mp4'); } catch (e) {}
+            if (hasAudio) {
+              try { ffmpeg.FS('unlink', 'original.mp4'); } catch (e) {}
+            }
             
             return new Blob([data.buffer], { type: 'video/mp4' });
+          },
+
+          /**
+           * 构建音频变速滤镜（atempo）
+           * atempo参数范围是0.5-2.0，如果超出需要链式处理
+           */
+          buildAudioTempoFilter: function(speedRatio) {
+            if (speedRatio >= 0.5 && speedRatio <= 2.0) {
+              // 在范围内，直接使用
+              return 'atempo=' + speedRatio.toFixed(4);
+            }
+            
+            // 超出范围，需要链式处理
+            var filters = [];
+            var remaining = speedRatio;
+            
+            while (remaining > 2.0) {
+              filters.push('atempo=2.0');
+              remaining /= 2.0;
+            }
+            
+            while (remaining < 0.5) {
+              filters.push('atempo=0.5');
+              remaining /= 0.5;
+            }
+            
+            if (Math.abs(remaining - 1.0) > 0.01) {
+              filters.push('atempo=' + remaining.toFixed(4));
+            }
+            
+            return filters.join(',');
           },
 
           /**
@@ -5572,7 +5661,7 @@ function initApp() {
                 this.mp4ToSvgaMessage = '提取音频...';
                 try {
                   await this.loadFFmpeg();
-                  audios = await this.extractAudioFromMp4(this.mp4.file, frames.length);
+                  audios = await this.extractAudioFromMp4(this.mp4.file, frames.length, this.mp4ToSvgaConfig.fps);
                 } catch (e) {
                   console.warn('音频提取失败，继续生成无音频SVGA:', e);
                 }
@@ -6260,7 +6349,7 @@ function initApp() {
                 this.svgaConvertMessage = '正在提取音频...';
                 try {
                   await this.loadFFmpeg();
-                  audios = await this.extractAudioFromMp4(this.yyeva.file, frameData.frames.length);
+                  audios = await this.extractAudioFromMp4(this.yyeva.file, frameData.frames.length, this.svgaConfig.fps);
                 } catch (e) {
                   console.warn('音频提取失败，继续生成无音频SVGA:', e);
                 }
@@ -6740,45 +6829,71 @@ function initApp() {
           },
 
           /**
-           * 从MP4视频提取音频数据
+           * 从 MP4视频提取音频数据
            * @param {File} videoFile - 视频文件
-           * @param {number} totalFrames - 总帧数
+           * @param {number} totalFrames - 总帧数（变速后的）
+           * @param {number} fps - 帧率
            * @returns {Promise<Array|null>} - 音频数据数组，无音频时返回null
            */
-          extractAudioFromMp4: async function(videoFile, totalFrames) {
+          extractAudioFromMp4: async function(videoFile, totalFrames, fps) {
             if (!this.ffmpegLoaded || !this.ffmpeg) {
               return null;
             }
-            
+                      
             try {
               var ffmpeg = this.ffmpeg;
               var inputName = 'input_audio.mp4';
               var outputName = 'audio.mp3';
-              
-              // 写入视频文件
+                        
+              // 写入视频文件（使用v0.11.6 API）
               var videoData = await videoFile.arrayBuffer();
-              await ffmpeg.writeFile(inputName, new Uint8Array(videoData));
-              
-              // 提取音频为MP3
-              await ffmpeg.exec([
+              ffmpeg.FS('writeFile', inputName, new Uint8Array(videoData));
+                        
+              // 计算音频变速比例（如果启用了变速）
+              var audioSpeedRatio = 1.0;
+              var needSpeedAdjust = false;
+                        
+              if (this.speedRemapConfig.enabled && this.speedRemapConfig.keyframes && this.speedRemapConfig.keyframes.length >= 2) {
+                // 原始视频时长
+                var originalDuration = this.mp4Video ? this.mp4Video.duration : 0;
+                if (originalDuration > 0 && fps > 0) {
+                  // 变速后的时长
+                  var outputDuration = totalFrames / fps;
+                  audioSpeedRatio = originalDuration / outputDuration;
+                  needSpeedAdjust = Math.abs(audioSpeedRatio - 1.0) > 0.01;
+                }
+              }
+                        
+              // 构建ffmpeg命令
+              var ffmpegArgs = [
                 '-i', inputName,
                 '-vn',           // 不处理视频
                 '-acodec', 'libmp3lame',
-                '-q:a', '2',     // 高质量
-                '-y', outputName
-              ]);
-              
-              // 读取音频数据
-              var audioData = await ffmpeg.readFile(outputName);
-              
-              // 清理临时文件
-              try { await ffmpeg.deleteFile(inputName); } catch (e) {}
-              try { await ffmpeg.deleteFile(outputName); } catch (e) {}
-              
+                '-q:a', '2'      // 高质量
+              ];
+                        
+              // 如果需要变速，添加atempo滤镜
+              if (needSpeedAdjust) {
+                var tempoFilter = this.buildAudioTempoFilter(audioSpeedRatio);
+                ffmpegArgs.push('-af', tempoFilter);
+              }
+                        
+              ffmpegArgs.push('-y', outputName);
+                        
+              // 执行提取（使用v0.11.6 API）
+              await ffmpeg.run.apply(ffmpeg, ffmpegArgs);
+                        
+              // 读取音频数据（使用v0.11.6 API）
+              var audioData = ffmpeg.FS('readFile', outputName);
+                        
+              // 清理临时文件（使用v0.11.6 API）
+              try { ffmpeg.FS('unlink', inputName); } catch (e) {}
+              try { ffmpeg.FS('unlink', outputName); } catch (e) {}
+                        
               if (!audioData || audioData.length === 0) {
                 return null;
               }
-              
+                        
               // 返回音频数据数组（SVGA格式）
               return [{
                 audioKey: 'audio_0',
@@ -6788,7 +6903,7 @@ function initApp() {
                 startTime: 0,
                 totalTime: 0
               }];
-              
+                        
             } catch (error) {
               console.warn('音频提取失败（可能无音频轨道）:', error);
               return null;
@@ -6889,240 +7004,20 @@ function initApp() {
             return frames;
           },
 
-          // 合成双通道帧并直接转换为JPEG（优化：合并两个步骤）
+          // 合成双通道帧并直接转换为JPEG（使用独立模块）
           composeDualChannelFrames: async function (frames) {
             var _this = this;
-            var jpegFrames = [];  // 直接返回JPEG的Uint8Array
-            var isColorLeftAlphaRight = this.mp4Config.channelMode === 'color-left-alpha-right';
-            var frameCount = frames.length;
-            
-            // 复用Canvas避免重复创建
-            var width = frames[0].width;
-            var height = frames[0].height;
-            
-            // 双通道Canvas（带alpha）
-            var dualCanvas = document.createElement('canvas');
-            dualCanvas.width = width * 2;
-            dualCanvas.height = height;
-            var dualCtx = dualCanvas.getContext('2d', { 
-              alpha: true,
-              willReadFrequently: true 
+                      
+            return DualChannelComposer.composeToJPEG(frames, {
+              mode: this.mp4Config.channelMode,
+              onProgress: function(progress) {
+                _this.mp4ConvertProgress = Math.round(progress * 100);
+                _this.mp4ConvertMessage = '合成双通道帧 ' + Math.round(progress * frames.length) + '/' + frames.length;
+              },
+              onCancel: function() {
+                return _this.mp4ConvertCancelled;
+              }
             });
-            dualCtx.imageSmoothingEnabled = false;
-            
-            // 黑底Canvas（用于JPEG转换）
-            var blackBgCanvas = document.createElement('canvas');
-            blackBgCanvas.width = width * 2;
-            blackBgCanvas.height = height;
-            var blackBgCtx = blackBgCanvas.getContext('2d');
-            var blackBgImageData = blackBgCtx.createImageData(width * 2, height);
-            var blackBgData = blackBgImageData.data;
-            
-            // 计算JPEG质量（自适应）
-            var totalPixels = width * 2 * height;
-            var jpegQuality = 0.6;
-            if (totalPixels < 500000) {
-              jpegQuality = 0.7;
-            } else if (totalPixels > 2000000) {
-              jpegQuality = 0.5;
-            }
-
-            for (var i = 0; i < frameCount; i++) {
-              if (this.mp4ConvertCancelled) {
-                throw new Error('用户取消转换');
-              }
-
-              // 更新进度
-              this.mp4ConvertProgress = Math.round((i + 1) / frameCount * 100);
-              this.mp4ConvertMessage = '合成双通道帧 ' + (i + 1) + '/' + frameCount;
-
-              var imageData = frames[i];
-              
-              // === 合成双通道 ===
-              dualCtx.clearRect(0, 0, width * 2, height);
-              var dualImageData = dualCtx.createImageData(width * 2, height);
-              var dualData = dualImageData.data;
-              
-              // 逐像素分离通道
-              for (var j = 0; j < imageData.data.length; j += 4) {
-                var r = imageData.data[j + 0];
-                var g = imageData.data[j + 1];
-                var b = imageData.data[j + 2];
-                var a = imageData.data[j + 3];
-
-                // 反预乘恢复原始颜色
-                var finalR = r, finalG = g, finalB = b;
-                if (a > 0 && a < 255) {
-                  finalR = Math.min(255, Math.round(r * 255 / a));
-                  finalG = Math.min(255, Math.round(g * 255 / a));
-                  finalB = Math.min(255, Math.round(b * 255 / a));
-                } else if (a === 0) {
-                  finalR = 0; finalG = 0; finalB = 0;
-                }
-
-                // 计算位置
-                var pixelIndex = Math.floor(j / 4);
-                var row = Math.floor(pixelIndex / width);
-                var col = pixelIndex % width;
-                var leftIdx = (row * width * 2 + col) * 4;
-                var rightIdx = (row * width * 2 + col + width) * 4;
-
-                if (isColorLeftAlphaRight) {
-                  // 左彩右灰
-                  dualData[leftIdx + 0] = finalR;
-                  dualData[leftIdx + 1] = finalG;
-                  dualData[leftIdx + 2] = finalB;
-                  dualData[leftIdx + 3] = a;
-                  dualData[rightIdx + 0] = a;
-                  dualData[rightIdx + 1] = a;
-                  dualData[rightIdx + 2] = a;
-                  dualData[rightIdx + 3] = 255;
-                } else {
-                  // 左灰右彩
-                  dualData[leftIdx + 0] = a;
-                  dualData[leftIdx + 1] = a;
-                  dualData[leftIdx + 2] = a;
-                  dualData[leftIdx + 3] = 255;
-                  dualData[rightIdx + 0] = finalR;
-                  dualData[rightIdx + 1] = finalG;
-                  dualData[rightIdx + 2] = finalB;
-                  dualData[rightIdx + 3] = a;
-                }
-              }
-              
-              dualCtx.putImageData(dualImageData, 0, 0);
-              
-              // === 直接合成黑底并转换为JPEG ===
-              // 修复锯齿：彩色通道需要用alpha与黑底混合，而不是直接复制RGB
-              for (var k = 0; k < dualData.length; k += 4) {
-                var pixelAlpha = dualData[k + 3];
-                
-                if (pixelAlpha === 255) {
-                  // 不透明像素（包括灰度通道）：直接复制
-                  blackBgData[k + 0] = dualData[k + 0];
-                  blackBgData[k + 1] = dualData[k + 1];
-                  blackBgData[k + 2] = dualData[k + 2];
-                } else if (pixelAlpha === 0) {
-                  // 完全透明：黑色
-                  blackBgData[k + 0] = 0;
-                  blackBgData[k + 1] = 0;
-                  blackBgData[k + 2] = 0;
-                } else {
-                  // 半透明像素：RGB与黑底混合（黑底=0，所以直接乘以alpha比例）
-                  blackBgData[k + 0] = Math.round(dualData[k + 0] * pixelAlpha / 255);
-                  blackBgData[k + 1] = Math.round(dualData[k + 1] * pixelAlpha / 255);
-                  blackBgData[k + 2] = Math.round(dualData[k + 2] * pixelAlpha / 255);
-                }
-                blackBgData[k + 3] = 255;
-              }
-              blackBgCtx.putImageData(blackBgImageData, 0, 0);
-              
-              // 转换为JPEG Blob
-              var blob = await new Promise(function(resolve) {
-                blackBgCanvas.toBlob(resolve, 'image/jpeg', jpegQuality);
-              });
-              var buffer = await blob.arrayBuffer();
-              jpegFrames.push(new Uint8Array(buffer));
-
-              // 让出线程
-              if (i % 5 === 0) {
-                await new Promise(function(r) { setTimeout(r, 0); });
-              }
-            }
-
-            return jpegFrames;
-          },
-
-          // 合成单帧双通道
-          composeDualChannel: function (imageData, isColorLeftAlphaRight) {
-            var width = imageData.width;
-            var height = imageData.height;
-
-            // 创建双倍宽度的Canvas（必须带alpha通道，避免黑色底色）
-            var dualCanvas = document.createElement('canvas');
-            dualCanvas.width = width * 2;
-            dualCanvas.height = height;
-            var dualCtx = dualCanvas.getContext('2d', { 
-              alpha: true,  // 必须为true，避免黑色底色
-              willReadFrequently: true 
-            });
-            
-            // 禁用所有图像平滑/抗锯齿
-            dualCtx.imageSmoothingEnabled = false;
-            
-            // 清空为透明背景（重要！）
-            dualCtx.clearRect(0, 0, width * 2, height);
-
-            // 优化：直接创建最终的双通道ImageData，一次性处理
-            var dualImageData = dualCtx.createImageData(width * 2, height);
-            var dualData = dualImageData.data;
-
-            // 逐像素分离通道
-            for (var i = 0; i < imageData.data.length; i += 4) {
-              var r = imageData.data[i + 0];
-              var g = imageData.data[i + 1];
-              var b = imageData.data[i + 2];
-              var a = imageData.data[i + 3];
-
-              // Canvas的getImageData返回预乘Alpha的数据，必须反预乘才能恢复原始颜色
-              var finalR = r;
-              var finalG = g;
-              var finalB = b;
-              
-              if (a > 0 && a < 255) {
-                // 反预乘公式：原始颜色 = 预乘颜色 * 255 / alpha
-                finalR = Math.min(255, Math.round(r * 255 / a));
-                finalG = Math.min(255, Math.round(g * 255 / a));
-                finalB = Math.min(255, Math.round(b * 255 / a));
-              } else if (a === 0) {
-                // 完全透明：颜色置为黑色
-                finalR = 0;
-                finalG = 0;
-                finalB = 0;
-              }
-              // a === 255：不需要处理，直接使用原值
-
-              // 计算像素在双通道图中的位置
-              var pixelIndex = Math.floor(i / 4);
-              var row = Math.floor(pixelIndex / width);
-              var col = pixelIndex % width;
-              
-              // 左侧像素位置
-              var leftIdx = (row * width * 2 + col) * 4;
-              // 右侧像素位置  
-              var rightIdx = (row * width * 2 + col + width) * 4;
-
-              if (isColorLeftAlphaRight) {
-                // 左彩右灰：左侧RGB保留半透明，右侧Alpha灰度图必须alpha=255
-                dualData[leftIdx + 0] = finalR;
-                dualData[leftIdx + 1] = finalG;
-                dualData[leftIdx + 2] = finalB;
-                dualData[leftIdx + 3] = a;  // 保留原始alpha
-
-                // 右侧灰度图：灰度值=alpha，但alpha必须设为255（避免putImageData预乘）
-                dualData[rightIdx + 0] = a;  // 灰度值=alpha值
-                dualData[rightIdx + 1] = a;
-                dualData[rightIdx + 2] = a;
-                dualData[rightIdx + 3] = 255;  // 必须255，避免灰度被预乘变暗
-              } else {
-                // 左灰右彩：左侧Alpha灰度图必须alpha=255，右侧RGB保留半透明
-                // 左侧灰度图：灰度值=alpha，但alpha必须设为255（避免putImageData预乘）
-                dualData[leftIdx + 0] = a;
-                dualData[leftIdx + 1] = a;
-                dualData[leftIdx + 2] = a;
-                dualData[leftIdx + 3] = 255;  // 必须255，避免灰度被预乘变暗
-
-                dualData[rightIdx + 0] = finalR;
-                dualData[rightIdx + 1] = finalG;
-                dualData[rightIdx + 2] = finalB;
-                dualData[rightIdx + 3] = a;  // 保留原始alpha
-              }
-            }
-
-            // 使用putImageData直接写入，避免任何图像处理
-            dualCtx.putImageData(dualImageData, 0, 0);
-
-            return dualCanvas;
           },
 
           // 编码为MP4 (0.11版本API，优化：接收已转换的JPEG数据)
