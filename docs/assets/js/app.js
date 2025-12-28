@@ -18,60 +18,70 @@
  *    - openMP4Panel() - SVGA转MP4弹窗
  *    - openSVGAPanel() - MP4转SVGA弹窗
  * 
- * 4. 【库加载管理器】
+ * 4. 【居中弹窗管理】
+ *    - onFrameLabelDblClick() - K帧编辑弹窗（双击K帧标签）
+ *    - confirmEditFrame() - 确认编辑K帧
+ *    - cancelEditFrame() - 取消编辑K帧
+ *    - （序列帧拖入后自动显示） - 帧率设置弹窗
+ *    - confirmFramesFps() - 确认帧率设置
+ *    - cancelFramesFpsDialog() - 取消帧率设置
+ *    - openChangeFpsDialog() - 打开改变帧率弹窗
+ *    注：所有居中弹窗使用统一样式 .center-modal-*
+ * 
+ * 5. 【库加载管理器】
  *    - getLibraryConfig() - 库配置
  *    - loadLibrary() - 加载库
  *    - loadScript() - 通用脚本加载器
  * 
- * 5. 【文件加载与拖拽上传】
+ * 6. 【文件加载与拖拽上传】
  *    - handleFile() - 文件分发器
  *    - onDragOver/onDrop - 拖拽上传
  *    - triggerFileUpload() - 触发文件选择
  * 
- * 6. 【资源清理】
+ * 7. 【资源清理】
  *    - clearAll() - 清空画布
  *    - cleanupSvga() - 清理SVGA资源
  *    - cleanupYyeva() - 清理MP4资源
  * 
- * 7. 【工具函数】
+ * 8. 【工具函数】
  *    - showToast() - 提示消息
  *    - loadHelpContent() - 加载帮助文档
  * 
- * 8. 【SVGA加载与播放】
+ * 9. 【SVGA加载与播放】
  *    - initSvgaPlayer() - 初始化SVGA播放器
  *    - loadSvga() - 加载SVGA文件
  *    - cleanupSvga() - 清理SVGA资源
  * 
- * 9. 【播放控制】
- *    - togglePlay() - 播放/暂停
- *    - seekTo() - 跳转进度
- *    - updateProgress() - 更新进度
+ * 10. 【播放控制】
+ *     - togglePlay() - 播放/暂停
+ *     - seekTo() - 跳转进度
+ *     - updateProgress() - 更新进度
  * 
- * 10. 【双通道MP4加载与播放】
+ * 11. 【双通道MP4加载与播放】
  *     - loadYyevaPlaceholder() - 加载双通道MP4
  *     - renderYyevaFrame() - 渲染帧
  *     - cleanupYyeva() - 清理MP4资源
  * 
- * 11. 【UI交互】
+ * 12. 【UI交互】
  *     - toggleTheme() - 切换主题
  *     - applyCanvasBackground() - 应用背景
  *     - zoomIn/zoomOut - 缩放控制
  * 
- * 12. 【素材替换功能】
+ * 13. 【素材替换功能】
  *     - openMaterialPanel() - 打开素材弹窗
  *     - replaceMaterial() - 替换素材
  *     - resetMaterial() - 重置素材
  * 
- * 13. 【导出GIF功能】
+ * 14. 【导出GIF功能】
  *     - openGifPanel() - 打开GIF导出弹窗（统一入口）
  *     - runGifExport() - 执行GIF导出（使用GIFExporter模块）
  * 
- * 14. 【格式转换：MP4转SVGA】
+ * 15. 【格式转换：MP4转SVGA】
  *     - startSVGAConversion() - 开始转换
  *     - extractYyevaFrames() - 提取帧
  *     - (使用独立模块 svga-builder.js 构建)
  * 
- * 15. 【格式转换：SVGA转MP4】
+ * 16. 【格式转换：SVGA转MP4】
  *     - startMP4Conversion() - 开始转换
  *     - extractFrames() - 提取帧
  *     - composeDualChannelFrames() - 合成双通道
@@ -113,9 +123,11 @@ function initApp() {
 
             // 播放状态
             isPlaying: false,
-            progress: 0, // 0-100
+            progress: 0, // 0-100，基于时间
             currentFrame: 0,
             totalFrames: 0,
+            currentTime: 0, // 当前播放时间（秒）
+            totalDuration: 0, // 总时长（秒）
             
             // 播放控制器实例
             playerController: null,
@@ -1251,6 +1263,11 @@ function initApp() {
                 videoItem.framesLength ||
                 0;
               _this.totalFrames = frames;
+              
+              // 设置总时长
+              _this.svgaFps = _this.svga.fileInfo.fps || 30;
+              _this.totalDuration = frames / _this.svgaFps;
+              _this.currentTime = 0;
 
               if (_this.svga.fileInfo.fps && frames) {
                 var dur = (frames / _this.svga.fileInfo.fps).toFixed(1);
@@ -1376,8 +1393,16 @@ function initApp() {
             this.svgaPlayer.onFrame(function (frame) {
               _this.currentFrame = frame;
               if (_this.totalFrames > 0) {
-                var p = (frame / (_this.totalFrames - 1)) * 100;
-                _this.progress = Math.max(0, Math.min(100, Math.round(p)));
+                // 计算当前时间（基于帧数和fps）
+                _this.currentTime = frame / (_this.svgaFps || 30);
+                // progress基于时间
+                if (_this.totalDuration > 0) {
+                  _this.progress = Math.max(0, Math.min(100, (_this.currentTime / _this.totalDuration) * 100));
+                } else {
+                  // fallback：基于帧数
+                  var p = (frame / (_this.totalFrames - 1)) * 100;
+                  _this.progress = Math.max(0, Math.min(100, Math.round(p)));
+                }
               }
             });
 
@@ -1704,6 +1729,10 @@ function initApp() {
             this.progress = 0;
             this.isPlaying = false;
             
+            // 设置总时长
+            this.totalDuration = duration;
+            this.currentTime = 0;
+            
             // 启动过渡
             this.footerTransitioning = true;
             this.footerContentVisible = false;
@@ -1750,7 +1779,15 @@ function initApp() {
             // 监听帧更新
             this.lottiePlayer.addEventListener('enterFrame', function(e) {
               _this.currentFrame = Math.floor(e.currentTime);
-              _this.progress = Math.round((e.currentTime / _this.totalFrames) * 100);
+              // 计算当前时间
+              var fps = _this.lottie.fileInfo.fps || 30;
+              _this.currentTime = e.currentTime / fps;
+              // progress基于时间
+              if (_this.totalDuration > 0) {
+                _this.progress = Math.round((_this.currentTime / _this.totalDuration) * 100);
+              } else {
+                _this.progress = Math.round((e.currentTime / _this.totalFrames) * 100);
+              }
             });
             
             // 监听循环完成
@@ -1982,7 +2019,15 @@ function initApp() {
             ctx.drawImage(img, 0, 0);
             
             this.currentFrame = frameIndex;
-            this.progress = (frameIndex / (this.totalFrames - 1)) * 100 || 0;
+            // 计算当前时间
+            var fps = this.frames.fileInfo.fps || 25;
+            this.currentTime = frameIndex / fps;
+            // progress基于时间
+            if (this.totalDuration > 0) {
+              this.progress = (this.currentTime / this.totalDuration) * 100 || 0;
+            } else {
+              this.progress = (frameIndex / (this.totalFrames - 1)) * 100 || 0;
+            }
           },
           
           /**
@@ -2048,6 +2093,10 @@ function initApp() {
             this.frames.fileInfo.fps = fps;
             this.frames.fileInfo.duration = (this.totalFrames / fps).toFixed(2) + 's';
             this.showFramesFpsDialog = false;
+            
+            // 设置总时长
+            this.totalDuration = this.totalFrames / fps;
+            this.currentTime = 0;
             
             // 如果是首次设置（预加载后），启动过渡动画并开始播放
             // 如果是改变帧率，则恢复之前的播放状态
@@ -2428,6 +2477,8 @@ function initApp() {
             var currentTime = video.currentTime;
             var duration = video.duration || 1;
             
+            this.currentTime = currentTime;
+            this.totalDuration = duration;
             this.progress = (currentTime / duration) * 100;
             this.currentFrame = Math.round(currentTime * 30); // 假设30fps
           },
@@ -2676,6 +2727,10 @@ function initApp() {
                 var fps = parseFloat(_this.mp4.fileInfo.fps) || 30;
                 var currentFrame = Math.floor(video.currentTime * fps);
                 
+                // 设置当前时间和总时长
+                _this.currentTime = video.currentTime;
+                _this.totalDuration = video.duration;
+                // progress基于时间（即使变速也匀速）
                 _this.progress = (video.currentTime / video.duration) * 100;
                 _this.currentFrame = currentFrame;
                 
@@ -4595,6 +4650,39 @@ function initApp() {
             }
                       
             return Math.round(position * this.speedRemapConfig.originalTotalFrames);
+          },
+          
+          /**
+           * 根据位置获取当前区间的播放速率
+           */
+          getSpeedAtPosition: function(position) {
+            var keyframes = this.speedRemapConfig.keyframes;
+            if (!keyframes || keyframes.length < 2) {
+              return 1.0;
+            }
+            
+            var totalFrames = this.speedRemapConfig.originalTotalFrames;
+            if (!totalFrames) return 1.0;
+            
+            // 找到position所在的两个关键帧区间
+            for (var i = 0; i < keyframes.length - 1; i++) {
+              var k1 = keyframes[i];
+              var k2 = keyframes[i + 1];
+              
+              if (position >= k1.position && position <= k2.position) {
+                var frameDelta = k2.originalFrame - k1.originalFrame;
+                var positionDelta = k2.position - k1.position;
+                
+                if (positionDelta <= 0) return 1.0;
+                if (frameDelta <= 0) return 1.0;
+                
+                // frameDelta帧 在 positionDelta*totalFrames帧 时间内播放
+                var speed = frameDelta / (positionDelta * totalFrames);
+                return speed;
+              }
+            }
+            
+            return 1.0;
           },
           
           /**
@@ -7321,6 +7409,52 @@ function initApp() {
             });
           },
           
+          // 变速时间轴每段区间的速率和颜色信息
+          speedRemapSegments: function() {
+            var keyframes = this.speedRemapConfig.keyframes;
+            if (!keyframes || keyframes.length < 2) {
+              return [];
+            }
+            
+            var totalFrames = this.speedRemapConfig.originalTotalFrames || 1;
+            var segments = [];
+            
+            for (var i = 0; i < keyframes.length - 1; i++) {
+              var k1 = keyframes[i];
+              var k2 = keyframes[i + 1];
+              
+              // 计算速率
+              var frameDelta = k2.originalFrame - k1.originalFrame;
+              var positionDelta = k2.position - k1.position;
+              var speed = 1.0;
+              
+              if (positionDelta > 0 && frameDelta > 0) {
+                speed = frameDelta / (positionDelta * totalFrames);
+              }
+              
+              // 计算透明度
+              var opacity = 0;
+              if (speed > 1) {
+                // 加速：倍率每增加0.5，透明度增加10%，倍率5时100%
+                // (speed - 1) / 0.5 * 0.1 = (speed - 1) * 0.2
+                opacity = Math.min(1, (speed - 1) * 0.2);
+              } else if (speed < 1) {
+                // 减速：倍率每减少0.05，透明度增加10%，倍率0.5时100%
+                // (1 - speed) / 0.05 * 0.1 = (1 - speed) * 2
+                opacity = Math.min(1, (1 - speed) * 2);
+              }
+              
+              segments.push({
+                startPos: k1.position,
+                endPos: k2.position,
+                speed: speed,
+                opacity: opacity
+              });
+            }
+            
+            return segments;
+          },
+          
           // SVGA转换预估计算
           svgaEstimate: function () {
             // 获取配置参数
@@ -7766,6 +7900,13 @@ function initApp() {
         },
         mounted: function () {
           var _this = this;
+          
+          // 强制重置弹窗状态，防止意外显示
+          this.showEditFrameDialog = false;
+          this.editingKeyframeIndex = -1;
+          this.editFrameInput = '';
+          this.showFramesFpsDialog = false;
+          
           this.initSvgaPlayer();
           this.initEmptyStateSvgaPlayer();
           

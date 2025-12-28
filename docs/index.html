@@ -59,7 +59,7 @@
       </div>
     </div>
     
-    <div id="app">
+    <div id="app" v-cloak>
       <!-- 顶部导航栏 -->
       <div class="header-navbar">
         <!-- <a href="sth_auto.html" class="nav-link">素材自助</a> -->
@@ -215,13 +215,32 @@
                    @click="onTimelineClick"
                    @mousemove="onTimelineMouseMove"
                    @mouseleave="onTimelineMouseLeave">
-                <!-- 压缩区域可视化（灰色） -->
-                <div class="speed-remap-timeline-range" 
+                <!-- 压缩区域可视化（底色） -->
+                <div class="speed-remap-timeline-range"
                      :style="{ left: (speedRemapConfig.keyframes[0] ? speedRemapConfig.keyframes[0].position * 500 : 0) + 'px', 
                                width: ((speedRemapConfig.keyframes.length >= 2 ? speedRemapConfig.keyframes[speedRemapConfig.keyframes.length-1].position - speedRemapConfig.keyframes[0].position : 1) * 500) + 'px' }"></div>
+                <!-- 每段区间的速率颜色覆盖 -->
+                <template v-for="(segment, segIndex) in speedRemapSegments">
+                  <div 
+                    :key="'seg-' + segIndex"
+                    class="speed-remap-segment-overlay"
+                    :class="{ 'segment-speedup': segment.speed > 1, 'segment-slowdown': segment.speed < 1 }"
+                    :style="{ 
+                      left: (segment.startPos * 500) + 'px', 
+                      width: ((segment.endPos - segment.startPos) * 500) + 'px',
+                      opacity: segment.opacity
+                    }"></div>
+                </template>
                 <!-- hover预览线 -->
-                <div class="speed-remap-timeline-hover-line" 
+                <div class="speed-remap-timeline-hover-line"
                      :style="{ left: timelineHoverX + 'px', display: timelineHoverX >= 0 ? 'block' : 'none' }"></div>
+                <!-- hover预览线上方的速率提示 -->
+                <div class="speed-remap-timeline-hover-frame"
+                     :style="{ left: timelineHoverX + 'px', display: timelineHoverX >= 0 ? 'block' : 'none' }">
+                  <template v-if="timelineHoverX >= 0">
+                    当前段<br>{{ getSpeedAtPosition(timelineHoverX / 500).toFixed(2) }}倍速
+                  </template>
+                </div>
                 <!-- K帧节点 -->
                 <div 
                   v-for="(kf, index) in speedRemapConfig.keyframes" 
@@ -322,7 +341,8 @@
                     ></div>
                   </div>
                   <div class="progress-text">
-                    {{ currentFrame }}/{{ totalFrames }}
+                    <span class="progress-time">{{ currentTime.toFixed(2) }}s</span>
+                    <span class="progress-frames">{{ currentFrame }}/{{ totalFrames }}</span>
                   </div>
                 </div>
                 <div class="controls-center">
@@ -517,7 +537,7 @@
                       @click="openSpeedRemapEditor"
                     >
                       <span v-if="!mp4.hasFile" class="tooltip-text">请先拖入 MP4 文件</span>
-                      {{ speedRemapConfig.enabled ? '变速✓' : '变速' }}
+                      {{ speedRemapConfig.enabled ? '多段变速✓' : '多段变速' }}
                     </button>
                   </div>
                   <div class="footer-actions">
@@ -1393,13 +1413,13 @@
         </div>
       </div>
       
-      <!-- 编辑K帧帧数弹窗（只在MP4模式下显示） -->
-      <div class="modal-overlay" v-if="showEditFrameDialog && currentModule === 'mp4'" @click.self="cancelEditFrame">
-        <div class="svga-panel-container" style="width: 400px;">
-          <div class="modal-header">
+      <!-- K帧编辑弹窗（使用通用居中弹窗样式） -->
+      <div class="center-modal-overlay" v-if="showEditFrameDialog && currentModule === 'mp4' && showSpeedRemapEditor">
+        <div class="center-modal-dialog" style="width: 400px;">
+          <div class="center-modal-header">
             <h3>编辑K帧帧数</h3>
           </div>
-          <div class="modal-body">
+          <div class="center-modal-body">
             <div class="form-group">
               <label>帧数 (0-{{ speedRemapConfig.originalTotalFrames }})</label>
               <div class="svga-size-input-wrapper">
@@ -1414,7 +1434,7 @@
               </div>
             </div>
           </div>
-          <div class="modal-footer">
+          <div class="center-modal-footer">
             <button class="btn-primary" @click="cancelEditFrame">取消</button>
             <button class="btn-secondary" @click="confirmEditFrame">确定</button>
           </div>
@@ -2086,27 +2106,31 @@
         @change="handleReuploadSVGA"
       />
       
-      <!-- 序列帧帧率设置弹窗 -->
-      <div class="fps-dialog-overlay" v-if="showFramesFpsDialog" @click.self="cancelFramesFpsDialog"></div>
-      <div class="fps-dialog" v-if="showFramesFpsDialog">
-        <div class="fps-dialog-title">设置帧率</div>
-        <div class="fps-dialog-content">
-          <div class="fps-dialog-hint">请输入序列帧的播放帧率（1-120 fps）</div>
-          <div class="fps-dialog-input-row">
-            <input 
-              type="number" 
-              class="fps-dialog-input"
-              v-model.number="framesFpsInput"
-              min="1"
-              max="120"
-              @keyup.enter="confirmFramesFps"
-            />
-            <span class="fps-dialog-unit">fps</span>
+      <!-- 序列帧帧率设置弹窗（复用通用居中弹窗样式） -->
+      <div class="center-modal-overlay" v-if="showFramesFpsDialog">
+        <div class="center-modal-dialog" style="width: 400px;">
+          <div class="center-modal-header">
+            <h3>设置帧率</h3>
           </div>
-        </div>
-        <div class="fps-dialog-footer">
-          <button class="fps-dialog-btn fps-dialog-btn-cancel" @click="cancelFramesFpsDialog">取消</button>
-          <button class="fps-dialog-btn fps-dialog-btn-confirm" @click="confirmFramesFps">确定</button>
+          <div class="center-modal-body">
+            <div class="fps-hint">请输入序列帧的播放帧率（1-120 fps）</div>
+            <div class="fps-input-row">
+              <div class="svga-size-input-wrapper">
+                <input 
+                  type="number" 
+                  class="svga-input"
+                  v-model.number="framesFpsInput"
+                  min="1"
+                  max="120"
+                  @keyup.enter="confirmFramesFps"
+                />
+              </div>
+              <span class="fps-unit">fps</span>
+            </div>
+          </div>
+          <div class="center-modal-footer">
+            <button class="btn-secondary" @click="confirmFramesFps">确定</button>
+          </div>
         </div>
       </div>
       
