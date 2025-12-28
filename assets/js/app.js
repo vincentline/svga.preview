@@ -6641,17 +6641,41 @@ function initApp() {
           loadFFmpeg: async function () {
             // 检查 SharedArrayBuffer 支持
             // FFmpeg.wasm 需要 SharedArrayBuffer，这要求页面必须处于"跨域隔离"(Cross-Origin Isolation)状态
-            // 即必须有 Cross-Origin-Opener-Policy: same-origin 和 Cross-Origin-Embedder-Policy: require-corp 响应头
+            // 即必须有 Cross-Origin-Opener-Policy: same-origin 和 Cross-Origin-Embedder-Policy: credentialless 响应头
             if (typeof SharedArrayBuffer === 'undefined') {
-              var errorMsg = '您的浏览器环境不支持 SharedArrayBuffer，无法加载 FFmpeg。\n\n' +
-                '这通常是因为网站未开启"跨域隔离"(Cross-Origin Isolation)。\n' +
-                '如果是线上部署，请检查：\n' +
-                '1. 必须使用 HTTPS 访问（localhost 除外）\n' +
-                '2. Service Worker (coi-serviceworker.js) 必须正确加载并运行\n' +
-                '3. 请打开控制台(Console)查看是否有 Service Worker 相关报错';
-              
-              alert(errorMsg); // 弹窗提醒用户，比控制台更明显
-              throw new Error(errorMsg);
+              // 检查 Service Worker 是否已激活
+              if ('serviceWorker' in navigator) {
+                var registration = await navigator.serviceWorker.getRegistration();
+                if (registration && registration.active) {
+                  // Service Worker 已激活，但 SharedArrayBuffer 仍未可用
+                  // 这通常意味着需要刷新页面让 Service Worker 的响应头生效
+                  var errorMsg = 'SharedArrayBuffer 未启用，需要刷新页面。\n\n' +
+                    'Service Worker 已就绪，但需要刷新页面才能启用跨域隔离。\n' +
+                    '点击"确定"将自动刷新页面。';
+                  
+                  if (confirm(errorMsg)) {
+                    window.location.reload();
+                  }
+                  throw new Error('需要刷新页面启用 SharedArrayBuffer');
+                } else {
+                  // Service Worker 未激活
+                  var errorMsg = '您的浏览器环境不支持 SharedArrayBuffer，无法加载 FFmpeg。\n\n' +
+                    '这通常是因为网站未开启"跨域隔离"(Cross-Origin Isolation)。\n' +
+                    '如果是线上部署，请检查：\n' +
+                    '1. 必须使用 HTTPS 访问（localhost 除外）\n' +
+                    '2. Service Worker (coi-serviceworker.js) 必须正确加载并运行\n' +
+                    '3. 请打开控制台(Console)查看是否有 Service Worker 相关报错';
+                  
+                  alert(errorMsg);
+                  throw new Error(errorMsg);
+                }
+              } else {
+                var errorMsg = '您的浏览器不支持 Service Worker，无法启用 SharedArrayBuffer。\n\n' +
+                  '请使用现代浏览器（Chrome 67+、Firefox 79+、Safari 15.2+）。';
+                
+                alert(errorMsg);
+                throw new Error(errorMsg);
+              }
             }
 
             if (this.ffmpegLoaded) return;
