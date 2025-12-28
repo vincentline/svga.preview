@@ -72,10 +72,14 @@ $maxRetries = 3
 $retryCount = 0
 $pullSuccess = $false
 
+# 临时关闭错误停止，让重试逻辑能正常工作
+$ErrorActionPreference = 'Continue'
+
 while (-not $pullSuccess -and $retryCount -lt $maxRetries) {
-    git pull --no-rebase origin main 2>&1 | Out-Null
+    $output = git pull --no-rebase origin main 2>&1
     if ($LASTEXITCODE -eq 0) {
         $pullSuccess = $true
+        Write-Host "拉取成功" -ForegroundColor Green
     } else {
         $retryCount++
         if ($retryCount -lt $maxRetries) {
@@ -85,11 +89,11 @@ while (-not $pullSuccess -and $retryCount -lt $maxRetries) {
     }
 }
 
+# 恢复错误停止
+$ErrorActionPreference = 'Stop'
+
 if (-not $pullSuccess) {
-    Write-Host "拉取失败，可能是文件被占用或存在冲突" -ForegroundColor Red
-    Write-Host "请稍后重试或手动解决" -ForegroundColor Yellow
-    pause
-    exit 1
+    Write-Host "拉取失败，尝试直接推送..." -ForegroundColor Yellow
 }
 
 # 5. 推送
