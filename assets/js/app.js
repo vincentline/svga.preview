@@ -906,30 +906,97 @@ function initApp() {
                         var firstJsonFile = zip.file(jsonFiles[0]);
                         firstJsonFile.async('text').then(function(jsonText) {
                           try {
-                            var animationData = JSON.parse(jsonText);
-                            var width = animationData.w || animationData.width || 0;
-                            var height = animationData.h || animationData.height || 0;
+                            var data = JSON.parse(jsonText);
+                            console.log('[Lottie验证] 解析的JSON数据:', data);
+                            console.log('[Lottie验证] ZIP包中的所有JSON文件:', jsonFiles);
+                            var animationData = data;
                             
-                            if (!width || !height) {
-                              reject('Lottie文件缺少尺寸信息，可能文件格式不正确');
-                            } else {
-                              resolve({ animationData: animationData, file: file });
+                            // 检查是否是 .lottie 标准格式（包装格式）
+                            if (data.animations && Array.isArray(data.animations) && data.animations.length > 0) {
+                              console.log('[Lottie验证] 检测到.lottie包装格式, animations[0]:', data.animations[0]);
+                              // .lottie 格式可能的结构：
+                              // 1. { animations: [{id, data: {...}}] } - data字段包含动画
+                              // 2. { animations: [{id, animation: {...}}] } - animation字段包含动画
+                              // 3. { animations: [{id}] } + animations/xxx.json - 动画在单独文件
+                              
+                              if (data.animations[0].data) {
+                                animationData = data.animations[0].data;
+                              } else if (data.animations[0].animation) {
+                                animationData = data.animations[0].animation;
+                              } else {
+                                // 需要从 animations/ 目录读取真正的动画文件
+                                var animId = data.animations[0].id;
+                                console.log('[Lottie验证] animations[0]只有元数据，查找实际动画文件, id:', animId);
+                                
+                                // 查找 animations/ 目录下的 JSON 文件
+                                var animFile = null;
+                                for (var i = 0; i < jsonFiles.length; i++) {
+                                  if (jsonFiles[i].indexOf('animations/') === 0 && jsonFiles[i] !== jsonFiles[0]) {
+                                    animFile = jsonFiles[i];
+                                    break;
+                                  }
+                                }
+                                
+                                if (animFile) {
+                                  console.log('[Lottie验证] 找到动画文件:', animFile, '正在读取...');
+                                  zip.file(animFile).async('text').then(function(animText) {
+                                    try {
+                                      animationData = JSON.parse(animText);
+                                      console.log('[Lottie验证] 动画文件解析成功:', animationData);
+                                      validateAndResolve(animationData);
+                                    } catch (parseErr) {
+                                      console.error('[Lottie验证] 动画文件JSON解析失败:', parseErr);
+                                      reject('动画文件JSON解析失败：' + parseErr.message);
+                                    }
+                                  }).catch(function(readErr) {
+                                    console.error('[Lottie验证] 读取动画文件失败:', readErr);
+                                    reject('读取动画文件失败：' + readErr.message);
+                                  });
+                                  return; // 异步处理，等待动画文件读取
+                                } else {
+                                  console.error('[Lottie验证] 未找到animations/目录下的动画文件');
+                                  reject('未找到Lottie动画数据文件');
+                                  return;
+                                }
+                              }
                             }
+                            
+                            validateAndResolve(animationData);
+                            
                           } catch (err) {
+                            console.error('[Lottie验证] JSON解析失败:', err);
                             reject('JSON解析失败：' + err.message);
                           }
+                          
+                          // 验证并返回结果的辅助函数
+                          function validateAndResolve(animData) {
+                            var width = animData.w || animData.width || 0;
+                            var height = animData.h || animData.height || 0;
+                            
+                            if (!width || !height) {
+                              console.error('[Lottie验证] 缺少尺寸信息，当前animationData:', animData);
+                              reject('Lottie文件缺少尺寸信息，可能文件格式不正确');
+                            } else {
+                              console.log('[Lottie验证] .lottie文件验证成功，尺寸:', width, 'x', height);
+                              resolve({ animationData: animData, file: file });
+                            }
+                          }
                         }).catch(function(err) {
+                          console.error('[Lottie验证] 读取JSON文件失败:', err);
                           reject('读取JSON文件失败：' + err.message);
                         });
                       }).catch(function(err) {
+                        console.error('[Lottie验证] .lottie文件解压失败:', err);
                         reject('.lottie文件解压失败：' + err.message);
                       });
                     };
                     reader.onerror = function() {
+                      console.error('[Lottie验证] 文件读取失败');
                       reject('文件读取失败');
                     };
                     reader.readAsArrayBuffer(file);
                   }).catch(function(err) {
+                    console.error('[Lottie验证] JSZip库加载失败:', err);
                     reject('JSZip库加载失败');
                   });
                 } else {
@@ -949,15 +1016,19 @@ function initApp() {
                       var height = animationData.h || animationData.height || 0;
                       
                       if (!width || !height) {
+                        console.error('[Lottie验证] 缺少尺寸信息，当前animationData:', animationData);
                         reject('Lottie文件缺少尺寸信息，可能文件格式不正确');
                       } else {
+                        console.log('[Lottie验证] .json文件验证成功，尺寸:', width, 'x', height);
                         resolve({ animationData: animationData, file: file });
                       }
                     } catch (err) {
+                      console.error('[Lottie验证] JSON解析失败:', err);
                       reject('JSON解析失败：' + err.message);
                     }
                   };
                   reader.onerror = function() {
+                    console.error('[Lottie验证] 文件读取失败');
                     reject('文件读取失败');
                   };
                   reader.readAsText(file);
@@ -1464,14 +1535,20 @@ function initApp() {
               _this.currentFrame = 0;
               _this.progress = 0;
               
+              // 设置 SVGA 播放器的 onFrame 回调，实时更新播放进度
+              _this.svgaPlayer.onFrame = function(frame) {
+                if (_this.currentModule === 'svga' && _this.totalFrames > 0) {
+                  _this.currentFrame = frame;
+                  _this.progress = Math.round((frame / _this.totalFrames) * 100);
+                  _this.currentTime = frame / (_this.svgaFps || 30);
+                }
+              };
+              
               _this.applyCanvasBackground();
               
-              // 计算初始缩放比例
-              if (videoItem.videoSize) {
-                _this.resetViewToInitialScale(
-                  videoItem.videoSize.width,
-                  videoItem.videoSize.height
-                );
+              // 计算初始缩放比例并居中（委托给 ViewportController）
+              if (videoItem.videoSize && _this.viewportController) {
+                _this.viewportController.resetView();
               }
             }, 400);
           },
@@ -1585,11 +1662,10 @@ function initApp() {
                 _this.footerContentVisible = true;
                 _this.initYyevaCanvas();
                 
-                // 计算初始缩放比例
-                _this.resetViewToInitialScale(
-                  _this.yyeva.displayWidth,
-                  _this.yyeva.displayHeight
-                );
+                // 计算初始缩放比例并居中（委托给 ViewportController）
+                if (_this.viewportController) {
+                  _this.viewportController.resetView();
+                }
                 
                 // 检测 alpha 位置并渲染第一帧
                 video.onseeked = function() {
@@ -1688,8 +1764,10 @@ function initApp() {
                 container.appendChild(video);
               }
               
-              // 计算初始缩放比例
-              _this.resetViewToInitialScale(videoWidth, videoHeight);
+              // 计算初始缩放比例并居中（委托给 ViewportController）
+              if (_this.viewportController) {
+                _this.viewportController.resetView();
+              }
               
               // 启动过渡
               _this.footerTransitioning = true;
@@ -1769,6 +1847,17 @@ function initApp() {
                     };
                   }
                 });
+                
+                // 设置 SVGA 播放器的 onFrame 回调，实时更新播放进度
+                if (_this.svgaPlayer) {
+                  _this.svgaPlayer.onFrame = function(frame) {
+                    if (_this.currentModule === 'svga' && _this.totalFrames > 0) {
+                      _this.currentFrame = frame;
+                      _this.progress = Math.round((frame / _this.totalFrames) * 100);
+                      _this.currentTime = frame / (_this.svgaFps || 30);
+                    }
+                  };
+                }
               } else {
                 console.error('[App] 进度条元素未找到');
               }
@@ -1813,13 +1902,19 @@ function initApp() {
             }
           },
 
-          // 切换静音状态
+          // 切换静音状态（已重构：统一使用PlayerController）
           toggleMute: function () {
             // 如果没有音频，不响应点击
             if (!this.hasAudio) return;
             
             this.isMuted = !this.isMuted;
             
+            // 使用PlayerController统一接口
+            if (this.playerController) {
+              this.playerController.setMuted(this.isMuted);
+            }
+            
+            /* ========== 旧代码（已废弃，由PlayerController统一处理） ==========
             // 双通道MP4 模式
             if (this.currentModule === 'yyeva' && this.yyevaVideo) {
               this.yyevaVideo.muted = this.isMuted;
@@ -1837,6 +1932,7 @@ function initApp() {
                 Howler.mute(this.isMuted);
               }
             }
+            ========== 旧代码结束 ========== */
           },
           
           // 检测视频是否包含音频轨道
@@ -1902,18 +1998,29 @@ function initApp() {
               _this.progress = 0;
             });
             
-            // 应用背景色
-            this.$nextTick(function() {
-              _this.applyCanvasBackground();
+            // 结束过渡，显示底部浮层
+            setTimeout(function() {
+              _this.footerTransitioning = false;
+              _this.footerContentVisible = true;
               
-              // 计算初始缩放比例（使高度为屏幕的75%）
-              if (_this.lottie.originalWidth && _this.lottie.originalHeight) {
-                _this.resetViewToInitialScale(
-                  _this.lottie.originalWidth,
-                  _this.lottie.originalHeight
-                );
-              }
-            });
+              // 应用背景色
+              _this.$nextTick(function() {
+                _this.applyCanvasBackground();
+                
+                // 计算初始缩放比例并居中（委托给 ViewportController）
+                if (_this.viewportController) {
+                  _this.viewportController.resetView();
+                }
+                
+                // 自动播放
+                setTimeout(function() {
+                  if (_this.lottiePlayer) {
+                    _this.lottiePlayer.play();
+                    _this.isPlaying = true;
+                  }
+                }, 100);
+              });
+            }, 400);
           },
           
           /**
@@ -2214,11 +2321,10 @@ function initApp() {
                 
                 // 使用$nextTick确保DOM更新后再计算位置
                 _this.$nextTick(function() {
-                  // 计算初始缩放比例（使高度为屏幕的75%）
-                  _this.resetViewToInitialScale(
-                    _this.frames.originalWidth,
-                    _this.frames.originalHeight
-                  );
+                  // 计算初始缩放比例并居中（委托给 ViewportController）
+                  if (_this.viewportController) {
+                    _this.viewportController.resetView();
+                  }
                   
                   // 再等待50ms让内容渲染，然后开始播放
                   setTimeout(function() {
@@ -2867,7 +2973,9 @@ function initApp() {
                 }
                 
                 // 计算初始缩放比例
-                _this.resetViewToInitialScale(_this.mp4.originalWidth, _this.mp4.originalHeight);
+                if (_this.viewportController) {
+                  _this.viewportController.resetView();
+                }
                 
                 // 启动过渡
                 _this.footerTransitioning = true;
@@ -2941,20 +3049,26 @@ function initApp() {
           /* 缩放 + 平移 */
 
           /**
-           * 滚轮缩放 (onWheel)
-           * 功能：支持鼠标滚轮或 Ctrl+滚轮缩放，保持当前视图位置不变
+           * 滚轮事件处理 (onWheel)
+           * 功能：
+           *   - Ctrl+滚轮：缩放（改变 scale，保持当前位置）
+           *   - 普通滚轮：缩放（改变 scale，保持当前位置）
+           * 注意：所有缩放操作都不会移动播放器位置
            */
           onWheel: function (event) {
             event.preventDefault();
             if (!this.viewportController) return;
             
             var delta = event.deltaY || event.wheelDelta;
-            var step = delta > 0 ? -0.1 : 0.1;
-            var newScale = this.viewerScale + step;
-            if (newScale < 0.2) newScale = 0.2;
-            if (newScale > 5) newScale = 5;
             
-            this.viewportController.setScale(newScale, true);
+            // 滚轮缩放（不区分 Ctrl 键）
+            // 使用 ViewportController 的 zoomIn/zoomOut 方法
+            // 这些方法只改变 scale，不调整 offset，避免画面跳动
+            if (delta > 0) {
+              this.viewportController.zoomOut();
+            } else {
+              this.viewportController.zoomIn();
+            }
           },
 
           onMouseDown: function (event) {
@@ -2972,8 +3086,17 @@ function initApp() {
             if (!this.dragging) return;
             var dx = event.clientX - this.dragStartX;
             var dy = event.clientY - this.dragStartY;
-            this.viewerOffsetX = this.dragStartOffsetX + dx;
-            this.viewerOffsetY = this.dragStartOffsetY + dy;
+            var newOffsetX = this.dragStartOffsetX + dx;
+            var newOffsetY = this.dragStartOffsetY + dy;
+            
+            // 同步更新 ViewportController 的 offset 状态
+            if (this.viewportController) {
+              this.viewportController.setOffset(newOffsetX, newOffsetY, true);
+            } else {
+              // 兼容旧逻辑（如果没有 ViewportController）
+              this.viewerOffsetX = newOffsetX;
+              this.viewerOffsetY = newOffsetY;
+            }
           },
 
           onMouseUp: function () {
@@ -2993,26 +3116,6 @@ function initApp() {
           },
           
           // 计算初始缩放比例，使播放器高度为屏幕高度的75%
-          /**
-           * 计算初始缩放比例（委托给 ViewportController）
-           */
-          calculateInitialScale: function(contentWidth, contentHeight) {
-            if (!this.viewportController) return 1;
-            return this.viewportController.calculateInitialScale(contentWidth, contentHeight);
-          },
-          
-          /**
-           * 重置视图到初始状态（计算初始缩放 + 居中）
-           * @param {Number} contentWidth 内容宽度
-           * @param {Number} contentHeight 内容高度
-           */
-          resetViewToInitialScale: function(contentWidth, contentHeight) {
-            if (!this.viewportController) return;
-            var initialScale = this.viewportController.calculateInitialScale(contentWidth, contentHeight);
-            this.viewportController.setScale(initialScale, false);
-            this.viewportController.centerView();
-          },
-          
           /**
            * 获取当前播放器内容的原始尺寸 (getContentOriginalSize)
            * 返回值：{width, height} 或 null

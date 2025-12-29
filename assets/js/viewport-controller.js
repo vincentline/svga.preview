@@ -57,8 +57,8 @@
  * ===== 注意事项 =====
  * - 所有方法默认会触发 onViewportChange 回调，除非明确传入 notify=false
  * - 缩放和平移不会自动限制画布边界，需要在应用层处理（如果需要）
- * - 当前 zoomIn/zoomOut 采用简单模式（保持位置不变），不会跳到画面中间
- * - 如需围绕中心点缩放，可使用保留的 applyZoomWithCenterPoint() 方法
+ * - zoomIn/zoomOut 采用围绕中心点缩放模式，自动调整 offsetY 保持中心点不动
+ * - applyZoomWithCenterPoint() 实现了中心点缩放的核心逻辑
  */
 
 (function(global) {
@@ -236,20 +236,19 @@
    * 
    * 功能：
    *   每次增加固定步长 (zoomStep，默认0.1)
-   *   保持当前视图位置不变（只改变缩放比例）
+   *   围绕播放器中心点缩放，保持中心点位置不变
    * 
-   * 注意：
-   *   不会调整偏移量，所以画面不会“跳到中间”
-   *   如果需要围绕中心点缩放，请使用 applyZoomWithCenterPoint()
+   * 实现：
+   *   调用 applyZoomWithCenterPoint() 自动补偿偏移量
    * 
    * @example
    * // 点击 + 按钮或滚轮向上
-   * controller.zoomIn(); // scale: 0.5 -> 0.6
+   * controller.zoomIn(); // scale: 0.5 -> 0.6，中心点保持不动
    */
   ViewportController.prototype.zoomIn = function() {
-    var newScale = Math.min(this.scale + this.zoomStep, this.maxScale);
-    this.scale = newScale;
-    this.onViewportChange(this.scale, this.offsetX, this.offsetY);
+    var oldScale = this.scale;
+    var newScale = Math.min(oldScale + this.zoomStep, this.maxScale);
+    this.applyZoomWithCenterPoint(oldScale, newScale);
   };
 
   /**
@@ -257,20 +256,19 @@
    * 
    * 功能：
    *   每次减少固定步长 (zoomStep，默认0.1)
-   *   保持当前视图位置不变（只改变缩放比例）
+   *   围绕播放器中心点缩放，保持中心点位置不变
    * 
-   * 注意：
-   *   不会调整偏移量，所以画面不会“跳到中间”
-   *   如果需要围绕中心点缩放，请使用 applyZoomWithCenterPoint()
+   * 实现：
+   *   调用 applyZoomWithCenterPoint() 自动补偿偏移量
    * 
    * @example
    * // 点击 - 按钮或滚轮向下
-   * controller.zoomOut(); // scale: 0.6 -> 0.5
+   * controller.zoomOut(); // scale: 0.6 -> 0.5，中心点保持不动
    */
   ViewportController.prototype.zoomOut = function() {
-    var newScale = Math.max(this.scale - this.zoomStep, this.minScale);
-    this.scale = newScale;
-    this.onViewportChange(this.scale, this.offsetX, this.offsetY);
+    var oldScale = this.scale;
+    var newScale = Math.max(oldScale - this.zoomStep, this.minScale);
+    this.applyZoomWithCenterPoint(oldScale, newScale);
   };
 
   /**
@@ -286,9 +284,8 @@
    *   - 这会导致画面中心点相对屏幕移动
    *   - 需要计算偏移补偿：offsetY -= (新高度 - 旧高度) / 2
    * 
-   * 注意：
-   *   目前暂未使用，保留供未来需要围绕中心点缩放的场景
-   *   当前 zoomIn/zoomOut 使用的是简单模式（保持位置不变）
+   * 使用场景：
+   *   zoomIn/zoomOut 方法内部调用，实现围绕中心点缩放
    * 
    * @param {Number} oldScale - 旧的缩放比例
    * @param {Number} newScale - 新的缩放比例
