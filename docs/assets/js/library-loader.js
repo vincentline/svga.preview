@@ -108,6 +108,12 @@
       checkFn: function() { return typeof pako !== 'undefined'; },
       priority: 25
     },
+    'jszip': {
+      name: 'JSZip',
+      url: 'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js',
+      checkFn: function() { return typeof JSZip !== 'undefined'; },
+      priority: 25
+    },
     'pngquant': {
       name: 'PngQuant',
       url: 'https://unpkg.com/@saschazar/wasm-pngquant@2.0.11/dist/wasm-pngquant.js',

@@ -1,6 +1,7 @@
 /**
  * 播放控制器模块
- * 封装多模式统一的播放控制逻辑（播放/暂停、进度跳转、拖拽滑块）
+ * 封装多模式统一的播放控制逻辑（播放/暂停、进度跳转、拖拽滑块、静音控制）
+ * 使用适配器模式统一不同播放器的接口，避免重复的if-else判断
  * 
  * 使用方式：
  * var controller = new PlayerController({
@@ -11,12 +12,271 @@
  * 
  * controller.togglePlay();
  * controller.seekTo(0.5); // 0-1
+ * controller.setMuted(true);
  * controller.destroy();
  */
 
 (function(global) {
   'use strict';
 
+  // ==================== 播放器适配器基类 ====================
+  
+  /**
+   * 播放器适配器基类 - 定义统一接口
+   */
+  function PlayerAdapter(state) {
+    this.state = state;
+  }
+  
+  PlayerAdapter.prototype = {
+    // 播放
+    play: function() { throw new Error('子类必须实现 play'); },
+    // 暂停
+    pause: function() { throw new Error('子类必须实现 pause'); },
+    // 跳转到指定进度（0-1）
+    seekTo: function(percentage) { throw new Error('子类必须实现 seekTo'); },
+    // 设置静音
+    setMuted: function(muted) { throw new Error('子类必须实现 setMuted'); },
+    // 检查是否可用
+    canHandle: function() { return this.state.hasFile; },
+    // 进度转换（用于变速等特殊场景）
+    transformPercentage: function(p) { return p; }
+  };
+  
+  // ==================== Lottie 播放器适配器 ====================
+  
+  function LottiePlayerAdapter(state) {
+    PlayerAdapter.call(this, state);
+  }
+  
+  LottiePlayerAdapter.prototype = Object.create(PlayerAdapter.prototype);
+  LottiePlayerAdapter.prototype.constructor = LottiePlayerAdapter;
+  
+  LottiePlayerAdapter.prototype.canHandle = function() {
+    return this.state.hasFile && this.state.lottiePlayer;
+  };
+  
+  LottiePlayerAdapter.prototype.play = function() {
+    this.state.lottiePlayer.play();
+  };
+  
+  LottiePlayerAdapter.prototype.pause = function() {
+    this.state.lottiePlayer.pause();
+  };
+  
+  LottiePlayerAdapter.prototype.seekTo = function(percentage) {
+    var targetFrame = Math.round(percentage * this.state.totalFrames);
+    this.state.lottiePlayer.goToAndStop(targetFrame, true);
+  };
+  
+  LottiePlayerAdapter.prototype.setMuted = function(muted) {
+    // Lottie 本身没有音频
+  };
+  
+  // ==================== 视频播放器适配器基类 ====================
+  
+  function VideoPlayerAdapter(state, video) {
+    PlayerAdapter.call(this, state);
+    this.video = video;
+  }
+  
+  VideoPlayerAdapter.prototype = Object.create(PlayerAdapter.prototype);
+  VideoPlayerAdapter.prototype.constructor = VideoPlayerAdapter;
+  
+  VideoPlayerAdapter.prototype.canHandle = function() {
+    return this.state.hasFile && this.video;
+  };
+  
+  VideoPlayerAdapter.prototype.play = function() {
+    var _this = this;
+    return this.video.play().then(function() {
+      _this.afterPlay(); // 钩子方法，子类可重写
+    }).catch(function(err) {
+      console.error('播放失败:', err);
+    });
+  };
+  
+  VideoPlayerAdapter.prototype.pause = function() {
+    this.video.pause();
+    this.afterPause(); // 钩子方法，子类可重写
+  };
+  
+  VideoPlayerAdapter.prototype.seekTo = function(percentage) {
+    var actualPercentage = this.transformPercentage(percentage);
+    var duration = this.video.duration || 1;
+    this.video.currentTime = actualPercentage * duration;
+  };
+  
+  VideoPlayerAdapter.prototype.setMuted = function(muted) {
+    this.video.muted = muted;
+  };
+  
+  VideoPlayerAdapter.prototype.afterPlay = function() {};
+  VideoPlayerAdapter.prototype.afterPause = function() {};
+  
+  // ==================== YYEVA 双通道MP4适配器 ====================
+  
+  function YyevaPlayerAdapter(state) {
+    VideoPlayerAdapter.call(this, state, state.yyevaVideo);
+  }
+  
+  YyevaPlayerAdapter.prototype = Object.create(VideoPlayerAdapter.prototype);
+  YyevaPlayerAdapter.prototype.constructor = YyevaPlayerAdapter;
+  
+  YyevaPlayerAdapter.prototype.afterPlay = function() {
+    if (this.state.startYyevaRenderLoop) {
+      this.state.startYyevaRenderLoop();
+    }
+  };
+  
+  YyevaPlayerAdapter.prototype.afterPause = function() {
+    if (this.state.yyevaAnimationId) {
+      cancelAnimationFrame(this.state.yyevaAnimationId);
+      this.state.yyevaAnimationId = null;
+    }
+  };
+  
+  YyevaPlayerAdapter.prototype.seekTo = function(percentage) {
+    VideoPlayerAdapter.prototype.seekTo.call(this, percentage);
+    // 立即渲染一帧（暂停时也能更新画面）
+    if (this.state.renderYyevaFrame) {
+      var _this = this;
+      setTimeout(function() {
+        _this.state.renderYyevaFrame();
+      }, 50);
+    }
+  };
+  
+  // ==================== MP4 播放器适配器（含变速逻辑）====================
+  
+  function Mp4PlayerAdapter(state) {
+    VideoPlayerAdapter.call(this, state, state.mp4Video);
+  }
+  
+  Mp4PlayerAdapter.prototype = Object.create(VideoPlayerAdapter.prototype);
+  Mp4PlayerAdapter.prototype.constructor = Mp4PlayerAdapter;
+  
+  Mp4PlayerAdapter.prototype.afterPlay = function() {
+    if (this.state.startMp4ProgressLoop) {
+      this.state.startMp4ProgressLoop();
+    }
+  };
+  
+  // 变速映射逻辑
+  Mp4PlayerAdapter.prototype.transformPercentage = function(percentage) {
+    if (!this.state.speedRemapConfig || 
+        !this.state.speedRemapConfig.enabled || 
+        !this.state.speedRemapConfig.keyframes || 
+        this.state.speedRemapConfig.keyframes.length < 2) {
+      return percentage;
+    }
+    
+    var keyframes = this.state.speedRemapConfig.keyframes;
+    var totalFrames = this.state.speedRemapConfig.originalTotalFrames || this.state.totalFrames;
+    var lastKeyframe = keyframes[keyframes.length - 1];
+    
+    // percentage是相对于变速后总时长的百分比，转换为position
+    var targetPosition = percentage * lastKeyframe.position;
+    
+    // 根据position计算原始帧号
+    var originalFrame = 0;
+    for (var i = 0; i < keyframes.length - 1; i++) {
+      var k1 = keyframes[i];
+      var k2 = keyframes[i + 1];
+      if (targetPosition >= k1.position && targetPosition <= k2.position) {
+        var posDelta = k2.position - k1.position;
+        if (posDelta > 0) {
+          var posProgress = (targetPosition - k1.position) / posDelta;
+          originalFrame = k1.originalFrame + posProgress * (k2.originalFrame - k1.originalFrame);
+        } else {
+          originalFrame = k1.originalFrame;
+        }
+        break;
+      }
+    }
+    
+    // 计算原始视频的实际位置
+    return originalFrame / totalFrames;
+  };
+  
+  // ==================== 序列帧播放器适配器 ====================
+  
+  function FramesPlayerAdapter(state) {
+    PlayerAdapter.call(this, state);
+  }
+  
+  FramesPlayerAdapter.prototype = Object.create(PlayerAdapter.prototype);
+  FramesPlayerAdapter.prototype.constructor = FramesPlayerAdapter;
+  
+  FramesPlayerAdapter.prototype.play = function() {
+    if (this.state.startFramesPlayLoop) {
+      this.state.startFramesPlayLoop();
+    }
+  };
+  
+  FramesPlayerAdapter.prototype.pause = function() {
+    if (this.state.stopFramesPlayLoop) {
+      this.state.stopFramesPlayLoop();
+    }
+  };
+  
+  FramesPlayerAdapter.prototype.seekTo = function(percentage) {
+    var targetFrame = Math.round(percentage * (this.state.totalFrames - 1));
+    if (this.state.seekFramesTo) {
+      this.state.seekFramesTo(targetFrame);
+    }
+  };
+  
+  FramesPlayerAdapter.prototype.setMuted = function(muted) {
+    // 序列帧没有音频
+  };
+  
+  // ==================== SVGA 播放器适配器 ====================
+  
+  function SvgaPlayerAdapter(state) {
+    PlayerAdapter.call(this, state);
+  }
+  
+  SvgaPlayerAdapter.prototype = Object.create(PlayerAdapter.prototype);
+  SvgaPlayerAdapter.prototype.constructor = SvgaPlayerAdapter;
+  
+  SvgaPlayerAdapter.prototype.canHandle = function() {
+    return this.state.hasFile && this.state.svgaPlayer;
+  };
+  
+  SvgaPlayerAdapter.prototype.play = function() {
+    try {
+      var currentPercentage = (this.state.progress || 0) / 100;
+      this.state.svgaPlayer.stepToPercentage(currentPercentage, true);
+    } catch (e) {
+      console.error('播放失败:', e);
+    }
+  };
+  
+  SvgaPlayerAdapter.prototype.pause = function() {
+    try {
+      this.state.svgaPlayer.pauseAnimation();
+    } catch (e) {
+      console.error('暂停失败:', e);
+    }
+  };
+  
+  SvgaPlayerAdapter.prototype.seekTo = function(percentage) {
+    try {
+      this.state.svgaPlayer.stepToPercentage(percentage, this.state.isPlaying);
+    } catch (e) {
+      console.error('跳转失败:', e);
+    }
+  };
+  
+  SvgaPlayerAdapter.prototype.setMuted = function(muted) {
+    if (typeof Howler !== 'undefined') {
+      Howler.mute(muted);
+    }
+  };
+  
+  // ==================== 播放控制器 ====================
+  
   /**
    * 播放控制器
    * @param {Object} options 配置选项
@@ -39,199 +299,101 @@
   }
 
   /**
-   * 切换播放/暂停
+   * 获取当前模式对应的播放器适配器
+   */
+  PlayerController.prototype.getAdapter = function() {
+    var state = this.getPlayerState();
+    var mode = state.mode;
+    
+    // 根据模式返回对应的适配器
+    var adapter = null;
+    switch (mode) {
+      case 'lottie':
+        adapter = new LottiePlayerAdapter(state);
+        break;
+      case 'yyeva':
+        adapter = new YyevaPlayerAdapter(state);
+        break;
+      case 'mp4':
+        adapter = new Mp4PlayerAdapter(state);
+        break;
+      case 'frames':
+        adapter = new FramesPlayerAdapter(state);
+        break;
+      case 'svga':
+        adapter = new SvgaPlayerAdapter(state);
+        break;
+    }
+    
+    // 检查适配器是否可用
+    if (adapter && adapter.canHandle()) {
+      return adapter;
+    }
+    return null;
+  };
+  
+  /**
+   * 切换播放/暂停（重构后：统一接口，无if-else分支）
    */
   PlayerController.prototype.togglePlay = function() {
     var state = this.getPlayerState();
-    var mode = state.mode;
-    var isPlaying = state.isPlaying;
-      
-    // Lottie 模式
-    if (mode === 'lottie' && state.hasFile && state.lottiePlayer) {
-      if (isPlaying) {
-        state.lottiePlayer.pause();
-        this.onPlayStateChange(false);
-      } else {
-        state.lottiePlayer.play();
-        this.onPlayStateChange(true);
-      }
-      return;
-    }
-      
-    // 双通MP4 模式
-    if (mode === 'yyeva' && state.hasFile && state.yyevaVideo) {
-      if (isPlaying) {
-        state.yyevaVideo.pause();
-        if (state.yyevaAnimationId) {
-          cancelAnimationFrame(state.yyevaAnimationId);
-          state.yyevaAnimationId = null;
-        }
-        this.onPlayStateChange(false);
-      } else {
-        var _this = this;
-        state.yyevaVideo.play().then(function() {
-          _this.onPlayStateChange(true);
-          if (state.startYyevaRenderLoop) {
-            state.startYyevaRenderLoop();
-          }
-        }).catch(function(err) {
-          console.error('播放失败:', err);
-        });
-      }
-      return;
-    }
-      
-    // 普通MP4 模式
-    if (mode === 'mp4' && state.hasFile && state.mp4Video) {
-      if (isPlaying) {
-        state.mp4Video.pause();
-        this.onPlayStateChange(false);
-      } else {
-        var _this = this;
-        state.mp4Video.play().then(function() {
-          _this.onPlayStateChange(true);
-          if (state.startMp4ProgressLoop) {
-            state.startMp4ProgressLoop();
-          }
-        }).catch(function(err) {
-          console.error('播放失败:', err);
-        });
-      }
-      return;
-    }
+    var adapter = this.getAdapter();
     
-    // 序列帧模式
-    if (mode === 'frames' && state.hasFile) {
-      if (isPlaying) {
-        if (state.stopFramesPlayLoop) {
-          state.stopFramesPlayLoop();
-        }
-        this.onPlayStateChange(false);
-      } else {
-        this.onPlayStateChange(true);
-        if (state.startFramesPlayLoop) {
-          state.startFramesPlayLoop();
-        }
-      }
-      return;
-    }
+    if (!adapter) return;
     
-    // SVGA 模式
-    if (mode === 'svga' && state.svgaPlayer && state.hasFile) {
-      if (isPlaying) {
-        try {
-          state.svgaPlayer.pauseAnimation();
-        } catch (e) {
-          console.error('暂停失败:', e);
-        }
+    try {
+      if (state.isPlaying) {
+        adapter.pause();
         this.onPlayStateChange(false);
       } else {
-        try {
-          var currentPercentage = (state.progress || 0) / 100;
-          state.svgaPlayer.stepToPercentage(currentPercentage, true);
-        } catch (e) {
-          console.error('播放失败:', e);
-        }
+        adapter.play();
         this.onPlayStateChange(true);
       }
+    } catch (e) {
+      console.error('播放控制失败:', e);
     }
   };
 
   /**
-   * 跳转到指定进度
+   * 跳转到指定进度（重构后：统一接口，无if-else分支）
    * @param {number} percentage 进度百分比 0-1
    */
   PlayerController.prototype.seekTo = function(percentage) {
     percentage = Math.max(0, Math.min(1, percentage));
     var state = this.getPlayerState();
-    var mode = state.mode;
-    var progress = Math.round(percentage * 100);
+    var adapter = this.getAdapter();
     
-    // Lottie 模式
-    if (mode === 'lottie' && state.hasFile && state.lottiePlayer) {
-      var targetFrame = Math.round(percentage * state.totalFrames);
-      this.onProgressChange(progress, targetFrame);
-      state.lottiePlayer.goToAndStop(targetFrame, true);
-      return;
-    }
+    if (!adapter) return;
     
-    // 双通道MP4 模式
-    if (mode === 'yyeva' && state.hasFile && state.yyevaVideo) {
-      var duration = state.yyevaVideo.duration || 1;
-      state.yyevaVideo.currentTime = percentage * duration;
-      var currentFrame = Math.round(percentage * state.totalFrames);
-      this.onProgressChange(progress, currentFrame);
-      
-      // 立即渲染一帧（暂停时也能更新画面）
-      if (state.renderYyevaFrame) {
-        setTimeout(function() {
-          state.renderYyevaFrame();
-        }, 50);
-      }
-      return;
-    }
-    
-    // 普通MP4 模式
-    if (mode === 'mp4' && state.hasFile && state.mp4Video) {
-      var duration = state.mp4Video.duration || 1;
-      var fps = 30;
-      var actualPercentage = percentage;
-      
-      // 变速时，需要将变速后位置映射回原始视频位置
-      if (state.speedRemapConfig && state.speedRemapConfig.enabled && state.speedRemapConfig.keyframes && state.speedRemapConfig.keyframes.length >= 2) {
-        var keyframes = state.speedRemapConfig.keyframes;
-        var totalFrames = state.speedRemapConfig.originalTotalFrames || state.totalFrames;
-        var lastKeyframe = keyframes[keyframes.length - 1];
-        
-        // percentage是相对于变速后总时长的百分比，转换为position
-        var targetPosition = percentage * lastKeyframe.position;
-        
-        // 根据position计算原始帧号
-        var originalFrame = 0;
-        for (var i = 0; i < keyframes.length - 1; i++) {
-          var k1 = keyframes[i];
-          var k2 = keyframes[i + 1];
-          if (targetPosition >= k1.position && targetPosition <= k2.position) {
-            var posDelta = k2.position - k1.position;
-            if (posDelta > 0) {
-              var posProgress = (targetPosition - k1.position) / posDelta;
-              originalFrame = k1.originalFrame + posProgress * (k2.originalFrame - k1.originalFrame);
-            } else {
-              originalFrame = k1.originalFrame;
-            }
-            break;
-          }
-        }
-        
-        // 计算原始视频的实际位置
-        actualPercentage = originalFrame / totalFrames;
-      }
-      
-      state.mp4Video.currentTime = actualPercentage * duration;
+    try {
+      // 计算进度和帧号
+      var progress = Math.round(percentage * 100);
+      var actualPercentage = adapter.transformPercentage(percentage);
       var currentFrame = Math.round(actualPercentage * state.totalFrames);
+      
+      // 更新进度显示
       this.onProgressChange(progress, currentFrame);
-      return;
+      
+      // 跳转到指定位置
+      adapter.seekTo(percentage);
+    } catch (e) {
+      console.error('跳转失败:', e);
     }
+  };
+  
+  /**
+   * 设置静音状态（新增：统一接口）
+   * @param {boolean} muted 是否静音
+   */
+  PlayerController.prototype.setMuted = function(muted) {
+    var adapter = this.getAdapter();
     
-    // 序列帧模式
-    if (mode === 'frames' && state.hasFile) {
-      var targetFrame = Math.round(percentage * (state.totalFrames - 1));
-      this.onProgressChange(progress, targetFrame);
-      if (state.seekFramesTo) {
-        state.seekFramesTo(targetFrame);
-      }
-      return;
-    }
+    if (!adapter) return;
     
-    // SVGA 模式
-    if (mode === 'svga' && state.svgaPlayer && state.hasFile) {
-      var currentFrame = Math.round(percentage * (state.totalFrames - 1));
-      this.onProgressChange(progress, currentFrame);
-      try {
-        state.svgaPlayer.stepToPercentage(percentage, state.isPlaying);
-      } catch (e) {
-        console.error('跳转失败:', e);
-      }
+    try {
+      adapter.setMuted(muted);
+    } catch (e) {
+      console.error('设置静音失败:', e);
     }
   };
 
