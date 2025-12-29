@@ -66,7 +66,12 @@
   
   LottiePlayerAdapter.prototype.seekTo = function(percentage) {
     var targetFrame = Math.round(percentage * this.state.totalFrames);
-    this.state.lottiePlayer.goToAndStop(targetFrame, true);
+    // 根据播放状态选择是否继续播放
+    if (this.state.isPlaying) {
+      this.state.lottiePlayer.goToAndPlay(targetFrame, true);
+    } else {
+      this.state.lottiePlayer.goToAndStop(targetFrame, true);
+    }
   };
   
   LottiePlayerAdapter.prototype.setMuted = function(muted) {
@@ -233,6 +238,10 @@
   
   // ==================== SVGA 播放器适配器 ====================
   
+  /**
+   * SVGA 播放器适配器
+   * 功能：统一 SVGA 播放控制接口，支持音频同步管理
+   */
   function SvgaPlayerAdapter(state) {
     PlayerAdapter.call(this, state);
   }
@@ -244,26 +253,93 @@
     return this.state.hasFile && this.state.svgaPlayer;
   };
   
+  /**
+   * 播放控制：从当前位置继续播放
+   * 关键技术：
+   * 1. 记录现有的 Howler 音频实例
+   * 2. 调用 SVGA 的 stepToPercentage 继续播放（会创建新的音频实例）
+   * 3. 延迟停止新创建的音频实例，恢复旧实例
+   * 4. 避免音频重复播放和从头开始的问题
+   */
   SvgaPlayerAdapter.prototype.play = function() {
+    var _this = this;
     try {
+      // 记录当前的音频实例
+      var existingHowls = [];
+      if (typeof Howler !== 'undefined' && Howler._howls) {
+        existingHowls = Howler._howls.slice(); // 复制数组
+      }
+      
+      // 从当前位置继续播放（SVGA 可能会创建新的音频实例）
       var currentPercentage = (this.state.progress || 0) / 100;
       this.state.svgaPlayer.stepToPercentage(currentPercentage, true);
+      
+      // 立即处理音频：停止新创建的实例，恢复旧实例
+      setTimeout(function() {
+        if (typeof Howler !== 'undefined' && Howler._howls) {
+          // 找出新创建的音频实例并停止
+          Howler._howls.forEach(function(howl) {
+            if (howl && existingHowls.indexOf(howl) === -1) {
+              // 这是新创建的实例，停止它
+              howl.stop();
+            }
+          });
+          
+          // 恢复旧的音频实例（如果不是静音）
+          if (!_this.state.isMuted) {
+            existingHowls.forEach(function(howl) {
+              if (howl && !howl.playing()) {
+                howl.play();
+              }
+            });
+          }
+        }
+      }, 50);
     } catch (e) {
       console.error('播放失败:', e);
     }
   };
   
+  /**
+   * 暂停控制：暂停动画和音频
+   * 直接暂停所有 Howler 音频实例，保留当前播放位置
+   */
   SvgaPlayerAdapter.prototype.pause = function() {
     try {
+      // 暂停动画
       this.state.svgaPlayer.pauseAnimation();
+      
+      // 暂停所有 Howler 音频（保留播放位置）
+      if (typeof Howler !== 'undefined' && Howler._howls) {
+        Howler._howls.forEach(function(howl) {
+          if (howl && howl.playing()) {
+            howl.pause();
+          }
+        });
+      }
     } catch (e) {
       console.error('暂停失败:', e);
     }
   };
   
+  /**
+   * 进度跳转：跳转到指定位置
+   * 停止所有音频防止叠加，然后跳转
+   */
   SvgaPlayerAdapter.prototype.seekTo = function(percentage) {
     try {
+      // 拖动进度条时先停止所有音频，防止多个音频实例叠加
+      if (typeof Howler !== 'undefined') {
+        Howler.stop();
+      }
+      
+      // 跳转到指定位置
       this.state.svgaPlayer.stepToPercentage(percentage, this.state.isPlaying);
+      
+      // 如果是播放状态且未静音，恢复音频
+      if (this.state.isPlaying && typeof Howler !== 'undefined' && !this.state.isMuted) {
+        Howler.mute(false);
+      }
     } catch (e) {
       console.error('跳转失败:', e);
     }

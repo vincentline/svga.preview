@@ -1421,10 +1421,20 @@ function initApp() {
            * 初始化SVGA播放器
            */
           initSvgaPlayer: function () {
+            var _this = this;
             var container = this.$refs.svgaContainer;
             if (!container) return;
             this.svgaPlayer = new SVGA.Player(container);
             this.svgaParser = new SVGA.Parser();
+            
+            // 设置 onFrame 回调（正确用法：调用方法，而非直接赋值）
+            this.svgaPlayer.onFrame(function(frame) {
+              if (_this.currentModule === 'svga' && _this.totalFrames > 0) {
+                _this.currentFrame = frame;
+                _this.progress = Math.round((frame / _this.totalFrames) * 100);
+                _this.currentTime = frame / (_this.svgaFps || 30);
+              }
+            });
           },
           
           initEmptyStateSvgaPlayer: function () {
@@ -1496,6 +1506,13 @@ function initApp() {
             // 提取素材列表
             this.extractMaterialList(videoItem);
             
+            // 提取音频数据（异步）
+            file.arrayBuffer().then(function(arrayBuffer) {
+              _this.parseSvgaAudioData(arrayBuffer);
+            }).catch(function(err) {
+              console.error('读取SVGA文件失败:', err);
+            });
+            
             // 设置视频信息
             try {
               if (videoItem.videoSize) {
@@ -1530,19 +1547,20 @@ function initApp() {
               
               // 加载动画
               _this.svgaPlayer.setVideoItem(videoItem);
-              _this.svgaPlayer.startAnimation();
-              _this.isPlaying = true;
-              _this.currentFrame = 0;
-              _this.progress = 0;
               
-              // 设置 SVGA 播放器的 onFrame 回调，实时更新播放进度
-              _this.svgaPlayer.onFrame = function(frame) {
+              // 重要：setVideoItem 后重新设置 onFrame 回调（防止被重置）
+              _this.svgaPlayer.onFrame(function(frame) {
                 if (_this.currentModule === 'svga' && _this.totalFrames > 0) {
                   _this.currentFrame = frame;
                   _this.progress = Math.round((frame / _this.totalFrames) * 100);
                   _this.currentTime = frame / (_this.svgaFps || 30);
                 }
-              };
+              });
+              
+              _this.svgaPlayer.startAnimation();
+              _this.isPlaying = true;
+              _this.currentFrame = 0;
+              _this.progress = 0;
               
               _this.applyCanvasBackground();
               
@@ -1848,16 +1866,7 @@ function initApp() {
                   }
                 });
                 
-                // 设置 SVGA 播放器的 onFrame 回调，实时更新播放进度
-                if (_this.svgaPlayer) {
-                  _this.svgaPlayer.onFrame = function(frame) {
-                    if (_this.currentModule === 'svga' && _this.totalFrames > 0) {
-                      _this.currentFrame = frame;
-                      _this.progress = Math.round((frame / _this.totalFrames) * 100);
-                      _this.currentTime = frame / (_this.svgaFps || 30);
-                    }
-                  };
-                }
+                // SVGA 播放器的 onFrame 回调已在 initSvgaPlayer 中设置
               } else {
                 console.error('[App] 进度条元素未找到');
               }
