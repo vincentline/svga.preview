@@ -13,9 +13,15 @@ if (typeof window === 'undefined') {
 
   self.addEventListener('fetch', (event) => {
     const request = event.request;
+    const url = new URL(request.url);
     
     // 跳过非导航请求
     if (request.cache === 'only-if-cached' && request.mode !== 'same-origin') {
+      return;
+    }
+    
+    // 跳过第三方统计服务（避免 CORS 错误）
+    if (url.hostname === 'wind.hlgdata.com') {
       return;
     }
 

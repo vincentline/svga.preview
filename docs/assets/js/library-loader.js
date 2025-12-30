@@ -116,7 +116,10 @@
     },
     'pngquant': {
       name: 'PngQuant',
-      url: 'https://unpkg.com/@saschazar/wasm-pngquant@2.0.11/dist/wasm-pngquant.js',
+      url: 'https://cdn.jsdelivr.net/npm/@saschazar/wasm-pngquant@2.0.11/dist/wasm-pngquant.js',
+      fallbackUrls: [
+        'https://unpkg.com/@saschazar/wasm-pngquant@2.0.11/dist/wasm-pngquant.js'
+      ],
       checkFn: function() { return typeof wasmPngquant !== 'undefined'; },
       priority: 26  // 优先级略低于protobuf/pako，因为是选配功能
     },
