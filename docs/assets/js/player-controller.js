@@ -532,20 +532,25 @@
     progressThumb.addEventListener('mousedown', onDragStart);
     progressThumb.addEventListener('touchstart', onDragStart, { passive: false });
     
-    // 点击进度条跳转
-    progressBar.addEventListener('click', function(e) {
+    // 点击进度条跳转（保存函数引用以便清理）
+    var onProgressBarClick = function(e) {
       // 如果点击的是滑块，不处理（由拖拽处理）
       if (e.target === progressThumb || progressThumb.contains(e.target)) {
         return;
       }
       updateProgress(e);
-    });
+    };
+    progressBar.addEventListener('click', onProgressBarClick);
     
     // 保存清理函数
     this._cleanupDrag = function() {
+      // 清理滑块事件
       progressThumb.removeEventListener('mousedown', onDragStart);
       progressThumb.removeEventListener('touchstart', onDragStart);
-      onDragEnd(); // 确保清理全局监听
+      // 清理进度条点击事件
+      progressBar.removeEventListener('click', onProgressBarClick);
+      // 确保清理全局监听
+      onDragEnd();
     };
   };
 
