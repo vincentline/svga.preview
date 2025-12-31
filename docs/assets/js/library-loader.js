@@ -58,6 +58,10 @@
    * - checkFn: 检测库是否已加载的函数（返回 true 表示已加载）
    * - priority: 预加载优先级（数字越小越优先，0 最高）
    * - disabled: 是否禁用预加载（可选，true 则跳过）
+   * - fallbackUrls: 备用 CDN 地址列表（可选）
+   * 
+   * 重要：添加或修改 CDN 地址时，必须同步更新 coi-serviceworker.js 中的 CDN 白名单！
+   * 当前白名单包括：jsdelivr.net, unpkg.com, cdnjs.cloudflare.com
    */
   var LIBRARY_CONFIG = {
     'vue': {

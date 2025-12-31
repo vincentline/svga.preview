@@ -3313,6 +3313,29 @@ function initApp() {
             }
           },
 
+          /**
+           * 提取素材列表并计算内存占用
+           * 
+           * 【重要说明 - 内存计算算法】
+           * 必须使用图片的实际解码尺寸（Image对象的width/height），而不是sprite.layout尺寸！
+           * 
+           * 原因：
+           * 1. sprite.layout 是图片在画布上的显示区域，不是图片的实际尺寸
+           * 2. SVGA官网计算内存时使用的是图片解码后的实际尺寸
+           * 3. 图片实际尺寸可能大于layout尺寸（例如某些优化过的SVGA）
+           * 
+           * 计算公式：width × height × 4 字节（RGBA四通道）
+           * 
+           * 验证方式：与SVGA官网 https://svga.io/svga-preview.html 的计算结果对比
+           * 
+           * 错误示例（已修复）：
+           *   ❌ 使用 sprite.frames[i].layout.width/height 计算
+           *   结果：某文件计算为193KB，但官网显示0.695MB（相差3.6倍）
+           * 
+           * 正确方式：
+           *   ✓ 通过 new Image() 加载图片数据，使用 img.width/height 计算
+           *   结果：与官网完全一致
+           */
           extractMaterialList: function (videoItem) {
             var _this = this;
             this.materialList = [];
@@ -3320,7 +3343,29 @@ function initApp() {
             
             if (!videoItem || !videoItem.images) return;
             
+            // 初始化内存占用显示为"计算中..."
+            this.svga.fileInfo.memoryText = '计算中...';
+            
             var imageKeys = Object.keys(videoItem.images);
+            var imageCount = imageKeys.length;
+            var processedCount = 0;
+            var totalBytes = 0;
+            
+            // 构建 imageKey -> layout 的映射（注意：layout仅用于显示信息，不用于内存计算）
+            var imageLayoutMap = {};
+            if (videoItem.sprites && videoItem.sprites.length > 0) {
+              videoItem.sprites.forEach(function(sprite) {
+                if (sprite.imageKey && sprite.frames && sprite.frames.length > 0) {
+                  // 找到第一个有layout的帧
+                  for (var i = 0; i < sprite.frames.length; i++) {
+                    if (sprite.frames[i].layout) {
+                      imageLayoutMap[sprite.imageKey] = sprite.frames[i].layout;
+                      break;
+                    }
+                  }
+                }
+              });
+            }
             imageKeys.forEach(function (imageKey) {
               var imgData = videoItem.images[imageKey];
               var previewUrl = '';
@@ -3344,25 +3389,49 @@ function initApp() {
               
               _this.materialList.push(materialItem);
               
+              // 【关键】必须通过Image对象获取图片的实际解码尺寸，与SVGA官网算法一致
+              // 不能使用 sprite.layout 尺寸，那是显示区域而非实际图片尺寸
+              var img = new Image();
+              
               img.onload = function () {
+                // 内存计算公式：实际宽度 × 实际高度 × 4字节（RGBA）
                 var bytes = this.width * this.height * 4;
                 materialItem.fileSize = bytes;
                 materialItem.fileSizeText = _this.formatBytes(bytes);
-                materialItem.sizeText = this.width + 'px*' + this.height + 'px';
-                // 保存原始宽高，用于后续图片替换时的缩放
+                materialItem.sizeText = this.width + ' × ' + this.height;
                 materialItem.originalWidth = this.width;
                 materialItem.originalHeight = this.height;
+                
+                totalBytes += bytes;
+                processedCount++;
+                
+                // 所有图片处理完成后更新总内存
+                if (processedCount === imageCount) {
+                  _this.svga.fileInfo.memoryText = _this.formatBytes(totalBytes);
+                }
               };
               
               img.onerror = function () {
                 materialItem.sizeText = '-';
                 materialItem.fileSizeText = '-';
+                
+                processedCount++;
+                
+                // 所有图片处理完成后更新总内存
+                if (processedCount === imageCount) {
+                  _this.svga.fileInfo.memoryText = totalBytes > 0 ? _this.formatBytes(totalBytes) : '-';
+                }
               };
               
               if (previewUrl) {
                 img.src = previewUrl;
               }
             });
+            
+            // 如果所有图片都同步处理完成，立即更新显示
+            if (processedCount === imageCount) {
+              this.svga.fileInfo.memoryText = totalBytes > 0 ? this.formatBytes(totalBytes) : '-';
+            }
           },
 
           /* 图片缩放处理：最短边缩放并居中裁剪 */
@@ -4392,9 +4461,9 @@ function initApp() {
           formatBytes: function (bytes) {
             if (!bytes && bytes !== 0) return '';
             var kb = bytes / 1024;
-            if (kb < 1024) return kb.toFixed(0) + 'kb';
+            if (kb < 1024) return kb.toFixed(2) + ' KB';
             var mb = kb / 1024;
-            return mb.toFixed(2) + 'M';
+            return mb.toFixed(4) + ' MB';
           },
           
           /* ==================== 绿幕抠图功能 ==================== */

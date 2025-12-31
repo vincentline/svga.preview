@@ -20,8 +20,26 @@ if (typeof window === 'undefined') {
       return;
     }
     
-    // 跳过第三方统计服务（避免 CORS 错误）
-    if (url.hostname === 'wind.hlgdata.com') {
+    /**
+     * 跳过第三方服务和CDN（避免 CORS 错误）
+     * 
+     * 重要：即使使用 credentialless 模式，某些CDN还是会被 Service Worker 拦截导致 CORS 错误
+     * 
+     * 必须跳过的域名：
+     * 1. wind.hlgdata.com - 第三方统计服务
+     * 2. jsdelivr.net - 主 CDN（Vue、protobuf等核心库）
+     * 3. unpkg.com - 备用 CDN（pngquant 等）
+     * 4. cdnjs.cloudflare.com - 备用 CDN
+     * 
+     * 注意：修改此处时，请确保：
+     * - 所有项目依赖的 CDN 都在白名单中
+     * - 更新后升级 index.html 中的 Service Worker 版本号
+     * - 本地测试确认核心库能加载（Vue、SVGA、protobuf、pako）
+     */
+    if (url.hostname === 'wind.hlgdata.com' || 
+        url.hostname.includes('jsdelivr.net') || 
+        url.hostname.includes('unpkg.com') ||
+        url.hostname.includes('cdnjs.cloudflare.com')) {
       return;
     }
 
