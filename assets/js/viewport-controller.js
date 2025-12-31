@@ -15,7 +15,7 @@
  * - scale（缩放比例）：1.0 表示原始尺寸，0.5 表示缩小一半，2.0 表示放大一倍
  * - offsetX（水平偏移）：正值向右移动，负值向左移动（像素）
  * - offsetY（垂直偏移）：正值向下移动，负值向上移动（像素）
- * - transform-origin: top center - CSS 缩放原点为顶部中心
+ * - transform-origin: top center - CSS 缩放原点为顶部中心？
  * 
  * ===== 使用示例 =====
  * ```javascript
@@ -61,7 +61,7 @@
  * - applyZoomWithCenterPoint() 实现了中心点缩放的核心逻辑
  */
 
-(function(global) {
+(function (global) {
   'use strict';
 
   /**
@@ -78,16 +78,19 @@
    */
   function ViewportController(options) {
     this.options = options || {};
-    
+
     // 回调函数
-    this.getContentSize = options.getContentSize || function() { return null; };
-    this.onViewportChange = options.onViewportChange || function() {};
-    
+    this.getContentSize = options.getContentSize || function () { return null; };
+    this.onViewportChange = options.onViewportChange || function () { };
+
     // 视图状态（内部状态，通过回调同步到 Vue）
     this.scale = 1;      // 缩放比例
     this.offsetX = 0;    // 水平偏移（像素）
     this.offsetY = 0;    // 垂直偏移（像素）
-    
+
+    // 视图模式状态：'fit-height' 适应屏幕高度 | '1:1' 原始尺寸
+    this.viewMode = 'fit-height';
+
     // 配置参数
     this.footerHeight = options.footerHeight || 154;                    // 底部浮层高度
     this.defaultScreenHeightRatio = options.screenHeightRatio || 0.75; // 默认屏幕高度的75%
@@ -119,19 +122,19 @@
    * // 缩放比例 = 810 / 1920 = 0.42
    * var scale = controller.calculateInitialScale(1080, 1920); // 返回 0.42
    */
-  ViewportController.prototype.calculateInitialScale = function(contentWidth, contentHeight) {
+  ViewportController.prototype.calculateInitialScale = function (contentWidth, contentHeight) {
     if (!contentWidth || !contentHeight) return 1;
-    
+
     var windowHeight = window.innerHeight;
     var targetHeight = windowHeight * this.defaultScreenHeightRatio; // 默认75%
-    
+
     // 根据内容高度计算缩放比例
     var scale = targetHeight / contentHeight;
-    
+
     // 限制缩放范围，避免过度缩小或放大
     if (scale < this.minScale) scale = this.minScale;
     if (scale > this.maxScale) scale = this.maxScale;
-    
+
     return scale;
   };
 
@@ -152,13 +155,13 @@
    * // 设置为 200%，但不触发回调
    * controller.setScale(2.0, false);
    */
-  ViewportController.prototype.setScale = function(scale, notify) {
+  ViewportController.prototype.setScale = function (scale, notify) {
     // 限制缩放范围
     if (scale < this.minScale) scale = this.minScale;
     if (scale > this.maxScale) scale = this.maxScale;
-    
+
     this.scale = scale;
-    
+
     // 默认触发回调，除非明确传入 false
     if (notify !== false) {
       this.onViewportChange(this.scale, this.offsetX, this.offsetY);
@@ -183,10 +186,10 @@
    * // 向右移动 100px，向下移动 50px
    * controller.setOffset(100, 50);
    */
-  ViewportController.prototype.setOffset = function(offsetX, offsetY, notify) {
+  ViewportController.prototype.setOffset = function (offsetX, offsetY, notify) {
     this.offsetX = offsetX;
     this.offsetY = offsetY;
-    
+
     // 默认触发回调，除非明确传入 false
     if (notify !== false) {
       this.onViewportChange(this.scale, this.offsetX, this.offsetY);
@@ -211,14 +214,14 @@
    * controller.setScale(initialScale, false);
    * controller.centerView();
    */
-  ViewportController.prototype.centerView = function() {
+  ViewportController.prototype.centerView = function () {
     var availableHeight = window.innerHeight - this.footerHeight;
     var size = this.getContentSize();
     var contentHeight = size ? size.height * this.scale : 0;
-    
+
     // 重置水平偏移
     this.offsetX = 0;
-    
+
     // 计算垂直偏移（居中）
     if (contentHeight > 0 && contentHeight < availableHeight) {
       // 内容高度小于可用高度，居中显示
@@ -227,7 +230,7 @@
       // 内容高度超出可用高度，顶部对齐
       this.offsetY = 0;
     }
-    
+
     this.onViewportChange(this.scale, this.offsetX, this.offsetY);
   };
 
@@ -245,7 +248,7 @@
    * // 点击 + 按钮或滚轮向上
    * controller.zoomIn(); // scale: 0.5 -> 0.6，中心点保持不动
    */
-  ViewportController.prototype.zoomIn = function() {
+  ViewportController.prototype.zoomIn = function () {
     var oldScale = this.scale;
     var newScale = Math.min(oldScale + this.zoomStep, this.maxScale);
     this.applyZoomWithCenterPoint(oldScale, newScale);
@@ -265,7 +268,7 @@
    * // 点击 - 按钮或滚轮向下
    * controller.zoomOut(); // scale: 0.6 -> 0.5，中心点保持不动
    */
-  ViewportController.prototype.zoomOut = function() {
+  ViewportController.prototype.zoomOut = function () {
     var oldScale = this.scale;
     var newScale = Math.max(oldScale - this.zoomStep, this.minScale);
     this.applyZoomWithCenterPoint(oldScale, newScale);
@@ -294,18 +297,18 @@
    * // 从 0.5 缩放到 0.6，保持中心点不动
    * controller.applyZoomWithCenterPoint(0.5, 0.6);
    */
-  ViewportController.prototype.applyZoomWithCenterPoint = function(oldScale, newScale) {
+  ViewportController.prototype.applyZoomWithCenterPoint = function (oldScale, newScale) {
     var size = this.getContentSize();
-    
+
     if (size && size.height > 0) {
       var oldHeight = size.height * oldScale;
       var newHeight = size.height * newScale;
       var heightDiff = newHeight - oldHeight;
-      
+
       // 向上调整 offsetY，让中心点保持不动
       this.offsetY -= heightDiff / 2;
     }
-    
+
     this.scale = newScale;
     this.onViewportChange(this.scale, this.offsetX, this.offsetY);
   };
@@ -325,12 +328,13 @@
    * // 点击“适应屏幕”
    * controller.resetView();
    */
-  ViewportController.prototype.resetView = function() {
+  ViewportController.prototype.resetView = function () {
     var size = this.getContentSize();
     if (!size) return;
-    
+
     var initialScale = this.calculateInitialScale(size.width, size.height);
     this.scale = initialScale;
+    this.viewMode = 'fit-height'; // 设置为适应屏幕高度模式
     this.centerView();
   };
 
@@ -357,9 +361,47 @@
    * controller.setScaleTo1();
    * controller.centerView();
    */
-  ViewportController.prototype.setScaleTo1 = function() {
+  ViewportController.prototype.setScaleTo1 = function () {
     this.scale = 1.0;
+    this.viewMode = '1:1'; // 设置为1:1模式
     this.onViewportChange(this.scale, this.offsetX, this.offsetY);
+  };
+
+  /**
+   * 切换视图模式
+   * 
+   * 功能：
+   *   在1:1和适应屏幕高度两种模式间切换
+   *   无论用户过程中怎么缩放，都只简单切换状态
+   * 
+   * 逻辑：
+   *   - 当前是 'fit-height' → 切换到 '1:1' （scale = 1.0）
+   *   - 当前是 '1:1' → 切换到 'fit-height' （重置为初始缩放）
+   * 
+   * 调用场景：
+   *   - 点击底部浮层的切换按钮（1:1 / 适应屏幕高度）
+   * 
+   * @example
+   * // 点击切换按钮
+   * controller.toggleViewMode();
+   */
+  ViewportController.prototype.toggleViewMode = function () {
+    if (this.viewMode === 'fit-height') {
+      // 当前是适应屏幕高度 → 切换到1:1
+      this.setScaleTo1();
+    } else {
+      // 当前是1:1 → 切换到适应屏幕高度
+      this.resetView();
+    }
+  };
+
+  /**
+   * 获取当前视图模式
+   * 
+   * @returns {String} 'fit-height' 或 '1:1'
+   */
+  ViewportController.prototype.getViewMode = function () {
+    return this.viewMode;
   };
 
   /**
@@ -378,7 +420,7 @@
    * var state = controller.getViewportState();
    * console.log(state); // { scale: 0.5, offsetX: 0, offsetY: 100 }
    */
-  ViewportController.prototype.getViewportState = function() {
+  ViewportController.prototype.getViewportState = function () {
     return {
       scale: this.scale,
       offsetX: this.offsetX,
@@ -400,7 +442,7 @@
    *   this.viewportController = null;
    * }
    */
-  ViewportController.prototype.destroy = function() {
+  ViewportController.prototype.destroy = function () {
     this.getContentSize = null;
     this.onViewportChange = null;
   };

@@ -3,23 +3,36 @@
 
 if (typeof window === 'undefined') {
   // Service Worker 代码
-  self.addEventListener('install', () => {
+  self.addEventListener('install', (event) => {
+    console.log('[COI SW] Installing new version...');
+    // 强制跳过等待，立即激活新版本
     self.skipWaiting();
   });
-  
+
   self.addEventListener('activate', (event) => {
-    event.waitUntil(self.clients.claim());
+    console.log('[COI SW] Activating new version...');
+    event.waitUntil(
+      self.clients.claim().then(() => {
+        // 强制刷新所有已打开的页面，使其使用新的 Service Worker
+        return self.clients.matchAll({ type: 'window' }).then(clients => {
+          clients.forEach(client => {
+            console.log('[COI SW] Reloading client:', client.url);
+            client.navigate(client.url);
+          });
+        });
+      })
+    );
   });
 
   self.addEventListener('fetch', (event) => {
     const request = event.request;
     const url = new URL(request.url);
-    
+
     // 跳过非导航请求
     if (request.cache === 'only-if-cached' && request.mode !== 'same-origin') {
       return;
     }
-    
+
     /**
      * 跳过第三方服务和CDN（避免 CORS 错误）
      * 
@@ -36,10 +49,10 @@ if (typeof window === 'undefined') {
      * - 更新后升级 index.html 中的 Service Worker 版本号
      * - 本地测试确认核心库能加载（Vue、SVGA、protobuf、pako）
      */
-    if (url.hostname === 'wind.hlgdata.com' || 
-        url.hostname.includes('jsdelivr.net') || 
-        url.hostname.includes('unpkg.com') ||
-        url.hostname.includes('cdnjs.cloudflare.com')) {
+    if (url.hostname === 'wind.hlgdata.com' ||
+      url.hostname.includes('jsdelivr.net') ||
+      url.hostname.includes('unpkg.com') ||
+      url.hostname.includes('cdnjs.cloudflare.com')) {
       return;
     }
 
@@ -59,7 +72,7 @@ if (typeof window === 'undefined') {
               headers: newHeaders
             });
           }
-          
+
           // 其他资源直接返回，不修改头部
           return response;
         })
@@ -71,9 +84,9 @@ if (typeof window === 'undefined') {
   });
 } else {
   // 客户端注册代码
-  (function() {
+  (function () {
     'use strict';
-    
+
     // 检查是否已经跨域隔离
     if (window.crossOriginIsolated) {
       console.log('[COI] Already cross-origin isolated');
@@ -96,18 +109,18 @@ if (typeof window === 'undefined') {
 
     // 注册Service Worker
     const scriptUrl = document.currentScript ? document.currentScript.src : window.location.origin + '/coi-serviceworker.js';
-    
+
     navigator.serviceWorker.register(scriptUrl)
       .then(registration => {
         console.log('[COI] Service Worker registered:', registration.scope);
-        
+
         // 检查Service Worker状态
         if (registration.active && navigator.serviceWorker.controller) {
           // Service Worker已激活且已控制页面，不需要刷新
           console.log('[COI] Service Worker already controlling page');
           return;
         }
-        
+
         // 首次注册，需要刷新一次来激活Service Worker
         if (!navigator.serviceWorker.controller) {
           console.log('[COI] First registration, reloading to activate...');
