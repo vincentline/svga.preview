@@ -8,7 +8,9 @@
 
 /* 骨架屏加载动画 */
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 html,
@@ -215,7 +217,8 @@ body.dark-mode .theme-toggle .tooltip-text::after {
 /* ===== 库加载进度条 ===== */
 .library-loading-indicator {
   position: fixed;
-  top: 36px; /* 在header-navbar下方 */
+  top: 36px;
+  /* 在header-navbar下方 */
   left: 16px;
   z-index: 999;
   animation: slideDown 0.3s ease;
@@ -233,6 +236,7 @@ body.dark-mode .theme-toggle .tooltip-text::after {
     opacity: 0;
     transform: translateY(-10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -260,24 +264,24 @@ body.dark-mode .library-loading-indicator .loading-text {
   top: 44px;
   z-index: 1000;
   background: none;
-  /* 使用雪碧图 - 缩放50%(40/80) */
+  /* 使用雪碧图 - 原始80x80，通过background-size缩小50%到40x40显示 */
   background-image: url('../img/controls-sprite.png');
-  background-size: 400px 200px;
+  background-size: 400px 240px;
   background-position: 0px 0px;
   background-repeat: no-repeat;
   transition: opacity 0.2s;
 }
 
 .help-button:hover {
-  background-position: -40px 0px; /* -80*0.5 */
+  background-position: -40px 0px;
 }
 
 body.dark-mode .help-button {
-  background-position: -80px 0px; /* -160*0.5 */
+  background-position: -80px 0px;
 }
 
 body.dark-mode .help-button:hover {
-  background-position: -120px 0px; /* -240*0.5 */
+  background-position: -120px 0px;
 }
 
 .help-button:hover .help-popup {
@@ -359,8 +363,10 @@ body.dark-mode .help-popup {
 }
 
 .viewer-area.drag-hover {
-  outline: 2px dashed #5b5b5b;  /* 拖拽时显示的虚线边框 */
-  outline-offset: -10px;        /* 边框向内偏移10px */
+  outline: 2px dashed #5b5b5b;
+  /* 拖拽时显示的虚线边框 */
+  outline-offset: -10px;
+  /* 边框向内偏移10px */
 }
 
 /* 播放器容器
@@ -392,17 +398,17 @@ body.dark-mode .help-popup {
   bottom: 100%;
   left: 0;
   margin-bottom: 8px;
-  
+
   font-family: 'Segoe UI', sans-serif;
   font-weight: 400;
   font-size: 12px;
   line-height: 19px;
   color: #818181;
-  
+
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  
+
   transition: color 0.3s;
 }
 
@@ -537,7 +543,7 @@ body.dark-mode .empty-state-tip-line2 {
   align-items: center;
   gap: 8px;
   margin-bottom: 10px;
-  
+
   position: absolute;
   bottom: 132px;
 }
@@ -586,7 +592,7 @@ body.dark-mode .mode-name-label {
   gap: 10px;
   width: 28px;
   height: 28px;
-  background: #e6e6e67d;
+  background: #ffffff7d;
   border: none;
   border-radius: 8px;
   cursor: pointer;
@@ -927,59 +933,59 @@ body.dark-mode .info-item-value {
   border-radius: 4px;
   border: none;
   background-color: transparent;
-  /* 使用雪碧图 - 缩放50% */
+  /* 使用雪碧图 - 原始80x80，通过background-size缩小50%显示 */
   background-image: url('../img/controls-sprite.png');
-  background-size: 400px 200px;
-  background-position: -160px 0px; /* -320*0.5 */
+  background-size: 400px 240px;
+  background-position: -160px 0px;
   background-repeat: no-repeat;
   cursor: pointer;
   outline: none;
 }
 
 .play-btn:hover {
-  background-position: -200px 0px; /* -400*0.5 */
+  background-position: -200px 0px;
 }
 
 .play-btn:active {
-  background-position: -240px 0px; /* -480*0.5 */
+  background-position: -240px 0px;
 }
 
 /* 播放中状态（暂停按钮） */
 .play-btn.is-playing {
-  background-position: 0px -40px; /* 0, -80*0.5 */
+  background-position: 0px -40px;
 }
 
 .play-btn.is-playing:hover {
-  background-position: -40px -40px; /* -80*0.5, -80*0.5 */
+  background-position: -40px -40px;
 }
 
 .play-btn.is-playing:active {
-  background-position: -80px -40px; /* -160*0.5, -80*0.5 */
+  background-position: -80px -40px;
 }
 
 /* 暗黑模式 */
 body.dark-mode .play-btn {
-  background-position: -280px 0px; /* -560*0.5 */
+  background-position: -280px 0px;
 }
 
 body.dark-mode .play-btn:hover {
-  background-position: -320px 0px; /* -640*0.5 */
+  background-position: -320px 0px;
 }
 
 body.dark-mode .play-btn:active {
-  background-position: -360px 0px; /* -720*0.5 */
+  background-position: -360px 0px;
 }
 
 body.dark-mode .play-btn.is-playing {
-  background-position: -120px -40px; /* -240*0.5, -80*0.5 */
+  background-position: -120px -40px;
 }
 
 body.dark-mode .play-btn.is-playing:hover {
-  background-position: -160px -40px; /* -320*0.5, -80*0.5 */
+  background-position: -160px -40px;
 }
 
 body.dark-mode .play-btn.is-playing:active {
-  background-position: -200px -40px; /* -400*0.5, -80*0.5 */
+  background-position: -200px -40px;
 }
 
 /* 静音按钮 */
@@ -989,10 +995,10 @@ body.dark-mode .play-btn.is-playing:active {
   border-radius: 4px;
   border: none;
   background-color: transparent;
-  /* 使用雪碧图 - 缩放50% */
+  /* 使用雪碧图 - 原始80x80，通过background-size缩小50%显示 */
   background-image: url('../img/controls-sprite.png');
-  background-size: 400px 200px;
-  background-position: -240px -40px; /* -480*0.5, -80*0.5 */
+  background-size: 400px 240px;
+  background-position: -240px -40px;
   background-repeat: no-repeat;
   cursor: pointer;
   outline: none;
@@ -1000,33 +1006,34 @@ body.dark-mode .play-btn.is-playing:active {
 }
 
 .mute-btn:hover {
-  background-position: -280px -40px; /* -560*0.5, -80*0.5 */
+  background-position: -280px -40px;
 }
 
 .mute-btn:active {
-  background-position: -320px -40px; /* -640*0.5, -80*0.5 */
+  background-position: -320px -40px;
 }
 
 /* 静音状态（已开启静音） */
 .mute-btn.is-muted {
-  background-position: -360px -40px; /* -720*0.5, -80*0.5 */
+  background-position: -360px -40px;
 }
 
 .mute-btn.is-muted:hover {
-  background-position: 0px -80px; /* 0, -160*0.5 */
+  background-position: 0px -80px;
 }
 
 .mute-btn.is-muted:active {
-  background-position: -40px -80px; /* -80*0.5, -160*0.5 */
+  background-position: -40px -80px;
 }
 
 /* 禁用状态（无音频） */
 .mute-btn.is-disabled {
-  background-position: -80px -80px; /* -160*0.5, -160*0.5 */
+  background-position: -80px -80px;
   cursor: not-allowed;
-  opacity: 0.6;
+  pointer-events: none;
 }
 
+/* 禁用状态不响应hover和active */
 .mute-btn.is-disabled:hover,
 .mute-btn.is-disabled:active {
   background-position: -80px -80px;
@@ -1034,33 +1041,34 @@ body.dark-mode .play-btn.is-playing:active {
 
 /* 暗黑模式 */
 body.dark-mode .mute-btn {
-  background-position: -120px -80px; /* -240*0.5, -160*0.5 */
+  background-position: -120px -80px;
 }
 
 body.dark-mode .mute-btn:hover {
-  background-position: -160px -80px; /* -320*0.5, -160*0.5 */
+  background-position: -160px -80px;
 }
 
 body.dark-mode .mute-btn:active {
-  background-position: -200px -80px; /* -400*0.5, -160*0.5 */
+  background-position: -200px -80px;
 }
 
 body.dark-mode .mute-btn.is-muted {
-  background-position: -240px -80px; /* -480*0.5, -160*0.5 */
+  background-position: -240px -80px;
 }
 
 body.dark-mode .mute-btn.is-muted:hover {
-  background-position: -280px -80px; /* -560*0.5, -160*0.5 */
+  background-position: -280px -80px;
 }
 
 body.dark-mode .mute-btn.is-muted:active {
-  background-position: -320px -80px; /* -640*0.5, -160*0.5 */
+  background-position: -320px -80px;
 }
 
 body.dark-mode .mute-btn.is-disabled {
-  background-position: -360px -80px; /* -720*0.5, -160*0.5 */
+  background-position: -360px -80px;
 }
 
+/* 暗黑模式禁用状态不响应hover和active */
 body.dark-mode .mute-btn.is-disabled:hover,
 body.dark-mode .mute-btn.is-disabled:active {
   background-position: -360px -80px;
@@ -1097,6 +1105,7 @@ body.dark-mode .progress-bar:hover {
   pointer-events: none;
   border-radius: 10px 0 0 10px;
 }
+
 .progress-fill:hover {
   background-color: #333333;
 }
@@ -1104,6 +1113,7 @@ body.dark-mode .progress-bar:hover {
 body.dark-mode .progress-fill {
   background-color: #EBEBEB;
 }
+
 body.dark-mode .progress-fill:hover {
   background-color: #f5f5f5;
 }
@@ -1116,19 +1126,22 @@ body.dark-mode .progress-fill:hover {
   width: 16px;
   height: 16px;
   background-color: #5B5B5B;
-  
+
   border-radius: 50%;
   cursor: grab;
   transition: left 0.1s, transform 0.1s, box-shadow 0.1s;
   z-index: 2;
   pointer-events: auto;
 }
+
 body.dark-mode .progress-thumb {
   background-color: #EBEBEB;
 }
+
 body.dark-mode .progress-thumb:hover {
   background-color: #409eff;
 }
+
 .progress-thumb:hover {
   transform: translate(-50%, -50%) scale(1.2);
   box-shadow: 0 0 0 4px rgba(64, 158, 255, 0.2);
@@ -1234,9 +1247,9 @@ body.dark-mode .btn-primary:active {
   height: 28px;
   border: none;
   background-color: transparent;
-  /* 使用雪碧图 - 缩放50% */
+  /* 使用雪碧图 - 原始80x80，通过background-size缩小50%显示 */
   background-image: url('../img/controls-sprite.png');
-  background-size: 400px 200px;
+  background-size: 400px 240px;
   background-repeat: no-repeat;
   cursor: pointer;
   outline: none;
@@ -1246,36 +1259,36 @@ body.dark-mode .btn-primary:active {
 
 /* 缩小按钮 - 通过data属性区分 */
 .zoom-btn[data-type="out"] {
-  background-position: -80px -120px; /* -160*0.5, -240*0.5 */
+  background-position: -80px -120px;
 }
 
 .zoom-btn[data-type="out"]:hover {
-  background-position: -120px -120px; /* -240*0.5, -240*0.5 */
+  background-position: -120px -120px;
 }
 
 body.dark-mode .zoom-btn[data-type="out"] {
-  background-position: -240px -120px; /* -480*0.5, -240*0.5 */
+  background-position: -240px -120px;
 }
 
 body.dark-mode .zoom-btn[data-type="out"]:hover {
-  background-position: -280px -120px; /* -560*0.5, -240*0.5 */
+  background-position: -280px -120px;
 }
 
 /* 放大按钮 */
 .zoom-btn[data-type="in"] {
-  background-position: 0px -120px; /* 0*0.5, -240*0.5 */
+  background-position: 0px -120px;
 }
 
 .zoom-btn[data-type="in"]:hover {
-  background-position: -40px -120px; /* -80*0.5, -240*0.5 */
+  background-position: -40px -120px;
 }
 
 body.dark-mode .zoom-btn[data-type="in"] {
-  background-position: -160px -120px; /* -320*0.5, -240*0.5 */
+  background-position: -160px -120px;
 }
 
 body.dark-mode .zoom-btn[data-type="in"]:hover {
-  background-position: -200px -120px; /* -400*0.5, -240*0.5 */
+  background-position: -200px -120px;
 }
 
 /* 百分比显示 */
@@ -1294,16 +1307,17 @@ body.dark-mode .scale-percentage {
   color: #999999;
 }
 
-/* 1:1按钮 */
+/* 1:1按钮（默认状态：适应屏幕高度模式下显示） */
 .reset-scale-btn {
   width: 28px;
   height: 28px;
   border: none;
   background-color: transparent;
-  /* 使用雪碧图 - 缩放50% */
+  /* 使用雪碧图 - 原始80x80，通过background-size缩小50%显示 */
   background-image: url('../img/controls-sprite.png');
-  background-size: 400px 200px;
-  background-position: -320px -120px; /* -640*0.5, -240*0.5 */
+  background-size: 400px 240px;
+  background-position: -320px -120px;
+  /* one2one.png */
   background-repeat: no-repeat;
   cursor: pointer;
   outline: none;
@@ -1312,15 +1326,39 @@ body.dark-mode .scale-percentage {
 }
 
 .reset-scale-btn:hover {
-  background-position: -360px -120px; /* -720*0.5, -240*0.5 */
+  background-position: -360px -120px;
+  /* one2one_hover.png */
 }
 
 body.dark-mode .reset-scale-btn {
-  background-position: 0px -160px; /* 0*0.5, -320*0.5 */
+  background-position: 0px -160px;
+  /* one2one_dark.png */
 }
 
 body.dark-mode .reset-scale-btn:hover {
-  background-position: -40px -160px; /* -80*0.5, -320*0.5 */
+  background-position: -40px -160px;
+  /* one2one_hover_dark.png */
+}
+
+/* 适应屏幕高度按钮（当1:1模式下显示） */
+.reset-scale-btn.is-contain {
+  background-position: -80px -160px;
+  /* contain.png */
+}
+
+.reset-scale-btn.is-contain:hover {
+  background-position: -120px -160px;
+  /* contain_hover.png */
+}
+
+body.dark-mode .reset-scale-btn.is-contain {
+  background-position: -160px -160px;
+  /* contain_dark.png */
+}
+
+body.dark-mode .reset-scale-btn.is-contain:hover {
+  background-position: -200px -160px;
+  /* contain_hover_dark.png */
 }
 
 /* 清空/关闭按钮 (btn03样式) */
@@ -1777,7 +1815,7 @@ body.dark-mode .material-meta {
 
 /* 操作按钮区 (Frame 29) */
 .material-actions {
-  width: 161px;  
+  width: 161px;
   height: 28px;
   flex: none;
   order: 2;
@@ -1856,10 +1894,8 @@ body.dark-mode .material-btn-replace:hover {
   justify-content: center;
   align-items: center;
   border-radius: 8px;
-  padding: 0px 4px;
-  gap: 10px;
   position: absolute;
-  width: 32px;
+  width: 28px;
   height: 28px;
   left: 92px;
   top: 0px;
@@ -1867,10 +1903,10 @@ body.dark-mode .material-btn-replace:hover {
   border: 1px solid #e6e6e6;
   cursor: pointer;
   transition: all 0.15s ease;
-  /* 使用雪碧图 - recover图标 */
+  /* 使用雪碧图 - recover图标，原始80x80通过background-size缩小50%显示 */
   background-image: url('../img/controls-sprite.png');
-  background-size: 400px 200px;
-  background-position: -240px -160px; /* -480*0.5, -320*0.5 recover.png */
+  background-size: 400px 240px;
+  background-position: -240px -160px;
   background-repeat: no-repeat;
 }
 
@@ -1895,11 +1931,59 @@ body.dark-mode .material-btn-replace:hover {
 
 body.dark-mode .material-btn-close {
   background-color: #2d2d2d;
-  background-position: -280px -160px; /* -560*0.5, -320*0.5 recover_dark.png */
+  background-position: -280px -160px;
   border-color: #505050;
 }
 
 body.dark-mode .material-btn-close:hover {
+  background-color: #3a3a3a;
+  border-color: #606060;
+}
+
+/* 恢复播放按钮（在清空画布按钮左边） */
+.restore-playback-btn {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  border-radius: 8px;
+  position: relative;
+  width: 28px;
+  height: 28px;
+
+  /* 清空按钮宽32px + 12px间距 */
+
+  background: #ffffff7d;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  /* 使用雪碧图 - recover图标，原始80x80通过background-size缩小50%显示 */
+  background-image: url('../img/controls-sprite.png');
+  background-size: 400px 240px;
+  background-position: -238px -158px;
+  /* recover.png */
+  background-repeat: no-repeat;
+}
+
+.restore-playback-btn:hover {
+  background-color: #F5F5F7;
+  border-color: #CCCCCC;
+}
+
+.restore-playback-btn:active {
+  background-color: #E8E8ED;
+  transform: scale(0.95);
+}
+
+body.dark-mode .restore-playback-btn {
+  background-color: #4040407d;
+  background-position: -278px -158px;
+  /* recover_dark.png */
+  border: none;
+}
+
+body.dark-mode .restore-playback-btn:hover {
   background-color: #3a3a3a;
   border-color: #606060;
 }
@@ -1917,7 +2001,7 @@ body.dark-mode .material-btn-close:hover {
   position: absolute;
   width: 32px;
   height: 28px;
-  left: 129px;  
+  left: 129px;
   top: 0px;
   background: #FFFFFF;
   border: 1px solid #e6e6e6;
@@ -2400,7 +2484,7 @@ body.dark-mode .mp4-select-dropdown {
 
 .mp4-select-option.selected {
   font-weight: 600;
-  
+
 }
 
 body.dark-mode .mp4-select-option {
@@ -2865,6 +2949,7 @@ body.dark-mode .mp4-btn-convert:disabled {
     opacity: 0;
     transform: translateX(-50%) translateY(-10px);
   }
+
   to {
     opacity: 1;
     transform: translateX(-50%) translateY(0);
@@ -2880,7 +2965,8 @@ body.dark-mode .mp4-btn-convert:disabled {
 
 .library-loading-indicator .loading-text {
   font-size: 13px;
-  color: #818181; /* 辅助颜色 */
+  color: #818181;
+  /* 辅助颜色 */
   font-weight: 400;
 }
 
@@ -2900,7 +2986,8 @@ body.dark-mode .mp4-btn-convert:disabled {
 
 .library-loading-indicator .loading-progress {
   height: 100%;
-  background: #409eff; /* 主色调 */
+  background: #409eff;
+  /* 主色调 */
   border-radius: 2px;
   transition: width 0.3s ease;
 }
@@ -2928,7 +3015,8 @@ body.dark-mode .library-loading-indicator .loading-bar {
 
 .toast-container {
   position: fixed;
-  top: 48px; /* 在header-navbar下方24px */
+  top: 48px;
+  /* 在header-navbar下方24px */
   left: 50%;
   transform: translateX(-50%);
   z-index: 9999;
@@ -3962,17 +4050,17 @@ body.dark-mode .ad-position-bottom {
 /* ==================== 变速时间轴编辑器 ==================== */
 
 .speed-remap-editor {
- position: absolute;
- bottom: 132px;
- width: auto;
- margin: 0 0 8px 0;
- z-index: 100;
- align-items: flex-start;
- left: 0;
- background-color: #ffffff;
- border: 1px solid #e6e6e6;
- border-radius: 16px;
- padding: 16px 28px;
+  position: absolute;
+  bottom: 132px;
+  width: auto;
+  margin: 0 0 8px 0;
+  z-index: 100;
+  align-items: flex-start;
+  left: 0;
+  background-color: #ffffff;
+  border: 1px solid #e6e6e6;
+  border-radius: 16px;
+  padding: 16px 28px;
 }
 
 body.dark-mode .speed-remap-editor {
@@ -3999,14 +4087,14 @@ body.dark-mode .speed-remap-editor {
 .speed-remap-duration {
   font-size: 12px;
   color: #666666;
-  
-  
-  
+
+
+
 }
 
 body.dark-mode .speed-remap-duration {
   color: #999999;
-  
+
 }
 
 /* 时间轴主体 */
@@ -4017,12 +4105,12 @@ body.dark-mode .speed-remap-duration {
   background: #F3F3F3;
   border-radius: 2px;
   cursor: default;
-  
+
 }
 
 body.dark-mode .speed-remap-timeline {
   background: #3a3a3a;
-  
+
 }
 
 /* 压缩区域可视化（底色） */
@@ -4143,6 +4231,7 @@ body.dark-mode .speed-remap-timeline-hover-speed {
   border-style: solid;
   border-color: #f3f3f3;
 }
+
 body.dark-mode .keyframe-line {
   background: #f5f5f5;
   border-color: #3a3a3a;
@@ -4284,7 +4373,7 @@ body.dark-mode .tick-label {
 
 /* 时长显示（时间轴右侧4px） */
 .speed-remap-duration-label {
-  
+
   min-width: 88px;
   font-family: 'Segoe UI', system-ui, sans-serif;
   font-size: 12px;
@@ -4302,7 +4391,7 @@ body.dark-mode .speed-remap-duration-label {
   flex-direction: row;
   align-items: center;
   gap: 10px;
-  
+
 }
 
 /* 恢复按钮 */
@@ -4339,8 +4428,8 @@ body.dark-mode .speed-remap-duration-label {
   width: 20px;
   height: 20px;
   background-image: url('../img/controls-sprite.png');
-  background-size: 400px 200px;
-  background-position: -240px -160px; /* -480*0.5, -320*0.5 recover.png */
+  background-size: 400px 240px;
+  background-position: -240px -160px;
   background-repeat: no-repeat;
   flex-shrink: 0;
 }
@@ -4362,7 +4451,7 @@ body.dark-mode .btn-speed-reset {
 }
 
 body.dark-mode .btn-speed-reset::before {
-  background-position: -280px -160px; /* -560*0.5, -320*0.5 recover_dark.png */
+  background-position: -280px -160px;
 }
 
 body.dark-mode .btn-speed-reset:hover {

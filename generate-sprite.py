@@ -18,7 +18,7 @@ OUTPUT_CSS = 'docs/assets/css/sprite-generated.css'
 ICONS = {
     'help': [
         'help.png',
-        'help_hover.png', 
+        'help_hover.png',
         'help_dark.png',
         'help_hover_dark.png'
     ],
@@ -90,14 +90,15 @@ ICONS = {
     ]
 }
 
+
 def generate_sprite():
     """生成雪碧图"""
     print("🎨 开始生成雪碧图...")
-    
+
     # 收集所有图标文件
     all_icons = []
     icon_positions = {}
-    
+
     for category, icons in ICONS.items():
         for icon in icons:
             icon_path = os.path.join(IMG_DIR, icon)
@@ -105,46 +106,51 @@ def generate_sprite():
                 all_icons.append((icon, icon_path))
             else:
                 print(f"⚠️  图标不存在: {icon}")
-    
+
     if not all_icons:
         print("❌ 没有找到任何图标文件")
         return False
-    
+
     print(f"✅ 找到 {len(all_icons)} 个图标文件")
-    
+
     # 获取图标尺寸（假设所有图标尺寸一致或分类一致）
     first_img = Image.open(all_icons[0][1])
     icon_width = first_img.width
     icon_height = first_img.height
     first_img.close()
-    
+
     print(f"📐 图标尺寸: {icon_width}x{icon_height}px")
-    
+
     # 计算雪碧图尺寸（横向排列，每行10个）
     icons_per_row = 10
     rows = (len(all_icons) + icons_per_row - 1) // icons_per_row
     sprite_width = icon_width * icons_per_row
     sprite_height = icon_height * rows
-    
-    print(f"📊 雪碧图尺寸: {sprite_width}x{sprite_height}px ({icons_per_row}列 x {rows}行)")
-    
+
+    print(
+        f"📊 雪碧图尺寸: {sprite_width}x{sprite_height}px ({icons_per_row}列 x {rows}行)")
+
     # 创建雪碧图
     sprite = Image.new('RGBA', (sprite_width, sprite_height), (0, 0, 0, 0))
-    
+
     # 粘贴图标并记录位置
     for idx, (icon_name, icon_path) in enumerate(all_icons):
         img = Image.open(icon_path)
-        
+
+        # 确保图像模式为RGBA，保持透明通道
+        if img.mode != 'RGBA':
+            img = img.convert('RGBA')
+
         # 计算位置
         col = idx % icons_per_row
         row = idx // icons_per_row
         x = col * icon_width
         y = row * icon_height
-        
-        # 粘贴图标
-        sprite.paste(img, (x, y), img if img.mode == 'RGBA' else None)
+
+        # 直接粘贴原始尺寸，不做任何缩放或重采样
+        sprite.paste(img, (x, y), img)
         img.close()
-        
+
         # 记录位置（CSS 使用负值）
         icon_positions[icon_name] = {
             'x': -x,
@@ -152,31 +158,34 @@ def generate_sprite():
             'width': icon_width,
             'height': icon_height
         }
-        
+
         print(f"  📍 {icon_name}: ({x}px, {y}px)")
-    
-    # 保存雪碧图
-    sprite.save(OUTPUT_SPRITE, 'PNG', optimize=True)
+
+    # 保存雪碧图（不压缩，保持最高质量）
+    sprite.save(OUTPUT_SPRITE, 'PNG', compress_level=0)
     print(f"✅ 雪碧图已保存: {OUTPUT_SPRITE}")
-    
+
     # 生成CSS
     generate_css(icon_positions, icon_width, icon_height)
-    
+
     # 保存位置信息为JSON（方便调试）
     json_path = OUTPUT_SPRITE.replace('.png', '.json')
     with open(json_path, 'w', encoding='utf-8') as f:
         json.dump(icon_positions, f, indent=2, ensure_ascii=False)
     print(f"✅ 位置信息已保存: {json_path}")
-    
+
     return True
+
 
 def generate_css(positions, width, height):
     """生成CSS代码"""
     print("\n🎨 生成CSS代码...")
-    
+
     css_lines = [
         "/* 自动生成的雪碧图样式 - 请勿手动编辑 */",
-        "/* 生成时间: " + __import__('datetime').datetime.now().strftime('%Y-%m-%d %H:%M:%S') + " */",
+        "/* 生成时间: " +
+        __import__('datetime').datetime.now().strftime(
+            '%Y-%m-%d %H:%M:%S') + " */",
         "",
         "/* 雪碧图基础样式 */",
         ".sprite-icon {",
@@ -186,26 +195,27 @@ def generate_css(positions, width, height):
         "}",
         ""
     ]
-    
+
     # 按类别生成CSS
     for category, icons in ICONS.items():
         css_lines.append(f"/* {category.upper()} 图标 */")
-        
+
         for icon_name in icons:
             if icon_name not in positions:
                 continue
-                
+
             pos = positions[icon_name]
             class_name = icon_name.replace('.png', '').replace('_', '-')
-            
+
             css_lines.append(f".sprite-{class_name} {{")
-            css_lines.append(f"  background-position: {pos['x']}px {pos['y']}px;")
+            css_lines.append(
+                f"  background-position: {pos['x']}px {pos['y']}px;")
             css_lines.append(f"  width: {pos['width']}px;")
             css_lines.append(f"  height: {pos['height']}px;")
             css_lines.append("}")
-        
+
         css_lines.append("")
-    
+
     # 添加使用示例
     css_lines.extend([
         "/* 使用示例：",
@@ -220,14 +230,15 @@ def generate_css(positions, width, height):
         " * 或者使用 sprite-play-Default 类名",
         " */"
     ])
-    
+
     css_content = '\n'.join(css_lines)
-    
+
     with open(OUTPUT_CSS, 'w', encoding='utf-8') as f:
         f.write(css_content)
-    
+
     print(f"✅ CSS已生成: {OUTPUT_CSS}")
     print("\n💡 提示: 请将生成的CSS整合到 styles.css 中")
+
 
 if __name__ == '__main__':
     try:
