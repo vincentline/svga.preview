@@ -4,20 +4,20 @@
 <head>
   <meta charset="utf-8" />
   <title>SVGA、双通道MP4、Lottie动画在线预览工具 - 免费在线播放器</title>
-  <meta name="description" content="免费在线预览SVGA、Lottie、双通道MP4动画，支持素材替换、GIF导出、MP4转换、帧率调整、变速编辑，无需安装即用" />
-  <meta name="keywords" content="SVGA预览,Lottie播放器,双通道MP4,动画预览工具,GIF导出,SVGA素材替换,在线动画编辑器,MP4转换" />
+  <meta name="description" content="免费在线预览SVGA、Lottie、双通道MP4动画，支持素材管理、GIF导出、MP4转换、帧率调整、变速编辑，无需安装即用" />
+  <meta name="keywords" content="SVGA预览,Lottie播放器,双通道MP4,动画预览工具,GIF导出,SVGA素材管理,在线动画编辑器,MP4转换" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <!-- Open Graph / 社交分享优化 -->
   <meta property="og:type" content="website" />
   <meta property="og:title" content="SVGA、Lottie、双通道MP4动画在线预览工具" />
-  <meta property="og:description" content="免费在线预览和编辑SVGA、Lottie、双通道MP4动画，支持素材替换、GIF导出、变速编辑" />
+  <meta property="og:description" content="免费在线预览和编辑SVGA、Lottie、双通道MP4动画，支持素材管理、GIF导出、变速编辑" />
   <meta property="og:url" content="https://svga.io" />
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary" />
   <meta name="twitter:title" content="SVGA、Lottie动画在线预览工具" />
-  <meta name="twitter:description" content="免费在线预览SVGA、Lottie、双通道MP4动画，支持素材替换和导出" />
+  <meta name="twitter:description" content="免费在线预览SVGA、Lottie、双通道MP4动画，支持素材管理和导出" />
 
   <!-- 搜索引擎优化 -->
   <meta name="robots" content="index, follow" />
@@ -174,7 +174,7 @@
           </div>
           <div class="empty-state-text">
             <div class="empty-state-tip-line1">支持文件包括：SVGA、双通道MP4、普通MP4、Lottie的jason格式</div>
-            <div class="empty-state-tip-line2">你可以，导出GIF；SVGA素材图替换；转双通道MP4；转SVGA...</div>
+            <div class="empty-state-tip-line2">你可以，导出GIF；SVGA素材图管理；转双通道MP4；转SVGA...</div>
           </div>
 
           <input ref="fileInput" type="file" accept=".svga,.json,.lottie,.mp4,.png,.jpg,.jpeg" multiple
@@ -421,11 +421,11 @@
                         {{ isExportingLottie ? '导出中 ' + lottieExportProgress + '%' : '导出Lottie(实验性)' }}
                       </button>
                       <button class="btn-primary" @click="openMaterialPanel" v-if="svga.hasFile">
-                        素材图替换
+                        素材图管理
                       </button>
                       <button class="btn-primary tooltip" v-else>
                         <span class="tooltip-text">请先拖入 SVGA 文件</span>
-                        素材图替换
+                        素材图管理
                       </button>
                       <button class="btn-secondary" :class="{'tooltip': !svga.hasFile}" :disabled="!svga.hasFile"
                         @click="openMP4Panel">
@@ -584,11 +584,11 @@
       <div class="material-panel-container">
         <!-- 顶部统计信息 -->
         <div class="material-panel-stats">
-          <div class="stats-header">素材图替换</div>
+          <div class="stats-header">素材图管理</div>
           <div class="stats-divider"></div>
           <div class="stats-content">
             <div class="stats-title">图像资源：{{ materialList.length }} 个 内存占用：{{ svga.fileInfo.memoryText }}</div>
-            <div class="stats-help">你可以替换素材图片，然后导出新的SVGA。<br>替换后的图片将自动缩放填充至原图尺寸，保持比例居中显示。</div>
+            <div class="stats-help">你可以替换、下载素材图片，然后导出新的SVGA。<br>替换后的图片将自动缩放填充至原图尺寸，保持比例居中显示。</div>
           </div>
         </div>
 
@@ -623,7 +623,7 @@
               </div>
               <div class="material-actions">
                 <button class="material-btn-replace" @click="replaceMaterial(index)">
-                  <span>替换此图片</span>
+                  <span>替换此图</span>
                 </button>
                 <button v-if="item.isReplaced" class="material-btn-close" @click="restoreMaterial(index)" title="恢复原图">
 
@@ -649,7 +649,14 @@
                 stroke-linejoin="round" />
             </svg>
           </button>
-          <button class="material-btn-export" @click="exportNewSVGA" :disabled="!hasReplacedMaterials">
+          <!-- 压缩素材图按钮（与导出按钮同样式） -->
+          <button class="material-btn-export" @click="openCompressModal"
+            :disabled="isCompressingMaterials || materialList.length === 0">
+            <template v-if="isCompressingMaterials">压缩中 {{ compressProgress }}%</template>
+            <template v-else>压缩素材图</template>
+          </button>
+          <button class="material-btn-export" @click="exportNewSVGA"
+            :disabled="!hasReplacedMaterials && !hasCompressedMaterials">
             导出新SVGA
           </button>
         </div>
@@ -1166,6 +1173,49 @@
               开始转换SVGA
             </template>
           </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 素材压缩弹窗（使用通用居中弹窗样式） -->
+    <div class="center-modal-overlay" v-if="showCompressModal && currentModule === 'svga'">
+      <div class="center-modal-dialog" style="width: 420px;">
+        <div class="center-modal-header">
+          <h3>压缩所有素材图</h3>
+        </div>
+        <div class="center-modal-body">
+          <!-- 图片缩小比例 -->
+          <div class="svga-config-item">
+            <div class="svga-config-label">图片缩小比例：</div>
+            <div class="svga-value-container">
+              <div class="svga-value-input-wrapper">
+                <input type="number" class="svga-input" v-model.number="compressConfig.scalePercent"
+                  :disabled="isCompressingMaterials" min="10" max="100" />
+              </div>
+              <div class="svga-value-unit">%</div>
+            </div>
+          </div>
+          <div class="compress-hint">把图片缩小尺寸然后放大使用，会有效降低内存占用，但画面可能明显变糊。</div>
+
+          <!-- 压缩到质量 -->
+          <div class="svga-config-item" style="margin-top: 16px;">
+            <div class="svga-config-label">压缩到质量：</div>
+            <div class="svga-value-container">
+              <div class="svga-value-input-wrapper">
+                <input type="number" class="svga-input" v-model.number="compressConfig.quality"
+                  :disabled="isCompressingMaterials" min="10" max="100" />
+              </div>
+              <div class="svga-value-unit">%</div>
+            </div>
+          </div>
+          <div class="compress-hint">采用pngquant进行PNG压缩，会有效降低图片文件大小。</div>
+        </div>
+        <div class="center-modal-footer">
+          <!-- 如果已压缩过，显示撤销按钮 -->
+          <button v-if="hasCompressedMaterials" class="btn-undo" @click="undoCompressMaterials"
+            :disabled="isCompressingMaterials">撤销</button>
+          <button class="btn-primary" @click="closeCompressModal" :disabled="isCompressingMaterials">取消</button>
+          <button class="btn-secondary" @click="startCompressMaterials" :disabled="isCompressingMaterials">确定</button>
         </div>
       </div>
     </div>
