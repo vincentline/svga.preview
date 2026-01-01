@@ -114,6 +114,8 @@ function initApp() {
         // 沉浸模式：隐藏标题栏，底部浮层变为mini浮层
         // 给用户更大的展示动画空间
         isImmersiveMode: false,
+        modeNameFadeOut: false, // 模式名称是否淡出
+        modeNameFadeTimer: null, // 模式名称淡出定时器
         dragging: false,
         dragStartX: 0,
         dragStartY: 0,
@@ -243,8 +245,10 @@ function initApp() {
         materialList: [],
         materialSearchQuery: '',
         originalVideoItem: null,
-        replacedImages: {},            // 用于预览显示的图片（放大后）
-        compressedImages: {},          // 用于导出的压缩图（缩小后）
+        replacedImages: {},            // 用于预览的图片（放大后）
+        // 压缩素材的缩放信息（导出时用于替换图片数据）
+        // 结构: {imageKey: {scaledWidth, scaledHeight, originalWidth, originalHeight, compressedDataUrl}}
+        compressedScaleInfo: {},
 
         // 素材压缩相关状态
         showCompressModal: false,           // 是否显示压缩弹窗
@@ -252,12 +256,12 @@ function initApp() {
         compressProgress: 0,                // 压缩进度 0-100
         compressConfig: {
           scalePercent: 70,                 // 缩小比例 10-100%
-          quality: 70                       // pngquant压缩质量 10-100%
+          level: 3                          // PNG压缩级别 1-6，3平衡
         },
         hasCompressedMaterials: false,      // 是否压缩过素材
         preCompressMaterials: null,         // 压缩前的素材状态（用于撤销）
         preCompressReplacedImages: null,    // 压缩前的replacedImages（用于撤销）
-        preCompressCompressedImages: null,  // 压缩前的compressedImages（用于撤销）
+        preCompressScaleInfo: null,         // 压缩前的compressedScaleInfo（用于撤销）
 
         // 音频数据（从原始SVGA文件提取）
         svgaAudioData: null, // { audioKey: Uint8Array }
@@ -3379,7 +3383,25 @@ function initApp() {
        * 给用户更大的展示动画空间
        */
       toggleImmersiveMode: function () {
+        var _this = this;
         this.isImmersiveMode = !this.isImmersiveMode;
+
+        // 清除之前的定时器
+        if (this.modeNameFadeTimer) {
+          clearTimeout(this.modeNameFadeTimer);
+          this.modeNameFadeTimer = null;
+        }
+
+        if (this.isImmersiveMode) {
+          // 进入沉浸模式：显示模式名称，5s后淡出
+          this.modeNameFadeOut = false;
+          this.modeNameFadeTimer = setTimeout(function () {
+            _this.modeNameFadeOut = true;
+          }, 5000);
+        } else {
+          // 退出沉浸模式：立即显示模式名称
+          this.modeNameFadeOut = false;
+        }
 
         // 更新viewport-controller的headerHeight和footerHeight
         if (this.viewportController) {
@@ -3419,6 +3441,7 @@ function initApp() {
        */
       openMaterialPanel: function () {
         if (!this.svga.hasFile || !this.originalVideoItem) return;
+
         // 使用统一的右侧弹窗管理
         this.openRightPanel('showMaterialPanel');
       },
@@ -3897,9 +3920,9 @@ function initApp() {
       /* ==================== 素材压缩功能 ==================== */
 
       /**
-       * 打开压缩弹窗
+       * 打开压缩并导出弹窗
        */
-      openCompressModal: function () {
+      openCompressAndExportModal: function () {
         this.showCompressModal = true;
       },
 
@@ -3911,7 +3934,32 @@ function initApp() {
       },
 
       /**
+       * 压缩并导出
+       */
+      startCompressAndExport: async function () {
+        // 先执行压缩
+        await this.startCompressMaterials();
+
+        // 压缩完成后导出
+        if (this.hasCompressedMaterials) {
+          await this.exportNewSVGA();
+        }
+      },
+
+      /**
        * 开始压缩素材图
+       * 
+       * 压缩流程：
+       * 1. 将图片缩小到指定比例（scalePercent）
+       * 2. 使用 Canvas 原生 PNG 编码（toDataURL）
+       * 3. 生成两份图片：
+       *    - 小图（compressedDataUrl）：用于导出，减小SVGA文件体积
+       *    - 放大图（previewDataUrl）：用于预览，因为SVGA播放器不会自动放大
+       * 4. 保存缩放信息到 compressedScaleInfo
+       * 
+       * 导出时处理（在 exportNewSVGA 中）：
+       * - 使用小图替换SVGA中的原图
+       * - 不修改layout和transform，SVGA播放器会自动拉伸小图到layout指定的尺寸
        */
       startCompressMaterials: async function () {
         var _this = this;
@@ -3921,24 +3969,7 @@ function initApp() {
           return;
         }
 
-        // 尝试加载 pngquant 库（可选）
-        var pngquantAvailable = false;
-        try {
-          await this.loadLibrary(['pngquant'], true);
-          pngquantAvailable = typeof wasmPngquant !== 'undefined';
-        } catch (err) {
-          // pngquant 加载失败，询问用户是否继续
-          var continueWithoutPngquant = confirm(
-            'pngquant库加载失败（CDN网络问题）\n\n' +
-            '是否继续？\n' +
-            '• 点“确定”：只做尺寸缩小，跳过色彩压缩\n' +
-            '• 点“取消”：放弃压缩'
-          );
-          if (!continueWithoutPngquant) {
-            return;
-          }
-          pngquantAvailable = false;
-        }
+
 
         // 关闭弹窗，开始压缩
         this.showCompressModal = false;
@@ -3948,19 +3979,13 @@ function initApp() {
         // 保存压缩前的状态（用于撤销）
         this.preCompressMaterials = JSON.parse(JSON.stringify(this.materialList));
         this.preCompressReplacedImages = Object.assign({}, this.replacedImages);
-        this.preCompressCompressedImages = Object.assign({}, this.compressedImages);
+        this.preCompressScaleInfo = Object.assign({}, this.compressedScaleInfo);
 
         var total = this.materialList.length;
         var processed = 0;
         var scalePercent = this.compressConfig.scalePercent / 100;
-        var quality = this.compressConfig.quality;
 
         try {
-          // 初始化 pngquant（如果可用）
-          if (pngquantAvailable && !wasmPngquant.isReady) {
-            await wasmPngquant.init();
-          }
-
           for (var i = 0; i < this.materialList.length; i++) {
             var material = this.materialList[i];
 
@@ -3990,56 +4015,49 @@ function initApp() {
             var ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, newWidth, newHeight);
 
-            // 转为 PNG Blob
-            var pngBlob = await new Promise(function (resolve) {
-              canvas.toBlob(resolve, 'image/png');
-            });
-            var pngData = new Uint8Array(await pngBlob.arrayBuffer());
+            var compressedDataUrl;
 
-            // 使用 pngquant 压缩（如果可用）
-            var compressedData = pngData;
-            if (pngquantAvailable) {
-              try {
-                var qualityRange = [Math.max(10, quality - 10), Math.min(100, quality + 10)];
-                compressedData = await wasmPngquant.compress(pngData, {
-                  quality: qualityRange,
-                  speed: 3
-                });
-                compressedData = new Uint8Array(compressedData);
-              } catch (e) {
-                console.warn('pngquant压缩失败，使用原始数据:', e);
-              }
+            // 获取Canvas原生输出（缩小后的PNG）
+            var compressedDataUrl = canvas.toDataURL('image/png');
+
+            // 放大到原尺寸用于预览（SVGA播放器不会自动放大）
+            var compressedImg;
+            try {
+              compressedImg = await this._loadImage(compressedDataUrl);
+            } catch (err) {
+              console.error('[素材压缩] 素材', material.imageKey, '图片加载失败！', err);
+              throw err;
             }
 
-            // 转为 base64 DataURL
-            var compressedBlob = new Blob([compressedData], { type: 'image/png' });
-            var compressedDataUrl = await this._blobToDataURL(compressedBlob);
-
-            // 放大到原尺寸（使用 scaleImageToFill 填充）
-            var compressedImg = await this._loadImage(compressedDataUrl);
             var scaledCanvas = this.scaleImageToFill(compressedImg, material.originalWidth, material.originalHeight);
-            var finalDataUrl = scaledCanvas.toDataURL('image/png');
+            var previewDataUrl = scaledCanvas.toDataURL('image/png');
 
-            // 更新素材列表
-            material.previewUrl = finalDataUrl;
+            // 更新素材列表预览
+            material.previewUrl = previewDataUrl;
             material.isReplaced = true;
-            // 尺寸显示为原始尺寸（因为已放大回去）
-            material.sizeText = material.originalWidth + 'px*' + material.originalHeight + 'px';
+            // 尺寸显示为压缩后的尺寸
+            material.sizeText = newWidth + 'px*' + newHeight + 'px';
 
-            // 内存占用显示为缩小后的尺寸（体现压缩效果）
+            // 内存占用显示为缩小后的尺寸
             var bytes = newWidth * newHeight * 4;
             material.fileSize = bytes;
             material.fileSizeText = this.formatBytes(bytes) + ' (压缩后)';
 
-            // 更新 replacedImages（用于预览）
+            // 更新 replacedImages（用于预览，放大后的图）
             var newReplacedImages = Object.assign({}, this.replacedImages);
-            newReplacedImages[material.imageKey] = finalDataUrl;
+            newReplacedImages[material.imageKey] = previewDataUrl;
             this.replacedImages = newReplacedImages;
 
-            // 更新 compressedImages（用于导出，保存缩小后的图）
-            var newCompressedImages = Object.assign({}, this.compressedImages);
-            newCompressedImages[material.imageKey] = compressedDataUrl;
-            this.compressedImages = newCompressedImages;
+            // 保存缩放信息和小图数据（用于导出）
+            var newCompressedScaleInfo = Object.assign({}, this.compressedScaleInfo);
+            newCompressedScaleInfo[material.imageKey] = {
+              scaledWidth: newWidth,
+              scaledHeight: newHeight,
+              originalWidth: material.originalWidth,
+              originalHeight: material.originalHeight,
+              compressedDataUrl: compressedDataUrl  // 小图数据用于导出
+            };
+            this.compressedScaleInfo = newCompressedScaleInfo;
 
             processed++;
             this.compressProgress = Math.round((processed / total) * 100);
@@ -4076,12 +4094,12 @@ function initApp() {
         // 恢复压缩前的状态
         this.materialList = JSON.parse(JSON.stringify(this.preCompressMaterials));
         this.replacedImages = Object.assign({}, this.preCompressReplacedImages);
-        this.compressedImages = Object.assign({}, this.preCompressCompressedImages || {});
+        this.compressedScaleInfo = Object.assign({}, this.preCompressScaleInfo || {});
 
         // 清除撤销记录
         this.preCompressMaterials = null;
         this.preCompressReplacedImages = null;
-        this.preCompressCompressedImages = null;
+        this.preCompressScaleInfo = null;
         this.hasCompressedMaterials = false;
 
         // 关闭弹窗
@@ -4110,7 +4128,7 @@ function initApp() {
       },
 
       /**
-       * Blob转 DataURL
+       * Blob转DataURL
        * @private
        */
       _blobToDataURL: function (blob) {
@@ -4149,9 +4167,6 @@ function initApp() {
           return;
         }
 
-        var processing = confirm('即将导出替换后的 SVGA 文件。继续吗？');
-        if (!processing) return;
-
         // 动态加载 protobuf 和 pako
         try {
           await this.loadLibrary(['protobuf', 'pako'], true)
@@ -4172,7 +4187,7 @@ function initApp() {
               var inflatedData = pako.inflate(uint8Array);
 
               // 使用 protobuf.js 动态加载 proto 并解码
-              protobuf.load('./svga.proto', function (err, root) {
+              protobuf.load('./svga.proto', async function (err, root) {
                 if (err) {
                   console.error('Proto加载错误:', err);
                   alert('加载 proto 定义失败: ' + err.message);
@@ -4219,10 +4234,19 @@ function initApp() {
                     return;
                   }
 
-                  // 处理所有图片（优先使用compressedImages中的压缩图）
+                  // 处理所有图片
                   imagesToProcess.forEach(function (item) {
-                    // 如果有压缩图，使用压缩图；否则使用replacedImages中的图
-                    var base64Data = _this.compressedImages[item.imageKey] || item.base64Data;
+                    var scaleInfo = _this.compressedScaleInfo[item.imageKey];
+                    var base64Data;
+
+                    // 如果有压缩信息，直接使用保存的小图DataURL（Canvas原生PNG）
+                    if (scaleInfo && scaleInfo.compressedDataUrl) {
+                      base64Data = scaleInfo.compressedDataUrl;
+                    } else {
+                      // 没有压缩，使用原图
+                      base64Data = item.base64Data;
+                    }
+
                     // 移除 data:image/xxx;base64, 前缀
                     var base64String = base64Data.split(',')[1] || base64Data;
                     // 转换为 Uint8Array
@@ -4235,6 +4259,52 @@ function initApp() {
                     movieData.images[item.imageKey] = bytes;
                     replacedCount++;
                   });
+
+                  // ========== 处理压缩素材的transform（核心算法！） ==========
+                  // 算法原理：
+                  // 1. 压缩时：图片从原始尺寸（如324x321）缩小到指定比例（如50% = 162x161）
+                  // 2. 导出时：替换images中的图片数据为小图（162x161的PNG）
+                  // 3. 通过transform矩阵放大显示：
+                  //    - a/b/c/d 乘以scaleUp（控制缩放、旋转、斜切）
+                  //    - tx/ty 保持不变（相对于layout坐标系的绝对位置）
+                  // 4. layout完全不变（位置和尺寸保持原始值）
+                  //
+                  // 关键发现：
+                  // - transform的a/b/c/d控制图片的变换矩阵，必须同步缩放以保持旋转角度
+                  // - transform的tx/ty是画布坐标系下的绝对偏移，不受图片尺寸影响
+                  // - 错误做法：只缩放a/d会导致旋转角度错误（相差约15°）
+                  // - 错误做法：缩放tx/ty会导致位置大幅偏移
+                  //
+                  if (Object.keys(_this.compressedScaleInfo).length > 0 && movieData.sprites) {
+                    movieData.sprites.forEach(function (sprite) {
+                      var scaleInfo = _this.compressedScaleInfo[sprite.imageKey];
+                      if (scaleInfo && sprite.frames) {
+                        var scaleUp = scaleInfo.originalWidth / scaleInfo.scaledWidth;
+
+                        sprite.frames.forEach(function (frame) {
+                          if (!frame.transform) {
+                            frame.transform = { a: 1, b: 0, c: 0, d: 1, tx: 0, ty: 0 };
+                          }
+
+                          // 获取原有transform值
+                          var origA = frame.transform.a !== undefined ? frame.transform.a : 1;
+                          var origB = frame.transform.b !== undefined ? frame.transform.b : 0;
+                          var origC = frame.transform.c !== undefined ? frame.transform.c : 0;
+                          var origD = frame.transform.d !== undefined ? frame.transform.d : 1;
+                          var origTx = frame.transform.tx !== undefined ? frame.transform.tx : 0;
+                          var origTy = frame.transform.ty !== undefined ? frame.transform.ty : 0;
+
+                          // 核心：a/b/c/d乘以scaleUp，tx/ty保持不变
+                          frame.transform.a = origA * scaleUp;
+                          frame.transform.b = origB * scaleUp;
+                          frame.transform.c = origC * scaleUp;
+                          frame.transform.d = origD * scaleUp;
+                          frame.transform.tx = origTx;
+                          frame.transform.ty = origTy;
+                        });
+                      }
+                    });
+                  }
 
                   // 直接编码 protobuf 消息
                   var buffer = MovieEntity.encode(movieData).finish();
@@ -4257,7 +4327,7 @@ function initApp() {
                     URL.revokeObjectURL(url);
                   }, 100);
 
-                  alert('导出成功！已替换 ' + replacedCount + ' 个素材。');
+                  _this.showToast('导出成功！已替换 ' + replacedCount + ' 个素材。');
 
                 } catch (decodeErr) {
                   console.error('编解码失败:', decodeErr);

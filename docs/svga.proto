@@ -32,12 +32,16 @@ message Layout {
 }
 
 message Transform {
-    float a = 1;
-    float b = 2;
-    float c = 3;
-    float d = 4;
-    float tx = 5;
-    float ty = 6;
+    float a = 1;    // X轴缩放因子（与旋转相关）
+    float b = 2;    // Y轴斜切/旋转因子
+    float c = 3;    // X轴斜切/旋转因子
+    float d = 4;    // Y轴缩放因子（与旋转相关）
+    float tx = 5;   // X轴平移（画布坐标系下的绝对偏移）
+    float ty = 6;   // Y轴平移（画布坐标系下的绝对偏移）
+    // 2D仿射变换矩阵: [a, b, tx; c, d, ty; 0, 0, 1]
+    // 变换公式: x' = a*x + b*y + tx, y' = c*x + d*y + ty
+    // 注意: a/b/c/d控制缩放、旋转、斜切，必须同步缩放以保持旋转角度
+    //       tx/ty是画布绝对位置，不受图片尺寸影响
 }
 
 message ShapeEntity {

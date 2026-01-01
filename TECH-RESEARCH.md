@@ -1,10 +1,230 @@
 # 技术调研报告
 
-> **最后更新**: 2026-01-01  
+> **最后更新**: 2026-01-02 (SVGA素材压缩功能与导出流程优化)  
 > **文档状态**: ✅ 持续更新
 
 ## 📋 调研目标
 为 SVGA Preview 项目的功能开发提供技术方案支持和实现记录。
+
+---
+
+## 📊 阶段9：SVGA素材压缩与导出流程优化
+**完成时间**：2026-01-02
+
+### 1. 功能概述 ✅
+
+素材压缩功能允许用户缩小 SVGA 中的图片尺寸，从而减少内存占用（主要目标）和文件体积。
+
+**核心特性**：
+- 图片尺寸缩小（scalePercent: 10-100%）
+- 与导出SVGA功能合并，一键完成“压缩并导出”
+- 导出时自动修改sprite的transform实现放大显示
+- 支持撤销压缩
+
+**技术结论**：
+- ✅ 尺寸缩小是最有效的压缩方式（内存减少 = 像素减少）
+- ❌ 前端PNG质量压缩效果有限，无法达到专业工具水平
+- ℹ️ 进一步优化需后端集成TinyPNG/pngquant等专业工具
+
+### 2. 技术实现
+
+#### 2.1 压缩流程
+
+```
+原始图片 (250x250)
+    ↓
+尺寸缩小 (scalePercent=70% → 175x175)
+    ↓
+Canvas原生PNG编码 (toDataURL)
+    ↓
+生成两份图片:
+  - compressedDataUrl: 175x175小图 (用于导出SVGA)
+  - previewDataUrl: 250x250放大图 (用于预览显示)
+    ↓
+保存缩放信息到 compressedScaleInfo
+    ↓
+导出SVGA时使用小图 + 修改transform
+```
+
+#### 2.2 数据结构
+
+```javascript
+// 压缩缩放信息
+compressedScaleInfo: {
+  'imageKey': {
+    scaledWidth: 175,        // 压缩后宽度
+    scaledHeight: 175,       // 压缩后高度
+    originalWidth: 250,      // 原始宽度
+    originalHeight: 250,     // 原始高度
+    compressedDataUrl: '...' // 小图DataURL（Canvas原生PNG，用于导出SVGA）
+  }
+}
+```
+
+#### 2.3 PNG压缩技术调研与结论 ⚠️
+
+**调研背景**：为进一步减小文件体积，尝试在前端集成PNG质量压缩。
+
+**尝试方案**：
+
+1. **@jsquash/oxipng** (最初方案)
+   - 基于WebAssembly的PNG优化器
+   - 问题：WASM文件加载失败，本地环境MIME类型配置复杂
+   - 结论：放弃
+
+2. **pako手动构建PNG** (第二方案)
+   - 手动构建PNG文件结构（签名 + IHDR + IDAT + IEND）
+   - 实现CRC32校验
+   - 测试结果：比Canvas原生PNG小8-10%
+   - **关键问题**：导出SVGA时会用protobuf+pako再压缩一次，导致**双重压缩反而增大文件**
+   - 结论：放弃
+
+3. **browser-image-compression** (第三方案)
+   - 对PNG压缩效果有限
+   - 需转为JPEG才能有效，但SVGA必须保留透明度
+   - 结论：不适用
+
+**最终方案**：Canvas原生`toDataURL('image/png')`
+- 简单可靠，无需额外依赖
+- SVGA的protobuf+pako会统一压缩所有图片
+- 虽然压缩效率低于专业工具，但主要优化已通过尺寸缩小实现
+
+**数据对比**（某SVGA示例）：
+- 原始文件：975KB（使用专业工具预处理）
+- 尺寸缩小70% + Canvas PNG：1733KB
+- 内存占用：13.8MB → 6.8MB（减小51%）
+
+**结论**：
+- ✅ **内存优化目标达成**（减少像素数量）
+- ❌ **文件体积优化受限**（Canvas PNG压缩效率低于专业工具）
+- 💡 **进一步优化方向**：后端集成TinyPNG/pngquant等专业工具
+
+#### 2.4 导出时的transform处理（核心算法！）
+
+**✅ 正确方案**：
+- 替换images中的图片数据（使用小图）
+- **layout完全不变**（x/y/width/height都保持原始值）
+- **修改transform矩阵**：
+  - a/b/c/d 乘以scaleUp（控制缩放、旋转、斜切）
+  - tx/ty 保持不变（画布坐标系下的绝对位置）
+
+**关键发现**：
+
+1. **transform矩阵的a/b/c/d必须同步缩放**：
+   - a/d 控制X/Y轴的缩放
+   - b/c 参与旋转和斜切变换
+   - 如果只缩放a/d不缩放b/c，会导致**旋转角度错误约15°**
+
+2. **transform的tx/ty不能缩放**：
+   - tx/ty 是相对于layout坐标系的绝对偏移量
+   - 与图片尺寸无关，只与画布位置有关
+   - 如果乘以scaleUp，会导致**位置大幅偏移**
+
+3. **layout完全不变**：
+   - layout定义了显示区域，不受图片尺寸影响
+   - 之前认为需要调整layout.x/y是错误的
+
+```javascript
+// 正确做法
+var scaleUp = originalWidth / scaledWidth;
+sprite.frames.forEach(function(frame) {
+  // layout完全不变！
+  
+  // 只修改transform
+  if (!frame.transform) {
+    frame.transform = { a: 1, b: 0, c: 0, d: 1, tx: 0, ty: 0 };
+  }
+  
+  var origA = frame.transform.a || 1;
+  var origB = frame.transform.b || 0;
+  var origC = frame.transform.c || 0;
+  var origD = frame.transform.d || 1;
+  var origTx = frame.transform.tx || 0;
+  var origTy = frame.transform.ty || 0;
+  
+  // 核心：a/b/c/d乘以scaleUp，tx/ty保持不变
+  frame.transform.a = origA * scaleUp;
+  frame.transform.b = origB * scaleUp;
+  frame.transform.c = origC * scaleUp;
+  frame.transform.d = origD * scaleUp;
+  frame.transform.tx = origTx;  // 保持不变！
+  frame.transform.ty = origTy;  // 保持不变！
+});
+```
+
+**错误做法总结**：
+- ✗ 只缩放a/d不缩放b/c → 旋转角度错误
+- ✗ 缩放tx/ty → 位置大幅偏移
+- ✗ 调整layout.x/y → 无效且混乱
+
+#### 2.5 导出处理流程
+
+```javascript
+// 1. 替换图片数据（使用小图）
+var scaleInfo = compressedScaleInfo[imageKey];
+var base64Data = scaleInfo ? scaleInfo.compressedDataUrl : replacedImages[imageKey];
+movieData.images[imageKey] = base64ToUint8Array(base64Data);
+
+// 2. 修改sprite的transform（layout完全不变）
+if (scaleInfo) {
+  var scaleUp = scaleInfo.originalWidth / scaleInfo.scaledWidth;
+  sprite.frames.forEach(function(frame) {
+    var origA = frame.transform.a || 1;
+    var origB = frame.transform.b || 0;
+    var origC = frame.transform.c || 0;
+    var origD = frame.transform.d || 1;
+    var origTx = frame.transform.tx || 0;
+    var origTy = frame.transform.ty || 0;
+    
+    frame.transform.a = origA * scaleUp;
+    frame.transform.b = origB * scaleUp;
+    frame.transform.c = origC * scaleUp;
+    frame.transform.d = origD * scaleUp;
+    frame.transform.tx = origTx;
+    frame.transform.ty = origTy;
+  });
+}
+```
+
+### 3. 注意事项
+
+1. **预览与导出分离**：预览使用放大图（SVGA播放器不自动放大），导出使用小图+transform放大
+2. **transform矩阵必须完整**：a/b/c/d四个值必须同步缩放，缺一不可
+3. **tx/ty的特殊性**：它们是画布坐标系下的绝对偏移，不受图片尺寸影响
+3. **Canvas PNG即可**：前端无需额外PNG质量压缩，SVGA的protobuf+pako会统一处理
+4. **撤销支持**：需同时保存materialList、replacedImages、compressedScaleInfo
+
+### 4. UI/UX优化
+
+**操作流程合并**：
+- 原方案：“压缩素材图”按钮 + “导出新SVGA”按钮（分离）
+- 新方案：“压缩并导出新SVGA”按钮（合并）
+- 已压缩时显示绿色✓标记
+- 点击后打开“设置素材图压缩参数”弹窗
+- 弹窗内有“撤销”按钮（已压缩时显示）
+- 导出成功使用toast提示而非alert弹窗
+
+### 5. 文件变更
+
+#### docs/assets/js/app.js
+- 新增 `compressedScaleInfo` 数据字段
+- 新增 `openCompressAndExportModal()` 打开压缩并导出弹窗
+- 新增 `startCompressAndExport()` 压缩并导出方法
+- 新增 `startCompressMaterials()` 压缩方法（只做尺寸缩小 + Canvas PNG）
+- 新增 `undoCompressMaterials()` 撤销方法
+- 修改 `exportNewSVGA()` 支持压缩图导出 + toast提示
+- ✅ **代码清理（2026-01-02）**: 移除 `_compressPNGWithPako()`, `_buildPNG()`, `_createPNGChunk()`, `_crc32()`, `_initCRC32Table()` 等pako手动构建PNG的函数（已证明无效）
+- ✅ **注释优化（2026-01-02）**: 移除"oxipng压缩级别"字段及注释，移除pngquant加载逻辑，统一日志标签为"[素材压缩]"，优化函数注释
+
+#### docs/assets/js/library-loader.js
+- ✅ **禁用无用库（2026-01-02）**: 将pngquant库标记为disabled=true（不再用于PNG压缩）
+
+#### docs/index.html
+- 移除“压缩素材图”按钮
+- 移除“导出新SVGA”按钮
+- 新增“压缩并导出新SVGA”按钮（带✓标记）
+- 修改压缩弹窗标题为“设置素材图压缩参数”
+- 修改弹窗“确定”按钮为“压缩并导出”
 
 ---
 

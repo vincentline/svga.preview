@@ -398,7 +398,7 @@
    * 设置为 1:1 缩放（原始尺寸）
    * 
    * 功能：
-   *   将缩放比例设为 1.0，保持当前偏移不变
+   *   将缩放比例设为 1.0，并自动居中
    *   即显示内容的实际像素尺寸
    * 
    * 调用场景：
@@ -406,21 +406,18 @@
    *   - 查看原始分辨率
    * 
    * 注意：
-   *   不会调整偏移量，所以不会居中或移动
-   *   如需居中，请再调用 centerView()
+   *   会自动调用 centerView() 进行居中
+   *   居中位置计算方式与适应窗口一致，减去底部浮层高度
    * 
    * @example
    * // 点击 1:1 按钮
-   * controller.setScaleTo1();
-   * 
-   * // 设为 1:1 并居中
-   * controller.setScaleTo1();
-   * controller.centerView();
+   * controller.setScaleTo1(); // 自动居中
    */
   ViewportController.prototype.setScaleTo1 = function () {
     this.scale = 1.0;
     this.viewMode = '1:1'; // 设置为1:1模式
-    this.onViewportChange(this.scale, this.offsetX, this.offsetY);
+    // 自动居中，使用与适应窗口相同的居中逻辑
+    this.centerView();
   };
 
   /**
