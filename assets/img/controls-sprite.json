@@ -310,5 +310,161 @@
     "y": -400,
     "width": 80,
     "height": 80
+  },
+  "minimize.png": {
+    "x": -160,
+    "y": -400,
+    "width": 80,
+    "height": 80
+  },
+  "minimize_hover.png": {
+    "x": -240,
+    "y": -400,
+    "width": 80,
+    "height": 80
+  },
+  "minimize_dark.png": {
+    "x": -320,
+    "y": -400,
+    "width": 80,
+    "height": 80
+  },
+  "minimize_hover_dark.png": {
+    "x": -400,
+    "y": -400,
+    "width": 80,
+    "height": 80
+  },
+  "maximize.png": {
+    "x": -480,
+    "y": -400,
+    "width": 80,
+    "height": 80
+  },
+  "maximize_hover.png": {
+    "x": -560,
+    "y": -400,
+    "width": 80,
+    "height": 80
+  },
+  "maximize_dark.png": {
+    "x": -640,
+    "y": -400,
+    "width": 80,
+    "height": 80
+  },
+  "maximize_hover_dark.png": {
+    "x": -720,
+    "y": -400,
+    "width": 80,
+    "height": 80
+  },
+  "mini_play.png": {
+    "x": 0,
+    "y": -480,
+    "width": 80,
+    "height": 80
+  },
+  "mini_play_hover.png": {
+    "x": -80,
+    "y": -480,
+    "width": 80,
+    "height": 80
+  },
+  "mini_play_dark.png": {
+    "x": -160,
+    "y": -480,
+    "width": 80,
+    "height": 80
+  },
+  "mini_play_hover_dark.png": {
+    "x": -240,
+    "y": -480,
+    "width": 80,
+    "height": 80
+  },
+  "mini_stop.png": {
+    "x": -320,
+    "y": -480,
+    "width": 80,
+    "height": 80
+  },
+  "mini_stop_hover.png": {
+    "x": -400,
+    "y": -480,
+    "width": 80,
+    "height": 80
+  },
+  "mini_stop_dark.png": {
+    "x": -480,
+    "y": -480,
+    "width": 80,
+    "height": 80
+  },
+  "mini_stop_hover_dark.png": {
+    "x": -560,
+    "y": -480,
+    "width": 80,
+    "height": 80
+  },
+  "mini_mute.png": {
+    "x": -640,
+    "y": -480,
+    "width": 80,
+    "height": 80
+  },
+  "mini_mute_hover.png": {
+    "x": -720,
+    "y": -480,
+    "width": 80,
+    "height": 80
+  },
+  "mini_mute_dark.png": {
+    "x": 0,
+    "y": -560,
+    "width": 80,
+    "height": 80
+  },
+  "mini_mute_hover_dark.png": {
+    "x": -80,
+    "y": -560,
+    "width": 80,
+    "height": 80
+  },
+  "mini_mute_disabled.png": {
+    "x": -160,
+    "y": -560,
+    "width": 80,
+    "height": 80
+  },
+  "mini_mute_disabled_dark.png": {
+    "x": -240,
+    "y": -560,
+    "width": 80,
+    "height": 80
+  },
+  "mini_mute_on.png": {
+    "x": -320,
+    "y": -560,
+    "width": 80,
+    "height": 80
+  },
+  "mini_mute_on_hover.png": {
+    "x": -400,
+    "y": -560,
+    "width": 80,
+    "height": 80
+  },
+  "mini_mute_on_dark.png": {
+    "x": -480,
+    "y": -560,
+    "width": 80,
+    "height": 80
+  },
+  "mini_mute_on_hover_dark.png": {
+    "x": -560,
+    "y": -560,
+    "width": 80,
+    "height": 80
   }
 }
