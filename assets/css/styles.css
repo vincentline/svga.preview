@@ -571,6 +571,15 @@ body.dark-mode .empty-state-tip-line2 {
   background: #ffffff;
   border: 1px solid #F3F3F3;
   border-radius: 8px;
+  /* 沉浸模式下淡出动画 */
+  opacity: 1;
+  transition: opacity 1s ease;
+}
+
+/* 沉浸模式下5s后淡出 */
+.mode-name-box.fade-out {
+  opacity: 0;
+  pointer-events: none;
 }
 
 body.dark-mode .mode-name-box {
@@ -1889,7 +1898,7 @@ body.dark-mode .stats-help {
   color: #333333;
   background: #ffffff;
   outline: none;
-  transition: all 0.3s;
+  /* 移除hover过渡动画，直接切换 */
 }
 
 .material-search-input::placeholder {
@@ -2809,7 +2818,7 @@ body.dark-mode .mp4-select-option.selected {
   background: #F3F3F3;
   border: none;
   border-radius: 12px;
-  transition: all 0.2s ease;
+  /* 移除hover过渡动画，直接切换 */
   flex: none;
   flex-grow: 0;
 }
@@ -3652,13 +3661,13 @@ body.dark-mode .svga-input:disabled {
 
 .svga-value-input-wrapper:hover {
   background: #FCFCFC;
-  border: 1px solid #333333;
+  border: 2px solid #333333;
   padding: 0 15px;
 }
 
 .svga-value-input-wrapper:focus-within {
   background: #FFFFFF;
-  border: 2px solid #5B5B5B;
+  border: 2px solid #333333;
   padding: 0 14px;
 }
 
@@ -3669,7 +3678,7 @@ body.dark-mode .svga-value-input-wrapper {
 
 body.dark-mode .svga-value-input-wrapper:hover {
   background: #454545;
-  border: 1px solid #999999;
+  border: 2px solid #999999;
   padding: 0 15px;
 }
 
@@ -4154,6 +4163,16 @@ body.dark-mode .chromakey-slider::-moz-range-thumb {
   justify-content: center;
   align-items: center;
   z-index: 10000;
+  /* 初始隐藏状态 */
+  opacity: 0;
+  visibility: hidden;
+  /* 淡入淡出动画 300ms */
+  transition: opacity 0.3s ease, visibility 0.3s;
+}
+
+.center-modal-overlay.show {
+  opacity: 1;
+  visibility: visible;
 }
 
 /* Vue未加载时隐藏弹窗（防止闪现） */
@@ -4171,6 +4190,15 @@ body.dark-mode .chromakey-slider::-moz-range-thumb {
   max-height: 90vh;
   overflow-y: auto;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  /* 淡入淡出动画 300ms */
+  opacity: 0;
+  transform: scale(0.95);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.center-modal-overlay.show .center-modal-dialog {
+  opacity: 1;
+  transform: scale(1);
 }
 
 body.dark-mode .center-modal-dialog {

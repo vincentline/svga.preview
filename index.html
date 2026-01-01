@@ -200,7 +200,7 @@
         <div class="footer-main-wrapper" :class="{'footer-main-wrapper-immersive': isImmersiveMode}">
           <!-- 右上角按钮区域：模式名（沉浸模式居中）、恢复播放（沉浸模式不显示）、清空画布（沉浸模式不显示） -->
           <div class="footer-top-actions" :class="{'footer-top-actions-immersive': isImmersiveMode}" v-if="!isEmpty">
-            <div class="mode-name-box">
+            <div class="mode-name-box" :class="{'fade-out': isImmersiveMode && modeNameFadeOut}">
               <span class="mode-name-label">
                 <template v-if="currentModule === 'svga'">SVGA</template>
                 <template v-else-if="currentModule === 'yyeva'">双通道MP4</template>
@@ -649,15 +649,14 @@
                 stroke-linejoin="round" />
             </svg>
           </button>
-          <!-- 压缩素材图按钮（与导出按钮同样式） -->
-          <button class="material-btn-export" @click="openCompressModal"
+          <!-- 压缩并导出SVGA按钮（与导出按钮同样式） -->
+          <button class="material-btn-export" @click="openCompressAndExportModal"
             :disabled="isCompressingMaterials || materialList.length === 0">
             <template v-if="isCompressingMaterials">压缩中 {{ compressProgress }}%</template>
-            <template v-else>压缩素材图</template>
-          </button>
-          <button class="material-btn-export" @click="exportNewSVGA"
-            :disabled="!hasReplacedMaterials && !hasCompressedMaterials">
-            导出新SVGA
+            <template v-else>
+              压缩并导出新SVGA
+              <span v-if="hasCompressedMaterials" style="color: #4CAF50; margin-left: 4px;">✓</span>
+            </template>
           </button>
         </div>
       </div>
@@ -1178,10 +1177,10 @@
     </div>
 
     <!-- 素材压缩弹窗（使用通用居中弹窗样式） -->
-    <div class="center-modal-overlay" v-if="showCompressModal && currentModule === 'svga'">
+    <div class="center-modal-overlay" :class="{'show': showCompressModal && currentModule === 'svga'}">
       <div class="center-modal-dialog" style="width: 420px;">
         <div class="center-modal-header">
-          <h3>压缩所有素材图</h3>
+          <h3>设置素材图压缩参数</h3>
         </div>
         <div class="center-modal-body">
           <!-- 图片缩小比例 -->
@@ -1195,33 +1194,35 @@
               <div class="svga-value-unit">%</div>
             </div>
           </div>
-          <div class="compress-hint">把图片缩小尺寸然后放大使用，会有效降低内存占用，但画面可能明显变糊。</div>
+          <div class="compress-hint">缩小图片尺寸来降低内存和文件大小。</div>
 
-          <!-- 压缩到质量 -->
+          <!-- 压缩级别 -->
           <div class="svga-config-item" style="margin-top: 16px;">
-            <div class="svga-config-label">压缩到质量：</div>
+            <div class="svga-config-label">压缩级别：</div>
             <div class="svga-value-container">
               <div class="svga-value-input-wrapper">
-                <input type="number" class="svga-input" v-model.number="compressConfig.quality"
-                  :disabled="isCompressingMaterials" min="10" max="100" />
+                <input type="number" class="svga-input" v-model.number="compressConfig.level"
+                  :disabled="isCompressingMaterials" min="1" max="6" />
               </div>
-              <div class="svga-value-unit">%</div>
+              <div class="svga-value-unit">级别</div>
             </div>
           </div>
-          <div class="compress-hint">采用pngquant进行PNG压缩，会有效降低图片文件大小。</div>
+          <div class="compress-hint">PNG压缩级别，1最低压缩，6最高压缩，3平衡。</div>
         </div>
         <div class="center-modal-footer">
           <!-- 如果已压缩过，显示撤销按钮 -->
           <button v-if="hasCompressedMaterials" class="btn-undo" @click="undoCompressMaterials"
             :disabled="isCompressingMaterials">撤销</button>
           <button class="btn-primary" @click="closeCompressModal" :disabled="isCompressingMaterials">取消</button>
-          <button class="btn-secondary" @click="startCompressMaterials" :disabled="isCompressingMaterials">确定</button>
+          <button class="btn-secondary" @click="startCompressAndExport"
+            :disabled="isCompressingMaterials">压缩并导出</button>
         </div>
       </div>
     </div>
 
     <!-- K帧编辑弹窗（使用通用居中弹窗样式） -->
-    <div class="center-modal-overlay" v-if="showEditFrameDialog && currentModule === 'mp4' && showSpeedRemapEditor">
+    <div class="center-modal-overlay"
+      :class="{'show': showEditFrameDialog && currentModule === 'mp4' && showSpeedRemapEditor}">
       <div class="center-modal-dialog" style="width: 400px;">
         <div class="center-modal-header">
           <h3>编辑K帧帧数</h3>
@@ -1243,7 +1244,7 @@
     </div>
 
     <!-- 视频转换弹窗（使用通用居中弹窗样式） -->
-    <div class="center-modal-overlay" v-if="showVideoConvertModal">
+    <div class="center-modal-overlay" :class="{'show': showVideoConvertModal}">
       <div class="center-modal-dialog" style="width: 480px;">
         <div class="center-modal-header">
           <h3>视频播放异常</h3>
@@ -1921,7 +1922,7 @@
     <input type="file" ref="reuploadSvgaInput" accept=".svga" style="display: none;" @change="handleReuploadSVGA" />
 
     <!-- 序列帧帧率设置弹窗（复用通用居中弹窗样式） -->
-    <div class="center-modal-overlay" v-if="showFramesFpsDialog">
+    <div class="center-modal-overlay" :class="{'show': showFramesFpsDialog}">
       <div class="center-modal-dialog" style="width: 400px;">
         <div class="center-modal-header">
           <h3>设置帧率</h3>

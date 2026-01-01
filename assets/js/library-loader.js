@@ -45,7 +45,7 @@
  *   }
  * });
  */
-(function(window) {
+(function (window) {
   'use strict';
 
   /**
@@ -67,77 +67,82 @@
     'vue': {
       name: 'Vue.js',
       url: 'https://cdn.jsdelivr.net/npm/vue@2.7.14/dist/vue.min.js',
-      checkFn: function() { return typeof Vue !== 'undefined'; },
+      checkFn: function () { return typeof Vue !== 'undefined'; },
       priority: 0 // 最高优先级
     },
     'svgaplayer': {
       name: 'SVGA Player',
       url: 'https://cdn.jsdelivr.net/npm/svgaplayerweb@2.3.1/build/svga.min.js',
-      checkFn: function() { return typeof SVGA !== 'undefined' && SVGA.Player; },
+      checkFn: function () { return typeof SVGA !== 'undefined' && SVGA.Player; },
       priority: 1
     },
     'lottie': {
       name: 'Lottie',
       url: 'https://cdn.jsdelivr.net/npm/lottie-web@5.12.2/build/player/lottie.min.js',
-      checkFn: function() { return typeof lottie !== 'undefined'; },
+      checkFn: function () { return typeof lottie !== 'undefined'; },
       priority: 5
     },
     'howler': {
       name: 'Howler.js',
       url: 'https://cdn.jsdelivr.net/npm/howler@2.2.3/dist/howler.min.js',
-      checkFn: function() { return typeof Howl !== 'undefined'; },
+      checkFn: function () { return typeof Howl !== 'undefined'; },
       priority: 6
     },
     'marked': {
       name: 'Marked',
       url: 'https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js',
-      checkFn: function() { return typeof marked !== 'undefined'; },
+      checkFn: function () { return typeof marked !== 'undefined'; },
       priority: 20
     },
     'gif': {
       name: 'GIF.js',
       url: 'https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.js',
-      checkFn: function() { return typeof GIF !== 'undefined'; },
+      checkFn: function () { return typeof GIF !== 'undefined'; },
       priority: 15
     },
     'protobuf': {
       name: 'Protobuf.js',
       url: 'https://cdn.jsdelivr.net/npm/protobufjs@7.2.5/dist/protobuf.min.js',
-      checkFn: function() { return typeof protobuf !== 'undefined'; },
+      checkFn: function () { return typeof protobuf !== 'undefined'; },
       priority: 25
     },
     'pako': {
       name: 'Pako',
       url: 'https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js',
-      checkFn: function() { return typeof pako !== 'undefined'; },
+      checkFn: function () { return typeof pako !== 'undefined'; },
       priority: 25
     },
     'jszip': {
       name: 'JSZip',
       url: 'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js',
-      checkFn: function() { return typeof JSZip !== 'undefined'; },
+      checkFn: function () { return typeof JSZip !== 'undefined'; },
       priority: 25
     },
     'pngquant': {
-      name: 'PngQuant',
-      url: 'https://cdn.jsdelivr.net/npm/@saschazar/wasm-pngquant@2.0.11/dist/wasm-pngquant.js',
+      name: 'PNG Compressor (Pako)',
+      url: 'https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js',
       fallbackUrls: [
-        'https://unpkg.com/@saschazar/wasm-pngquant@2.0.11/dist/wasm-pngquant.js'
+        'https://unpkg.com/pako@2.1.0/dist/pako.min.js',
+        'https://cdn.jsdelivr.net/npm/pako@2.0.4/dist/pako.min.js',
+        'https://unpkg.com/pako@2.0.4/dist/pako.min.js'
       ],
-      checkFn: function() { return typeof wasmPngquant !== 'undefined'; },
-      priority: 26  // 优先级略低于protobuf/pako，因为是选配功能
+      checkFn: function () {
+        return typeof pako !== 'undefined';
+      },
+      priority: 26,
+      disabled: true  // 2026-01-02: 不再用于PNG压缩，已由pako库替代
     },
     'svgaweb': {
       name: 'SVGA-Web',
       url: 'https://cdn.jsdelivr.net/npm/svga-web@2.4.2/svga-web.min.js',
-      checkFn: function() { return typeof SVGA !== 'undefined' && SVGA.Downloader; },
+      checkFn: function () { return typeof SVGA !== 'undefined' && SVGA.Downloader; },
       priority: 25,
       disabled: true  // 禁用这个库，不预加载
     },
     'ffmpeg': {
       name: 'FFmpeg',
       url: 'https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js',
-      checkFn: function() { return typeof FFmpeg !== 'undefined'; },
+      checkFn: function () { return typeof FFmpeg !== 'undefined'; },
       priority: 30
     }
   };
@@ -157,7 +162,7 @@
    * 添加进度监听器
    * @param {Function} callback - 回调函数 (currentLib) => void
    */
-  LibraryLoader.prototype.onProgress = function(callback) {
+  LibraryLoader.prototype.onProgress = function (callback) {
     if (typeof callback === 'function') {
       this.listeners.push(callback);
     }
@@ -166,9 +171,9 @@
   /**
    * 触发进度更新
    */
-  LibraryLoader.prototype.notifyProgress = function() {
+  LibraryLoader.prototype.notifyProgress = function () {
     var currentLib = this.currentLib;
-    this.listeners.forEach(function(callback) {
+    this.listeners.forEach(function (callback) {
       try {
         callback(currentLib);
       } catch (e) {
@@ -178,75 +183,156 @@
   };
 
   /**
-   * 加载单个库
+   * 加载单个库（支持备用URL自动重试）
    * @param {string} libKey - 库的键名
    * @param {boolean} highPriority - 是否高优先级
    * @returns {Promise}
    */
-  LibraryLoader.prototype.loadSingleLibrary = function(libKey, highPriority) {
+  LibraryLoader.prototype.loadSingleLibrary = function (libKey, highPriority) {
     var _this = this;
     var config = LIBRARY_CONFIG[libKey];
-    
+
     if (!config) {
       return Promise.reject(new Error('未知的库: ' + libKey));
     }
-    
+
     // 如果已加载，直接返回
     if (this.loadedLibs[libKey] || (config.checkFn && config.checkFn())) {
       this.loadedLibs[libKey] = true;
       return Promise.resolve();
     }
-    
-    return new Promise(function(resolve, reject) {
-      _this.currentLib = {
-        name: config.name,
-        url: config.url,
-        progress: 0
-      };
-      _this.notifyProgress();
-      
-      var script = document.createElement('script');
-      script.src = config.url;
-      
-      script.onload = function() {
-        _this.currentLib.progress = 50;
-        _this.notifyProgress();
-        
-        // 等待全局变量可用
-        var maxWait = 30;
-        var check = function() {
-          if (!config.checkFn || config.checkFn()) {
-            _this.currentLib.progress = 100;
-            _this.notifyProgress();
-            
-            setTimeout(function() {
-              _this.currentLib = null;
-              _this.loadedLibs[libKey] = true;
+
+    // 构建URL列表：主URL + 备用URLs
+    var urls = [config.url];
+    if (config.fallbackUrls && config.fallbackUrls.length > 0) {
+      urls = urls.concat(config.fallbackUrls);
+    }
+
+    // 尝试加载每个URL，直到成功
+    var tryLoadUrl = function (urlIndex) {
+      if (urlIndex >= urls.length) {
+        // 所有URL都失败
+        return Promise.reject(new Error('所有CDN都加载失败: ' + libKey));
+      }
+
+      var currentUrl = urls[urlIndex];
+
+      // 支持动态 import 加载（用于 ES Module）
+      if (config.loadMethod === 'import') {
+        return new Promise(function (resolve, reject) {
+          _this.currentLib = {
+            name: config.name,
+            url: currentUrl,
+            progress: 0
+          };
+          _this.notifyProgress();
+
+          import(currentUrl)
+            .then(function (module) {
+              // 将模块存储到 window
+              window.oxipngModule = module;
+
+              _this.currentLib.progress = 50;
               _this.notifyProgress();
-              resolve();
-            }, 300); // 显示100%后稍等
-          } else if (maxWait-- > 0) {
-            var progress = 50 + (30 - maxWait) * 1.5;
-            _this.currentLib.progress = Math.min(99, Math.round(progress));
-            _this.notifyProgress();
-            setTimeout(check, 100);
-          } else {
-            _this.currentLib = null;
-            _this.notifyProgress();
-            reject(new Error('库加载超时: ' + libKey));
-          }
+
+              // 等待检查
+              var maxWait = 30;
+              var check = function () {
+                if (!config.checkFn || config.checkFn()) {
+                  _this.currentLib.progress = 100;
+                  _this.notifyProgress();
+
+                  setTimeout(function () {
+                    _this.currentLib = null;
+                    _this.loadedLibs[libKey] = true;
+                    _this.notifyProgress();
+                    resolve();
+                  }, 300);
+                } else if (maxWait-- > 0) {
+                  var progress = 50 + (30 - maxWait) * 1.5;
+                  _this.currentLib.progress = Math.min(99, Math.round(progress));
+                  _this.notifyProgress();
+                  setTimeout(check, 100);
+                } else {
+                  _this.currentLib = null;
+                  _this.notifyProgress();
+                  reject(new Error('库加载超时: ' + libKey));
+                }
+              };
+              check();
+            })
+            .catch(function (error) {
+              _this.currentLib = null;
+              _this.notifyProgress();
+              console.warn('CDN加载失败: ' + currentUrl);
+              reject(error);
+            });
+        }).catch(function (error) {
+          console.log('尝试备用CDN (' + (urlIndex + 2) + '/' + urls.length + ')...');
+          return tryLoadUrl(urlIndex + 1);
+        });
+      }
+
+      // 传统 <script> 加载
+
+      return new Promise(function (resolve, reject) {
+        _this.currentLib = {
+          name: config.name,
+          url: currentUrl,
+          progress: 0
         };
-        check();
-      };
-      
-      script.onerror = function() {
-        _this.currentLib = null;
         _this.notifyProgress();
-        reject(new Error('加载失败: ' + config.url));
-      };
-      
-      document.head.appendChild(script);
-    });
+
+        var script = document.createElement('script');
+        script.src = currentUrl;
+
+        script.onload = function () {
+          _this.currentLib.progress = 50;
+          _this.notifyProgress();
+
+          // 等待全局变量可用
+          var maxWait = 30;
+          var check = function () {
+            if (!config.checkFn || config.checkFn()) {
+              _this.currentLib.progress = 100;
+              _this.notifyProgress();
+
+              setTimeout(function () {
+                _this.currentLib = null;
+                _this.loadedLibs[libKey] = true;
+                _this.notifyProgress();
+                resolve();
+              }, 300); // 显示100%后稍等
+            } else if (maxWait-- > 0) {
+              var progress = 50 + (30 - maxWait) * 1.5;
+              _this.currentLib.progress = Math.min(99, Math.round(progress));
+              _this.notifyProgress();
+              setTimeout(check, 100);
+            } else {
+              _this.currentLib = null;
+              _this.notifyProgress();
+              reject(new Error('库加载超时: ' + libKey));
+            }
+          };
+          check();
+        };
+
+        script.onerror = function () {
+          _this.currentLib = null;
+          _this.notifyProgress();
+          console.warn('CDN加载失败: ' + currentUrl);
+          reject(new Error('加载失败: ' + currentUrl));
+        };
+
+        document.head.appendChild(script);
+      }).catch(function (error) {
+        // 当前URL失败，尝试下一个
+        console.log('尝试备用CDN (' + (urlIndex + 2) + '/' + urls.length + ')...');
+        return tryLoadUrl(urlIndex + 1);
+      });
+    };
+
+    return tryLoadUrl(0);
   };
 
   /**
@@ -266,27 +352,27 @@
    * 
    * 3. 队列排序：每次 processQueue() 会按 priority 排序，插队任务一定优先
    */
-  LibraryLoader.prototype.load = function(libKeys, highPriority) {
+  LibraryLoader.prototype.load = function (libKeys, highPriority) {
     var _this = this;
     if (typeof libKeys === 'string') {
       libKeys = [libKeys];
     }
-    
-    return new Promise(function(resolve, reject) {
+
+    return new Promise(function (resolve, reject) {
       var loadTask = {
         libs: libKeys,
         priority: highPriority ? 0 : 10,
         resolve: resolve,
         reject: reject
       };
-      
+
       // 高优先级插队到队列最前面
       if (highPriority) {
         _this.queue.unshift(loadTask);
       } else {
         _this.queue.push(loadTask);
       }
-      
+
       _this.processQueue();
     });
   };
@@ -294,39 +380,39 @@
   /**
    * 处理加载队列
    */
-  LibraryLoader.prototype.processQueue = function() {
+  LibraryLoader.prototype.processQueue = function () {
     var _this = this;
-    
+
     // 如果正在加载，不重复处理
     if (this.loading || this.queue.length === 0) {
       return;
     }
-    
+
     this.loading = true;
-    
+
     // 按优先级排序
-    this.queue.sort(function(a, b) {
+    this.queue.sort(function (a, b) {
       return a.priority - b.priority;
     });
-    
+
     var task = this.queue.shift();
-    
+
     // 顺序加载所有库
     var loadChain = Promise.resolve();
-    
-    task.libs.forEach(function(libKey) {
-      loadChain = loadChain.then(function() {
+
+    task.libs.forEach(function (libKey) {
+      loadChain = loadChain.then(function () {
         return _this.loadSingleLibrary(libKey, task.priority === 0);
       });
     });
-    
+
     loadChain
-      .then(function() {
+      .then(function () {
         task.resolve();
         _this.loading = false;
         _this.processQueue(); // 继续处理队列
       })
-      .catch(function(error) {
+      .catch(function (error) {
         console.error('库加载失败:', error);
         task.reject(error);
         _this.loading = false;
@@ -337,35 +423,35 @@
   /**
    * 预加载所有非关键库（空闲时按优先级排队加载）
    */
-  LibraryLoader.prototype.preload = function() {
+  LibraryLoader.prototype.preload = function () {
     var _this = this;
-    
+
     // 获取所有库并按优先级排序
     var allLibs = Object.keys(LIBRARY_CONFIG)
-      .map(function(key) {
+      .map(function (key) {
         return { key: key, priority: LIBRARY_CONFIG[key].priority };
       })
-      .sort(function(a, b) {
+      .sort(function (a, b) {
         return a.priority - b.priority;
       });
-    
+
     // 排除已加载的库和禁用的库
-    var toLoad = allLibs.filter(function(lib) {
+    var toLoad = allLibs.filter(function (lib) {
       var config = LIBRARY_CONFIG[lib.key];
       return !_this.isLoaded(lib.key) && !config.disabled;
-    }).map(function(lib) {
+    }).map(function (lib) {
       return lib.key;
     });
-    
+
     if (toLoad.length === 0) {
       return;
     }
-    
+
     // 延迟1秒后开始预加载，避免影响首屏渲染
-    setTimeout(function() {
+    setTimeout(function () {
       // 逐个加载（低优先级）
-      toLoad.forEach(function(libKey) {
-        _this.load(libKey, false).catch(function() {});
+      toLoad.forEach(function (libKey) {
+        _this.load(libKey, false).catch(function () { });
       });
     }, 1000);
   };
@@ -375,7 +461,7 @@
    * @param {string} libKey - 库的键名
    * @returns {boolean}
    */
-  LibraryLoader.prototype.isLoaded = function(libKey) {
+  LibraryLoader.prototype.isLoaded = function (libKey) {
     var config = LIBRARY_CONFIG[libKey];
     if (!config) return false;
     return this.loadedLibs[libKey] || (config.checkFn && config.checkFn());
@@ -386,7 +472,7 @@
    * @param {string} libKey - 库的键名（可选）
    * @returns {Object}
    */
-  LibraryLoader.prototype.getConfig = function(libKey) {
+  LibraryLoader.prototype.getConfig = function (libKey) {
     return libKey ? LIBRARY_CONFIG[libKey] : LIBRARY_CONFIG;
   };
 
