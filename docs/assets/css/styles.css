@@ -52,7 +52,7 @@ body.dark-mode {
   padding: 0 16px;
   position: relative;
   z-index: 100;
-  transition: background-color 0.3s, border-color 0.3s;
+  transition: background-color 0.3s, border-color 0.3s, transform 0.3s ease, opacity 0.3s ease;
 }
 
 .nav-link {
@@ -266,7 +266,7 @@ body.dark-mode .library-loading-indicator .loading-text {
   background: none;
   /* 使用雪碧图 - 原始80x80，通过background-size缩小50%到40x40显示 */
   background-image: url('../img/controls-sprite.png');
-  background-size: 400px 240px;
+  background-size: 400px 320px;
   background-position: 0px 0px;
   background-repeat: no-repeat;
   transition: opacity 0.2s;
@@ -515,7 +515,7 @@ body.dark-mode .empty-state-tip-line2 {
   justify-content: center;
   padding: 10px;
   gap: 10px;
-  transition: background-color 0.3s;
+  transition: background-color 0.3s, height 0.3s ease;
 }
 
 /* 广告位 */
@@ -545,7 +545,21 @@ body.dark-mode .empty-state-tip-line2 {
   margin-bottom: 10px;
 
   position: absolute;
+  right: 0;
   bottom: 132px;
+  transition: bottom 0.3s ease;
+}
+
+/* 沉浸模式下调整footer-top-actions位置和居中 */
+.footer-main-wrapper-immersive .footer-top-actions {
+  bottom: 60px;
+}
+
+/* 沉浸模式下模式名称居中显示 */
+.footer-top-actions-immersive {
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
 }
 
 /* 模式名称容器 */
@@ -935,7 +949,7 @@ body.dark-mode .info-item-value {
   background-color: transparent;
   /* 使用雪碧图 - 原始80x80，通过background-size缩小50%显示 */
   background-image: url('../img/controls-sprite.png');
-  background-size: 400px 240px;
+  background-size: 400px 320px;
   background-position: -160px 0px;
   background-repeat: no-repeat;
   cursor: pointer;
@@ -997,7 +1011,7 @@ body.dark-mode .play-btn.is-playing:active {
   background-color: transparent;
   /* 使用雪碧图 - 原始80x80，通过background-size缩小50%显示 */
   background-image: url('../img/controls-sprite.png');
-  background-size: 400px 240px;
+  background-size: 400px 320px;
   background-position: -240px -40px;
   background-repeat: no-repeat;
   cursor: pointer;
@@ -1249,7 +1263,7 @@ body.dark-mode .btn-primary:active {
   background-color: transparent;
   /* 使用雪碧图 - 原始80x80，通过background-size缩小50%显示 */
   background-image: url('../img/controls-sprite.png');
-  background-size: 400px 240px;
+  background-size: 400px 320px;
   background-repeat: no-repeat;
   cursor: pointer;
   outline: none;
@@ -1315,7 +1329,7 @@ body.dark-mode .scale-percentage {
   background-color: transparent;
   /* 使用雪碧图 - 原始80x80，通过background-size缩小50%显示 */
   background-image: url('../img/controls-sprite.png');
-  background-size: 400px 240px;
+  background-size: 400px 320px;
   background-position: -320px -120px;
   /* one2one.png */
   background-repeat: no-repeat;
@@ -1360,6 +1374,278 @@ body.dark-mode .reset-scale-btn.is-contain:hover {
   background-position: -200px -160px;
   /* contain_hover_dark.png */
 }
+
+/* ==================== 沉浸模式样式 ==================== */
+
+/* 标题栏隐藏动画 */
+.header-navbar.header-hidden {
+  transform: translateY(-100%);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+/* 底部浮层沉浸模式 */
+.footer-bar.footer-immersive {
+  height: 80px;
+  transition: height 0.3s ease;
+}
+
+/* wrapper沉浸模式 */
+.footer-main-wrapper.footer-main-wrapper-immersive {
+  /* 沉浸模式下调整布局：mini浮层居中，foter-top-actions保持右对齐 */
+  align-items: center;
+}
+
+/* Mini浮层按钮（进入沉浸模式） */
+.minimize-btn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background-color: transparent;
+  background-image: url('../img/controls-sprite.png');
+  background-size: 400px 320px;
+  background-position: -80px -200px;
+  /* minimize.png */
+  background-repeat: no-repeat;
+  cursor: pointer;
+  outline: none;
+  flex-shrink: 0;
+}
+
+.minimize-btn:hover {
+  background-position: -120px -200px;
+  /* minimize_hover.png */
+}
+
+body.dark-mode .minimize-btn {
+  background-position: -160px -200px;
+  /* minimize_dark.png */
+}
+
+body.dark-mode .minimize-btn:hover {
+  background-position: -200px -200px;
+  /* minimize_hover_dark.png */
+}
+
+/* Mini浮层容器 */
+.footer-mini {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  height: 60px;
+  padding: 0 24px;
+  background-color: #ffffff;
+  border: 1px solid #e6e6e6;
+  border-radius: 16px;
+  box-shadow: 0px 10px 32px 0px rgba(51, 51, 51, 0.2);
+  transition: background-color 0.3s, border-color 0.3s, box-shadow 0.3s;
+}
+
+body.dark-mode .footer-mini {
+  background-color: #2a2a2a;
+  border-color: #404040;
+  box-shadow: 0px 10px 32px 0px rgba(0, 0, 0, 0.4);
+}
+
+/* Mini浮层播放按钮 */
+.mini-play-btn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background-color: transparent;
+  background-image: url('../img/controls-sprite.png');
+  background-size: 400px 320px;
+  background-position: 0px -240px;
+  /* mini_play.png */
+  background-repeat: no-repeat;
+  cursor: pointer;
+  outline: none;
+  flex-shrink: 0;
+}
+
+.mini-play-btn:hover {
+  background-position: -40px -240px;
+  /* mini_play_hover.png */
+}
+
+.mini-play-btn.is-playing {
+  background-position: -160px -240px;
+  /* mini_stop.png */
+}
+
+.mini-play-btn.is-playing:hover {
+  background-position: -200px -240px;
+  /* mini_stop_hover.png */
+}
+
+body.dark-mode .mini-play-btn {
+  background-position: -80px -240px;
+  /* mini_play_dark.png */
+}
+
+body.dark-mode .mini-play-btn:hover {
+  background-position: -120px -240px;
+  /* mini_play_hover_dark.png */
+}
+
+body.dark-mode .mini-play-btn.is-playing {
+  background-position: -240px -240px;
+  /* mini_stop_dark.png */
+}
+
+body.dark-mode .mini-play-btn.is-playing:hover {
+  background-position: -280px -240px;
+  /* mini_stop_hover_dark.png */
+}
+
+/* Mini浮层静音按钮 */
+.mini-mute-btn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background-color: transparent;
+  background-image: url('../img/controls-sprite.png');
+  background-size: 400px 320px;
+  background-position: -320px -240px;
+  /* mini_mute.png */
+  background-repeat: no-repeat;
+  cursor: pointer;
+  outline: none;
+  flex-shrink: 0;
+}
+
+.mini-mute-btn:hover {
+  background-position: -360px -240px;
+  /* mini_mute_hover.png */
+}
+
+.mini-mute-btn.is-muted {
+  background-position: -160px -280px;
+  /* mini_mute_on.png */
+}
+
+.mini-mute-btn.is-muted:hover {
+  background-position: -200px -280px;
+  /* mini_mute_on_hover.png */
+}
+
+.mini-mute-btn.is-disabled {
+  background-position: -80px -280px;
+  /* mini_mute_disabled.png */
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+body.dark-mode .mini-mute-btn {
+  background-position: 0px -280px;
+  /* mini_mute_dark.png */
+}
+
+body.dark-mode .mini-mute-btn:hover {
+  background-position: -40px -280px;
+  /* mini_mute_hover_dark.png */
+}
+
+body.dark-mode .mini-mute-btn.is-muted {
+  background-position: -240px -280px;
+  /* mini_mute_on_dark.png */
+}
+
+body.dark-mode .mini-mute-btn.is-muted:hover {
+  background-position: -280px -280px;
+  /* mini_mute_on_hover_dark.png */
+}
+
+body.dark-mode .mini-mute-btn.is-disabled {
+  background-position: -120px -280px;
+  /* mini_mute_disabled_dark.png */
+}
+
+/* Mini浮层缩放按钮（1:1/适应屏幕） */
+.mini-scale-btn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background-color: transparent;
+  background-image: url('../img/controls-sprite.png');
+  background-size: 400px 320px;
+  background-position: -320px -120px;
+  /* one2one.png */
+  background-repeat: no-repeat;
+  cursor: pointer;
+  outline: none;
+  flex-shrink: 0;
+}
+
+.mini-scale-btn:hover {
+  background-position: -360px -120px;
+  /* one2one_hover.png */
+}
+
+.mini-scale-btn.is-contain {
+  background-position: -80px -160px;
+  /* contain.png */
+}
+
+.mini-scale-btn.is-contain:hover {
+  background-position: -120px -160px;
+  /* contain_hover.png */
+}
+
+body.dark-mode .mini-scale-btn {
+  background-position: 0px -160px;
+  /* one2one_dark.png */
+}
+
+body.dark-mode .mini-scale-btn:hover {
+  background-position: -40px -160px;
+  /* one2one_hover_dark.png */
+}
+
+body.dark-mode .mini-scale-btn.is-contain {
+  background-position: -160px -160px;
+  /* contain_dark.png */
+}
+
+body.dark-mode .mini-scale-btn.is-contain:hover {
+  background-position: -200px -160px;
+  /* contain_hover_dark.png */
+}
+
+/* Mini浮层最大化按钮（退出沉浸模式） */
+.mini-maximize-btn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background-color: transparent;
+  background-image: url('../img/controls-sprite.png');
+  background-size: 400px 320px;
+  background-position: -240px -200px;
+  /* maximize.png */
+  background-repeat: no-repeat;
+  cursor: pointer;
+  outline: none;
+  flex-shrink: 0;
+}
+
+.mini-maximize-btn:hover {
+  background-position: -280px -200px;
+  /* maximize_hover.png */
+}
+
+body.dark-mode .mini-maximize-btn {
+  background-position: -320px -200px;
+  /* maximize_dark.png */
+}
+
+body.dark-mode .mini-maximize-btn:hover {
+  background-position: -360px -200px;
+  /* maximize_hover_dark.png */
+}
+
+/* ==================== 沉浸模式样式结束 ==================== */
 
 /* 清空/关闭按钮 (btn03样式) */
 .clear-btn {
@@ -1905,7 +2191,7 @@ body.dark-mode .material-btn-replace:hover {
   transition: all 0.15s ease;
   /* 使用雪碧图 - recover图标，原始80x80通过background-size缩小50%显示 */
   background-image: url('../img/controls-sprite.png');
-  background-size: 400px 240px;
+  background-size: 400px 320px;
   background-position: -240px -160px;
   background-repeat: no-repeat;
 }
@@ -1960,7 +2246,7 @@ body.dark-mode .material-btn-close:hover {
   transition: all 0.15s ease;
   /* 使用雪碧图 - recover图标，原始80x80通过background-size缩小50%显示 */
   background-image: url('../img/controls-sprite.png');
-  background-size: 400px 240px;
+  background-size: 400px 320px;
   background-position: -238px -158px;
   /* recover.png */
   background-repeat: no-repeat;
@@ -3021,6 +3307,17 @@ body.dark-mode .library-loading-indicator .loading-bar {
   transform: translateX(-50%);
   z-index: 9999;
   pointer-events: none;
+  /* 防止初始加载时闪现 */
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* Vue transition激活时显示 */
+.toast-fade-enter-active .toast-container,
+.toast-fade-leave-active .toast-container,
+.toast-fade-enter-to .toast-container,
+.toast-fade-leave-from .toast-container {
+  visibility: visible;
 }
 
 .toast-message {
@@ -4428,7 +4725,7 @@ body.dark-mode .speed-remap-duration-label {
   width: 20px;
   height: 20px;
   background-image: url('../img/controls-sprite.png');
-  background-size: 400px 240px;
+  background-size: 400px 320px;
   background-position: -240px -160px;
   background-repeat: no-repeat;
   flex-shrink: 0;

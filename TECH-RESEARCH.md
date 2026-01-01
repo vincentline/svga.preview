@@ -1,10 +1,379 @@
 # 技术调研报告
 
-> **最后更新**: 2025-12-30  
+> **最后更新**: 2026-01-01  
 > **文档状态**: ✅ 持续更新
 
 ## 📋 调研目标
 为 SVGA Preview 项目的功能开发提供技术方案支持和实现记录。
+
+---
+
+## 📊 阶段8：沉浸模式（Immersive Mode）
+**完成时间**：2026-01-01
+
+### 1. 功能概述 ✅
+
+沉浸模式为用户提供更大的动画展示空间，通过隐藏非核心UI元素，让用户专注于内容本身。
+
+**核心特性**：
+- 标题栏向上退出消失（300ms动画）
+- 底部完整浮层切换为mini浮层（高度154px → 80px）
+- 视图自动向上移动，充分利用空间
+- 隐藏恢复播放、清空画布、帮助按钮
+- 模式名称居中显示
+
+### 2. 技术实现
+
+#### 2.1 状态管理
+
+**Vue状态**：
+```javascript
+data: {
+  isImmersiveMode: false,  // 沉浸模式状态
+  // ...
+}
+```
+
+**切换方法**：
+```javascript
+toggleImmersiveMode: function () {
+  this.isImmersiveMode = !this.isImmersiveMode;
+  
+  // 更新viewport-controller的headerHeight和footerHeight
+  if (this.viewportController) {
+    // 沉浸模式：headerHeight=0（标题栏隐藏），footerHeight=80px（mini浮层）
+    // 正常模式：headerHeight=36px，footerHeight=154px
+    var newHeaderHeight = this.isImmersiveMode ? 0 : 36;
+    var newFooterHeight = this.isImmersiveMode ? 80 : 154;
+    this.viewportController.setHeaderHeight(newHeaderHeight);
+    this.viewportController.setFooterHeight(newFooterHeight);
+    // 重新居中视图，因为可用高度变了
+    this.viewportController.centerView();
+  }
+},
+```
+
+#### 2.2 视图控制器调整
+
+**新增参数和方法**：
+```javascript
+// viewport-controller.js
+function ViewportController(options) {
+  // 配置参数
+  this.headerHeight = options.headerHeight || 36;  // 顶部标题栏高度
+  this.footerHeight = options.footerHeight || 154; // 底部浮层高度
+  // ...
+}
+
+// 设置顶部标题栏高度
+ViewportController.prototype.setHeaderHeight = function (height) {
+  this.headerHeight = height;
+};
+
+// 设置底部浮层高度  
+ViewportController.prototype.setFooterHeight = function (height) {
+  this.footerHeight = height;
+};
+```
+
+**居中计算调整**：
+```javascript
+ViewportController.prototype.centerView = function () {
+  // 计算可用高度 = 窗口高度 - 顶部标题栏 - 底部浮层
+  var availableHeight = window.innerHeight - this.headerHeight - this.footerHeight;
+  
+  var size = this.getContentSize();
+  var contentHeight = size ? size.height * this.scale : 0;
+  
+  this.offsetX = 0;
+  
+  // 计算垂直偏移（居中）
+  if (contentHeight > 0 && contentHeight < availableHeight) {
+    // 居中显示，向上偏移20px获得更好的视觉居中效果
+    this.offsetY = this.headerHeight + (availableHeight - contentHeight) / 2 - 20;
+  } else {
+    // 顶部对齐
+    this.offsetY = this.headerHeight;
+  }
+  
+  this.onViewportChange(this.scale, this.offsetX, this.offsetY);
+};
+```
+
+**视觉居中优化**：
+- 数学居中往往视觉偏下
+- 统一向上偏移20px获得更好的视觉效果
+- 同时应用于普通模式和沉浸模式
+
+#### 2.3 UI布局
+
+**HTML结构**：
+```html
+<!-- 标题栏：添加沉浸模式class -->
+<div class="header-navbar" :class="{'header-hidden': isImmersiveMode}">
+  <!-- ... -->
+</div>
+
+<!-- 底部浮层：动态高度 -->
+<div class="footer-bar" :class="{'footer-immersive': isImmersiveMode}">
+  <div class="footer-main-wrapper" :class="{'footer-main-wrapper-immersive': isImmersiveMode}">
+    
+    <!-- 顶部操作区：模式名称居中，隐藏其他按钮 -->
+    <div class="footer-top-actions" 
+         :class="{'footer-top-actions-immersive': isImmersiveMode}" 
+         v-if="!isEmpty">
+      <div class="mode-name-box">
+        <span class="mode-name-label">{{ currentModuleName }}</span>
+      </div>
+      <!-- 恢复播放按钮（沉浸模式隐藏） -->
+      <button class="restore-playback-btn" 
+              v-show="!isImmersiveMode" 
+              @click="restorePlayback"></button>
+      <!-- 清空画布按钮（沉浸模式隐藏） -->
+      <button class="clear-canvas-btn" 
+              v-show="!isImmersiveMode" 
+              @click="clearAll"></button>
+    </div>
+    
+    <!-- 完整浮层（沉浸模式隐藏） -->
+    <div class="footer-main" v-show="!isImmersiveMode">
+      <!-- ... -->
+    </div>
+    
+    <!-- Mini浮层（沉浸模式显示） -->
+    <div class="footer-mini" v-show="isImmersiveMode && !isEmpty">
+      <button class="mini-play-btn" :class="{'is-playing': isPlaying}" 
+              @click="togglePlay"></button>
+      <button class="mini-mute-btn" :class="{'is-muted': isMuted}" 
+              @click="toggleMute"></button>
+      <button class="mini-scale-btn" :class="{'is-contain': viewMode === '1:1'}" 
+              @click="resetScale"></button>
+      <button class="mini-maximize-btn" 
+              @click="toggleImmersiveMode"></button>
+    </div>
+  </div>
+</div>
+
+<!-- Help按钮（沉浸模式隐藏） -->
+<div class="help-button" v-show="!isImmersiveMode">
+  <!-- ... -->
+</div>
+```
+
+#### 2.4 CSS样式
+
+**标题栏隐藏动画**：
+```css
+.header-navbar.header-hidden {
+  transform: translateY(-100%);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+```
+
+**底部浮层高度切换**：
+```css
+.footer-bar.footer-immersive {
+  height: 80px;
+  transition: height 0.3s ease;
+}
+```
+
+**Mini浮层样式**：
+```css
+.footer-mini {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  height: 60px;
+  padding: 0 24px;
+  background-color: #ffffff;
+  border: 1px solid #e6e6e6;
+  border-radius: 16px;
+  box-shadow: 0px 10px 32px 0px rgba(51, 51, 51, 0.2);
+}
+
+/* Mini按钮尺寸：60x60px */
+.mini-play-btn,
+.mini-mute-btn,
+.mini-scale-btn,
+.mini-maximize-btn {
+  width: 60px;
+  height: 60px;
+  border: none;
+  background-color: transparent;
+  background-size: 400px 320px; /* 雪碧图缩放 */
+  background-repeat: no-repeat;
+  cursor: pointer;
+  outline: none;
+  flex-shrink: 0;
+}
+```
+
+**模式名称居中**：
+```css
+/* 沉浸模式下模式名称居中显示 */
+.footer-top-actions-immersive {
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+}
+```
+
+**图标状态切换无动画**：
+```css
+/* 移除transition，直接切换状态 */
+.mini-play-btn,
+.mini-mute-btn {
+  /* 不添加 transition: background-position */
+}
+```
+
+#### 2.5 雪碧图更新
+
+**图标增加**：
+- 原有：6行（240px高）
+- 新增：2行Mini图标（minimize、maximize、mini_play等）
+- 总计：8行（320px高）
+
+**background-size更新**：
+```css
+/* 从 400px 240px 更新为 400px 320px */
+background-size: 400px 320px;
+```
+
+**所有按钮需同步更新**，共8处：
+- play-btn
+- mute-btn
+- reset-scale-btn
+- minimize-btn
+- mini-play-btn
+- mini-mute-btn
+- mini-scale-btn
+- mini-maximize-btn
+
+### 3. 关键技术点
+
+#### 3.1 动态视图计算
+
+**问题**：切换沉浸模式时，可用高度改变，内容需要重新居中
+
+**解决方案**：
+- 通过`setHeaderHeight()`和`setFooterHeight()`动态更新参数
+- 调用`centerView()`重新计算偏移量
+- 视图自动适应新的可用空间
+
+**可用高度对比**：
+
+| 模式 | headerHeight | footerHeight | 可用高度（1080p） |
+|------|--------------|--------------|------------------|
+| 普通 | 36px | 154px | 1080 - 36 - 154 = 890px |
+| 沉浸 | 0px | 80px | 1080 - 0 - 80 = 1000px |
+
+沉浸模式增加110px显示空间。
+
+#### 3.2 视觉居中调整
+
+**问题**：数学居中看起来偏下
+
+**原因**：人眼视觉中心偏上，纯数学居中会感觉内容"掉下来"
+
+**解决方案**：
+```javascript
+// 统一向上偏移20px
+this.offsetY = this.headerHeight + (availableHeight - contentHeight) / 2 - 20;
+```
+
+**适用范围**：普通模式和沉浸模式都应用此调整
+
+#### 3.3 功能禁用策略
+
+**沉浸模式下禁用的功能**：
+1. ❌ 恢复播放（`v-show="!isImmersiveMode"`）
+2. ❌ 清空画布（`v-show="!isImmersiveMode"`）
+3. ❌ 帮助按钮（`v-show="!isImmersiveMode"`）
+4. ❌ 进度条显示（完整浮层隐藏）
+
+**保留的功能**：
+1. ✅ 播放/暂停
+2. ✅ 静音控制
+3. ✅ 1:1/适应屏幕切换
+4. ✅ 退出沉浸模式（最大化按钮）
+5. ✅ 模式名称显示（居中）
+
+**设计理念**：
+- 沉浸模式专注于内容展示
+- 保留最核心的播放控制
+- 移除所有管理功能
+- 只能通过最大化按钮退出
+
+#### 3.4 Toast防闪现
+
+**问题**：页面初始加载时，toast-container短暂显示
+
+**解决方案**：
+```css
+.toast-container {
+  /* 防止初始加载时闪现 */
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* Vue transition激活时显示 */
+.toast-fade-enter-active .toast-container,
+.toast-fade-leave-active .toast-container,
+.toast-fade-enter-to .toast-container,
+.toast-fade-leave-from .toast-container {
+  visibility: visible;
+}
+```
+
+### 4. 退出机制
+
+**主动退出**：
+- 点击最大化按钮退出沉浸模式
+- 恢复headerHeight=36, footerHeight=154
+- 重新居中视图
+
+**不自动退出的场景**：
+- 恢复播放（功能已禁用）
+- 清空画布（功能已禁用）
+- 切换文件（沉浸模式持续）
+
+### 5. 文件清单
+
+**修改的文件**：
+1. `docs/index.html` - HTML结构调整
+2. `docs/assets/css/styles.css` - CSS样式
+3. `docs/assets/js/app.js` - Vue逻辑
+4. `docs/assets/js/viewport-controller.js` - 视图控制
+5. 雪碧图（新增2行图标）
+
+**新增图标**：
+- minimize（进入沉浸模式）
+- maximize（退出沉浸模式）
+- mini_play / mini_play_on
+- mini_mute / mini_mute_on
+- mini_scale / mini_scale_contain
+
+### 6. 优势总结
+
+✅ **用户体验**：
+- 更大的展示空间（+110px可用高度）
+- 极简界面，专注内容
+- 流畅的过渡动画（300ms）
+
+✅ **技术架构**：
+- 状态管理清晰（单一状态控制）
+- 视图自动适配（动态参数）
+- 组件按需显示（v-show控制）
+
+✅ **维护性**：
+- 逻辑集中在viewport-controller
+- CSS动画统一管理
+- 退出机制简单可靠
 
 ---
 

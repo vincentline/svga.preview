@@ -110,6 +110,10 @@ function initApp() {
         // 初始加载文件时默认为'fit-height'，显示1:1按钮
         // 点击1:1按钮后变为'1:1'模式，按钮变成contain图标
         viewMode: 'fit-height',
+
+        // 沉浸模式：隐藏标题栏，底部浮层变为mini浮层
+        // 给用户更大的展示动画空间
+        isImmersiveMode: false,
         dragging: false,
         dragStartX: 0,
         dragStartY: 0,
@@ -1351,6 +1355,16 @@ function initApp() {
           return; // 用户取消
         }
 
+        // 退出沉浸模式（如果当前在沉浸模式中）
+        if (this.isImmersiveMode) {
+          this.isImmersiveMode = false;
+          // 恢复正常的headerHeight和footerHeight
+          if (this.viewportController) {
+            this.viewportController.setHeaderHeight(36);
+            this.viewportController.setFooterHeight(154);
+          }
+        }
+
         // 先隐藏内容
         this.footerContentVisible = false;
         this.footerTransitioning = true;
@@ -1389,19 +1403,34 @@ function initApp() {
        *   - 重新加载原始文件
        *   - 恢复到初始视图状态
        */
+      /**
+       * 恢复播放：将播放器恢复到刚打开文件时的初始状态
+       * 包括重置所有编辑效果（背景、素材、绿幕、变速）和播放进度
+       */
       restorePlayback: function () {
         var _this = this;
 
-        // 检查是否有正在进行的任务
+        /* ==================== 1. 任务确认 ==================== */
+        // 检查是否有正在进行的任务（如正在导出），避免操作冲突
         if (!this.confirmIfHasOngoingTasks('恢复播放', 'restore')) {
           return; // 用户取消
         }
 
+        // 退出沉浸模式（如果当前在沉浸模式中）
+        if (this.isImmersiveMode) {
+          this.isImmersiveMode = false;
+          if (this.viewportController) {
+            this.viewportController.setHeaderHeight(36);
+            this.viewportController.setFooterHeight(154);
+          }
+        }
+
+        /* ==================== 2. 获取当前文件 ==================== */
         var currentMode = this.currentModule;
         var currentFile = null;
         var originalVideoItem = this.originalVideoItem;
 
-        // 根据当前模式获取原始文件
+        // 根据当前模式获取原始文件（支持5种模式）
         if (currentMode === 'svga' && this.svga.hasFile) {
           currentFile = this.svga.file;
         } else if (currentMode === 'yyeva' && this.yyeva.hasFile) {
@@ -1419,13 +1448,15 @@ function initApp() {
           return;
         }
 
-        // 重置背景色到默认状态（pattern）
+        /* ==================== 3. 重置所有编辑状态 ==================== */
+
+        // 3.1 重置背景色到默认状态（pattern）
         this.bgColorKey = 'pattern';
 
-        // 重置素材替换
+        // 3.2 重置素材替换（清空所有替换的图片）
         this.replacedImages = {};
 
-        // 重置绿幕抠图
+        // 3.3 重置绿幕抠图配置
         this.chromaKeyEnabled = false;
         this.chromaKeyApplied = false;
         this.chromaKeySimilarity = 40;
@@ -1435,7 +1466,7 @@ function initApp() {
           this.chromaKeyRenderLoop = null;
         }
 
-        // 重置变速配置
+        // 3.4 重置变速配置（关闭编辑器并清空关键帧）
         this.showSpeedRemapEditor = false;
         this.speedRemapConfig = {
           enabled: false,
@@ -1447,12 +1478,20 @@ function initApp() {
         this.selectedKeyframeIndex = -1;
         this.timelineHoverX = -1;
 
-        // 暂停播放
+        /* ==================== 4. 暂停播放并重置进度 ==================== */
+        // 暂停当前播放
         if (this.isPlaying) {
           this.togglePlay();
         }
 
-        // 重新加载文件
+        // 显式重置播放进度（确保所有模式都生效）
+        // 这样即使load方法的回调没有触发（如浏览器缓存），也能保证进度被重置
+        this.currentFrame = 0;
+        this.currentTime = 0;
+        this.progress = 0;
+
+        /* ==================== 5. 重新加载文件 ==================== */
+        // 调用各模式的load方法，重新初始化播放器
         if (currentMode === 'svga') {
           this.loadSvgaFile({
             file: currentFile,
@@ -1463,7 +1502,7 @@ function initApp() {
             file: currentFile
           });
         } else if (currentMode === 'mp4') {
-          this.loadMP4({ file: currentFile });
+          this.loadMp4File({ file: currentFile });
         } else if (currentMode === 'lottie') {
           this.loadLottie({ file: currentFile });
         } else if (currentMode === 'frames') {
@@ -3312,6 +3351,27 @@ function initApp() {
         this.viewportController.toggleViewMode();
         // 同步视图模式状态
         this.viewMode = this.viewportController.getViewMode();
+      },
+
+      /**
+       * 切换沉浸模式
+       * 沉浸模式：隐藏标题栏，底部浮层变为mini浮层
+       * 给用户更大的展示动画空间
+       */
+      toggleImmersiveMode: function () {
+        this.isImmersiveMode = !this.isImmersiveMode;
+
+        // 更新viewport-controller的headerHeight和footerHeight
+        if (this.viewportController) {
+          // 沉浸模式：headerHeight=0（标题栏隐藏），footerHeight=80px（mini浮层）
+          // 正常模式：headerHeight=36px，footerHeight=154px
+          var newHeaderHeight = this.isImmersiveMode ? 0 : 36;
+          var newFooterHeight = this.isImmersiveMode ? 80 : 154;
+          this.viewportController.setHeaderHeight(newHeaderHeight);
+          this.viewportController.setFooterHeight(newFooterHeight);
+          // 重新居中视图，因为可用高度变了
+          this.viewportController.centerView();
+        }
       },
 
       applyCanvasBackground: function () {

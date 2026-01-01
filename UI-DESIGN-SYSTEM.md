@@ -1817,14 +1817,203 @@ body.dark-mode .card-footer {
 }
 ```
 
+### 7.5 沉浸模式布局
+
+沉浸模式提供极简的视觉体验，隐藏非核心UI元素，增加内容展示空间。
+
+**标题栏隐藏动画**：
+```css
+.header-navbar {
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.header-navbar.header-hidden {
+  transform: translateY(-100%);
+  opacity: 0;
+  pointer-events: none;
+}
+```
+
+**底部浮层高度切换**：
+```css
+.footer-bar {
+  height: 154px; /* 普通模式 */
+  transition: height 0.3s ease;
+}
+
+.footer-bar.footer-immersive {
+  height: 80px; /* 沉浸模式 */
+}
+```
+
+**模式名称居中**：
+```css
+.footer-top-actions {
+  position: absolute;
+  right: 0;
+  bottom: 132px;
+  transition: bottom 0.3s ease;
+}
+
+.footer-top-actions-immersive {
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+}
+```
+
 ---
 
-## 8. 版本历史
+## 8. 沉浸模式组件
+
+### 8.1 Mini浮层
+
+**功能**：沉浸模式下的精简控制条，居中显示，包含核心播放控制。
+
+**尺寸规范**：
+- 浮层高度：60px
+- 内边距：0 24px
+- 按钮尺寸：60x60px
+- 按钮间距：16px
+- 圆角：16px
+
+**样式定义**：
+```css
+.footer-mini {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  height: 60px;
+  padding: 0 24px;
+  background-color: #ffffff;
+  border: 1px solid #e6e6e6;
+  border-radius: 16px;
+  box-shadow: 0px 10px 32px 0px rgba(51, 51, 51, 0.2);
+}
+
+body.dark-mode .footer-mini {
+  background-color: #2a2a2a;
+  border-color: #404040;
+  box-shadow: 0px 10px 32px 0px rgba(0, 0, 0, 0.6);
+}
+```
+
+### 8.2 Mini按钮
+
+**组件列表**：
+1. mini-play-btn - 播放/暂停
+2. mini-mute-btn - 静音控制
+3. mini-scale-btn - 1:1/适应屏幕
+4. mini-maximize-btn - 退出沉浸模式
+
+**通用样式**：
+```css
+.mini-play-btn,
+.mini-mute-btn,
+.mini-scale-btn,
+.mini-maximize-btn {
+  width: 60px;
+  height: 60px;
+  border: none;
+  background-color: transparent;
+  background-size: 400px 320px;
+  background-repeat: no-repeat;
+  cursor: pointer;
+  outline: none;
+  flex-shrink: 0;
+}
+
+/* Hover状态无过渡动画，直接切换图标 */
+.mini-play-btn:hover {
+  background-position: -60px -560px;
+}
+```
+
+**状态切换**：
+```css
+/* 播放按钮 */
+.mini-play-btn { background-position: 0 -560px; }
+.mini-play-btn:hover { background-position: -60px -560px; }
+.mini-play-btn.is-playing { background-position: -120px -560px; }
+.mini-play-btn.is-playing:hover { background-position: -180px -560px; }
+
+/* 静音按钮 */
+.mini-mute-btn { background-position: 0 -620px; }
+.mini-mute-btn:hover { background-position: -60px -620px; }
+.mini-mute-btn.is-muted { background-position: -120px -620px; }
+.mini-mute-btn.is-muted:hover { background-position: -180px -620px; }
+
+/* 缩放按钮 */
+.mini-scale-btn { background-position: -240px -560px; }
+.mini-scale-btn:hover { background-position: -300px -560px; }
+.mini-scale-btn.is-contain { background-position: -240px -620px; }
+.mini-scale-btn.is-contain:hover { background-position: -300px -620px; }
+
+/* 最大化按钮 */
+.mini-maximize-btn { background-position: -60px -680px; }
+.mini-maximize-btn:hover { background-position: -120px -680px; }
+```
+
+**暗黑模式**：
+```css
+body.dark-mode .mini-play-btn { background-position: 0 -740px; }
+body.dark-mode .mini-play-btn:hover { background-position: -60px -740px; }
+body.dark-mode .mini-play-btn.is-playing { background-position: -120px -740px; }
+/* ... 其他按钮类似 */
+```
+
+### 8.3 最小化/最大化按钮
+
+**minimize-btn**（进入沉浸模式）：
+```css
+.minimize-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background-color: transparent;
+  background-size: 400px 320px;
+  background-repeat: no-repeat;
+  cursor: pointer;
+  outline: none;
+  flex-shrink: 0;
+}
+
+.minimize-btn { background-position: 0 -680px; }
+.minimize-btn:hover { background-position: -32px -680px; }
+
+body.dark-mode .minimize-btn { background-position: -64px -680px; }
+body.dark-mode .minimize-btn:hover { background-position: -96px -680px; }
+```
+
+### 8.4 设计原则
+
+**视觉层级**：
+1. 最低层：标题栏（可隐藏）
+2. 中间层：内容展示区（自动适配）
+3. 顶层：Mini浮层（始终可见）
+
+**交互规则**：
+- ✅ 只能通过最大化按钮退出沉浸模式
+- ❌ 沉浸模式下禁用恢复播放
+- ❌ 沉浸模式下禁用清空画布
+- ❌ 沉浸模式下隐藏帮助按钮
+- ❌ 沉浸模式下不显示进度条
+
+**动画要求**：
+- 标题栏隐藏：300ms ease
+- 浮层高度：300ms ease
+- 图标状态：无过渡，直接切换
+
+---
+
+## 9. 版本历史
 
 | 版本 | 日期 | 描述 |
 |-----|------|------|
 | 1.0 | 2025-12-16 | 初始版本，基于现有代码梳理 |
 | 1.1 | 2025-12-22 | 根据styles.css实际内容更新：<br>• 补充播放/暂停按钮、静音按钮组件<br>• 补充Help按钮（四种主题状态图片）<br>• 更新Tab按钮为is-active样式<br>• 更新清空画布按钮危险警告样式<br>• 更新开关组件为实际使用的样式<br>• 更新进度条为播放进度条样式<br>• 添加侧边弹窗组件说明<br>• 添加Toast提示组件<br>• 添加库加载进度指示器<br>• 添加动画关键帧定义<br>• 更新颜色、圆角、阴影系统为实际值 |
+| 1.2 | 2026-01-01 | 添加沉浸模式组件：<br>• 添加Mini浮层设计规范<br>• 添加Mini按钮组件（play/mute/scale/maximize）<br>• 添加最小化/最大化按钮<br>• 添加沉浸模式布局规则<br>• 添加标题栏隐藏动画<br>• 添加底部浮层高度切换样式<br>• 添加模式名称居中样式 |
 
 ---
 

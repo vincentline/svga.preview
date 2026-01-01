@@ -1,5 +1,5 @@
 /* 自动生成的雪碧图样式 - 请勿手动编辑 */
-/* 生成时间: 2026-01-01 04:54:53 */
+/* 生成时间: 2026-01-01 15:31:17 */
 
 /* 雪碧图基础样式 */
 .sprite-icon {
@@ -284,6 +284,146 @@
 }
 .sprite-back-dark {
   background-position: -80px -400px;
+  width: 80px;
+  height: 80px;
+}
+
+/* MINIMIZE 图标 */
+.sprite-minimize {
+  background-position: -160px -400px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-minimize-hover {
+  background-position: -240px -400px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-minimize-dark {
+  background-position: -320px -400px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-minimize-hover-dark {
+  background-position: -400px -400px;
+  width: 80px;
+  height: 80px;
+}
+
+/* MAXIMIZE 图标 */
+.sprite-maximize {
+  background-position: -480px -400px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-maximize-hover {
+  background-position: -560px -400px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-maximize-dark {
+  background-position: -640px -400px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-maximize-hover-dark {
+  background-position: -720px -400px;
+  width: 80px;
+  height: 80px;
+}
+
+/* MINI_PLAY 图标 */
+.sprite-mini-play {
+  background-position: 0px -480px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-mini-play-hover {
+  background-position: -80px -480px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-mini-play-dark {
+  background-position: -160px -480px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-mini-play-hover-dark {
+  background-position: -240px -480px;
+  width: 80px;
+  height: 80px;
+}
+
+/* MINI_STOP 图标 */
+.sprite-mini-stop {
+  background-position: -320px -480px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-mini-stop-hover {
+  background-position: -400px -480px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-mini-stop-dark {
+  background-position: -480px -480px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-mini-stop-hover-dark {
+  background-position: -560px -480px;
+  width: 80px;
+  height: 80px;
+}
+
+/* MINI_MUTE 图标 */
+.sprite-mini-mute {
+  background-position: -640px -480px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-mini-mute-hover {
+  background-position: -720px -480px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-mini-mute-dark {
+  background-position: 0px -560px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-mini-mute-hover-dark {
+  background-position: -80px -560px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-mini-mute-disabled {
+  background-position: -160px -560px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-mini-mute-disabled-dark {
+  background-position: -240px -560px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-mini-mute-on {
+  background-position: -320px -560px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-mini-mute-on-hover {
+  background-position: -400px -560px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-mini-mute-on-dark {
+  background-position: -480px -560px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-mini-mute-on-hover-dark {
+  background-position: -560px -560px;
   width: 80px;
   height: 80px;
 }

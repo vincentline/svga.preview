@@ -92,6 +92,7 @@
     this.viewMode = 'fit-height';
 
     // 配置参数
+    this.headerHeight = options.headerHeight || 36;                // 顶部标题栏高度
     this.footerHeight = options.footerHeight || 154;                    // 底部浮层高度
     this.defaultScreenHeightRatio = options.screenHeightRatio || 0.75; // 默认屏幕高度的75%
     this.minScale = options.minScale || 0.1;                           // 最小缩放 10%
@@ -102,36 +103,53 @@
   /**
    * 计算初始缩放比例
    * 
-   * 功能：
-   *   根据内容尺寸和屏幕高度，计算合适的初始缩放比例
-   *   使内容高度占屏幕可用高度的 75%（默认）
+   * ===== 功能说明 =====
+   * 根据内容尺寸和屏幕高度，计算合适的初始缩放比例
+   * 使内容高度占屏幕高度的 75%（默认，可通过 screenHeightRatio 配置）
    * 
-   * 计算逻辑：
-   *   1. 获取窗口高度： window.innerHeight
-   *   2. 计算目标高度：窗口高度 * 75%
-   *   3. 计算缩放比例：目标高度 / 内容高度
-   *   4. 限制范围：0.1 ~ 5.0
+   * ===== 计算逻辑 =====
+   * 1. 获取窗口高度：window.innerHeight（整个浏览器窗口的高度）
+   * 2. 计算目标高度：窗口高度 * 75%
+   *    注意：这里用的是整个窗口高度，不减去底部浮层（footerHeight）
+   *    原因：75%是相对屏幕的视觉占比，不是可用空间占比
+   * 3. 计算缩放比例：目标高度 / 内容原始高度
+   * 4. 限制范围：0.1 ~ 5.0（可配置 minScale/maxScale）
    * 
-   * @param {Number} contentWidth - 内容宽度（像素）
-   * @param {Number} contentHeight - 内容高度（像素）
+   * ===== 与居中计算的区别 =====
+   * - 初始缩放：决定画布显示多大（基于整个窗口高度）
+   * - 居中偏移：决定画布在可视区域的位置（需要减去 footerHeight）
+   * 
+   * @param {Number} contentWidth - 内容原始宽度（像素）
+   * @param {Number} contentHeight - 内容原始高度（像素）
    * @returns {Number} 缩放比例 (0.1 ~ 5.0)
    * 
    * @example
-   * // 对于 1080x1920 的内容，在 1080p 屏幕上
-   * // 窗口高度 = 1080, 目标高度 = 810
-   * // 缩放比例 = 810 / 1920 = 0.42
-   * var scale = controller.calculateInitialScale(1080, 1920); // 返回 0.42
+   * // 示例1：1080x1920 的内容，在 1080p 屏幕上
+   * // 窗口高度 = 1080, 目标高度 = 1080 * 0.75 = 810
+   * // 缩放比例 = 810 / 1920 = 0.421875
+   * var scale = controller.calculateInitialScale(1080, 1920); // 返回 0.421875
+   * 
+   * // 示例2：750x1334 的内容，在竖屏手机上
+   * // 窗口高度 = 1334, 目标高度 = 1000.5
+   * // 缩放比例 = 1000.5 / 1334 = 0.75
+   * var scale = controller.calculateInitialScale(750, 1334); // 返回 0.75
    */
   ViewportController.prototype.calculateInitialScale = function (contentWidth, contentHeight) {
     if (!contentWidth || !contentHeight) return 1;
 
+    // 获取整个窗口高度（包括底部浮层区域）
     var windowHeight = window.innerHeight;
-    var targetHeight = windowHeight * this.defaultScreenHeightRatio; // 默认75%
 
-    // 根据内容高度计算缩放比例
+    // 计算目标高度 = 窗口高度 * 75%
+    // 注意：这里不减去 footerHeight，因为75%是相对屏幕的视觉占比
+    var targetHeight = windowHeight * this.defaultScreenHeightRatio; // 默认0.75
+
+    // 根据内容原始高度计算缩放比例
+    // 例如：内容1920px，目标810px，则 scale = 0.421875
     var scale = targetHeight / contentHeight;
 
     // 限制缩放范围，避免过度缩小或放大
+    // 默认范围：0.1（10%）~ 5.0（500%）
     if (scale < this.minScale) scale = this.minScale;
     if (scale > this.maxScale) scale = this.maxScale;
 
@@ -199,38 +217,76 @@
   /**
    * 居中视图
    * 
-   * 功能：
-   *   将内容垂直居中显示，水平偏移重置为 0
-   *   通常在加载新文件或改变缩放比例后调用
+   * ===== 功能说明 =====
+   * 将内容在可视区域内垂直居中显示，水平偏移重置为 0
+   * 通常在加载新文件或改变缩放比例后调用
    * 
-   * 计算逻辑：
-   *   1. 获取可用高度 = 窗口高度 - 底部浮层高度
-   *   2. 获取内容高度 = 原始高度 * 当前缩放比例
-   *   3. 如果内容高度 < 可用高度：居中显示
-   *   4. 否则：顶部对齐 (offsetY = 0)
+   * ===== 计算逻辑 =====
+   * 1. 计算可用高度 = 窗口高度 - 顶部标题栏高度(headerHeight) - 底部浮层高度(footerHeight)
+   *    原因：顶部和底部会遮挡内容，需要避开这些区域
+   *    沉浸模式：headerHeight=0, footerHeight=80
+   *    正常模式：headerHeight=36, footerHeight=154
+   * 2. 计算内容当前高度 = 原始高度 * 当前缩放比例
+   * 3. 判断是否需要居中：
+   *    - 如果内容高度 < 可用高度：居中显示（计算上下留白）
+   *    - 如果内容高度 >= 可用高度：顶部对齐（offsetY = headerHeight）
+   * 4. 水平方向：始终居中（offsetX = 0，CSS 通过 left:50% + translateX(-50%) 实现）
+   * 
+   * ===== 与初始缩放的区别 =====
+   * - 初始缩放（calculateInitialScale）：
+   *   使用整个窗口高度计算，不减 headerHeight/footerHeight
+   *   目的：决定画布显示多大（视觉占比75%）
+   * 
+   * - 居中偏移（centerView）：
+   *   使用可用高度（窗口高度 - headerHeight - footerHeight）
+   *   目的：决定画布在可视区域的位置，避开顶部和底部浮层
+   * 
+   * ===== headerHeight 的作用 =====
+   * headerHeight = 顶部标题栏的实际高度（默认36px）
+   * 用于居中计算时避开顶部遮挡区域
+   * 沉浸模式下标题栏隐藏，headerHeight=0
+   * 如果以后标题栏高度改为50px，需要同步修改这个值
    * 
    * @example
    * // 加载新文件后居中
    * controller.setScale(initialScale, false);
    * controller.centerView();
+   * 
+   * // 示例计算：
+   * // 窗口高度 = 1080px
+   * // 顶部标题栏 = 36px
+   * // 底部浮层 = 154px
+   * // 可用高度 = 1080 - 36 - 154 = 890px
+   * // 内容高度 = 1920 * 0.42 = 806.4px
+   * // 居中偏移 = 36 + (890 - 806.4) / 2 = 36 + 41.8 = 77.8px
    */
   ViewportController.prototype.centerView = function () {
-    var availableHeight = window.innerHeight - this.footerHeight;
+    // 计算可用高度 = 窗口高度 - 顶部标题栏 - 底部浮层
+    // 这里必须减去 headerHeight 和 footerHeight，因为它们会遮挡内容
+    var availableHeight = window.innerHeight - this.headerHeight - this.footerHeight;
+
+    // 获取内容原始尺寸
     var size = this.getContentSize();
+
+    // 计算内容当前高度 = 原始高度 * 当前缩放比例
     var contentHeight = size ? size.height * this.scale : 0;
 
-    // 重置水平偏移
+    // 重置水平偏移（水平居中由 CSS 的 left:50% + translateX(-50%) 实现）
     this.offsetX = 0;
 
     // 计算垂直偏移（居中）
     if (contentHeight > 0 && contentHeight < availableHeight) {
-      // 内容高度小于可用高度，居中显示
-      this.offsetY = (availableHeight - contentHeight) / 2;
+      // 情况1：内容高度小于可用高度 → 居中显示
+      // offsetY = headerHeight + 上方留白 - 视觉偏移调整
+      // 数学居中往往视觉偏下，向上偏移20px获得更好的视觉居中效果
+      this.offsetY = this.headerHeight + (availableHeight - contentHeight) / 2 - 20;
     } else {
-      // 内容高度超出可用高度，顶部对齐
-      this.offsetY = 0;
+      // 情况2：内容高度超出可用高度 → 顶部对齐
+      // 避免出现顶部空白，让用户可以从头开始查看内容
+      this.offsetY = this.headerHeight;
     }
 
+    // 触发回调，通知主应用更新 Vue 数据
     this.onViewportChange(this.scale, this.offsetX, this.offsetY);
   };
 
@@ -402,6 +458,48 @@
    */
   ViewportController.prototype.getViewMode = function () {
     return this.viewMode;
+  };
+
+  /**
+   * 设置底部浮层高度
+   * 
+   * 功能：
+   *   动态更新底部浮层高度，用于沉浸模式切换
+   *   沉浸模式时footerHeight=80px（mini浮层）
+   *   正常模式时footerHeight=154px（完整浮层）
+   * 
+   * @param {Number} height - 新的底部浮层高度（像素）
+   * 
+   * @example
+   * // 进入沉浸模式
+   * controller.setFooterHeight(80);
+   * 
+   * // 退出沉浸模式
+   * controller.setFooterHeight(154);
+   */
+  ViewportController.prototype.setFooterHeight = function (height) {
+    this.footerHeight = height;
+  };
+
+  /**
+   * 设置顶部标题栏高度
+   * 
+   * 功能：
+   *   动态更新顶部标题栏高度，用于沉浸模式切换
+   *   沉浸模式时headerHeight=0（标题栏隐藏）
+   *   正常模式时headerHeight=36px
+   * 
+   * @param {Number} height - 新的顶部标题栏高度（像素）
+   * 
+   * @example
+   * // 进入沉浸模式
+   * controller.setHeaderHeight(0);
+   * 
+   * // 退出沉浸模式
+   * controller.setHeaderHeight(36);
+   */
+  ViewportController.prototype.setHeaderHeight = function (height) {
+    this.headerHeight = height;
   };
 
   /**

@@ -98,7 +98,7 @@
 
   <div id="app" v-cloak>
     <!-- 顶部导航栏 -->
-    <div class="header-navbar">
+    <div class="header-navbar" :class="{'header-hidden': isImmersiveMode}">
       <!-- <a href="sth_auto.html" class="nav-link">素材自助</a> -->
       <div class="header-navbar-title">
         SVGA、双通道MP4、Lottie动画在线预览
@@ -142,8 +142,8 @@
       <div class="loading-text">正在加载 {{ loadingLibraryInfo.name }}（{{ loadingLibraryInfo.progress }}%）</div>
     </div>
 
-    <!-- Help 按钮 -->
-    <div class="help-button">
+    <!-- Help 按钮（沉浸模式隐藏） -->
+    <div class="help-button" v-show="!isImmersiveMode">
       <div class="help-popup" v-html="helpContent"></div>
     </div>
 
@@ -192,14 +192,14 @@
 
 
       <!-- 底部浮层 -->
-      <div class="footer-bar">
+      <div class="footer-bar" :class="{'footer-immersive': isImmersiveMode}">
         <!-- 左侧广告位 -->
         <div class="ad-slot"></div>
 
         <!-- footer-main 容器（包含主控制区和右上角清空按钮） -->
-        <div class="footer-main-wrapper">
-          <!-- 右上角按钮区域：模式名、恢复播放、清空画布 -->
-          <div class="footer-top-actions" v-if="!isEmpty">
+        <div class="footer-main-wrapper" :class="{'footer-main-wrapper-immersive': isImmersiveMode}">
+          <!-- 右上角按钮区域：模式名（沉浸模式居中）、恢复播放（沉浸模式不显示）、清空画布（沉浸模式不显示） -->
+          <div class="footer-top-actions" :class="{'footer-top-actions-immersive': isImmersiveMode}" v-if="!isEmpty">
             <div class="mode-name-box">
               <span class="mode-name-label">
                 <template v-if="currentModule === 'svga'">SVGA</template>
@@ -209,10 +209,11 @@
                 <template v-else>Lottie</template>
               </span>
             </div>
-            <!-- 恢复播放按钮：回到刚打开文件时的初始状态 -->
-            <button class="restore-playback-btn" @click="restorePlayback" title="恢复播放">
+            <!-- 恢复播放按钮：回到刚打开文件时的初始状态（沉浸模式不显示） -->
+            <button class="restore-playback-btn" v-show="!isImmersiveMode" @click="restorePlayback" title="恢复播放">
             </button>
-            <button class="clear-canvas-btn" @click="clearAll" title="清空画布">
+            <!-- 清空画布按钮（沉浸模式不显示） -->
+            <button class="clear-canvas-btn" v-show="!isImmersiveMode" @click="clearAll" title="清空画布">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M17 7L7 17" stroke="#333333" stroke-width="1.5" stroke-linecap="round" />
                 <path d="M7 7L17 17" stroke="#333333" stroke-width="1.5" stroke-linecap="round" />
@@ -303,7 +304,7 @@
           </div>
 
           <!-- 中间主控制区 -->
-          <div class="footer-main" :class="{'footer-main-empty': isEmpty}">
+          <div class="footer-main" :class="{'footer-main-empty': isEmpty}" v-show="!isImmersiveMode">
             <!-- 空状态 -->
             <template v-if="isEmpty">
               <div class="footer-empty-tip">
@@ -366,6 +367,8 @@
                     -->
                     <button class="reset-scale-btn" :class="{'is-contain': viewMode === '1:1'}" @click="resetScale"
                       :title="viewMode === 'fit-height' ? '切换到1:1尺寸' : '适应屏幕高度'"></button>
+                    <!-- 沉浸模式切换按钮：点击后隐藏标题栏，底部浮层变为mini浮层 -->
+                    <button class="minimize-btn" @click="toggleImmersiveMode" title="进入沉浸模式"></button>
                   </div>
                 </div>
 
@@ -548,6 +551,24 @@
                 </div>
               </div>
             </template>
+          </div>
+
+          <!-- Mini浮层（沉浸模式下显示） -->
+          <div class="footer-mini" v-show="isImmersiveMode && !isEmpty">
+            <!-- 播放/暂停按钮 -->
+            <button class="mini-play-btn" :class="{'is-playing': isPlaying}" @click="togglePlay"
+              :title="isPlaying ? '暂停' : '播放'"></button>
+            <!-- 静音按钮 -->
+            <button class="mini-mute-btn" :class="{
+              'is-muted': isMuted,
+              'is-disabled': !hasAudio
+            }" :disabled="!hasAudio" @click="toggleMute"
+              :title="hasAudio ? (isMuted ? '取消静音' : '静音') : '无音频'"></button>
+            <!-- 1:1/适应屏幕切换 -->
+            <button class="mini-scale-btn" :class="{'is-contain': viewMode === '1:1'}" @click="resetScale"
+              :title="viewMode === 'fit-height' ? '切换到1:1尺寸' : '适应屏幕高度'"></button>
+            <!-- 最大化按钮：退出沉浸模式 -->
+            <button class="mini-maximize-btn" @click="toggleImmersiveMode" title="退出沉浸模式"></button>
           </div>
         </div>
 

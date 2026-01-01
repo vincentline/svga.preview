@@ -87,6 +87,42 @@ ICONS = {
     'back': [
         'back.png',
         'back_dark.png',
+    ],
+    'minimize': [
+        'minimize.png',
+        'minimize_hover.png',
+        'minimize_dark.png',
+        'minimize_hover_dark.png',
+    ],
+    'maximize': [
+        'maximize.png',
+        'maximize_hover.png',
+        'maximize_dark.png',
+        'maximize_hover_dark.png',
+    ],
+    'mini_play': [
+        'mini_play.png',
+        'mini_play_hover.png',
+        'mini_play_dark.png',
+        'mini_play_hover_dark.png',
+    ],
+    'mini_stop': [
+        'mini_stop.png',
+        'mini_stop_hover.png',
+        'mini_stop_dark.png',
+        'mini_stop_hover_dark.png',
+    ],
+    'mini_mute': [
+        'mini_mute.png',
+        'mini_mute_hover.png',
+        'mini_mute_dark.png',
+        'mini_mute_hover_dark.png',
+        'mini_mute_disabled.png',
+        'mini_mute_disabled_dark.png',
+        'mini_mute_on.png',
+        'mini_mute_on_hover.png',
+        'mini_mute_on_dark.png',
+        'mini_mute_on_hover_dark.png',
     ]
 }
 
