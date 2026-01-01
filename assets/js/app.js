@@ -243,7 +243,21 @@ function initApp() {
         materialList: [],
         materialSearchQuery: '',
         originalVideoItem: null,
-        replacedImages: {},
+        replacedImages: {},            // 用于预览显示的图片（放大后）
+        compressedImages: {},          // 用于导出的压缩图（缩小后）
+
+        // 素材压缩相关状态
+        showCompressModal: false,           // 是否显示压缩弹窗
+        isCompressingMaterials: false,      // 是否正在压缩
+        compressProgress: 0,                // 压缩进度 0-100
+        compressConfig: {
+          scalePercent: 70,                 // 缩小比例 10-100%
+          quality: 70                       // pngquant压缩质量 10-100%
+        },
+        hasCompressedMaterials: false,      // 是否压缩过素材
+        preCompressMaterials: null,         // 压缩前的素材状态（用于撤销）
+        preCompressReplacedImages: null,    // 压缩前的replacedImages（用于撤销）
+        preCompressCompressedImages: null,  // 压缩前的compressedImages（用于撤销）
 
         // 音频数据（从原始SVGA文件提取）
         svgaAudioData: null, // { audioKey: Uint8Array }
@@ -1453,8 +1467,14 @@ function initApp() {
         // 3.1 重置背景色到默认状态（pattern）
         this.bgColorKey = 'pattern';
 
-        // 3.2 重置素材替换（清空所有替换的图片）
+        // 3.2 重置素材替换和压缩状态
         this.replacedImages = {};
+        this.showCompressModal = false;
+        this.isCompressingMaterials = false;
+        this.compressProgress = 0;
+        this.hasCompressedMaterials = false;
+        this.preCompressMaterials = null;
+        this.preCompressReplacedImages = null;
 
         // 3.3 重置绿幕抠图配置
         this.chromaKeyEnabled = false;
@@ -3874,6 +3894,248 @@ function initApp() {
         this.closeMaterialPanel();
       },
 
+      /* ==================== 素材压缩功能 ==================== */
+
+      /**
+       * 打开压缩弹窗
+       */
+      openCompressModal: function () {
+        this.showCompressModal = true;
+      },
+
+      /**
+       * 关闭压缩弹窗
+       */
+      closeCompressModal: function () {
+        this.showCompressModal = false;
+      },
+
+      /**
+       * 开始压缩素材图
+       */
+      startCompressMaterials: async function () {
+        var _this = this;
+
+        if (this.materialList.length === 0) {
+          alert('没有可压缩的素材');
+          return;
+        }
+
+        // 尝试加载 pngquant 库（可选）
+        var pngquantAvailable = false;
+        try {
+          await this.loadLibrary(['pngquant'], true);
+          pngquantAvailable = typeof wasmPngquant !== 'undefined';
+        } catch (err) {
+          // pngquant 加载失败，询问用户是否继续
+          var continueWithoutPngquant = confirm(
+            'pngquant库加载失败（CDN网络问题）\n\n' +
+            '是否继续？\n' +
+            '• 点“确定”：只做尺寸缩小，跳过色彩压缩\n' +
+            '• 点“取消”：放弃压缩'
+          );
+          if (!continueWithoutPngquant) {
+            return;
+          }
+          pngquantAvailable = false;
+        }
+
+        // 关闭弹窗，开始压缩
+        this.showCompressModal = false;
+        this.isCompressingMaterials = true;
+        this.compressProgress = 0;
+
+        // 保存压缩前的状态（用于撤销）
+        this.preCompressMaterials = JSON.parse(JSON.stringify(this.materialList));
+        this.preCompressReplacedImages = Object.assign({}, this.replacedImages);
+        this.preCompressCompressedImages = Object.assign({}, this.compressedImages);
+
+        var total = this.materialList.length;
+        var processed = 0;
+        var scalePercent = this.compressConfig.scalePercent / 100;
+        var quality = this.compressConfig.quality;
+
+        try {
+          // 初始化 pngquant（如果可用）
+          if (pngquantAvailable && !wasmPngquant.isReady) {
+            await wasmPngquant.init();
+          }
+
+          for (var i = 0; i < this.materialList.length; i++) {
+            var material = this.materialList[i];
+
+            // 使用当前显示的图片（可能是替换过的）
+            var sourceUrl = material.previewUrl;
+            if (!sourceUrl) {
+              processed++;
+              this.compressProgress = Math.round((processed / total) * 100);
+              continue;
+            }
+
+            // 加载图片
+            var img = await this._loadImage(sourceUrl);
+
+            // 计算缩小后的尺寸
+            var newWidth = Math.round(img.width * scalePercent);
+            var newHeight = Math.round(img.height * scalePercent);
+
+            // 确保最小尺寸为1
+            newWidth = Math.max(1, newWidth);
+            newHeight = Math.max(1, newHeight);
+
+            // 缩小图片
+            var canvas = document.createElement('canvas');
+            canvas.width = newWidth;
+            canvas.height = newHeight;
+            var ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, newWidth, newHeight);
+
+            // 转为 PNG Blob
+            var pngBlob = await new Promise(function (resolve) {
+              canvas.toBlob(resolve, 'image/png');
+            });
+            var pngData = new Uint8Array(await pngBlob.arrayBuffer());
+
+            // 使用 pngquant 压缩（如果可用）
+            var compressedData = pngData;
+            if (pngquantAvailable) {
+              try {
+                var qualityRange = [Math.max(10, quality - 10), Math.min(100, quality + 10)];
+                compressedData = await wasmPngquant.compress(pngData, {
+                  quality: qualityRange,
+                  speed: 3
+                });
+                compressedData = new Uint8Array(compressedData);
+              } catch (e) {
+                console.warn('pngquant压缩失败，使用原始数据:', e);
+              }
+            }
+
+            // 转为 base64 DataURL
+            var compressedBlob = new Blob([compressedData], { type: 'image/png' });
+            var compressedDataUrl = await this._blobToDataURL(compressedBlob);
+
+            // 放大到原尺寸（使用 scaleImageToFill 填充）
+            var compressedImg = await this._loadImage(compressedDataUrl);
+            var scaledCanvas = this.scaleImageToFill(compressedImg, material.originalWidth, material.originalHeight);
+            var finalDataUrl = scaledCanvas.toDataURL('image/png');
+
+            // 更新素材列表
+            material.previewUrl = finalDataUrl;
+            material.isReplaced = true;
+            // 尺寸显示为原始尺寸（因为已放大回去）
+            material.sizeText = material.originalWidth + 'px*' + material.originalHeight + 'px';
+
+            // 内存占用显示为缩小后的尺寸（体现压缩效果）
+            var bytes = newWidth * newHeight * 4;
+            material.fileSize = bytes;
+            material.fileSizeText = this.formatBytes(bytes) + ' (压缩后)';
+
+            // 更新 replacedImages（用于预览）
+            var newReplacedImages = Object.assign({}, this.replacedImages);
+            newReplacedImages[material.imageKey] = finalDataUrl;
+            this.replacedImages = newReplacedImages;
+
+            // 更新 compressedImages（用于导出，保存缩小后的图）
+            var newCompressedImages = Object.assign({}, this.compressedImages);
+            newCompressedImages[material.imageKey] = compressedDataUrl;
+            this.compressedImages = newCompressedImages;
+
+            processed++;
+            this.compressProgress = Math.round((processed / total) * 100);
+          }
+
+          // 压缩完成
+          this.hasCompressedMaterials = true;
+          this.isCompressingMaterials = false;
+
+          // 重新计算总内存占用
+          this._recalculateTotalMemory();
+
+          // 应用到播放器预览
+          this.applyReplacedMaterials();
+
+          this.showToast('压缩完成，共压缩 ' + total + ' 个素材');
+
+        } catch (err) {
+          console.error('压缩失败:', err);
+          alert('压缩失败: ' + err.message);
+          this.isCompressingMaterials = false;
+        }
+      },
+
+      /**
+       * 撤销压缩（恢复压缩前的状态）
+       */
+      undoCompressMaterials: function () {
+        if (!this.preCompressMaterials || !this.preCompressReplacedImages) {
+          alert('没有可撤销的压缩记录');
+          return;
+        }
+
+        // 恢复压缩前的状态
+        this.materialList = JSON.parse(JSON.stringify(this.preCompressMaterials));
+        this.replacedImages = Object.assign({}, this.preCompressReplacedImages);
+        this.compressedImages = Object.assign({}, this.preCompressCompressedImages || {});
+
+        // 清除撤销记录
+        this.preCompressMaterials = null;
+        this.preCompressReplacedImages = null;
+        this.preCompressCompressedImages = null;
+        this.hasCompressedMaterials = false;
+
+        // 关闭弹窗
+        this.showCompressModal = false;
+
+        // 重新计算总内存占用
+        this._recalculateTotalMemory();
+
+        // 应用到播放器预览
+        this.applyReplacedMaterials();
+
+        this.showToast('已撤销压缩');
+      },
+
+      /**
+       * 加载图片（Promise封装）
+       * @private
+       */
+      _loadImage: function (src) {
+        return new Promise(function (resolve, reject) {
+          var img = new Image();
+          img.onload = function () { resolve(img); };
+          img.onerror = function () { reject(new Error('图片加载失败')); };
+          img.src = src;
+        });
+      },
+
+      /**
+       * Blob转 DataURL
+       * @private
+       */
+      _blobToDataURL: function (blob) {
+        return new Promise(function (resolve, reject) {
+          var reader = new FileReader();
+          reader.onload = function () { resolve(reader.result); };
+          reader.onerror = function () { reject(new Error('读取失败')); };
+          reader.readAsDataURL(blob);
+        });
+      },
+
+      /**
+       * 重新计算总内存占用
+       * @private
+       */
+      _recalculateTotalMemory: function () {
+        var totalBytes = 0;
+        for (var i = 0; i < this.materialList.length; i++) {
+          if (this.materialList[i].fileSize) {
+            totalBytes += this.materialList[i].fileSize;
+          }
+        }
+        this.svga.fileInfo.memoryText = this.formatBytes(totalBytes);
+      },
+
       exportNewSVGA: async function () {
         var _this = this;
 
@@ -3957,9 +4219,10 @@ function initApp() {
                     return;
                   }
 
-                  // 处理所有图片（已经在replaceMaterial中缩放过，直接使用）
+                  // 处理所有图片（优先使用compressedImages中的压缩图）
                   imagesToProcess.forEach(function (item) {
-                    var base64Data = item.base64Data;
+                    // 如果有压缩图，使用压缩图；否则使用replacedImages中的图
+                    var base64Data = _this.compressedImages[item.imageKey] || item.base64Data;
                     // 移除 data:image/xxx;base64, 前缀
                     var base64String = base64Data.split(',')[1] || base64Data;
                     // 转换为 Uint8Array

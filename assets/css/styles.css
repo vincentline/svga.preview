@@ -2107,6 +2107,9 @@ body.dark-mode .material-meta {
   order: 2;
   align-self: stretch;
   position: relative;
+  display: flex;
+  justify-content: center;
+  flex-direction: row;
 }
 
 /* 替换按钮 (btn01_Medium) */
@@ -2132,7 +2135,7 @@ body.dark-mode .material-meta {
 }
 
 .material-btn-replace span {
-  width: 65px;
+  width: auto;
   min-width: 50px;
   height: 22px;
   font-family: 'Segoe UI';
@@ -2183,8 +2186,6 @@ body.dark-mode .material-btn-replace:hover {
   position: absolute;
   width: 28px;
   height: 28px;
-  left: 92px;
-  top: 0px;
   background: #FFFFFF;
   border: 1px solid #e6e6e6;
   cursor: pointer;
@@ -2192,7 +2193,7 @@ body.dark-mode .material-btn-replace:hover {
   /* 使用雪碧图 - recover图标，原始80x80通过background-size缩小50%显示 */
   background-image: url('../img/controls-sprite.png');
   background-size: 400px 320px;
-  background-position: -240px -160px;
+  background-position: -239px -159px;
   background-repeat: no-repeat;
 }
 
@@ -4223,6 +4224,54 @@ body.dark-mode .center-modal-header h3 {
   height: 44px;
   padding: 0 20px;
   border-radius: 16px;
+}
+
+/* 压缩弹窗特殊样式（说明文字） */
+.compress-hint {
+  font-size: 12px;
+  color: #999999;
+  line-height: 1.5;
+  margin-bottom: 4px;
+}
+
+body.dark-mode .compress-hint {
+  color: #777777;
+}
+
+/* 撤销按钮样式 */
+.btn-undo {
+  min-width: 80px;
+  height: 44px;
+  padding: 0 16px;
+  border-radius: 16px;
+  background: #ff9500;
+  border: none;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-undo:hover:not(:disabled) {
+  background: #e68600;
+}
+
+.btn-undo:active:not(:disabled) {
+  background: #cc7700;
+}
+
+.btn-undo:disabled {
+  background: rgba(255, 149, 0, 0.5);
+  cursor: not-allowed;
+}
+
+body.dark-mode .btn-undo {
+  background: #cc7700;
+}
+
+body.dark-mode .btn-undo:hover:not(:disabled) {
+  background: #e68600;
 }
 
 
