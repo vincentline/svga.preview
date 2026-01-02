@@ -50,7 +50,7 @@ body.dark-mode {
   align-items: center;
   justify-content: space-between;
   padding: 0 16px;
-  position: relative;
+  position: absolute;
   z-index: 100;
   transition: background-color 0.3s, border-color 0.3s, transform 0.3s ease, opacity 0.3s ease;
 }
@@ -350,7 +350,7 @@ body.dark-mode .help-popup {
  * 布局控制：
  *   - align-items: flex-start → 子元素从顶部开始排列，不自动垂直居中
  *   - justify-content: center → 子元素水平居中
- *   - padding-bottom: 154px → 为底部的 .footer-bar 留出空间，确保拖拽虚线边界不超出屏幕
+ *   - padding-bottom: 190px → 为底部的 .footer-bar 留出空间，确保拖拽虚线边界不超出屏幕
  * 位置控制：子元素 .viewer-container 的垂直位置由 JS 的 offsetY 控制（通过 transform: translateY）
  */
 .viewer-area {
@@ -508,7 +508,7 @@ body.dark-mode .empty-state-tip-line2 {
   bottom: 0;
   left: 0;
   right: 0;
-  height: 154px;
+  height: 190px;
   display: flex;
   flex-direction: row;
   align-items: stretch;
@@ -543,11 +543,11 @@ body.dark-mode .empty-state-tip-line2 {
   align-items: center;
   gap: 8px;
   margin-bottom: 10px;
-
   position: absolute;
   right: 0;
-  bottom: 132px;
-  transition: bottom 0.3s ease;
+  bottom: 168px;
+  /* 添加全面的过渡动画：位置（300ms）、透明度（200ms） */
+  transition: bottom 0.3s ease, opacity 0.2s ease, visibility 0.2s;
 }
 
 /* 沉浸模式下调整footer-top-actions位置和居中 */
@@ -672,16 +672,21 @@ body.dark-mode .clear-canvas-btn:active svg path {
   flex: 0 1 auto;
   min-width: 1000px;
   max-width: fit-content;
-  height: 134px;
+  height: 170px;
   background-color: #ffffff;
   border: 1px solid #e6e6e6;
   border-radius: 16px;
   box-shadow: 0px 10px 32px 0px rgba(51, 51, 51, 0.2);
-  padding: 16px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  transition: background-color 0.3s, border-color 0.3s, box-shadow 0.3s, min-width 0.4s ease, max-width 0.4s ease;
+  position: relative;
+  bottom: 0px;
+  /* 添加全面的过渡动画：宽度、高度、位置（300ms） */
+  transition: background-color 0.3s, border-color 0.3s, box-shadow 0.3s,
+    min-width 0.3s ease, max-width 0.3s ease,
+    height 0.3s ease, bottom 0.3s ease;
 }
 
 /* 空状态：宽度300px，居中 */
@@ -690,6 +695,9 @@ body.dark-mode .clear-canvas-btn:active svg path {
   max-width: 600px;
   justify-content: center;
   align-items: center;
+  height: 100px;
+  position: relative;
+  bottom: 160px;
 }
 
 /* 空状态样式 */
@@ -744,7 +752,7 @@ body.dark-mode .footer-main {
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  height: 28px;
+  height: auto;
 }
 
 .footer-tabs {
@@ -758,6 +766,13 @@ body.dark-mode .footer-main {
   flex-direction: row;
   align-items: center;
   gap: 10px;
+}
+
+/* 底部浮层中的大按钮不使用flex:1，宽度自适应 */
+.footer-actions .btn-large-primary,
+.footer-actions .btn-large-secondary {
+  flex: none;
+  width: auto;
 }
 
 .tab-btn {
@@ -1199,12 +1214,15 @@ body.dark-mode .progress-thumb:hover {
   min-width: 60px;
 }
 
-/* 通用按钮 */
+/* ==================== 通用按钮系统 ==================== */
+
+/* 中按钮通用样式（28px高度，8px圆角） */
 .btn-primary,
 .btn-secondary {
   height: 28px;
   padding: 0 16px;
   border-radius: 8px;
+  border: 1px solid transparent;
   font-family: 'Segoe UI', sans-serif;
   font-weight: 400;
   font-size: 14px;
@@ -1216,9 +1234,10 @@ body.dark-mode .progress-thumb:hover {
   white-space: nowrap;
 }
 
+/* 中按钮 - 主要按钮（btn01_Medium） */
 .btn-primary {
   background-color: #ffffff;
-  border: 1px solid #e6e6e6;
+  border-color: #e6e6e6;
   color: #333333;
 }
 
@@ -1248,9 +1267,10 @@ body.dark-mode .btn-primary:active {
   border-color: #888888;
 }
 
+/* 中按钮 - 次要按钮（btn02_Medium） */
 .btn-secondary {
   background-color: #5b5b5b;
-  border: 1px solid #5b5b5b;
+  border-color: #5b5b5b;
   color: #ffffff;
 }
 
@@ -1262,6 +1282,102 @@ body.dark-mode .btn-primary:active {
 .btn-secondary:active {
   background-color: #333333;
   border-color: #333333;
+}
+
+/* 大按钮通用样式（44px高度，16px圆角） */
+.btn-large-primary,
+.btn-large-secondary {
+  height: 44px;
+  padding: 0 20px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  font-family: 'Segoe UI', sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 1.57;
+  text-align: center;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s;
+  white-space: nowrap;
+  min-width: 110px;
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: auto;
+}
+
+/* 大按钮 - 主要按钮（btn01_Large） */
+.btn-large-primary {
+  background-color: #ffffff;
+  border-color: #e6e6e6;
+  color: #333333;
+}
+
+body.dark-mode .btn-large-primary {
+  background-color: #1a1a1a;
+  border-color: #404040;
+  color: #e0e0e0;
+}
+
+.btn-large-primary:hover {
+  background-color: #e6e6e6;
+  border-color: #5b5b5b;
+}
+
+body.dark-mode .btn-large-primary:hover {
+  background-color: #333333;
+  border-color: #666666;
+}
+
+.btn-large-primary:active {
+  background-color: #d3d3d3;
+  border-color: #333333;
+}
+
+body.dark-mode .btn-large-primary:active {
+  background-color: #404040;
+  border-color: #888888;
+}
+
+.btn-large-primary:disabled {
+  background-color: #ffffff;
+  border-color: #f3f3f3;
+  color: #aaaaaa;
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+body.dark-mode .btn-large-primary:disabled {
+  background-color: #1a1a1a;
+  border-color: #2a2a2a;
+  color: #666666;
+}
+
+/* 大按钮 - 次要按钮（btn02_Large） */
+.btn-large-secondary {
+  background-color: #5b5b5b;
+  border-color: #5b5b5b;
+  color: #ffffff;
+}
+
+.btn-large-secondary:hover {
+  background-color: #555555;
+  border-color: #000000;
+}
+
+.btn-large-secondary:active {
+  background-color: #000000;
+  border-color: #000000;
+}
+
+.btn-large-secondary:disabled {
+  background-color: rgba(91, 91, 91, 0.3);
+  border-color: rgba(91, 91, 91, 0.3);
+  color: #ffffff;
+  cursor: not-allowed;
+  opacity: 1;
 }
 
 /* 缩放按钮 */
@@ -1396,7 +1512,7 @@ body.dark-mode .reset-scale-btn.is-contain:hover {
 
 /* 底部浮层沉浸模式 */
 .footer-bar.footer-immersive {
-  height: 80px;
+  height: 88px;
   transition: height 0.3s ease;
 }
 
@@ -1441,10 +1557,10 @@ body.dark-mode .minimize-btn:hover {
 .footer-mini {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 16px;
-  height: 60px;
-  padding: 0 24px;
+
+  gap: 12px;
+  height: 68px;
+  padding: 0 20px;
   background-color: #ffffff;
   border: 1px solid #e6e6e6;
   border-radius: 16px;
@@ -2353,6 +2469,13 @@ body.dark-mode .material-btn-new:hover {
   order: 2;
 }
 
+/* 侧边弹窗中的大按钮需要flex布局 */
+.material-panel-footer .btn-large-secondary {
+  flex: 1;
+  display: flex;
+
+}
+
 /* 返回按钮 */
 .material-btn-back {
   box-sizing: border-box;
@@ -2365,7 +2488,7 @@ body.dark-mode .material-btn-new:hover {
   height: 44px;
   background: #FFFFFF;
   border: 1px solid #e6e6e6;
-  border-radius: 16px;
+  border-radius: 12px;
   cursor: pointer;
   transition: all 0.15s ease;
   flex-shrink: 0;
@@ -2395,15 +2518,17 @@ body.dark-mode .material-btn-back svg path {
   stroke: #e0e0e0;
 }
 
-/* MP4转换按钮进度显示 */
-.material-btn-export.mp4-btn-converting {
+/* 转换按钮进度显示（适配大按钮） */
+.btn-large-secondary.mp4-btn-converting,
+.btn-large-secondary.svga-btn-converting {
   position: relative;
   flex-direction: column;
   padding: 4px 12px;
   gap: 2px;
 }
 
-.mp4-progress-text {
+.mp4-progress-text,
+.svga-progress-text {
   font-family: 'Segoe UI', sans-serif;
   font-weight: 600;
   font-size: 14px;
@@ -2411,7 +2536,8 @@ body.dark-mode .material-btn-back svg path {
   color: #333333;
 }
 
-.mp4-stage-text {
+.mp4-stage-text,
+.svga-stage-text {
   font-family: 'Segoe UI', sans-serif;
   font-weight: 400;
   font-size: 10px;
@@ -2431,67 +2557,17 @@ body.dark-mode .material-btn-back svg path {
   background: rgba(255, 68, 68, 0.1) !important;
 }
 
-body.dark-mode .mp4-progress-text {
+body.dark-mode .mp4-progress-text,
+body.dark-mode .svga-progress-text {
   color: #ffffff;
 }
 
-body.dark-mode .mp4-stage-text {
+body.dark-mode .mp4-stage-text,
+body.dark-mode .svga-stage-text {
   color: #aaaaaa;
 }
 
-/* 导出新SVGA按钮 (btn02_Large) */
-.material-btn-export {
-  box-sizing: border-box;
-  flex: 1;
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  padding: 0px 20px;
-  gap: 10px;
-  width: 90px;
-  min-width: 60px;
-  height: 44px;
-  background: #5B5B5B;
-  border: none;
-  border-radius: 16px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  font-family: 'Segoe UI';
-  font-size: 14px;
-  font-weight: 400;
-  color: #FFFFFF;
-}
-
-.material-btn-export:hover:not(:disabled) {
-  background: #5B5B5B;
-  border: 1px solid #333333;
-}
-
-.material-btn-export:active:not(:disabled) {
-  background: #333333;
-  border: 1px solid #333333;
-}
-
-.material-btn-export:disabled {
-  background: rgba(91, 91, 91, 0.3);
-  border: none;
-  color: #FFFFFF;
-  cursor: not-allowed;
-}
-
-body.dark-mode .material-btn-export {
-  background: #e0e0e0;
-  color: #000000;
-}
-
-body.dark-mode .material-btn-export:hover:not(:disabled) {
-  background: #f0f0f0;
-}
-
-body.dark-mode .material-btn-export:active:not(:disabled) {
-  background: #d0d0d0;
-}
+/* 侧边弹窗按钮已统一使用 btn-large-secondary，不再需要 material-btn-export */
 
 .material-empty {
   width: 100%;
@@ -3143,6 +3219,9 @@ body.dark-mode .mp4-input:disabled {
   margin-top: auto;
 }
 
+/* MP4侧边弹窗中的大按钮需要flex布局 */
+.mp4-panel-footer .btn-large-secondary {}
+
 .mp4-btn {
   display: flex;
   flex-direction: row;
@@ -3150,7 +3229,7 @@ body.dark-mode .mp4-input:disabled {
   align-items: center;
   padding: 0 20px;
   height: 44px;
-  border-radius: 16px;
+
   font-family: 'Segoe UI', sans-serif;
   font-weight: 400;
   font-size: 14px;
@@ -3807,6 +3886,14 @@ body.dark-mode .svga-estimate-row {
   gap: 12px;
 }
 
+/* SVGA侧边弹窗中的大按钮需要flex布局 */
+.svga-panel-footer .btn-large-secondary {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 .svga-btn-cancel {
   border-color: #ff4444 !important;
 }
@@ -4149,6 +4236,14 @@ body.dark-mode .chromakey-slider::-moz-range-thumb {
   margin-top: auto;
 }
 
+/* 色键弹窗中的大按钮需要flex布局 */
+.chromakey-panel-footer .btn-large-secondary {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 /* ==================== 居中弹窗通用样式（统一管理） ==================== */
 
 /* 弹窗遮罩层 */
@@ -4245,14 +4340,7 @@ body.dark-mode .center-modal-header h3 {
   gap: 12px;
 }
 
-/* 弹窗按钮特殊样式（复用通用按钮，只调整尺寸） */
-.center-modal-footer .btn-primary,
-.center-modal-footer .btn-secondary {
-  min-width: 110px;
-  height: 44px;
-  padding: 0 20px;
-  border-radius: 16px;
-}
+/* 弹窗按钮直接使用大按钮样式，无需覆盖 */
 
 /* 压缩弹窗特殊样式（说明文字） */
 .compress-hint {
@@ -4266,40 +4354,46 @@ body.dark-mode .compress-hint {
   color: #777777;
 }
 
-/* 撤销按钮样式 */
+/* 撤销按钮（基于大按钮，自定义橙色样式） */
 .btn-undo {
   min-width: 80px;
   height: 44px;
   padding: 0 16px;
-  border-radius: 16px;
-  background: #ff9500;
+  border-radius: 12px;
   border: none;
+  background-color: #ff9500;
   color: #ffffff;
+  font-family: 'Segoe UI', sans-serif;
+  font-weight: 400;
   font-size: 14px;
-  font-weight: 500;
+  line-height: 1.57;
+  text-align: center;
   cursor: pointer;
-  transition: background 0.2s;
+  outline: none;
+  transition: all 0.2s;
+  white-space: nowrap;
 }
 
 .btn-undo:hover:not(:disabled) {
-  background: #e68600;
+  background-color: #e68600;
 }
 
 .btn-undo:active:not(:disabled) {
-  background: #cc7700;
+  background-color: #cc7700;
 }
 
 .btn-undo:disabled {
-  background: rgba(255, 149, 0, 0.5);
+  background-color: rgba(255, 149, 0, 0.5);
   cursor: not-allowed;
+  opacity: 1;
 }
 
 body.dark-mode .btn-undo {
-  background: #cc7700;
+  background-color: #cc7700;
 }
 
 body.dark-mode .btn-undo:hover:not(:disabled) {
-  background: #e68600;
+  background-color: #e68600;
 }
 
 
@@ -4425,8 +4519,8 @@ body.dark-mode .ad-position-bottom {
 
 .speed-remap-editor {
   position: absolute;
-  bottom: 132px;
-  width: auto;
+  bottom: 166px;
+  width: 1000px;
   margin: 0 0 8px 0;
   z-index: 100;
   align-items: flex-start;
@@ -4753,6 +4847,7 @@ body.dark-mode .tick-label {
   font-size: 12px;
   color: rgba(0, 0, 0, 0.4);
   white-space: nowrap;
+  width: 100%;
 }
 
 body.dark-mode .speed-remap-duration-label {
@@ -4769,23 +4864,12 @@ body.dark-mode .speed-remap-duration-label {
 }
 
 /* 恢复按钮 */
+/* 恢复按钮（基于大按钮次要，添加图标） */
 .btn-speed-reset {
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
   gap: 4px;
-  padding: 0 12px 0 8px;
-  height: 28px;
-  background: #FFFFFF;
-  border: 1px solid #e6e6e6;
-  border-radius: 8px;
-  font-family: 'Segoe UI', system-ui, sans-serif;
-  font-size: 13px;
-  color: #333333;
-  cursor: pointer;
-  transition: all 0.15s ease;
+  padding: 0 8px 0 8px;
+  width: 54px;
+  min-width: 54px;
 }
 
 .btn-speed-reset svg {
@@ -4799,8 +4883,8 @@ body.dark-mode .speed-remap-duration-label {
 .btn-speed-reset::before {
   content: '';
   display: inline-block;
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   background-image: url('../img/controls-sprite.png');
   background-size: 400px 320px;
   background-position: -240px -160px;
@@ -4808,62 +4892,12 @@ body.dark-mode .speed-remap-duration-label {
   flex-shrink: 0;
 }
 
-.btn-speed-reset:hover {
-  background: #F5F5F7;
-  border-color: #CCCCCC;
-}
-
-.btn-speed-reset:active {
-  background: #E8E8ED;
-  transform: scale(0.95);
-}
-
-body.dark-mode .btn-speed-reset {
-  background: #2d2d2d;
-  border-color: #505050;
-  color: #e0e0e0;
-}
-
 body.dark-mode .btn-speed-reset::before {
   background-position: -280px -160px;
 }
 
-body.dark-mode .btn-speed-reset:hover {
-  background: #3a3a3a;
-  border-color: #606060;
-}
-
 /* 取消按钮 */
-.btn-speed-cancel {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 0 16px;
-  height: 28px;
-  background: #FFFFFF;
-  border: 1px solid #E6E6E6;
-  border-radius: 8px;
-  font-family: 'Segoe UI', system-ui, sans-serif;
-  font-size: 13px;
-  color: #333333;
-  cursor: pointer;
-  transition: background-color 0.2s, border-color 0.2s;
-}
-
-.btn-speed-cancel:hover {
-  background: #f5f5f5;
-  border-color: #d0d0d0;
-}
-
-body.dark-mode .btn-speed-cancel {
-  background: #3a3a3a;
-  border-color: #555555;
-  color: #e0e0e0;
-}
-
-body.dark-mode .btn-speed-cancel:hover {
-  background: #444444;
-}
+/* 取消按钮已改为大按钮次要样式，不再需要 btn-speed-cancel */
 
 /* 变速按钮激活状态 */
 .btn-active {
@@ -4950,7 +4984,7 @@ body.dark-mode .modal-footer {
   padding: 0 20px;
   background: #FFFFFF;
   border: 1px solid #E6E6E6;
-  border-radius: 16px;
+  border-radius: 12px;
   font-family: 'Segoe UI', sans-serif;
   font-weight: 400;
   font-size: 14px;
@@ -5001,7 +5035,7 @@ body.dark-mode .modal-footer .btn-primary:active {
   padding: 0 20px;
   background: #5B5B5B;
   border: none;
-  border-radius: 16px;
+  border-radius: 12px;
   font-family: 'Segoe UI', sans-serif;
   font-weight: 400;
   font-size: 14px;

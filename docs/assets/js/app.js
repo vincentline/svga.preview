@@ -1383,33 +1383,36 @@ function initApp() {
           }
         }
 
-        // 先隐藏内容
+        // 0ms：先隐藏内容（启动淡出动画，200ms）
         this.footerContentVisible = false;
         this.footerTransitioning = true;
 
-        // 使用统一的模式切换函数
-        this.switchMode('svga');
-
-        // 重置Lottie状态
-        this.lottie = {
-          hasFile: false,
-          file: null,
-          fileInfo: {
-            name: '',
-            size: 0,
-            sizeText: ''
-          }
-        };
-
-        this.bgColorKey = 'pattern';
-
-        // 等待400ms过渡动画完成后，重新初始化空状态的随机SVGA动画
+        // 200ms：内容完全淡出后，清空数据并显示空状态（启动浮层动画，300ms）
         setTimeout(function () {
-          _this.footerTransitioning = false;
-          _this.$nextTick(function () {
-            _this.initEmptyStateSvgaPlayer();
-          });
-        }, 400);
+          // 使用统一的模式切换函数（此时数据被清空，isEmpty变为true）
+          _this.switchMode('svga');
+
+          // 重置Lottie状态
+          _this.lottie = {
+            hasFile: false,
+            file: null,
+            fileInfo: {
+              name: '',
+              size: 0,
+              sizeText: ''
+            }
+          };
+
+          _this.bgColorKey = 'pattern';
+
+          // 500ms：空状态动画完成，初始化空状态播放器（200+300=500ms）
+          setTimeout(function () {
+            _this.footerTransitioning = false;
+            _this.$nextTick(function () {
+              _this.initEmptyStateSvgaPlayer();
+            });
+          }, 300);
+        }, 200);
       },
 
       /**
@@ -1687,6 +1690,8 @@ function initApp() {
           _this.totalFrames = frames;
           _this.svgaFps = _this.svga.fileInfo.fps || 30;
           _this.totalDuration = frames / _this.svgaFps;
+          // 设置SVGA时长显示
+          _this.svga.fileInfo.duration = _this.totalDuration.toFixed(2) + 's';
           _this.currentTime = 0;
         } catch (err) {
           console.error('获取SVGA信息失败:', err);
@@ -2206,6 +2211,12 @@ function initApp() {
         this.lottieCanvas = null;
         this.lottieCtx = null;
 
+        // 销毁播放控制器
+        if (this.playerController) {
+          this.playerController.destroy();
+          this.playerController = null;
+        }
+
         // 清空容器内容
         var container = this.$refs.svgaContainer;
         if (container) {
@@ -2555,6 +2566,12 @@ function initApp() {
         this.framesCtx = null;
         this.framesImages = [];
 
+        // 销毁播放控制器
+        if (this.playerController) {
+          this.playerController.destroy();
+          this.playerController = null;
+        }
+
         // 清空容器内容
         var container = this.$refs.svgaContainer;
         if (container) {
@@ -2754,6 +2771,12 @@ function initApp() {
           this.svgaObjectUrl = null;
         }
 
+        // 销毁播放控制器
+        if (this.playerController) {
+          this.playerController.destroy();
+          this.playerController = null;
+        }
+
         // 清空容器内容
         var container = this.$refs.svgaContainer;
         if (container) {
@@ -2809,6 +2832,12 @@ function initApp() {
 
         this.yyevaCanvas = null;
         this.yyevaCtx = null;
+
+        // 销毁播放控制器
+        if (this.playerController) {
+          this.playerController.destroy();
+          this.playerController = null;
+        }
 
         // 清空容器内容（移除双通道MP4的Canvas）
         var container = this.$refs.svgaContainer;
@@ -2987,6 +3016,12 @@ function initApp() {
         if (this.mp4ObjectUrl) {
           URL.revokeObjectURL(this.mp4ObjectUrl);
           this.mp4ObjectUrl = null;
+        }
+
+        // 销毁播放控制器
+        if (this.playerController) {
+          this.playerController.destroy();
+          this.playerController = null;
         }
 
         // 清空容器内容

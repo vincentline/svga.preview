@@ -31,7 +31,7 @@
  *     this.viewerOffsetX = offsetX;
  *     this.viewerOffsetY = offsetY;
  *   },
- *   footerHeight: 154,        // 底部浮层高度
+ *   footerHeight: 190,        // 底部浮层高度
  *   screenHeightRatio: 0.75,  // 初始缩放：屏幕高度75%
  *   minScale: 0.1,            // 最小缩放比例
  *   maxScale: 5,              // 最大缩放比例
@@ -70,7 +70,7 @@
    * @param {Object} options - 配置选项
    * @param {Function} options.getContentSize - 获取当前内容尺寸的回调函数，返回 {width, height}
    * @param {Function} options.onViewportChange - 视图变化时的回调函数 (scale, offsetX, offsetY)
-   * @param {Number} [options.footerHeight=154] - 底部浮层高度（像素）
+   * @param {Number} [options.footerHeight=190] - 底部浮层高度（像素）
    * @param {Number} [options.screenHeightRatio=0.75] - 初始缩放时屏幕高度占比
    * @param {Number} [options.minScale=0.1] - 最小缩放比例
    * @param {Number} [options.maxScale=5] - 最大缩放比例
@@ -93,7 +93,7 @@
 
     // 配置参数
     this.headerHeight = options.headerHeight || 36;                // 顶部标题栏高度
-    this.footerHeight = options.footerHeight || 154;                    // 底部浮层高度
+    this.footerHeight = options.footerHeight || 190;                    // 底部浮层高度
     this.defaultScreenHeightRatio = options.screenHeightRatio || 0.75; // 默认屏幕高度的75%
     this.minScale = options.minScale || 0.1;                           // 最小缩放 10%
     this.maxScale = options.maxScale || 5;                             // 最大缩放 500%
@@ -225,7 +225,7 @@
    * 1. 计算可用高度 = 窗口高度 - 顶部标题栏高度(headerHeight) - 底部浮层高度(footerHeight)
    *    原因：顶部和底部会遮挡内容，需要避开这些区域
    *    沉浸模式：headerHeight=0, footerHeight=80
-   *    正常模式：headerHeight=36, footerHeight=154
+   *    正常模式：headerHeight=36, footerHeight=190
    * 2. 计算内容当前高度 = 原始高度 * 当前缩放比例
    * 3. 判断是否需要居中：
    *    - 如果内容高度 < 可用高度：居中显示（计算上下留白）
@@ -255,10 +255,11 @@
    * // 示例计算：
    * // 窗口高度 = 1080px
    * // 顶部标题栏 = 36px
-   * // 底部浮层 = 154px
-   * // 可用高度 = 1080 - 36 - 154 = 890px
+   * // 底部浮层 = 190px
+   * // 可用高度 = 1080 - 36 - 190 = 854px
    * // 内容高度 = 1920 * 0.42 = 806.4px
-   * // 居中偏移 = 36 + (890 - 806.4) / 2 = 36 + 41.8 = 77.8px
+   * // 可视区域中心 = 36 + 854 / 2 = 36 + 427 = 463px
+   * // 居中偏移 = 463 - 806.4 / 2 = 463 - 403.2 = 59.8px
    */
   ViewportController.prototype.centerView = function () {
     // 计算可用高度 = 窗口高度 - 顶部标题栏 - 底部浮层
@@ -275,16 +276,12 @@
     this.offsetX = 0;
 
     // 计算垂直偏移（居中）
-    if (contentHeight > 0 && contentHeight < availableHeight) {
-      // 情况1：内容高度小于可用高度 → 居中显示
-      // offsetY = headerHeight + 上方留白 - 视觉偏移调整
-      // 数学居中往往视觉偏下，向上偏移20px获得更好的视觉居中效果
-      this.offsetY = this.headerHeight + (availableHeight - contentHeight) / 2 - 20;
-    } else {
-      // 情况2：内容高度超出可用高度 → 顶部对齐
-      // 避免出现顶部空白，让用户可以从头开始查看内容
-      this.offsetY = this.headerHeight;
-    }
+    // 可视区域中心 = headerHeight + availableHeight / 2
+    // 播放器中心对齐到可视区域中心
+    // offsetY = 可视区域中心 - 播放器高度 / 2
+    // 注意：即使播放器超出可用高度，也强制居中（可能产生负数偏移）
+    var viewCenterY = this.headerHeight + availableHeight / 2;
+    this.offsetY = viewCenterY - contentHeight / 2;
 
     // 触发回调，通知主应用更新 Vue 数据
     this.onViewportChange(this.scale, this.offsetX, this.offsetY);
@@ -463,7 +460,7 @@
    * 功能：
    *   动态更新底部浮层高度，用于沉浸模式切换
    *   沉浸模式时footerHeight=80px（mini浮层）
-   *   正常模式时footerHeight=154px（完整浮层）
+   *   正常模式时footerHeight=190px（完整浮层）
    * 
    * @param {Number} height - 新的底部浮层高度（像素）
    * 
@@ -472,7 +469,7 @@
    * controller.setFooterHeight(80);
    * 
    * // 退出沉浸模式
-   * controller.setFooterHeight(154);
+   * controller.setFooterHeight(190);
    */
   ViewportController.prototype.setFooterHeight = function (height) {
     this.footerHeight = height;

@@ -293,12 +293,11 @@
               </div>
               <!-- 按钮 -->
               <div class="speed-remap-buttons">
-                <button v-if="speedRemapConfig.enabled" class="btn-speed-reset" @click="resetSpeedRemap">
-
-                  恢复
+                <button v-if="speedRemapConfig.enabled" class="btn-large-primary btn-speed-reset"
+                  @click="resetSpeedRemap">
                 </button>
-                <button class="btn-speed-cancel" @click="cancelSpeedRemap">取消</button>
-                <button class="btn-secondary" @click="confirmSpeedRemap">确定</button>
+                <button class="btn-large-primary" @click="cancelSpeedRemap">取消</button>
+                <button class="btn-large-secondary" @click="confirmSpeedRemap">确定</button>
               </div>
             </div>
           </div>
@@ -309,7 +308,7 @@
             <template v-if="isEmpty">
               <div class="footer-empty-tip">
                 <div class="footer-empty-tip-sub">
-                  请将文件拖到上面，或<br><span class="click-upload-text" @click="triggerFileUpload">点击上传</span>
+                  拖入文件，或<br><span class="click-upload-text" @click="triggerFileUpload">点击上传</span>
                 </div>
               </div>
             </template>
@@ -317,7 +316,8 @@
             <!-- 非空状态 -->
             <template v-else>
               <!-- 过渡完成后才显示内容 -->
-              <div v-show="footerContentVisible" style="display: flex; flex-direction: column; gap: 12px; width: 100%;">
+              <div v-show="footerContentVisible"
+                style="display: flex; flex-direction: column; width: 100%; height: 100%; justify-content: space-between; transition: opacity 0.2s ease;">
                 <!-- 第一行：播放控制 + 背景色选择 + 缩放控制 -->
                 <div class="footer-row-controls">
                   <div class="controls-left">
@@ -405,50 +405,50 @@
                   <!-- SVGA 模式 -->
                   <template v-if="currentModule === 'svga'">
                     <div class="footer-actions">
-                      <button class="btn-primary" @click="triggerChangePreviewFile" v-if="svga.hasFile">
+                      <button class="btn-large-primary" @click="triggerChangePreviewFile" v-if="svga.hasFile">
                         更换预览文件
                       </button>
                     </div>
                     <div class="footer-actions">
-                      <button class="btn-primary" :class="{'tooltip': !svga.hasFile}"
+                      <button class="btn-large-primary" :class="{'tooltip': !svga.hasFile}"
                         :disabled="!svga.hasFile || isExportingGIF" @click="openGifPanel">
                         <span v-if="!svga.hasFile" class="tooltip-text">请先拖入 SVGA 文件</span>
                         {{ isExportingGIF ? '导出中 ' + gifExportProgress + '%' : '导出GIF' }}
                       </button>
-                      <button class="btn-primary" :class="{'tooltip': !svga.hasFile}"
+                      <button class="btn-large-primary" :class="{'tooltip': !svga.hasFile}"
                         :disabled="!svga.hasFile || isExportingLottie" @click="exportLottie">
                         <span v-if="!svga.hasFile" class="tooltip-text">请先拖入 SVGA 文件</span>
                         {{ isExportingLottie ? '导出中 ' + lottieExportProgress + '%' : '导出Lottie(实验性)' }}
                       </button>
-                      <button class="btn-primary" @click="openMaterialPanel" v-if="svga.hasFile">
+                      <button class="btn-large-primary" @click="openMaterialPanel" v-if="svga.hasFile">
                         素材图管理
                       </button>
-                      <button class="btn-primary tooltip" v-else>
+                      <button class="btn-large-primary tooltip" v-else>
                         <span class="tooltip-text">请先拖入 SVGA 文件</span>
                         素材图管理
                       </button>
-                      <button class="btn-secondary" :class="{'tooltip': !svga.hasFile}" :disabled="!svga.hasFile"
+                      <button class="btn-large-secondary" :class="{'tooltip': !svga.hasFile}" :disabled="!svga.hasFile"
                         @click="openMP4Panel">
                         <span v-if="!svga.hasFile" class="tooltip-text">请先拖入 SVGA 文件</span>
-                        转双通道MP4
+                        转双通MP4
                       </button>
                     </div>
                   </template>
 
-                  <!-- 双通道MP4 模式 -->
+                  <!-- 双通MP4 模式 -->
                   <template v-else-if="currentModule === 'yyeva'">
                     <div class="footer-actions">
-                      <button class="btn-primary" @click="triggerChangePreviewFile">
+                      <button class="btn-large-primary" @click="triggerChangePreviewFile">
                         更换预览文件
                       </button>
                     </div>
                     <div class="footer-actions">
-                      <button class="btn-primary" :class="{'tooltip': !yyeva.hasFile}"
+                      <button class="btn-large-primary" :class="{'tooltip': !yyeva.hasFile}"
                         :disabled="!yyeva.hasFile || isExportingGIF" @click="openGifPanel">
                         <span v-if="!yyeva.hasFile" class="tooltip-text">请先拖入 MP4 文件</span>
                         {{ isExportingGIF ? '导出中 ' + gifExportProgress + '%' : '导出GIF' }}
                       </button>
-                      <button class="btn-secondary" :class="{'tooltip': !yyeva.hasFile}"
+                      <button class="btn-large-secondary" :class="{'tooltip': !yyeva.hasFile}"
                         :disabled="!yyeva.hasFile || isConvertingSVGA" @click="openSVGAPanel">
                         <span v-if="!yyeva.hasFile" class="tooltip-text">请先拖入 MP4 文件</span>
                         转SVGA
@@ -459,15 +459,15 @@
                   <!-- 普通MP4 模式 -->
                   <template v-else-if="currentModule === 'mp4'">
                     <div class="footer-actions">
-                      <button class="btn-primary" @click="triggerChangePreviewFile">
+                      <button class="btn-large-primary" @click="triggerChangePreviewFile">
                         更换预览文件
                       </button>
-                      <button class="btn-primary" :class="{'tooltip': !mp4.hasFile}" :disabled="!mp4.hasFile"
+                      <button class="btn-large-primary" :class="{'tooltip': !mp4.hasFile}" :disabled="!mp4.hasFile"
                         @click="openChromaKeyPanel">
                         <span v-if="!mp4.hasFile" class="tooltip-text">请先拖入 MP4 文件</span>
                         绿幕抠图
                       </button>
-                      <button class="btn-primary"
+                      <button class="btn-large-primary"
                         :class="{'tooltip': !mp4.hasFile, 'btn-active': speedRemapConfig.enabled}"
                         :disabled="!mp4.hasFile" @click="openSpeedRemapEditor">
                         <span v-if="!mp4.hasFile" class="tooltip-text">请先拖入 MP4 文件</span>
@@ -475,21 +475,21 @@
                       </button>
                     </div>
                     <div class="footer-actions">
-                      <button class="btn-primary" :class="{'tooltip': !mp4.hasFile}"
+                      <button class="btn-large-primary" :class="{'tooltip': !mp4.hasFile}"
                         :disabled="!mp4.hasFile || isExportingGIF" @click="openGifPanel">
                         <span v-if="!mp4.hasFile" class="tooltip-text">请先拖入 MP4 文件</span>
                         {{ isExportingGIF ? '导出中 ' + gifExportProgress + '%' : '导出GIF' }}
                       </button>
 
-                      <button class="btn-primary" :class="{'tooltip': !mp4.hasFile}" :disabled="!mp4.hasFile"
+                      <button class="btn-large-primary" :class="{'tooltip': !mp4.hasFile}" :disabled="!mp4.hasFile"
                         @click="openMp4ToSvgaPanel">
                         <span v-if="!mp4.hasFile" class="tooltip-text">请先拖入 MP4 文件</span>
                         转SVGA
                       </button>
-                      <button class="btn-secondary" :class="{'tooltip': !mp4.hasFile}" :disabled="!mp4.hasFile"
+                      <button class="btn-large-secondary" :class="{'tooltip': !mp4.hasFile}" :disabled="!mp4.hasFile"
                         @click="openMp4ToDualChannelPanel">
                         <span v-if="!mp4.hasFile" class="tooltip-text">请先拖入 MP4 文件</span>
-                        转双通道MP4
+                        转双通MP4
                       </button>
                     </div>
                   </template>
@@ -497,25 +497,25 @@
                   <!-- Lottie 模式 -->
                   <template v-else-if="currentModule === 'lottie'">
                     <div class="footer-actions">
-                      <button class="btn-primary" @click="triggerChangePreviewFile">
+                      <button class="btn-large-primary" @click="triggerChangePreviewFile">
                         更换预览文件
                       </button>
                     </div>
                     <div class="footer-actions">
-                      <button class="btn-primary" :class="{'tooltip': !lottie.hasFile}"
+                      <button class="btn-large-primary" :class="{'tooltip': !lottie.hasFile}"
                         :disabled="!lottie.hasFile || isExportingGIF" @click="openGifPanel">
                         <span v-if="!lottie.hasFile" class="tooltip-text">请先拖入 Lottie 文件</span>
                         {{ isExportingGIF ? '导出中 ' + gifExportProgress + '%' : '导出GIF' }}
                       </button>
-                      <button class="btn-secondary" :class="{'tooltip': !lottie.hasFile}" :disabled="!lottie.hasFile"
-                        @click="openLottieToSvgaPanel">
+                      <button class="btn-large-secondary" :class="{'tooltip': !lottie.hasFile}"
+                        :disabled="!lottie.hasFile" @click="openLottieToSvgaPanel">
                         <span v-if="!lottie.hasFile" class="tooltip-text">请先拖入 Lottie 文件</span>
                         转SVGA
                       </button>
-                      <button class="btn-secondary" :class="{'tooltip': !lottie.hasFile}" :disabled="!lottie.hasFile"
-                        @click="openLottieToDualChannelPanel">
+                      <button class="btn-large-secondary" :class="{'tooltip': !lottie.hasFile}"
+                        :disabled="!lottie.hasFile" @click="openLottieToDualChannelPanel">
                         <span v-if="!lottie.hasFile" class="tooltip-text">请先拖入 Lottie 文件</span>
-                        转双通道MP4
+                        转双通MP4
                       </button>
                     </div>
                   </template>
@@ -523,28 +523,28 @@
                   <!-- 序列帧模式 -->
                   <template v-else-if="currentModule === 'frames'">
                     <div class="footer-actions">
-                      <button class="btn-primary" @click="triggerChangePreviewFile">
+                      <button class="btn-large-primary" @click="triggerChangePreviewFile">
                         更换预览文件
                       </button>
-                      <button class="btn-primary" @click="openChangeFpsDialog">
+                      <button class="btn-large-primary" @click="openChangeFpsDialog">
                         改变帧率
                       </button>
                     </div>
                     <div class="footer-actions">
-                      <button class="btn-primary" :class="{'tooltip': !frames.hasFile}"
+                      <button class="btn-large-primary" :class="{'tooltip': !frames.hasFile}"
                         :disabled="!frames.hasFile || isExportingGIF" @click="openGifPanel">
                         <span v-if="!frames.hasFile" class="tooltip-text">请先拖入序列帧图片</span>
                         {{ isExportingGIF ? '导出中 ' + gifExportProgress + '%' : '导出GIF' }}
                       </button>
-                      <button class="btn-secondary" :class="{'tooltip': !frames.hasFile}" :disabled="!frames.hasFile"
-                        @click="openFramesToSvgaPanel">
+                      <button class="btn-large-secondary" :class="{'tooltip': !frames.hasFile}"
+                        :disabled="!frames.hasFile" @click="openFramesToSvgaPanel">
                         <span v-if="!frames.hasFile" class="tooltip-text">请先拖入序列帧图片</span>
                         转SVGA
                       </button>
-                      <button class="btn-secondary tooltip" :disabled="!frames.hasFile"
+                      <button class="btn-large-secondary tooltip" :disabled="!frames.hasFile"
                         @click="openFramesToDualChannelPanel">
                         <span v-if="!frames.hasFile" class="tooltip-text">请先拖入序列帧图片</span>
-                        转双通道MP4
+                        转双通MP4
                       </button>
                     </div>
                   </template>
@@ -649,8 +649,8 @@
                 stroke-linejoin="round" />
             </svg>
           </button>
-          <!-- 压缩并导出SVGA按钮（与导出按钮同样式） -->
-          <button class="material-btn-export" @click="openCompressAndExportModal"
+          <!-- 压缩并导出SVGA按钮 -->
+          <button class="btn-large-secondary" @click="openCompressAndExportModal"
             :disabled="isCompressingMaterials || materialList.length === 0">
             <template v-if="isCompressingMaterials">压缩中 {{ compressProgress }}%</template>
             <template v-else>
@@ -780,7 +780,7 @@
           </button>
 
           <!-- 转换按钮 -->
-          <button class="material-btn-export" :class="{'mp4-btn-converting': isConvertingMP4}"
+          <button class="btn-large-secondary" :class="{'mp4-btn-converting': isConvertingMP4}"
             :data-progress="mp4ConvertProgress" :disabled="isConvertingMP4" @click="startMP4Conversion">
             <template v-if="isConvertingMP4">
               <span class="mp4-progress-text">{{ mp4ConvertProgress }}%</span>
@@ -914,7 +914,7 @@
             </svg>
           </button>
 
-          <button class="material-btn-export" :class="{'mp4-btn-converting': isConvertingMP4}"
+          <button class="btn-large-secondary" :class="{'mp4-btn-converting': isConvertingMP4}"
             :data-progress="mp4ConvertProgress" :disabled="isConvertingMP4" @click="startMp4ToDualChannelConversion">
             <template v-if="isConvertingMP4">
               <span class="mp4-progress-text">{{ mp4ConvertProgress }}%</span>
@@ -1047,7 +1047,7 @@
             </svg>
           </button>
 
-          <button class="material-btn-export" :class="{'mp4-btn-converting': isConvertingMP4}"
+          <button class="btn-large-secondary" :class="{'mp4-btn-converting': isConvertingMP4}"
             :data-progress="mp4ConvertProgress" :disabled="isConvertingMP4" @click="startLottieToDualChannelConversion">
             <template v-if="isConvertingMP4">
               <span class="mp4-progress-text">{{ mp4ConvertProgress }}%</span>
@@ -1162,7 +1162,7 @@
           </button>
 
           <!-- 转换按钮 -->
-          <button class="material-btn-export" :class="{'svga-btn-converting': isConvertingSVGA}"
+          <button class="btn-large-secondary" :class="{'svga-btn-converting': isConvertingSVGA}"
             :data-progress="svgaConvertProgress" :disabled="isConvertingSVGA" @click="startSVGAConversion">
             <template v-if="isConvertingSVGA">
               <span class="svga-progress-text">{{ svgaConvertProgress }}%</span>
@@ -1213,8 +1213,8 @@
           <!-- 如果已压缩过，显示撤销按钮 -->
           <button v-if="hasCompressedMaterials" class="btn-undo" @click="undoCompressMaterials"
             :disabled="isCompressingMaterials">撤销</button>
-          <button class="btn-primary" @click="closeCompressModal" :disabled="isCompressingMaterials">取消</button>
-          <button class="btn-secondary" @click="startCompressAndExport"
+          <button class="btn-large-primary" @click="closeCompressModal" :disabled="isCompressingMaterials">取消</button>
+          <button class="btn-large-secondary" @click="startCompressAndExport"
             :disabled="isCompressingMaterials">压缩并导出</button>
         </div>
       </div>
@@ -1237,8 +1237,8 @@
           </div>
         </div>
         <div class="center-modal-footer">
-          <button class="btn-primary" @click="cancelEditFrame">取消</button>
-          <button class="btn-secondary" @click="confirmEditFrame">确定</button>
+          <button class="btn-large-primary" @click="cancelEditFrame">取消</button>
+          <button class="btn-large-secondary" @click="confirmEditFrame">确定</button>
         </div>
       </div>
     </div>
@@ -1276,8 +1276,8 @@
           </div>
         </div>
         <div class="center-modal-footer">
-          <button class="btn-primary" @click="cancelConvertVideo">否</button>
-          <button class="btn-secondary" @click="confirmConvertVideo" :disabled="isConverting">是</button>
+          <button class="btn-large-primary" @click="cancelConvertVideo">否</button>
+          <button class="btn-large-secondary" @click="confirmConvertVideo" :disabled="isConverting">是</button>
         </div>
       </div>
     </div>
@@ -1383,7 +1383,7 @@
           </button>
 
           <!-- 转换按钮 -->
-          <button class="material-btn-export" :class="{'svga-btn-converting': isConvertingMp4ToSvga}"
+          <button class="btn-large-secondary" :class="{'svga-btn-converting': isConvertingMp4ToSvga}"
             :data-progress="mp4ToSvgaProgress" :disabled="isConvertingMp4ToSvga" @click="startMp4ToSvgaConversion">
             <template v-if="isConvertingMp4ToSvga">
               <span class="svga-progress-text">{{ mp4ToSvgaProgress }}%</span>
@@ -1489,7 +1489,7 @@
           </button>
 
           <!-- 转换按钮 -->
-          <button class="material-btn-export" :class="{'svga-btn-converting': isConvertingLottieToSvga}"
+          <button class="btn-large-secondary" :class="{'svga-btn-converting': isConvertingLottieToSvga}"
             :data-progress="lottieToSvgaProgress" :disabled="isConvertingLottieToSvga"
             @click="startLottieToSvgaConversion">
             <template v-if="isConvertingLottieToSvga">
@@ -1596,7 +1596,7 @@
           </button>
 
           <!-- 转换按钮 -->
-          <button class="material-btn-export" :class="{'svga-btn-converting': isConvertingFramesToSvga}"
+          <button class="btn-large-secondary" :class="{'svga-btn-converting': isConvertingFramesToSvga}"
             :data-progress="framesToSvgaProgress" :disabled="isConvertingFramesToSvga"
             @click="startFramesToSvgaConversion">
             <template v-if="isConvertingFramesToSvga">
@@ -1728,7 +1728,7 @@
           </button>
 
           <!-- 转换按钮 -->
-          <button class="material-btn-export" :class="{'mp4-btn-converting': isConvertingFramesToDualChannel}"
+          <button class="btn-large-secondary" :class="{'mp4-btn-converting': isConvertingFramesToDualChannel}"
             :data-progress="framesToDualChannelProgress" :disabled="isConvertingFramesToDualChannel"
             @click="startFramesToDualChannelConversion">
             <template v-if="isConvertingFramesToDualChannel">
@@ -1848,7 +1848,7 @@
           </button>
 
           <!-- 导出按钮 -->
-          <button class="material-btn-export" :class="{'svga-btn-converting': isExportingGIF}"
+          <button class="btn-large-secondary" :class="{'svga-btn-converting': isExportingGIF}"
             :data-progress="gifExportProgress" :disabled="isExportingGIF" @click="startGifExport">
             <template v-if="isExportingGIF">
               <span class="svga-progress-text">{{ gifExportProgress }}%</span>
@@ -1911,7 +1911,7 @@
         <!-- 底部按钮 -->
         <div class="chromakey-panel-footer">
           <!-- 确定按钮 -->
-          <button class="material-btn-export" @click="applyChromaKey">
+          <button class="btn-large-secondary" @click="applyChromaKey">
             确定
           </button>
         </div>
@@ -1938,7 +1938,7 @@
           </div>
         </div>
         <div class="center-modal-footer">
-          <button class="btn-secondary" @click="confirmFramesFps">确定</button>
+          <button class="btn-large-secondary" @click="confirmFramesFps">确定</button>
         </div>
       </div>
     </div>
