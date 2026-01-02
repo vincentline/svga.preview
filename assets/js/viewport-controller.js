@@ -89,8 +89,12 @@
     this.offsetX = 0;    // 水平偏移（像素）
     this.offsetY = 0;    // 垂直偏移（像素）
 
-    // 视图模式状态：'fit-height' 适应屏幕高度 | '1:1' 原始尺寸
-    this.viewMode = 'fit-height';
+    // 交互状态
+    this.isDragging = false;
+    this.dragStartX = 0;
+    this.dragStartY = 0;
+    this.dragStartOffsetX = 0;
+    this.dragStartOffsetY = 0;
 
     // 配置参数
     this.headerHeight = options.headerHeight || 36;                // 顶部标题栏高度
@@ -100,6 +104,82 @@
     this.maxScale = options.maxScale || 5;                             // 最大缩放 500%
     this.zoomStep = options.zoomStep || 0.1;                           // 每次缩放 10%
   }
+
+  /**
+   * 处理鼠标按下事件
+   * @param {MouseEvent} event 
+   */
+  ViewportController.prototype.handleMouseDown = function (event) {
+    // 支持鼠标左键(0)和中键(1)拖动画布
+    if (event.button !== 0 && event.button !== 1) return;
+
+    event.preventDefault();
+    this.isDragging = true;
+    this.dragStartX = event.clientX;
+    this.dragStartY = event.clientY;
+    this.dragStartOffsetX = this.offsetX;
+    this.dragStartOffsetY = this.offsetY;
+
+    // 触发回调以更新 cursor 状态
+    this.onViewportChange(this.scale, this.offsetX, this.offsetY, this.isDragging);
+  };
+
+  /**
+   * 处理鼠标移动事件
+   * @param {MouseEvent} event 
+   */
+  ViewportController.prototype.handleMouseMove = function (event) {
+    if (!this.isDragging) return;
+
+    event.preventDefault();
+    var dx = event.clientX - this.dragStartX;
+    var dy = event.clientY - this.dragStartY;
+    var newOffsetX = this.dragStartOffsetX + dx;
+    var newOffsetY = this.dragStartOffsetY + dy;
+
+    this.setOffset(newOffsetX, newOffsetY, true);
+  };
+
+  /**
+   * 处理鼠标松开/离开事件
+   * @param {MouseEvent} event 
+   */
+  ViewportController.prototype.handleMouseUp = function (event) {
+    if (this.isDragging) {
+      this.isDragging = false;
+      // 触发回调以更新 cursor 状态
+      this.onViewportChange(this.scale, this.offsetX, this.offsetY, this.isDragging);
+    }
+  };
+
+  /**
+   * 处理滚轮事件
+   * @param {WheelEvent} event 
+   */
+  ViewportController.prototype.handleWheel = function (event) {
+    event.preventDefault();
+
+    var delta = event.deltaY || event.wheelDelta;
+
+    // 滚轮缩放（不区分 Ctrl 键）
+    // 使用 zoomIn/zoomOut 方法
+    // 这些方法只改变 scale，不调整 offset，避免画面跳动
+    if (delta > 0) {
+      this.zoomOut();
+    } else {
+      this.zoomIn();
+    }
+  };
+
+  /**
+   * 销毁控制器
+   */
+  ViewportController.prototype.destroy = function () {
+    // 清理引用
+    this.options = null;
+    this.getContentSize = null;
+    this.onViewportChange = null;
+  };
 
   /**
    * 计算初始缩放比例
@@ -183,7 +263,7 @@
 
     // 默认触发回调，除非明确传入 false
     if (notify !== false) {
-      this.onViewportChange(this.scale, this.offsetX, this.offsetY);
+      this.onViewportChange(this.scale, this.offsetX, this.offsetY, this.isDragging);
     }
   };
 
@@ -211,7 +291,7 @@
 
     // 默认触发回调，除非明确传入 false
     if (notify !== false) {
-      this.onViewportChange(this.scale, this.offsetX, this.offsetY);
+      this.onViewportChange(this.scale, this.offsetX, this.offsetY, this.isDragging);
     }
   };
 
@@ -285,7 +365,7 @@
     this.offsetY = viewCenterY - contentHeight / 2;
 
     // 触发回调，通知主应用更新 Vue 数据
-    this.onViewportChange(this.scale, this.offsetX, this.offsetY);
+    this.onViewportChange(this.scale, this.offsetX, this.offsetY, this.isDragging);
   };
 
   /**
@@ -364,7 +444,7 @@
     }
 
     this.scale = newScale;
-    this.onViewportChange(this.scale, this.offsetX, this.offsetY);
+    this.onViewportChange(this.scale, this.offsetX, this.offsetY, this.isDragging);
   };
 
   /**
@@ -536,6 +616,8 @@
    * }
    */
   ViewportController.prototype.destroy = function () {
+    // 清理引用
+    this.options = null;
     this.getContentSize = null;
     this.onViewportChange = null;
   };
