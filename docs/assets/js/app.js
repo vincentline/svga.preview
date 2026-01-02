@@ -29,9 +29,8 @@
  *    注：所有居中弹窗使用统一样式 .center-modal-*
  * 
  * 5. 【库加载管理器】
- *    - getLibraryConfig() - 库配置
- *    - loadLibrary() - 加载库
- *    - loadScript() - 通用脚本加载器
+ *    - loadLibrary() - 加载库（统一入口）
+ *    - preloadLibraries() - 预加载非关键库
  * 
  * 6. 【文件加载与拖拽上传】
  *    - handleFile() - 文件分发器
@@ -91,7 +90,15 @@
 
 // 启动应用：先加载Vue和SVGA播放器，再创建Vue实例
 function initApp() {
-  new Vue({
+  console.log('[App] 初始化开始');
+
+  // 捕获全局错误
+  Vue.config.errorHandler = function (err, vm, info) {
+    console.error('[Vue Error] ' + err.toString(), info);
+    console.error(err);
+  };
+
+  var vueInstance = new Vue({
     el: '#app',
     data: function () {
       return {
@@ -783,6 +790,26 @@ function initApp() {
         this.$refs.fileInput.click();
       },
 
+      /**
+       * 重新上传SVGA文件（用于替换当前文件）
+       * 对应 index.html 中的 handleReuploadSVGA
+       */
+      handleReuploadSVGA: function (event) {
+        var files = event.target.files;
+        if (!files || files.length === 0) return;
+
+        var file = files[0];
+        // 复用现有的文件处理逻辑，但强制认为是SVGA
+        if (file.name.toLowerCase().endsWith('.svga')) {
+          this.handleFile(file);
+        } else {
+          alert('请选择有效的 SVGA 文件');
+        }
+
+        // 清空 input 值，允许重复选择同一文件
+        event.target.value = '';
+      },
+
       onFileSelect: function (event) {
         var files = event.target.files;
         if (!files || !files.length) return;
@@ -1311,35 +1338,7 @@ function initApp() {
         video.load();
       },
 
-      /* 模块切换 */
-      switchModule: function (key) {
-        this.currentModule = key;
-      },
 
-      triggerReuploadSVGA: function () {
-        // 触发隐藏的文件输入框
-        if (this.$refs.reuploadSvgaInput) {
-          this.$refs.reuploadSvgaInput.click();
-        }
-      },
-
-      handleReuploadSVGA: function (event) {
-        var file = event.target.files[0];
-        if (!file) return;
-
-        // 检查文件格式
-        if (!file.name.toLowerCase().endsWith('.svga')) {
-          alert('请选择 .svga 文件');
-          event.target.value = ''; // 清空输入
-          return;
-        }
-
-        // 使用统一的文件处理流程
-        this.handleFile(file);
-
-        // 清空输入，允许重复选择同一文件
-        event.target.value = '';
-      },
 
       // 触发更换预览文件（支持SVGA和MP4）
       triggerChangePreviewFile: function () {
@@ -1600,14 +1599,19 @@ function initApp() {
         });
       },
 
-      initEmptyStateSvgaPlayer: function () {
+      initEmptyStateSvgaPlayer: function (retryCount) {
+        if (typeof retryCount === 'undefined') retryCount = 0;
         var _this = this;
         var container = this.$refs.emptyStateSvgaContainer;
         if (!container) {
+          if (retryCount > 50) {
+            console.warn('[App] initEmptyStateSvgaPlayer: 容器未找到，停止重试');
+            return;
+          }
           // 如果容器还没有渲染，等待DOM更新后重试
-          this.$nextTick(function () {
-            _this.initEmptyStateSvgaPlayer();
-          });
+          setTimeout(function () {
+            _this.initEmptyStateSvgaPlayer(retryCount + 1);
+          }, 100);
           return;
         }
 
@@ -2756,7 +2760,9 @@ function initApp() {
           try {
             this.svgaPlayer.stopAnimation();
             this.svgaPlayer.clear();
-          } catch (e) { }
+          } catch (e) {
+            console.warn('SVGA播放器清理失败:', e);
+          }
           this.svgaPlayer = null;
         }
 
@@ -2765,7 +2771,9 @@ function initApp() {
           try {
             this.svgaAudioPlayer.stop();
             this.svgaAudioPlayer.unload();
-          } catch (e) { }
+          } catch (e) {
+            console.warn('SVGA音频播放器清理失败:', e);
+          }
           this.svgaAudioPlayer = null;
         }
 
@@ -2921,13 +2929,21 @@ function initApp() {
             // 变速时，进度基于变速后时间轴的position（匀速）
             if (_this.speedRemapConfig.enabled && _this.speedRemapConfig.keyframes.length >= 2) {
               var keyframes = _this.speedRemapConfig.keyframes;
+              var totalFrames = _this.speedRemapConfig.originalTotalFrames || 1;
 
-              // 根据当前帧号，反向计算在变速后时间轴上的position
+              // 优化：合并两个循环，一次遍历同时完成位置计算和区间查找
               var remappedPosition = 0;
+              var segmentIndex = -1;
+
               for (var i = 0; i < keyframes.length - 1; i++) {
                 var k1 = keyframes[i];
                 var k2 = keyframes[i + 1];
+
                 if (currentFrame >= k1.originalFrame && currentFrame <= k2.originalFrame) {
+                  // 找到了当前帧所在的区间
+                  segmentIndex = i;
+
+                  // 同时计算remappedPosition
                   var frameDelta = k2.originalFrame - k1.originalFrame;
                   if (frameDelta > 0) {
                     var frameProgress = (currentFrame - k1.originalFrame) / frameDelta;
@@ -2935,39 +2951,19 @@ function initApp() {
                   } else {
                     remappedPosition = k1.position;
                   }
-                  break;
+
+                  break; // 找到区间后立即退出循环
                 }
               }
 
-              // 变速后总时长 = 原始时长 * 最后position（因为重新采样后帧数变化）
+              // 更新进度显示
               var lastKeyframe = keyframes[keyframes.length - 1];
               var remappedDuration = video.duration * lastKeyframe.position;
-
               _this.progress = (remappedPosition / lastKeyframe.position) * 100;
               _this.currentTime = remappedPosition * video.duration;
               _this.totalDuration = remappedDuration;
-            } else {
-              _this.currentTime = video.currentTime;
-              _this.totalDuration = video.duration;
-              _this.progress = (video.currentTime / video.duration) * 100;
-            }
-            _this.currentFrame = currentFrame;
 
-            // 变速支持：根据当前帧号动态调整播放速度
-            if (_this.speedRemapConfig.enabled && _this.speedRemapConfig.keyframes.length >= 2) {
-              var keyframes = _this.speedRemapConfig.keyframes;
-              var totalFrames = _this.speedRemapConfig.originalTotalFrames || 1;
-
-              // 查找当前帧所在区间（缓存优化）
-              var segmentIndex = -1;
-              for (var i = 0; i < keyframes.length - 1; i++) {
-                if (currentFrame >= keyframes[i].originalFrame && currentFrame <= keyframes[i + 1].originalFrame) {
-                  segmentIndex = i;
-                  break;
-                }
-              }
-
-              // 只在区间变化时重新计算速度
+              // 只在区间变化时重新计算并更新播放速度
               if (segmentIndex !== currentSegmentIndex && segmentIndex !== -1) {
                 currentSegmentIndex = segmentIndex;
                 var k1 = keyframes[segmentIndex];
@@ -2977,20 +2973,23 @@ function initApp() {
 
                 if (positionDelta > 0 && frameDelta > 0) {
                   currentSpeed = frameDelta / (positionDelta * totalFrames);
-                  currentSpeed = Math.max(0.25, Math.min(10, currentSpeed));
+                  currentSpeed = Math.max(0.1, Math.min(12, currentSpeed));
+
+                  // 区间变化时直接更新playbackRate
+                  video.playbackRate = currentSpeed;
                 }
               }
-
-              // 只在速度变化时更新playbackRate
-              if (Math.abs(video.playbackRate - currentSpeed) > 0.01) {
-                video.playbackRate = currentSpeed;
-              }
             } else {
+              _this.currentTime = video.currentTime;
+              _this.totalDuration = video.duration;
+              _this.progress = (video.currentTime / video.duration) * 100;
+
               // 未启用变速时恢复正常速度
               if (video.playbackRate !== 1) {
                 video.playbackRate = 1;
               }
             }
+            _this.currentFrame = currentFrame;
           }
 
           if (_this.isPlaying) {
@@ -3616,21 +3615,7 @@ function initApp() {
         var processedCount = 0;
         var totalBytes = 0;
 
-        // 构建 imageKey -> layout 的映射（注意：layout仅用于显示信息，不用于内存计算）
-        var imageLayoutMap = {};
-        if (videoItem.sprites && videoItem.sprites.length > 0) {
-          videoItem.sprites.forEach(function (sprite) {
-            if (sprite.imageKey && sprite.frames && sprite.frames.length > 0) {
-              // 找到第一个有layout的帧
-              for (var i = 0; i < sprite.frames.length; i++) {
-                if (sprite.frames[i].layout) {
-                  imageLayoutMap[sprite.imageKey] = sprite.frames[i].layout;
-                  break;
-                }
-              }
-            }
-          });
-        }
+
         imageKeys.forEach(function (imageKey) {
           var imgData = videoItem.images[imageKey];
           var previewUrl = '';
@@ -4419,7 +4404,9 @@ function initApp() {
         this.openRightPanel('showGifPanel');
 
         // 预加载GIF.js库
-        this.loadLibrary('gif', true).catch(function () { });
+        this.loadLibrary('gif', true).catch(function (error) {
+          console.warn('[GIF库预加载] 失败，将在需要时重新加载:', error);
+        });
       },
 
       /**
@@ -5327,6 +5314,8 @@ function initApp() {
        * 确认变速配置
        */
       confirmSpeedRemap: function () {
+        var _this = this;
+
         // 检查是否有位置变化（非线性映射）
         var keyframes = this.speedRemapConfig.keyframes;
         var hasSpeedChange = keyframes.length > 2; // 有中间K帧
@@ -5338,13 +5327,72 @@ function initApp() {
           hasSpeedChange = (start.position !== 0 || end.position !== 1);
         }
 
+        // 检查速度范围，如果超出范围则自动调整
+        var hasOutOfRange = false;
+        var MIN_SPEED = 0.1;
+        var MAX_SPEED = 12;
+        var totalFrames = this.speedRemapConfig.originalTotalFrames || 1;
+
+        if (hasSpeedChange && keyframes.length >= 2) {
+          // 检查每个区间的速度
+          for (var i = 0; i < keyframes.length - 1; i++) {
+            var k1 = keyframes[i];
+            var k2 = keyframes[i + 1];
+            var frameDelta = k2.originalFrame - k1.originalFrame;
+            var positionDelta = k2.position - k1.position;
+
+            if (positionDelta > 0 && frameDelta > 0) {
+              var speed = frameDelta / (positionDelta * totalFrames);
+
+              if (speed < MIN_SPEED || speed > MAX_SPEED) {
+                hasOutOfRange = true;
+
+                // 调整K帧位置以使速度在范围内
+                var targetSpeed = Math.max(MIN_SPEED, Math.min(MAX_SPEED, speed));
+                var newPositionDelta = frameDelta / (targetSpeed * totalFrames);
+
+                // 调整k2及后续所有K帧的position
+                var positionShift = newPositionDelta - positionDelta;
+                for (var j = i + 1; j < keyframes.length; j++) {
+                  keyframes[j].position += positionShift;
+                }
+              }
+            }
+          }
+        }
+
         this.speedRemapConfig.enabled = hasSpeedChange;
         this.showSpeedRemapEditor = false;
         this.selectedKeyframeIndex = -1;
 
-        if (hasSpeedChange) {
+        // 显示提示
+        if (hasOutOfRange) {
+          this.showToast('超出变速范围' + MIN_SPEED + '-' + MAX_SPEED + '，已自动调整为范围内速度');
+        } else if (hasSpeedChange) {
           this.showToast('变速配置已应用');
         }
+
+        if (hasSpeedChange) {
+          // 用户编辑了变速：从头开始播放
+
+          // 暂停当前播放
+          if (this.isPlaying) {
+            this.togglePlay();
+          }
+
+          // 跳转到0位置
+          if (this.playerController) {
+            this.playerController.seekTo(0);
+          }
+
+          // 延迟后开始播放
+          setTimeout(function () {
+            if (!_this.isPlaying) {
+              _this.togglePlay();
+            }
+          }, 100);
+        }
+        // 如果没有变速，只是关闭浮层（已经执行了 this.showSpeedRemapEditor = false）
       },
 
       /**
@@ -5662,14 +5710,18 @@ function initApp() {
           if (savedQuality !== null) {
             this.mp4Config.quality = parseInt(savedQuality);
           }
-        } catch (e) { }
+        } catch (e) {
+          console.warn('读取MP4配置失败:', e);
+        }
 
         // 使用统一的右侧弹窗管理
         this.openRightPanel('showMP4Panel');
 
         // 预加载FFmpeg库（高优先级插队）
         if (!this.libraryLoader.loadedLibs['ffmpeg']) {
-          this.loadLibrary('ffmpeg', true).catch(function () { });
+          this.loadLibrary('ffmpeg', true).catch(function (error) {
+            console.warn('FFmpeg库预加载失败:', error);
+          });
         }
       },
 
@@ -5713,7 +5765,9 @@ function initApp() {
           if (savedQuality !== null) {
             this.mp4DualChannelConfig.quality = parseInt(savedQuality);
           }
-        } catch (e) { }
+        } catch (e) {
+          console.warn('读取MP4双通道配置失败:', e);
+        }
 
         this.openRightPanel('showMp4ToDualChannelPanel');
 
@@ -6106,11 +6160,17 @@ function initApp() {
         // 清理文件
         for (var i = 0; i < jpegFrames.length; i++) {
           var frameName = 'frame' + String(i).padStart(6, '0') + '.jpg';
-          try { ffmpeg.FS('unlink', frameName); } catch (e) { }
+          try { ffmpeg.FS('unlink', frameName); } catch (e) {
+            console.warn('清理临时帧文件失败:', frameName, e);
+          }
         }
-        try { ffmpeg.FS('unlink', 'output.mp4'); } catch (e) { }
+        try { ffmpeg.FS('unlink', 'output.mp4'); } catch (e) {
+          console.warn('清理输出文件失败:', e);
+        }
         if (hasAudio) {
-          try { ffmpeg.FS('unlink', 'original.mp4'); } catch (e) { }
+          try { ffmpeg.FS('unlink', 'original.mp4'); } catch (e) {
+            console.warn('清理原始音频文件失败:', e);
+          }
         }
 
         return new Blob([data.buffer], { type: 'video/mp4' });
@@ -6418,7 +6478,9 @@ function initApp() {
         this.openRightPanel('showSVGAPanel');
 
         // 预加载protobuf和pako库
-        this.loadLibrary(['protobuf', 'pako'], true).catch(function () { });
+        this.loadLibrary(['protobuf', 'pako'], true).catch(function (error) {
+          console.warn('protobuf/pako库预加载失败:', error);
+        });
       },
 
       /**
@@ -6476,7 +6538,9 @@ function initApp() {
         this.openRightPanel('showMp4ToSvgaPanel');
 
         // 预加载protobuf和pako库
-        this.loadLibrary(['protobuf', 'pako'], true).catch(function () { });
+        this.loadLibrary(['protobuf', 'pako'], true).catch(function (error) {
+          console.warn('protobuf/pako库预加载失败:', error);
+        });
       },
 
       /**
@@ -6586,7 +6650,9 @@ function initApp() {
             try {
               await this.loadFFmpeg();
               audios = await this.extractAudioFromMp4(this.mp4.file, frames.length, this.mp4ToSvgaConfig.fps);
-            } catch (e) { }
+            } catch (e) {
+              console.warn('[MP4转SVGA] 音频提取失败，将导出无音频的SVGA:', e);
+            }
             if (this.mp4ToSvgaCancelled) return;
           }
 
@@ -6776,7 +6842,9 @@ function initApp() {
         this.openRightPanel('showLottieToSvgaPanel');
 
         // 预加载protobuf和pako库
-        this.loadLibrary(['protobuf', 'pako'], true).catch(function () { });
+        this.loadLibrary(['protobuf', 'pako'], true).catch(function (error) {
+          console.warn('protobuf/pako库预加载失败:', error);
+        });
       },
 
       closeLottieToSvgaPanel: function () {
@@ -6890,7 +6958,9 @@ function initApp() {
 
           try {
             localStorage.setItem('lottieToSvgaConfig', JSON.stringify({ quality: quality }));
-          } catch (e) { }
+          } catch (e) {
+            console.warn('保存Lottie转SVGA配置失败:', e);
+          }
 
           setTimeout(function () {
             _this.isConvertingLottieToSvga = false;
@@ -7006,7 +7076,9 @@ function initApp() {
         this.openRightPanel('showFramesToSvgaPanel');
 
         // 预加载protobuf和pako库
-        this.loadLibrary(['protobuf', 'pako'], true).catch(function () { });
+        this.loadLibrary(['protobuf', 'pako'], true).catch(function (error) {
+          console.warn('protobuf/pako库预加载失败:', error);
+        });
       },
 
       closeFramesToSvgaPanel: function () {
@@ -7461,7 +7533,9 @@ function initApp() {
             try {
               await this.loadFFmpeg();
               audios = await this.extractAudioFromMp4(this.yyeva.file, frameData.frames.length, this.svgaConfig.fps);
-            } catch (e) { }
+            } catch (e) {
+              console.warn('[双通道MP4转SVGA] 音频提取失败，将导出无音频的SVGA:', e);
+            }
             if (this.svgaConvertCancelled) throw new Error('用户取消转换');
           }
 
@@ -7659,11 +7733,6 @@ function initApp() {
         }
       },
 
-      previewMP4Effect: function () {
-        // TODO: 实现预览效果功能
-        alert('预览效果功能待实现');
-      },
-
       onMP4WidthChange: function () {
         // 保持比例，修改高度
         var videoItem = this.originalVideoItem;
@@ -7749,7 +7818,9 @@ function initApp() {
         try {
           localStorage.setItem('mp4_quality', this.mp4Config.quality);
           localStorage.setItem('mp4_fps', this.mp4Config.fps);
-        } catch (e) { }
+        } catch (e) {
+          console.warn('保存MP4配置失败:', e);
+        }
 
         this.isConvertingMP4 = true;
         this.mp4ConvertProgress = 0;
@@ -8982,7 +9053,7 @@ function initApp() {
 
       this.initSvgaPlayer();
       this.initEmptyStateSvgaPlayer();
-      this.initViewportController();
+      // this.initViewportController(); // 临时注释，排查问题
 
       var savedTheme = localStorage.getItem('theme');
       if (savedTheme === 'dark') {
@@ -8999,17 +9070,37 @@ function initApp() {
           }
         }
       });
+
+      // 全局监听拖拽事件，用于显示覆盖层
+      var dragCounter = 0;
+      document.body.addEventListener('dragenter', function (e) {
+        dragCounter++;
+        _this.dropHover = true;
+      });
+      document.body.addEventListener('dragleave', function (e) {
+        dragCounter--;
+        if (dragCounter === 0) {
+          _this.dropHover = false;
+        }
+      });
+      document.body.addEventListener('drop', function () {
+        dragCounter = 0;
+      });
       // 加载 help.md
       this.loadHelpContent();
 
       // 注册库加载进度回调（更新响应式数据）
-      window.libraryLoader.onProgress(function (currentLib) {
-        if (currentLib) {
-          _this.loadingLibraryInfo = { name: currentLib.name, progress: currentLib.progress };
-        } else {
-          _this.loadingLibraryInfo = null;
-        }
-      });
+      if (window.libraryLoader) {
+        window.libraryLoader.onProgress(function (currentLib) {
+          if (currentLib) {
+            _this.loadingLibraryInfo = { name: currentLib.name, progress: currentLib.progress };
+          } else {
+            _this.loadingLibraryInfo = null;
+          }
+        });
+      } else {
+        console.warn('libraryLoader not found');
+      }
 
       // 空格键控制播放/暂停
       document.addEventListener('keydown', function (e) {
@@ -9034,17 +9125,6 @@ function initApp() {
       // 预加载非关键库
       this.preloadLibraries();
     }
-  });
-}
-
-// 动态加载脚本
-function loadScript(url) {
-  return new Promise(function (resolve, reject) {
-    var script = document.createElement('script');
-    script.src = url;
-    script.onload = resolve;
-    script.onerror = function () { reject(new Error('加载失败: ' + url)); };
-    document.head.appendChild(script);
   });
 }
 

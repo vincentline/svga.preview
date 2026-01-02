@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>调试测试</title>
+</head>
+
+<body>
+    <h1>测试页面</h1>
+    <div id="output"></div>
+
+    <script>
+        console.log('=== 测试1: 基础JS执行 ===');
+        document.getElementById('output').innerHTML = '基础JS正常<br>';
+    </script>
+
+    <script src="assets/js/library-loader.js"></script>
+    <script>
+        console.log('=== 测试2: library-loader.js 加载 ===');
+        console.log('libraryLoader 存在:', typeof window.libraryLoader);
+        document.getElementById('output').innerHTML += 'library-loader: ' + (typeof window.libraryLoader) + '<br>';
+    </script>
+
+    <script src="assets/js/viewport-controller.js"></script>
+    <script>
+        console.log('=== 测试3: viewport-controller.js 加载 ===');
+        console.log('ViewportController 存在:', typeof window.ViewportController);
+        document.getElementById('output').innerHTML += 'ViewportController: ' + (typeof window.ViewportController) + '<br>';
+    </script>
+
+    <script src="assets/js/player-controller.js"></script>
+    <script>
+        console.log('=== 测试4: player-controller.js 加载 ===');
+        console.log('PlayerController 存在:', typeof window.PlayerController);
+        document.getElementById('output').innerHTML += 'PlayerController: ' + (typeof window.PlayerController) + '<br>';
+    </script>
+
+    <script src="assets/js/app.js"></script>
+    <script>
+        console.log('=== 测试5: app.js 加载 ===');
+        console.log('initApp 存在:', typeof window.initApp);
+        document.getElementById('output').innerHTML += 'app.js 加载完成<br>';
+        console.log('=== 所有测试完成 ===');
+    </script>
+</body>
+
+</html>

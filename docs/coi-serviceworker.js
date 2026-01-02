@@ -88,7 +88,7 @@ if (typeof window === 'undefined') {
     'use strict';
 
     // 检查是否已经跨域隔离
-    if (window.crossOriginIsolated) {
+    if (typeof window !== 'undefined' && window.crossOriginIsolated) {
       console.log('[COI] Already cross-origin isolated');
       return;
     }

@@ -1,85 +1,89 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-  <head>
-    <meta charset="utf-8" />
-    <title>404 - 页面未找到 | SVGA、双通道MP4、Lottie动画在线预览</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="SVGA、双通道MP4、Lottie动画在线预览工具" />
-    
-    <!-- COI Service Worker for SharedArrayBuffer support on GitHub Pages -->
-    <script src="coi-serviceworker.js?v=5"></script>
 
-    <!-- 外部样式表（优先加载） -->
-    <link rel="stylesheet" href="assets/css/styles.css" />
-    
-    <style>
+<head>
+  <meta charset="utf-8" />
+  <title>404 - 页面未找到 | SVGA、双通道MP4、Lottie动画在线预览</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="SVGA、双通道MP4、Lottie动画在线预览工具" />
+
+  <!-- COI Service Worker for SharedArrayBuffer support on GitHub Pages -->
+  <script src="coi-serviceworker.js?v=5"></script>
+
+  <!-- 外部样式表（优先加载） -->
+  <link rel="stylesheet" href="assets/css/styles.css" />
+
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+      background: var(--bg-color, #f5f5f5);
+    }
+
+    .error-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .error-code {
+      font-size: 120px;
+      font-weight: bold;
+      color: #666;
+      margin: 0;
+      line-height: 1;
+    }
+
+    .error-message {
+      font-size: 24px;
+      color: #999;
+      margin: 20px 0 40px;
+    }
+
+    .home-button {
+      display: inline-block;
+      padding: 12px 32px;
+      background: #007bff;
+      color: white;
+      text-decoration: none;
+      border-radius: 6px;
+      font-size: 16px;
+      transition: background 0.3s;
+    }
+
+    .home-button:hover {
+      background: #0056b3;
+    }
+
+    /* 暗黑模式支持 */
+    @media (prefers-color-scheme: dark) {
       body {
-        margin: 0;
-        padding: 0;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
-        background: var(--bg-color, #f5f5f5);
+        background: #1a1a1a;
       }
-      
-      .error-container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        min-height: 100vh;
-        padding: 20px;
-        text-align: center;
-      }
-      
+
       .error-code {
-        font-size: 120px;
-        font-weight: bold;
-        color: #666;
-        margin: 0;
-        line-height: 1;
-      }
-      
-      .error-message {
-        font-size: 24px;
         color: #999;
-        margin: 20px 0 40px;
       }
-      
-      .home-button {
-        display: inline-block;
-        padding: 12px 32px;
-        background: #007bff;
-        color: white;
-        text-decoration: none;
-        border-radius: 6px;
-        font-size: 16px;
-        transition: background 0.3s;
+
+      .error-message {
+        color: #666;
       }
-      
-      .home-button:hover {
-        background: #0056b3;
-      }
-      
-      /* 暗黑模式支持 */
-      @media (prefers-color-scheme: dark) {
-        body {
-          background: #1a1a1a;
-        }
-        
-        .error-code {
-          color: #999;
-        }
-        
-        .error-message {
-          color: #666;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <div class="error-container">
-      <h1 class="error-code">404</h1>
-      <p class="error-message">页面不存在</p>
-      <a href="./index.html" class="home-button">返回首页</a>
-    </div>
-  </body>
+    }
+  </style>
+</head>
+
+<body>
+  <div class="error-container">
+    <h1 class="error-code">404</h1>
+    <p class="error-message">页面不存在</p>
+    <a href="./index.html" class="home-button">返回首页</a>
+  </div>
+</body>
+
 </html>

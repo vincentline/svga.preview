@@ -380,8 +380,8 @@ function validateNodePosition(draggedNode, newFrame) {
 }
 
 // 速度范围限制
-const MIN_SPEED = 0.5;  // 最小0.5倍速
-const MAX_SPEED = 5.0;  // 最大5倍速
+const MIN_SPEED = 0.1;  // 最小0.1倍速
+const MAX_SPEED = 12;   // 最大12倍速
 ```
 
 **2. 吸附功能(可选)**:

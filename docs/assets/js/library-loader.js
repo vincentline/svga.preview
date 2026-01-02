@@ -451,7 +451,9 @@
     setTimeout(function () {
       // 逐个加载（低优先级）
       toLoad.forEach(function (libKey) {
-        _this.load(libKey, false).catch(function () { });
+        _this.load(libKey, false).catch(function (error) {
+          console.warn('库预加载失败:', libKey, error);
+        });
       });
     }, 1000);
   };

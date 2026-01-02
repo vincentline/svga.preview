@@ -75,6 +75,7 @@
    * @param {Number} [options.minScale=0.1] - 最小缩放比例
    * @param {Number} [options.maxScale=5] - 最大缩放比例
    * @param {Number} [options.zoomStep=0.1] - 每次缩放的步长
+   * @param {HTMLElement} [options.targetElement=null] - 监听事件的目标元素（如viewer容器）
    */
   function ViewportController(options) {
     this.options = options || {};

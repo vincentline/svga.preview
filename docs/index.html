@@ -150,9 +150,8 @@
     <!-- 主页面 -->
     <div class="main-page">
       <!-- 播放区域 -->
-      <div class="viewer-area" :class="{'drag-hover': dropHover}" @dragover.prevent="onDragOver"
-        @dragleave="onDragLeave" @drop.prevent="onDrop" @wheel="onWheel" @mousedown="onMouseDown"
-        @mousemove="onMouseMove" @mouseup="onMouseUp" @mouseleave="onMouseUp">
+      <div class="viewer-area" @wheel="onWheel" @mousedown="onMouseDown" @mousemove="onMouseMove" @mouseup="onMouseUp"
+        @mouseleave="onMouseUp">
         <div class="viewer-container" :style="viewerContainerStyle">
           <!-- 文件名显示（在播放器上方） -->
           <div class="viewer-filename" v-if="!isEmpty && currentFileInfo.name" :style="viewerFilenameStyle">
@@ -574,6 +573,14 @@
 
         <!-- 右侧广告位 -->
         <div class="ad-slot"></div>
+      </div>
+
+      <!-- 全屏拖拽覆盖层（最顶层） -->
+      <div class="drop-overlay" :class="{'show': dropHover}" @dragover.prevent="onDragOver" @dragleave="onDragLeave"
+        @drop.prevent="onDrop">
+        <div class="drop-hint">
+          <div class="drop-hint-text">松开鼠标！</div>
+        </div>
       </div>
     </div>
 
@@ -1942,10 +1949,11 @@
         </div>
       </div>
     </div>
+  </div>
 
-    <!-- 隐藏的文件输入框，用于更换预览文件（支持SVGA和MP4） -->
-    <input type="file" ref="changePreviewFileInput" accept=".svga,.mp4" style="display: none;"
-      @change="handleChangePreviewFile" />
+  <!-- 隐藏的文件输入框，用于更换预览文件（支持SVGA和MP4） -->
+  <input type="file" ref="changePreviewFileInput" accept=".svga,.mp4" style="display: none;"
+    @change="handleChangePreviewFile" />
   </div>
 
   <!-- 双通道图像合成器模块 -->

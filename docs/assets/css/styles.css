@@ -358,15 +358,66 @@ body.dark-mode .help-popup {
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding: 0px 200px 154px;
   position: relative;
 }
 
-.viewer-area.drag-hover {
-  outline: 2px dashed #5b5b5b;
-  /* 拖拽时显示的虚线边框 */
-  outline-offset: -10px;
-  /* 边框向内偏移10px */
+/* 全屏拖拽覆盖层（默认隐藏，拖拽时显示） */
+.drop-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.9);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  /* 默认不阻挡点击 */
+  transition: opacity 0.2s ease;
+}
+
+.drop-overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+  /* 显示时可接收拖拽事件 */
+}
+
+/* 拖拽提示 */
+.drop-hint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  outline: 4px dashed #333333;
+  outline-offset: -80px;
+  border-radius: 100px;
+  width: 100%;
+  height: 100%;
+  /* margin: 60px 24px 24px 24px; */
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.drop-hint-text {
+  font-size: 40px;
+  font-weight: 500;
+  color: #333333;
+}
+
+/* 暗黑模式 */
+body.dark-mode .drop-overlay {
+  background-color: rgba(0, 0, 0, 0.9);
+}
+
+body.dark-mode .drop-hint {
+  outline: 4px dashed #F5F5F5;
+}
+
+body.dark-mode .drop-hint-text {
+  color: #F5F5F5;
 }
 
 /* 播放器容器
@@ -3388,6 +3439,16 @@ body.dark-mode .library-loading-indicator .loading-bar {
 
 /* ==================== Toast提示 ==================== */
 
+/* v-cloak隐藏Vue未加载时的内容 */
+[v-cloak] {
+  display: none;
+}
+
+/* Vue未加载时隐藏Toast（防止闪现） */
+[v-cloak] .toast-container {
+  display: none !important;
+}
+
 .toast-container {
   position: fixed;
   top: 48px;
@@ -3396,17 +3457,6 @@ body.dark-mode .library-loading-indicator .loading-bar {
   transform: translateX(-50%);
   z-index: 9999;
   pointer-events: none;
-  /* 防止初始加载时闪现 */
-  opacity: 0;
-  visibility: hidden;
-}
-
-/* Vue transition激活时显示 */
-.toast-fade-enter-active .toast-container,
-.toast-fade-leave-active .toast-container,
-.toast-fade-enter-to .toast-container,
-.toast-fade-leave-from .toast-container {
-  visibility: visible;
 }
 
 .toast-message {
@@ -3431,18 +3481,32 @@ body.dark-mode .toast-message {
 }
 
 /* Toast淡入淡出动画 */
-.toast-fade-enter-active,
+.toast-fade-enter-active {
+  transition: all 0.3s ease;
+}
+
 .toast-fade-leave-active {
   transition: all 0.3s ease;
 }
 
-.toast-fade-enter-from,
+/* 初始状态：完全透明且在上方 */
+.toast-fade-enter-from {
+  opacity: 0;
+  transform: translateX(-50%) translateY(-10px);
+}
+
+/* 离开状态：淡出到上方 */
 .toast-fade-leave-to {
   opacity: 0;
   transform: translateX(-50%) translateY(-10px);
 }
 
-.toast-fade-enter-to,
+/* 显示状态：完全不透明且在原位 */
+.toast-fade-enter-to {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
 .toast-fade-leave-from {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
@@ -4246,6 +4310,11 @@ body.dark-mode .chromakey-slider::-moz-range-thumb {
 
 /* ==================== 居中弹窗通用样式（统一管理） ==================== */
 
+/* Vue未加载时隐藏弹窗（防止闪现） */
+[v-cloak] .center-modal-overlay {
+  display: none !important;
+}
+
 /* 弹窗遮罩层 */
 .center-modal-overlay {
   position: fixed;
@@ -4253,26 +4322,24 @@ body.dark-mode .chromakey-slider::-moz-range-thumb {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.3);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 10000;
-  /* 初始隐藏状态 */
+  /* 默认隐藏 */
   opacity: 0;
   visibility: hidden;
-  /* 淡入淡出动画 300ms */
-  transition: opacity 0.3s ease, visibility 0.3s;
+  pointer-events: none;
+  /* 动画 */
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* 显示状态 */
 .center-modal-overlay.show {
   opacity: 1;
   visibility: visible;
-}
-
-/* Vue未加载时隐藏弹窗（防止闪现） */
-[v-cloak] .center-modal-overlay {
-  display: none !important;
+  pointer-events: auto;
 }
 
 /* 弹窗容器 */
@@ -4285,20 +4352,19 @@ body.dark-mode .chromakey-slider::-moz-range-thumb {
   max-height: 90vh;
   overflow-y: auto;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-  /* 淡入淡出动画 300ms */
-  opacity: 0;
-  transform: scale(0.95);
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  /* 动画 */
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: scale(0.9) translateY(-20px);
 }
 
+/* 显示状态下的弹窗 */
 .center-modal-overlay.show .center-modal-dialog {
-  opacity: 1;
-  transform: scale(1);
+  transform: scale(1) translateY(0);
 }
 
 body.dark-mode .center-modal-dialog {
   background: #2a2a2a;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
 }
 
 /* 弹窗中的svga-panel-container使用auto（避免侧边弹窗样式干扰） */
