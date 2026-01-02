@@ -124,10 +124,6 @@ function initApp() {
         modeNameFadeOut: false, // 模式名称是否淡出
         modeNameFadeTimer: null, // 模式名称淡出定时器
         dragging: false,
-        dragStartX: 0,
-        dragStartY: 0,
-        dragStartOffsetX: 0,
-        dragStartOffsetY: 0,
 
         // 主题模式
         isDarkMode: false,
@@ -149,8 +145,8 @@ function initApp() {
         currentTime: 0, // 当前播放时间（秒）
         totalDuration: 0, // 总时长（秒）
 
-        // 播放控制器实例
-        playerController: null,
+        // 播放控制器实例（非响应式，在created中初始化）
+        // playerController: null,
 
         // SVGA 状态
         svga: {
@@ -186,12 +182,12 @@ function initApp() {
           displayHeight: 0   // 显示高度
         },
 
-        // 双通道MP4 播放器实例
-        yyevaVideo: null,
-        yyevaCanvas: null,
-        yyevaCtx: null,
-        yyevaAnimationId: null,
-        yyevaObjectUrl: null,
+        // 双通道MP4 播放器实例（非响应式，在created中初始化）
+        // yyevaVideo: null,
+        // yyevaCanvas: null,
+        // yyevaCtx: null,
+        // yyevaAnimationId: null,
+        // yyevaObjectUrl: null,
 
         // Lottie 状态
         lottie: {
@@ -211,11 +207,11 @@ function initApp() {
           animationData: null
         },
 
-        // Lottie 播放器实例
-        lottiePlayer: null,
-        lottieCanvas: null,
-        lottieCtx: null,
-        lottieAnimationId: null,
+        // Lottie 播放器实例（非响应式，在created中初始化）
+        // lottiePlayer: null,
+        // lottieCanvas: null,
+        // lottieCtx: null,
+        // lottieAnimationId: null,
 
         // 普通MP4 状态
         mp4: {
@@ -233,25 +229,25 @@ function initApp() {
           originalHeight: 0
         },
 
-        // 普通MP4 播放器实例
-        mp4Video: null,
-        mp4ObjectUrl: null,
+        // 普通MP4 播放器实例（非响应式，在created中初始化）
+        // mp4Video: null,
+        // mp4ObjectUrl: null,
         mp4HasAudio: false,
 
-        // 播放器实例
-        svgaPlayer: null,
-        svgaParser: null,
-        svgaObjectUrl: null,
+        // 播放器实例（非响应式，在created中初始化）
+        // svgaPlayer: null,
+        // svgaParser: null,
+        // svgaObjectUrl: null,
 
-        // 空状态SVGA播放器
-        emptyStateSvgaPlayer: null,
-        emptyStateSvgaParser: null,
+        // 空状态SVGA播放器（非响应式，在created中初始化）
+        // emptyStateSvgaPlayer: null,
+        // emptyStateSvgaParser: null,
 
         // 素材替换
         showMaterialPanel: false,
         materialList: [],
         materialSearchQuery: '',
-        originalVideoItem: null,
+        // originalVideoItem: null, // 非响应式
         replacedImages: {},            // 用于预览的图片（放大后）
         // 压缩素材的缩放信息（导出时用于替换图片数据）
         // 结构: {imageKey: {scaledWidth, scaledHeight, originalWidth, originalHeight, compressedDataUrl}}
@@ -270,9 +266,9 @@ function initApp() {
         preCompressReplacedImages: null,    // 压缩前的replacedImages（用于撤销）
         preCompressScaleInfo: null,         // 压缩前的compressedScaleInfo（用于撤销）
 
-        // 音频数据（从原始SVGA文件提取）
-        svgaAudioData: null, // { audioKey: Uint8Array }
-        svgaMovieData: null, // protobuf解析后的MovieEntity
+        // 音频数据（从原始SVGA文件提取）- 非响应式
+        // svgaAudioData: null, // { audioKey: Uint8Array }
+        // svgaMovieData: null, // protobuf解析后的MovieEntity
 
         // GIF 导出状态和配置
         showGifPanel: false,
@@ -310,7 +306,7 @@ function initApp() {
         mp4ConvertStage: '', // 'loading' | 'extracting' | 'composing' | 'encoding' | 'done'
         mp4ConvertMessage: '',
         mp4ConvertCancelled: false,
-        ffmpeg: null,
+        // ffmpeg: null, // 非响应式
         ffmpegLoaded: false,
         ffmpegLoading: false,
 
@@ -361,7 +357,7 @@ function initApp() {
         chromaKeySimilarity: 40,
         chromaKeySmoothness: 20,
         chromaKeyApplied: false,
-        chromaKeyRenderLoop: null,
+        // chromaKeyRenderLoop: null, // 非响应式
 
         // 普通MP4转SVGA配置
         showMp4ToSvgaPanel: false,
@@ -467,11 +463,11 @@ function initApp() {
           originalHeight: 0
         },
 
-        // 序列帧播放器实例
-        framesCanvas: null,
-        framesCtx: null,
-        framesAnimationId: null,
-        framesImages: [],        // 预加载的Image对象数组
+        // 序列帧播放器实例（非响应式）
+        // framesCanvas: null,
+        // framesCtx: null,
+        // framesAnimationId: null,
+        // framesImages: [],        // 预加载的Image对象数组
         framesStartTime: 0,      // 播放开始时间戳
         framesPausedAt: 0,       // 暂停时的帧索引
 
@@ -2058,10 +2054,13 @@ function initApp() {
           getContentSize: function () {
             return _this.getContentOriginalSize();
           },
-          onViewportChange: function (scale, offsetX, offsetY) {
+          onViewportChange: function (scale, offsetX, offsetY, isDragging) {
             _this.viewerScale = scale;
             _this.viewerOffsetX = offsetX;
             _this.viewerOffsetY = offsetY;
+            if (typeof isDragging !== 'undefined') {
+              _this.dragging = isDragging;
+            }
             // 同步视图模式状态，用于更新按钮CLASS和TITLE
             _this.viewMode = _this.viewportController.getViewMode();
           },
@@ -3268,51 +3267,23 @@ function initApp() {
        * 注意：所有缩放操作都不会移动播放器位置
        */
       onWheel: function (event) {
-        event.preventDefault();
         if (!this.viewportController) return;
-
-        var delta = event.deltaY || event.wheelDelta;
-
-        // 滚轮缩放（不区分 Ctrl 键）
-        // 使用 ViewportController 的 zoomIn/zoomOut 方法
-        // 这些方法只改变 scale，不调整 offset，避免画面跳动
-        if (delta > 0) {
-          this.viewportController.zoomOut();
-        } else {
-          this.viewportController.zoomIn();
-        }
+        this.viewportController.handleWheel(event);
       },
 
       onMouseDown: function (event) {
-        // 支持鼠标左键(0)和中键(1)拖动画布
-        if (event.button !== 0 && event.button !== 1) return;
-        event.preventDefault();
-        this.dragging = true;
-        this.dragStartX = event.clientX;
-        this.dragStartY = event.clientY;
-        this.dragStartOffsetX = this.viewerOffsetX;
-        this.dragStartOffsetY = this.viewerOffsetY;
+        if (!this.viewportController) return;
+        this.viewportController.handleMouseDown(event);
       },
 
       onMouseMove: function (event) {
-        if (!this.dragging) return;
-        var dx = event.clientX - this.dragStartX;
-        var dy = event.clientY - this.dragStartY;
-        var newOffsetX = this.dragStartOffsetX + dx;
-        var newOffsetY = this.dragStartOffsetY + dy;
-
-        // 同步更新 ViewportController 的 offset 状态
-        if (this.viewportController) {
-          this.viewportController.setOffset(newOffsetX, newOffsetY, true);
-        } else {
-          // 兼容旧逻辑（如果没有 ViewportController）
-          this.viewerOffsetX = newOffsetX;
-          this.viewerOffsetY = newOffsetY;
-        }
+        if (!this.viewportController) return;
+        this.viewportController.handleMouseMove(event);
       },
 
-      onMouseUp: function () {
-        this.dragging = false;
+      onMouseUp: function (event) {
+        if (!this.viewportController) return;
+        this.viewportController.handleMouseUp(event);
       },
 
       resetScale: function () {
@@ -9028,6 +8999,52 @@ function initApp() {
         return style;
       }
     },
+    created: function () {
+      // 初始化非响应式属性（避免Vue深度代理导致的性能问题）
+      this.libraryLoader = window.libraryLoader;
+      this.playerController = null;
+
+      // SVGA
+      this.svgaPlayer = null;
+      this.svgaParser = null;
+      this.svgaObjectUrl = null;
+      this.svgaAudioData = null;
+      this.svgaMovieData = null;
+
+      // Empty State SVGA
+      this.emptyStateSvgaPlayer = null;
+      this.emptyStateSvgaParser = null;
+
+      // YYEVA
+      this.yyevaVideo = null;
+      this.yyevaCanvas = null;
+      this.yyevaCtx = null;
+      this.yyevaAnimationId = null;
+      this.yyevaObjectUrl = null;
+
+      // Lottie
+      this.lottiePlayer = null;
+      this.lottieCanvas = null;
+      this.lottieCtx = null;
+      this.lottieAnimationId = null;
+
+      // MP4
+      this.mp4Video = null;
+      this.mp4ObjectUrl = null;
+
+      // Tools
+      this.ffmpeg = null;
+      this.chromaKeyRenderLoop = null;
+
+      // Frames
+      this.framesCanvas = null;
+      this.framesCtx = null;
+      this.framesAnimationId = null;
+      this.framesImages = [];
+
+      // Material Replacement
+      this.originalVideoItem = null;
+    },
     watch: {
       bgColorKey: function () {
         var _this = this;
@@ -9053,7 +9070,7 @@ function initApp() {
 
       this.initSvgaPlayer();
       this.initEmptyStateSvgaPlayer();
-      // this.initViewportController(); // 临时注释，排查问题
+      this.initViewportController();
 
       var savedTheme = localStorage.getItem('theme');
       if (savedTheme === 'dark') {
