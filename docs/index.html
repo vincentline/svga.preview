@@ -175,10 +175,10 @@
             <div class="empty-state-tip-line1">支持文件包括：SVGA、双通道MP4、普通MP4、Lottie的jason格式</div>
             <div class="empty-state-tip-line2">你可以，导出GIF；SVGA素材图管理；转双通道MP4；转SVGA...</div>
           </div>
-
-          <input ref="fileInput" type="file" accept=".svga,.json,.lottie,.mp4,.png,.jpg,.jpeg" multiple
-            style="display: none;" @change="onFileSelect" />
         </div>
+
+        <input ref="fileInput" type="file" accept=".svga,.json,.lottie,.mp4,.png,.jpg,.jpeg" multiple
+          style="display: none;" @change="onFileSelect" />
       </div>
 
       <!-- 右侧广告位容器 -->
@@ -1928,6 +1928,10 @@
     <!-- 隐藏的文件输入框，用于重传SVGA -->
     <input type="file" ref="reuploadSvgaInput" accept=".svga" style="display: none;" @change="handleReuploadSVGA" />
 
+    <!-- 隐藏的文件输入框，用于更换预览文件（支持SVGA、Lottie、MP4、序列帧） -->
+    <input type="file" ref="changePreviewFileInput" accept=".svga,.json,.lottie,.mp4,.png,.jpg,.jpeg" multiple
+      style="display: none;" @change="handleChangePreviewFile" />
+
     <!-- 序列帧帧率设置弹窗（复用通用居中弹窗样式） -->
     <div class="center-modal-overlay" :class="{'show': showFramesFpsDialog}">
       <div class="center-modal-dialog" style="width: 400px;">
@@ -1951,9 +1955,6 @@
     </div>
   </div>
 
-  <!-- 隐藏的文件输入框，用于更换预览文件（支持SVGA和MP4） -->
-  <input type="file" ref="changePreviewFileInput" accept=".svga,.json,.lottie,.mp4,.png,.jpg,.jpeg" multiple style="display: none;"
-    @change="handleChangePreviewFile" />
   </div>
 
   <!-- 双通道图像合成器模块 -->
@@ -1970,6 +1971,17 @@
 
   <!-- 视图控制器模块 -->
   <script src="assets/js/viewport-controller.js"></script>
+
+  <!-- Mixins (模块化重构) -->
+  <script src="assets/js/mixins/mixin-core.js"></script>
+  <script src="assets/js/mixins/mixin-file.js"></script>
+  <script src="assets/js/mixins/mixin-svga.js"></script>
+  <script src="assets/js/mixins/mixin-lottie.js"></script>
+  <script src="assets/js/mixins/mixin-yyeva.js"></script>
+  <script src="assets/js/mixins/mixin-mp4.js"></script>
+  <script src="assets/js/mixins/mixin-frames.js"></script>
+  <script src="assets/js/mixins/mixin-converter.js"></script>
+  <script src="assets/js/mixins/mixin-ui.js"></script>
 
   <!-- 应用主逻辑 -->
   <script src="assets/js/app.js"></script>

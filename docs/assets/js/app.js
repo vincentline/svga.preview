@@ -474,7 +474,10 @@ function initApp() {
         // 序列帧帧率设置弹窗
         showFramesFpsDialog: false,
         framesFpsInput: 25,      // 弹窗中的帧率输入值
-        framesWasPlayingBeforeDialog: undefined  // 打开帧率弹窗前的播放状态
+        framesWasPlayingBeforeDialog: undefined, // 打开帧率弹窗前的播放状态
+
+        // 音频状态（修复 ReferenceError）
+        hasAudio: false
       };
     },
     methods: {
@@ -784,6 +787,10 @@ function initApp() {
 
       triggerFileUpload: function () {
         this.$refs.fileInput.click();
+      },
+
+      triggerChangePreviewFile: function () {
+        this.triggerFileUpload();
       },
 
       /**
@@ -1336,7 +1343,7 @@ function initApp() {
 
 
 
-      // 触发更换预览文件（支持SVGA和MP4）
+      // 触发更换预览文件（支持SVGA、Lottie、MP4、序列帧）
       triggerChangePreviewFile: function () {
         if (this.$refs.changePreviewFileInput) {
           this.$refs.changePreviewFileInput.click();
@@ -2659,7 +2666,7 @@ function initApp() {
         // 清空容器
         container.innerHTML = '';
 
-        // 创建Canvas
+        // 创建显示Canvas
         var canvas = document.createElement('canvas');
         canvas.width = this.yyeva.displayWidth;
         canvas.height = this.yyeva.displayHeight;
@@ -2669,6 +2676,11 @@ function initApp() {
 
         this.yyevaCanvas = canvas;
         this.yyevaCtx = canvas.getContext('2d', { willReadFrequently: true });
+
+        // 创建复用的临时Canvas（用于提取视频帧数据，避免每帧创建新Canvas）
+        // 性能优化：复用临时Canvas减少GC压力，提升渲染帧率稳定性
+        this.yyevaTempCanvas = document.createElement('canvas');
+        this.yyevaTempCtx = this.yyevaTempCanvas.getContext('2d', { willReadFrequently: true });
       },
 
       // 双通道MP4 渲染循环
@@ -2704,11 +2716,16 @@ function initApp() {
         var colorX = this.yyeva.alphaPosition === 'right' ? 0 : halfWidth;
         var alphaX = this.yyeva.alphaPosition === 'right' ? halfWidth : 0;
 
-        // 创建临时Canvas用于提取数据
-        var tempCanvas = document.createElement('canvas');
-        tempCanvas.width = video.videoWidth;
-        tempCanvas.height = height;
-        var tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
+        // 复用临时Canvas（性能优化：避免每帧创建新Canvas，减少GC和内存分配）
+        var tempCanvas = this.yyevaTempCanvas;
+        var tempCtx = this.yyevaTempCtx;
+
+        // 仅在尺寸变化时调整Canvas大小
+        if (tempCanvas.width !== video.videoWidth || tempCanvas.height !== height) {
+          tempCanvas.width = video.videoWidth;
+          tempCanvas.height = height;
+        }
+
         tempCtx.drawImage(video, 0, 0);
 
         // 提取彩色和Alpha数据
@@ -2844,6 +2861,10 @@ function initApp() {
 
         this.yyevaCanvas = null;
         this.yyevaCtx = null;
+
+        // 清理复用的临时Canvas（性能优化相关资源）
+        this.yyevaTempCanvas = null;
+        this.yyevaTempCtx = null;
 
         // 销毁播放控制器（清理进度条事件监听器）
         // 重要：必须在清理时销毁，否则清空画布后重新加载文件时进度条会失效
@@ -4724,7 +4745,11 @@ function initApp() {
           if (this.yyevaVideo) this.yyevaVideo.play();
           this.startYyevaRenderLoop();
         } else if (this.currentModule === 'mp4') {
-          if (this.mp4Video) this.mp4Video.play();
+          if (this.mp4Video) {
+            this.mp4Video.play();
+            // 重要：重新启动进度更新循环
+            this.startMp4ProgressLoop();
+          }
         } else if (this.currentModule === 'lottie' && this.lottiePlayer) {
           this.lottiePlayer.play();
         } else if (this.currentModule === 'frames') {
@@ -9021,6 +9046,9 @@ function initApp() {
       this.yyevaCtx = null;
       this.yyevaAnimationId = null;
       this.yyevaObjectUrl = null;
+      // 性能优化：复用的临时Canvas（用于双通道合成，避免每帧创建）
+      this.yyevaTempCanvas = null;
+      this.yyevaTempCtx = null;
 
       // Lottie
       this.lottiePlayer = null;

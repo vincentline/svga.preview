@@ -15,7 +15,7 @@
  * - scale（缩放比例）：1.0 表示原始尺寸，0.5 表示缩小一半，2.0 表示放大一倍
  * - offsetX（水平偏移）：正值向右移动，负值向左移动（像素）
  * - offsetY（垂直偏移）：正值向下移动，负值向上移动（像素）
- * - transform-origin: top center - CSS 缩放原点为顶部中心？
+ * - transform-origin: top center - CSS 缩放原点在顶部中心，缩放时顶部位置保持固定
  * 
  * ===== 使用示例 =====
  * ```javascript
@@ -153,17 +153,26 @@
   };
 
   /**
-   * 处理滚轮事件
-   * @param {WheelEvent} event 
+   * 处理滚轮事件（缩放播放器）
+   * 
+   * 功能：
+   *   - 支持普通滚轮直接缩放（不需要按Ctrl键）
+   *   - 滚轮向上：放大 10%
+   *   - 滚轮向下：缩小 10%
+   *   - 围绕播放器中心点缩放，保持中心位置不变
+   * 
+   * 实现原理：
+   *   调用 zoomIn/zoomOut，内部会自动调整 offsetY 补偿，保持中心点不动
+   * 
+   * @param {WheelEvent} event - 滚轮事件对象
    */
   ViewportController.prototype.handleWheel = function (event) {
     event.preventDefault();
 
     var delta = event.deltaY || event.wheelDelta;
 
-    // 滚轮缩放（不区分 Ctrl 键）
-    // 使用 zoomIn/zoomOut 方法
-    // 这些方法只改变 scale，不调整 offset，避免画面跳动
+    // 滚轮向下（delta > 0）：缩小
+    // 滚轮向上（delta < 0）：放大
     if (delta > 0) {
       this.zoomOut();
     } else {
@@ -369,17 +378,22 @@
   };
 
   /**
-   * 放大
+   * 放大播放器
    * 
    * 功能：
-   *   每次增加固定步长 (zoomStep，默认0.1)
-   *   围绕播放器中心点缩放，保持中心点位置不变
+   *   - 每次增加固定步长（默认 10%，即 0.1）
+   *   - 围绕播放器中心点缩放，保持中心点位置不变
+   *   - 自动限制最大缩放比例（默认 500%，即 5.0）
    * 
-   * 实现：
-   *   调用 applyZoomWithCenterPoint() 自动补偿偏移量
+   * 实现原理：
+   *   调用 applyZoomWithCenterPoint() 自动补偿 offsetY，
+   *   抵消 transform-origin: top center 导致的中心点偏移
+   * 
+   * 使用场景：
+   *   - 点击底部浮层的 + 按钮
+   *   - 滚轮向上滚动
    * 
    * @example
-   * // 点击 + 按钮或滚轮向上
    * controller.zoomIn(); // scale: 0.5 -> 0.6，中心点保持不动
    */
   ViewportController.prototype.zoomIn = function () {
@@ -389,17 +403,22 @@
   };
 
   /**
-   * 缩小
+   * 缩小播放器
    * 
    * 功能：
-   *   每次减少固定步长 (zoomStep，默认0.1)
-   *   围绕播放器中心点缩放，保持中心点位置不变
+   *   - 每次减少固定步长（默认 10%，即 0.1）
+   *   - 围绕播放器中心点缩放，保持中心点位置不变
+   *   - 自动限制最小缩放比例（默认 10%，即 0.1）
    * 
-   * 实现：
-   *   调用 applyZoomWithCenterPoint() 自动补偿偏移量
+   * 实现原理：
+   *   调用 applyZoomWithCenterPoint() 自动补偿 offsetY，
+   *   抵消 transform-origin: top center 导致的中心点偏移
+   * 
+   * 使用场景：
+   *   - 点击底部浮层的 - 按钮
+   *   - 滚轮向下滚动
    * 
    * @example
-   * // 点击 - 按钮或滚轮向下
    * controller.zoomOut(); // scale: 0.6 -> 0.5，中心点保持不动
    */
   ViewportController.prototype.zoomOut = function () {
@@ -416,13 +435,14 @@
    *   使得画面中心点相对屏幕的位置保持不变
    * 
    * 原理详解：
-   *   - CSS transform-origin 设置为 "top center"，缩放从顶部中心开始
-   *   - 缩放时，内容高度变化，但顶部位置固定
-   *   - 这会导致画面中心点相对屏幕移动
-   *   - 需要计算偏移补偿：offsetY -= (新高度 - 旧高度) / 2
+   *   - CSS transform-origin 设置为 "top center"，缩放时顶部位置固定不动
+   *   - 缩放时播放器高度变化：新高度 = 原始高度 × 新缩放比例
+   *   - 由于顶部固定，播放器底部会向下/向上扩展，导致中心点位置改变
+   *   - 为保持中心点不动，需向上调整偏移量：offsetY -= (新高度 - 旧高度) / 2
+   *   - 这样中心点相对屏幕的位置就保持不变了
    * 
    * 使用场景：
-   *   zoomIn/zoomOut 方法内部调用，实现围绕中心点缩放
+   *   zoomIn/zoomOut 和 handleWheel 内部调用，实现围绕中心点缩放
    * 
    * @param {Number} oldScale - 旧的缩放比例
    * @param {Number} newScale - 新的缩放比例
