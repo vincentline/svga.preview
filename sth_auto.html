@@ -1048,42 +1048,26 @@
                 <div class="info-item"><span class="info-label">帧率：</span><span class="info-value">{{ dar.svgaInfo.fps }} FPS</span></div>
               </div>
             </div>
-            <div class="material-preview-container" v-if="dar.materials.name01 || dar.materials.Username01">
-              <div class="material-preview-info" v-if="dar.materials.name01">
-                <div class="section-title">素材：name01</div>
+            <div class="material-preview-container" v-if="dar.materialKeys.length > 0">
+              <div class="material-preview-info" v-for="key in dar.materialKeys" :key="key" v-if="dar.materials[key]">
+                <div class="section-title">素材：{{ key }}</div>
                 <div class="material-card">
-                  <div class="material-thumb"><img :src="dar.materials.name01.previewUrl" v-if="dar.materials.name01.previewUrl" /></div>
-                  <div class="material-info"><div class="material-name">{{ dar.materials.name01.sizeText }}</div></div>
+                  <div class="material-thumb"><img :src="dar.materials[key].previewUrl" v-if="dar.materials[key].previewUrl" /></div>
+                  <div class="material-info"><div class="material-name">{{ dar.materials[key].sizeText }}</div></div>
                   <div class="material-btns">
-                    <button class="btn" :disabled="dar.isExporting" @click="darReplaceMaterial('name01')">替换</button>
-                    <button class="btn btn-icon" :disabled="dar.isExporting" @click="darDownloadMaterial('name01')" title="下载">↓</button>
-                    <button class="btn btn-icon" v-if="dar.replacedImages.name01" :disabled="dar.isExporting" @click="darRestoreMaterial('name01')" title="恢复">↺</button>
-                  </div>
-                </div>
-              </div>
-              <div class="material-preview-info" v-if="dar.materials.Username01">
-                <div class="section-title">素材：Username01</div>
-                <div class="material-card">
-                  <div class="material-thumb"><img :src="dar.materials.Username01.previewUrl" v-if="dar.materials.Username01.previewUrl" /></div>
-                  <div class="material-info"><div class="material-name">{{ dar.materials.Username01.sizeText }}</div></div>
-                  <div class="material-btns">
-                    <button class="btn" :disabled="dar.isExporting" @click="darReplaceMaterial('Username01')">替换</button>
-                    <button class="btn btn-icon" :disabled="dar.isExporting" @click="darDownloadMaterial('Username01')" title="下载">↓</button>
-                    <button class="btn btn-icon" v-if="dar.replacedImages.Username01" :disabled="dar.isExporting" @click="darRestoreMaterial('Username01')" title="恢复">↺</button>
+                    <button class="btn" :disabled="dar.isExporting" @click="darReplaceMaterial(key)">替换</button>
+                    <button class="btn btn-icon" :disabled="dar.isExporting" @click="darDownloadMaterial(key)" title="下载">↓</button>
+                    <button class="btn btn-icon" v-if="dar.replacedImages[key]" :disabled="dar.isExporting" @click="darRestoreMaterial(key)" title="恢复">↺</button>
                   </div>
                 </div>
               </div>
             </div>
           </div>
           <div class="settings-panel">
-            <div class="panel-section" v-if="dar.materials.name01">
-              <div class="section-title">文本效果区域01</div>
-              <div class="text-effect-area">
-                <div class="text-canvas-wrapper" @mousedown="darStartDragText" @wheel="darHandleWheel">
-                  <canvas ref="darTextCanvas1" class="text-canvas" width="300" height="50"></canvas>
-                </div>
-                <input type="text" class="text-input" v-model="dar.textInput1" placeholder="输入文字，支持emoji 😊" @input="darRenderText" />
-                <div class="position-controls">
+            <div class="panel-section">
+               <div class="section-title">文本内容输入</div>
+               <input type="text" class="text-input" v-model="dar.textInput1" placeholder="输入文字，支持emoji 😊" @input="darRenderText" />
+               <div class="position-controls">
                   <div class="position-btns">
                     <button class="pos-btn" @click="darMoveText('up')">↑</button>
                     <button class="pos-btn" @click="darMoveText('down')">↓</button>
@@ -1094,25 +1078,24 @@
                   </div>
                 </div>
                 <div style="display: flex; gap: 8px;">
-                  <button class="btn" style="flex: 1;" @click="darResetText">恢复</button>
-                  <button class="btn btn-primary" style="flex: 2;" @click="darApplyText1">替换"name01"</button>
+                  <button class="btn" style="flex: 1;" @click="darResetText">恢复默认位置</button>
                 </div>
-              </div>
             </div>
-            <div class="panel-section" v-if="dar.materials.Username01">
-              <div class="section-title">文本效果区域02</div>
+
+            <div class="panel-section" v-for="(key, index) in dar.materialKeys" :key="'panel_' + key" v-if="dar.materials[key]">
+              <div class="section-title">文本效果区域：{{ key }}</div>
               <div class="text-effect-area">
-                <div class="text-canvas-wrapper">
-                  <canvas ref="darTextCanvas2" class="text-canvas" width="300" height="50"></canvas>
+                <div class="text-canvas-wrapper" @mousedown="darStartDragText" @wheel="darHandleWheel">
+                  <canvas ref="darTextCanvas" class="text-canvas" width="300" height="50"></canvas>
                 </div>
                 <div style="display: flex; gap: 8px;">
-                  <button class="btn" style="flex: 1;" @click="darResetText">恢复</button>
-                  <button class="btn btn-primary" style="flex: 2;" @click="darApplyText2">替换"Username01"</button>
+                  <button class="btn btn-primary" style="flex: 1;" @click="darApplyText(key, index)">替换"{{ key }}"</button>
                 </div>
               </div>
             </div>
-            <div class="panel-section" v-if="!dar.materials.name01 && !dar.materials.Username01">
-              <div class="loading-tip">未检测到 name01 或 Username01 素材</div>
+
+            <div class="panel-section" v-if="dar.materialKeys.length === 0">
+              <div class="loading-tip">该SVGA未配置可替换素材</div>
             </div>
             <div class="export-section">
               <button class="btn btn-success export-btn" :disabled="!darCanExport || dar.isExporting" @click="darExportSVGA">导出新SVGA</button>
@@ -1230,7 +1213,8 @@
               svgaVideoItem: null,
               svgaFile: null,
               svgaInfo: { width: 0, height: 0, fps: 0 },
-              materials: { name01: null, Username01: null },
+              materials: {}, // 动态存储素材信息
+              materialKeys: [], // 当前SVGA包含的素材key列表
               replacedImages: {},
               textInput1: '',
               textOffset: { x: 0, y: 0 },
@@ -1245,7 +1229,7 @@
                 strokeWidth: 2,
                 textAlign: 'center'
               },
-              customTextStyle: { name01: null, Username01: null },
+              customTextStyle: {},
               currentReplaceTarget: null,
               showModal: false,
               isExporting: false
@@ -1324,7 +1308,7 @@
             var h = String(now.getHours()).padStart(2, '0');
             var mi = String(now.getMinutes()).padStart(2, '0');
             var s = String(now.getSeconds()).padStart(2, '0');
-            return '' + y + m + d + h + mi + s + '_' + baseName + '.' + ext;
+            return baseName + '_' + y + m + d + h + mi + s + '.' + ext;
           },
           formatBytes: function(bytes) {
             if (bytes === 0) return '0 B';
@@ -1441,19 +1425,16 @@
             if (this.dar.svgaPlayer) this.dar.svgaPlayer.clear();
             this.dar.currentFrame = item;
             this.dar.showModal = true;
-            this.dar.materials = { name01: null, Username01: null };
+            this.dar.materials = {};
+            this.dar.materialKeys = item.textStyle ? Object.keys(item.textStyle) : [];
             this.dar.replacedImages = {};
             this.dar.textInput1 = '';
             this.dar.textOffset = { x: 0, y: 0 };
             this.dar.textScale = 1;
-            if (item.textStyle) {
-              this.dar.customTextStyle = {
-                name01: item.textStyle.name01 || null,
-                Username01: item.textStyle.Username01 || null
-              };
-            } else {
-              this.dar.customTextStyle = { name01: null, Username01: null };
-            }
+            
+            // 初始化样式配置
+            this.dar.customTextStyle = item.textStyle || {};
+            
             this.$nextTick(function() { this.loadDarSVGA(item); }.bind(this));
           },
           
@@ -1471,24 +1452,24 @@
           darExtractMaterials: function(videoItem) {
             var _this = this;
             var images = videoItem.images || {};
-            ['name01', 'Username01'].forEach(function(key) {
+            
+            // 遍历所有动态key
+            this.dar.materialKeys.forEach(function(key) {
               if (images[key]) {
                 var imgData = images[key];
                 var previewUrl = typeof imgData === 'string' ? (imgData.startsWith('data:') ? imgData : ('data:image/png;base64,' + imgData)) : '';
                 var img = new Image();
                 img.onload = function() {
-                  _this.dar.materials[key] = { previewUrl: previewUrl, width: this.width, height: this.height, sizeText: this.width + '×' + this.height };
+                  _this.$set(_this.dar.materials, key, { 
+                    previewUrl: previewUrl, 
+                    width: this.width, 
+                    height: this.height, 
+                    sizeText: this.width + '×' + this.height 
+                  });
                   _this.$forceUpdate();
                   _this.$nextTick(function() {
-                    if (key === 'name01' && _this.$refs.darTextCanvas1) {
-                      _this.$refs.darTextCanvas1.width = _this.dar.materials.name01.width;
-                      _this.$refs.darTextCanvas1.height = _this.dar.materials.name01.height;
-                    }
-                    if (key === 'Username01' && _this.$refs.darTextCanvas2) {
-                      _this.$refs.darTextCanvas2.width = _this.dar.materials.Username01.width;
-                      _this.$refs.darTextCanvas2.height = _this.dar.materials.Username01.height;
-                    }
-                    _this.darRenderText();
+                     // 触发重绘
+                     _this.darRenderText();
                   });
                 };
                 img.src = previewUrl;
@@ -1575,8 +1556,21 @@
           },
           
           darRenderText: function() {
-            this.darRenderTextToCanvas(this.$refs.darTextCanvas1, this.dar.textInput1, this.dar.textOffset, this.dar.textScale, 'name01');
-            this.darRenderTextToCanvas(this.$refs.darTextCanvas2, this.dar.textInput1, this.dar.textOffset, this.dar.textScale, 'Username01');
+            var _this = this;
+            var canvases = this.$refs.darTextCanvas;
+            if (!canvases || !Array.isArray(canvases)) return;
+            
+            this.dar.materialKeys.forEach(function(key, index) {
+               // 确保Canvas尺寸与素材匹配
+               var canvas = canvases[index];
+               if (canvas && _this.dar.materials[key]) {
+                  if (canvas.width !== _this.dar.materials[key].width || canvas.height !== _this.dar.materials[key].height) {
+                    canvas.width = _this.dar.materials[key].width;
+                    canvas.height = _this.dar.materials[key].height;
+                  }
+                  _this.darRenderTextToCanvas(canvas, _this.dar.textInput1, _this.dar.textOffset, _this.dar.textScale, key);
+               }
+            });
           },
           
           darMoveText: function(direction) {
@@ -1615,20 +1609,13 @@
             this.darRenderText();
           },
           
-          darApplyText1: function() {
-            if (!this.$refs.darTextCanvas1 || !this.dar.textInput1) { this.showToast('请输入文字'); return; }
-            var dataUrl = this.$refs.darTextCanvas1.toDataURL('image/png');
-            this.$set(this.dar.replacedImages, 'name01', dataUrl);
-            this.darApplyToSVGA('name01', dataUrl);
-            this.showToast('已应用到 name01');
-          },
-          
-          darApplyText2: function() {
-            if (!this.$refs.darTextCanvas2 || !this.dar.textInput1) { this.showToast('请输入文字'); return; }
-            var dataUrl = this.$refs.darTextCanvas2.toDataURL('image/png');
-            this.$set(this.dar.replacedImages, 'Username01', dataUrl);
-            this.darApplyToSVGA('Username01', dataUrl);
-            this.showToast('已应用到 Username01');
+          darApplyText: function(key, index) {
+            var canvases = this.$refs.darTextCanvas;
+            if (!canvases || !canvases[index] || !this.dar.textInput1) { this.showToast('请输入文字'); return; }
+            var dataUrl = canvases[index].toDataURL('image/png');
+            this.$set(this.dar.replacedImages, key, dataUrl);
+            this.darApplyToSVGA(key, dataUrl);
+            this.showToast('已应用到 ' + key);
           },
           
           darApplyToSVGA: function(imageKey, dataUrl) {

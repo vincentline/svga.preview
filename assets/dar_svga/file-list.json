@@ -454,16 +454,93 @@
     }
   },
   {
-    "name": "Dzijin02",
-    "svga": "https://blog-1258489735.cos.ap-chengdu.myqcloud.com/other/avatar_frame_dar/Dzijin02.svga",
+    "name": "n01",
+    "svga": "https://blog-1258489735.cos.ap-chengdu.myqcloud.com/other/avatar_frame_dar/n01.svga",
     "textStyle": {
-      "name01": {
+      "Assistant": {
+        "fontWeight": "900",
+        "fillColor": "#FFFFFF",
+        "textShadow": "2px 3.5px 3px #C35806"
+      }
+    }
+  },
+  {
+    "name": "n02",
+    "svga": "https://blog-1258489735.cos.ap-chengdu.myqcloud.com/other/avatar_frame_dar/n02.svga",
+    "textStyle": {
+      "img_2103118107": {
         "fontWeight": "700",
-        "fillColor": "#FFDE45",
-        "multiShadow": [
-          "2px -2px 1px #FFFFFF",
-          "-1px 2px 1px #A97008"
-        ]
+        "textShadow": "1.5px 2px 2px #000000",
+        "gradient": {
+          "colors": [
+            "#FFC21A",
+            "#FF9E1A",
+            "#FFFE69",
+            "#FFFE69"
+          ],
+          "positions": [
+            0.0,
+            0.2,
+            0.7,
+            1.0
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "n03",
+    "svga": "https://blog-1258489735.cos.ap-chengdu.myqcloud.com/other/avatar_frame_dar/n03.svga",
+    "textStyle": {
+      "img_2103118097": {
+        "fontWeight": "700",
+        "textShadow": "1.5px 2px 1px #0518AA",
+        "gradient": {
+          "colors": [
+            "#FFFFFF",
+            "#61E5FF",
+            "#FFFFFF",
+            "#CDF7FF",
+            "#88EBFF",
+            "#FFFFFF"
+          ],
+          "positions": [
+            0.0,
+            0.2692,
+            0.476,
+            0.6635,
+            0.8,
+            1.0
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "n04",
+    "svga": "https://blog-1258489735.cos.ap-chengdu.myqcloud.com/other/avatar_frame_dar/n04.svga"
+  },
+  {
+    "name": "n05",
+    "svga": "https://blog-1258489735.cos.ap-chengdu.myqcloud.com/other/avatar_frame_dar/n05.svga",
+    "textStyle": {
+      "img_394": {
+        "fontWeight": "700",
+        "textShadow": "0px 3px 0px rgba(0, 0, 0, 0.05)",
+        "gradient": {
+          "colors": [
+            "#FFFFFF",
+            "#FFFFFF",
+            "#FABE91",
+            "#FABE91"
+          ],
+          "positions": [
+            0.0,
+            0.4,
+            0.8,
+            1.0
+          ]
+        }
       }
     }
   }
