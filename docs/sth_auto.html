@@ -936,6 +936,157 @@
       body.dark-mode .crop-modal-footer {
         border-top-color: #404040;
       }
+
+      /* ==================== 用户勋章样式 ==================== */
+      .frame-item.add-btn {
+        border: 2px dashed #e3e3e3;
+        justify-content: center;
+        color: #999;
+      }
+      
+      .frame-item.add-btn:hover {
+        border-color: #409eff;
+        color: #409eff;
+      }
+
+      .add-icon {
+        font-size: 32px;
+        margin-bottom: 8px;
+      }
+
+      .delete-badge-btn {
+        position: absolute;
+        top: 4px;
+        right: 4px;
+        width: 20px;
+        height: 20px;
+        background: rgba(0,0,0,0.5);
+        color: #fff;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 14px;
+        opacity: 0;
+        transition: opacity 0.2s;
+        z-index: 5;
+      }
+
+      .edit-badge-btn {
+        position: absolute;
+        top: 4px;
+        right: 28px;
+        width: 20px;
+        height: 20px;
+        background: rgba(0,0,0,0.5);
+        color: #fff;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 12px;
+        opacity: 0;
+        transition: opacity 0.2s;
+        z-index: 5;
+      }
+
+      .frame-item:hover .delete-badge-btn,
+      .frame-item:hover .edit-badge-btn {
+        opacity: 1;
+      }
+
+      .frame-item {
+        position: relative;
+      }
+
+      /* 上传区域 */
+      .upload-area {
+        border: 2px dashed #e3e3e3;
+        border-radius: 12px;
+        height: 200px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        background: #fafafa;
+        transition: all 0.3s;
+        margin-bottom: 16px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .upload-area:hover {
+        border-color: #409eff;
+        background: #f0f7ff;
+      }
+
+      body.dark-mode .upload-area {
+        background: #2a2a2a;
+        border-color: #404040;
+      }
+
+      body.dark-mode .upload-area:hover {
+        background: #333;
+      }
+
+      .upload-preview-img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+      }
+
+      .upload-placeholder {
+        text-align: center;
+        color: #999;
+      }
+
+      /* 勋章生成预览 */
+      .badge-gen-preview {
+        width: 100%;
+        height: 300px;
+        background: #f5f5f5;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 16px;
+        overflow: hidden;
+        position: relative;
+        background-image: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjEiIGZpbGw9IiNlM2UzZTMiLz48L3N2Zz4=);
+      }
+
+      body.dark-mode .badge-gen-preview {
+        background-color: #1a1a1a;
+        background-image: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjEiIGZpbGw9IiM0MDQwNDAiLz48L3N2Zz4=);
+      }
+
+      .badge-canvas-wrapper {
+        position: relative;
+        cursor: move;
+      }
+
+      .css-input {
+        width: 100%;
+        height: 100px;
+        padding: 12px;
+        border: 1px solid #e3e3e3;
+        border-radius: 8px;
+        background: #ffffff;
+        color: #333;
+        font-family: monospace;
+        font-size: 12px;
+        resize: vertical;
+        margin-bottom: 12px;
+      }
+
+      body.dark-mode .css-input {
+        background: #1a1a1a;
+        border-color: #404040;
+        color: #e0e0e0;
+      }
     </style>
   </head>
   <body>
@@ -977,6 +1128,11 @@
           :class="{ active: activeTab === 'gift_video' }"
           @click="switchTab('gift_video')"
         >名人礼物视频款</button>
+        <button 
+          class="tab-btn" 
+          :class="{ active: activeTab === 'badge' }"
+          @click="switchTab('badge')"
+        >用户勋章</button>
       </div>
 
       <!-- 主内容区域 -->
@@ -1025,6 +1181,29 @@
         <!-- 名人礼物视频款（开发中） -->
         <template v-if="activeTab === 'gift_video'">
           <div class="dev-placeholder">开发中...</div>
+        </template>
+
+        <!-- 用户勋章列表 -->
+        <template v-if="activeTab === 'badge'">
+          <div class="frame-grid">
+            <!-- 增加样式按钮 -->
+            <div class="frame-item add-btn" @click="openBadgeAddModal">
+              <div class="add-icon">+</div>
+              <div class="frame-name">增加样式</div>
+            </div>
+            <!-- 勋章列表 -->
+            <div 
+              v-for="(item, index) in badge.list"
+              :key="'badge_' + index"
+              class="frame-item"
+              @click="openBadgeGenModal(item)"
+            >
+              <div class="delete-badge-btn" v-if="item.isCustom" @click.stop="deleteBadge(item)">×</div>
+              <div class="edit-badge-btn" v-if="item.isCustom" @click.stop="openBadgeEditModal(item)">✎</div>
+              <img :src="item.url" :alt="item.name" class="frame-icon" />
+              <div class="frame-name">{{ item.name }}</div>
+            </div>
+          </div>
         </template>
       </div>
 
@@ -1179,9 +1358,75 @@
         </div>
       </div>
 
+      <!-- 用户勋章：增加样式弹窗 -->
+      <div class="modal-overlay" :class="{show: badge.showAddModal}">
+        <div class="modal-container" style="height: auto; max-height: 90%;">
+          <button class="modal-close-btn" @click="closeBadgeAddModal" title="关闭">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="preview-section" style="border-right: 1px solid #e3e3e3;">
+             <div class="section-title">上传PNG图片 (拖拽或点击)</div>
+             <div 
+               class="upload-area" 
+               @click="$refs.badgeFileInput.click()"
+               @dragover.prevent
+               @drop.prevent="badgeHandleDrop"
+             >
+               <img v-if="badge.addForm.previewUrl" :src="badge.addForm.previewUrl" class="upload-preview-img" />
+               <div v-else class="upload-placeholder">
+                 <div style="font-size: 24px; margin-bottom: 8px;">+</div>
+                 <div>点击或拖拽PNG图片到此处</div>
+                 <div style="font-size: 12px; margin-top: 4px;">PNG, < 5MB, < 3000px</div>
+               </div>
+             </div>
+          </div>
+          <div class="settings-panel" style="width: 400px; box-shadow: none;">
+            <div class="panel-section">
+              <div class="section-title">{{ badge.editingId ? '修改用户勋章样式' : '增加用户勋章样式' }}</div>
+              <div style="margin-bottom: 12px;">
+                <div style="font-size: 12px; color: #666; margin-bottom: 4px;">名称 (非必填，默认文件名)</div>
+                <input type="text" class="text-input" v-model="badge.addForm.name" placeholder="请输入勋章名称" />
+              </div>
+              <div>
+                <div style="font-size: 12px; color: #666; margin-bottom: 4px;">文字CSS样式 (找设计师提供，非必填)</div>
+                <textarea class="css-input" v-model="badge.addForm.css" placeholder="粘贴CSS样式代码..."></textarea>
+              </div>
+            </div>
+            <div class="export-section">
+              <button class="btn btn-success export-btn" :disabled="!badge.addForm.file && !badge.addForm.previewUrl" @click="badgeSubmitAdd">提交</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 用户勋章：生成图片弹窗 -->
+      <div class="modal-overlay" :class="{show: badge.showGenModal}">
+        <div class="modal-container" style="width: 500px; height: auto;">
+          <button class="modal-close-btn" @click="closeBadgeGenModal" title="关闭">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div style="flex: 1; display: flex; flex-direction: column; padding: 24px;">
+            <div class="section-title" style="text-align: center;">生成用户勋章图片</div>
+            
+            <div class="badge-gen-preview" @wheel="badgeHandleWheel">
+              <div class="badge-canvas-wrapper" @mousedown="badgeStartDrag">
+                <canvas ref="badgeCanvas"></canvas>
+              </div>
+            </div>
+
+            <div style="margin-bottom: 16px;">
+              <input type="text" class="text-input" v-model="badge.genText" placeholder="请输入文字 (支持Emoji)" @input="badgeRenderCanvas" />
+            </div>
+
+            <button class="btn btn-success export-btn" :disabled="!badge.genText || !badge.genText.trim()" @click="badgeExport">导出PNG图片</button>
+          </div>
+        </div>
+      </div>
+
       <!-- 隐藏的文件输入框 -->
       <input type="file" ref="darFileInput" accept="image/*" style="display:none" @change="darHandleFileSelect" />
       <input type="file" ref="giftFileInput" accept="image/*" style="display:none" @change="giftHandleFileSelect" />
+      <input type="file" ref="badgeFileInput" accept="image/png" style="display:none" @change="badgeHandleFileSelect" />
     </div>
 
     <!-- Vue.js -->
@@ -1260,6 +1505,33 @@
               isConvertingMP4: false,
               mp4ConvertProgress: 0,
               mp4ConvertStage: ''
+            },
+
+            // 用户勋章数据
+            badge: {
+              list: [],
+              customList: [],
+              current: null,
+              showAddModal: false,
+              showGenModal: false,
+              editingId: null,
+              
+              // 增加样式表单
+              addForm: {
+                name: '',
+                file: null,
+                previewUrl: '',
+                css: '',
+                width: 0,
+                height: 0
+              },
+              
+              // 生成图片
+              genText: '',
+              genOffset: { x: 0, y: 0 },
+              genScale: 1,
+              dragging: false,
+              dragStartPos: { x: 0, y: 0 }
             }
           };
         },
@@ -1272,6 +1544,7 @@
           }
           this.loadDarFrameList();
           this.loadGiftFrameList();
+          this.badgeLoadList(); // 加载勋章列表
           document.addEventListener('mousemove', this.onDragMove);
           document.addEventListener('mouseup', this.onDragEnd);
         },
@@ -1846,11 +2119,20 @@
               this.gift.cropDragStart = { x: e.clientX, y: e.clientY };
               this.giftRenderCropCanvas();
             }
+            if (this.badge.dragging) {
+              var dx3 = e.clientX - this.badge.dragStartPos.x;
+              var dy3 = e.clientY - this.badge.dragStartPos.y;
+              this.badge.genOffset.x += dx3;
+              this.badge.genOffset.y += dy3;
+              this.badge.dragStartPos = { x: e.clientX, y: e.clientY };
+              this.badgeRenderCanvas();
+            }
           },
           
           onDragEnd: function() {
             this.dar.draggingText = false;
             this.gift.cropDragging = false;
+            this.badge.dragging = false;
           },
           
           giftHandleCropWheel: function(e) {
@@ -2152,6 +2434,356 @@
             }
             try { ffmpeg.FS('unlink', 'output.mp4'); } catch (e) {}
             return mp4Blob;
+          },
+
+          // ==================== 用户勋章方法 ====================
+          badgeLoadList: function() {
+            var _this = this;
+            // 1. 加载本地存储的自定义勋章
+            var custom = [];
+            try {
+              var stored = localStorage.getItem('custom_badges');
+              if (stored) custom = JSON.parse(stored);
+            } catch(e) { console.error('加载本地勋章失败', e); }
+            this.badge.customList = custom;
+            
+            // 2. 加载xunzhang文件夹里的配置 (暂未提供，先置空或尝试加载)
+            // 假设有个 assets/xunzhang/file-list.json，没有的话就只有自定义
+            this.badge.list = [];
+            // 合并显示
+            this.badgeUpdateList();
+          },
+
+          badgeUpdateList: function() {
+            // 合并：预置列表 + 自定义列表
+            // 预置列表暂为空，后续可扩展
+            var defaultList = []; 
+            this.badge.list = defaultList.concat(this.badge.customList.map(function(item) {
+              return { 
+                name: item.name, 
+                url: item.url, 
+                css: item.css, 
+                width: item.width,
+                height: item.height,
+                isCustom: true,
+                id: item.id
+              };
+            }));
+          },
+
+          openBadgeAddModal: function() {
+            this.badge.editingId = null;
+            this.badge.addForm = {
+              name: '',
+              file: null,
+              previewUrl: '',
+              css: '',
+              width: 0,
+              height: 0
+            };
+            this.badge.showAddModal = true;
+          },
+
+          openBadgeEditModal: function(item) {
+            this.badge.editingId = item.id;
+            this.badge.addForm = {
+              name: item.name,
+              file: null, // 编辑时不强制重新上传文件
+              previewUrl: item.url,
+              css: item.css || '',
+              width: item.width,
+              height: item.height
+            };
+            this.badge.showAddModal = true;
+          },
+
+          closeBadgeAddModal: function() {
+            this.badge.showAddModal = false;
+            this.badge.editingId = null;
+          },
+
+          badgeHandleFileSelect: function(e) {
+            var file = e.target.files[0];
+            this.badgeProcessFile(file);
+            e.target.value = '';
+          },
+
+          badgeHandleDrop: function(e) {
+            var file = e.dataTransfer.files[0];
+            this.badgeProcessFile(file);
+          },
+
+          badgeProcessFile: function(file) {
+            var _this = this;
+            if (!file) return;
+            
+            // 校验：是否PNG
+            if (file.type !== 'image/png') {
+              this.showToast('只支持PNG图片');
+              return;
+            }
+            
+            // 校验：大小是否超过5M
+            if (file.size > 5 * 1024 * 1024) {
+              this.showToast('图片大小不能超过5M');
+              return;
+            }
+
+            var reader = new FileReader();
+            reader.onload = function(evt) {
+              var img = new Image();
+              img.onload = function() {
+                // 校验：尺寸是否超过3000px
+                if (img.width > 3000 || img.height > 3000) {
+                  _this.showToast('图片宽高不能超过3000px');
+                  return;
+                }
+                
+                _this.badge.addForm.file = file;
+                _this.badge.addForm.previewUrl = evt.target.result;
+                _this.badge.addForm.width = img.width;
+                _this.badge.addForm.height = img.height;
+                
+                // 默认名称使用文件名（去扩展名）
+                if (!_this.badge.addForm.name) {
+                  var name = file.name.replace(/\.[^/.]+$/, "");
+                  _this.badge.addForm.name = name;
+                }
+              };
+              img.src = evt.target.result;
+            };
+            reader.readAsDataURL(file);
+          },
+
+          badgeSubmitAdd: function() {
+            var form = this.badge.addForm;
+            var _this = this;
+            if ((!form.file && !form.previewUrl)) {
+              this.showToast('请上传图片');
+              return;
+            }
+            
+            // 简单的CSS校验 (非强制，仅提示)
+            if (form.css && form.css.trim() !== '') {
+               // 这里不做严格校验，用户负责粘贴正确的CSS
+            }
+
+            if (this.badge.editingId) {
+              // 编辑现有
+              var index = this.badge.customList.findIndex(function(i) { return i.id === _this.badge.editingId; });
+              if (index > -1) {
+                var updatedItem = Object.assign({}, this.badge.customList[index], {
+                  name: form.name || '未命名勋章',
+                  url: form.previewUrl,
+                  css: form.css,
+                  width: form.width,
+                  height: form.height,
+                  // id和timestamp保持不变
+                });
+                // Vue不能检测索引赋值，使用splice
+                this.badge.customList.splice(index, 1, updatedItem);
+                this.showToast('修改成功');
+              }
+            } else {
+              // 新增
+              var newItem = {
+                id: Date.now(),
+                name: form.name || '未命名勋章',
+                url: form.previewUrl, // 存Base64到本地
+                css: form.css,
+                width: form.width,
+                height: form.height,
+                timestamp: Date.now()
+              };
+              this.badge.customList.push(newItem);
+              this.showToast('添加成功');
+            }
+
+            this.badgeSaveCustomList();
+            this.badgeUpdateList();
+            this.closeBadgeAddModal();
+          },
+
+          badgeSaveCustomList: function() {
+            try {
+              localStorage.setItem('custom_badges', JSON.stringify(this.badge.customList));
+            } catch(e) {
+              if (e.name === 'QuotaExceededError') {
+                this.showToast('本地存储空间已满，无法保存更多勋章');
+              } else {
+                console.error(e);
+              }
+            }
+          },
+
+          deleteBadge: function(item) {
+            if (!confirm('确定要删除这个勋章吗？')) return;
+            var index = this.badge.customList.findIndex(function(i) { return i.id === item.id; });
+            if (index > -1) {
+              this.badge.customList.splice(index, 1);
+              this.badgeSaveCustomList();
+              this.badgeUpdateList();
+              this.showToast('已删除');
+            }
+          },
+
+          openBadgeGenModal: function(item) {
+            this.badge.current = item;
+            this.badge.genText = '';
+            this.badge.genOffset = { x: 0, y: 0 };
+            this.badge.genScale = 1;
+            this.badge.showGenModal = true;
+            this.$nextTick(function() {
+              this.badgeRenderCanvas();
+            }.bind(this));
+          },
+
+          closeBadgeGenModal: function() {
+            this.badge.showGenModal = false;
+            this.badge.current = null;
+          },
+
+          badgeStartDrag: function(e) {
+            this.badge.dragging = true;
+            this.badge.dragStartPos = { x: e.clientX, y: e.clientY };
+            e.preventDefault();
+          },
+
+          badgeHandleWheel: function(e) {
+            e.preventDefault();
+            var delta = e.deltaY > 0 ? -0.1 : 0.1;
+            this.badge.genScale = Math.max(0.1, Math.min(5, this.badge.genScale + delta));
+            this.badgeRenderCanvas();
+          },
+
+          badgeRenderCanvas: function() {
+            var canvas = this.$refs.badgeCanvas;
+            if (!canvas || !this.badge.current) return;
+            var item = this.badge.current;
+            
+            // 设置画布尺寸为图片尺寸
+            if (canvas.width !== item.width || canvas.height !== item.height) {
+              canvas.width = item.width;
+              canvas.height = item.height;
+              // 调整外层容器样式以适应
+              var wrapper = canvas.parentElement;
+              var preview = wrapper.parentElement;
+              var scale = Math.min(preview.clientWidth / item.width, preview.clientHeight / item.height, 1) * 0.9;
+              wrapper.style.transform = 'scale(' + scale + ')';
+              wrapper.style.transformOrigin = 'center center';
+            }
+
+            var ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            var _this = this;
+            var img = new Image();
+            img.onload = function() {
+              ctx.drawImage(img, 0, 0);
+              
+              // 绘制文字
+              if (_this.badge.genText) {
+                _this.badgeDrawText(ctx, item.width, item.height);
+              }
+            };
+            img.src = item.url;
+          },
+
+          badgeDrawText: function(ctx, width, height) {
+             var text = this.badge.genText;
+             var offset = this.badge.genOffset;
+             var scale = this.badge.genScale;
+             var customCss = this.badge.current.css;
+             
+             ctx.save();
+             
+             // 默认样式
+             var fontSize = 24 * scale;
+             var fontFamily = "'Noto Sans', 'Noto Sans SC', sans-serif";
+             var fillColor = '#ffffff';
+             var strokeColor = '#000000';
+             var strokeWidth = 2 * scale;
+             
+             // 尝试解析CSS
+             // 这里只做简单的解析，支持 color, font-size, font-family, text-shadow, -webkit-text-stroke
+             if (customCss) {
+               // 提取颜色
+               var colorMatch = customCss.match(/color:\s*([^;]+)/i);
+               if (colorMatch) fillColor = colorMatch[1];
+               
+               // 提取字体大小 (基于默认24px缩放)
+               var sizeMatch = customCss.match(/font-size:\s*([\d.]+)px/i);
+               if (sizeMatch) fontSize = parseFloat(sizeMatch[1]) * scale;
+               
+               // 提取字体
+               var fontMatch = customCss.match(/font-family:\s*([^;]+)/i);
+               if (fontMatch) fontFamily = fontMatch[1];
+               
+               // 提取描边
+               var strokeMatch = customCss.match(/-webkit-text-stroke:\s*([\d.]+)px\s*([^;]+)/i);
+               if (strokeMatch) {
+                 strokeWidth = parseFloat(strokeMatch[1]) * scale;
+                 strokeColor = strokeMatch[2];
+               }
+             }
+
+             ctx.font = 'bold ' + fontSize + 'px ' + fontFamily;
+             ctx.textAlign = 'center';
+             ctx.textBaseline = 'middle';
+             var x = width / 2 + offset.x;
+             var y = height / 2 + offset.y;
+             
+             // 处理阴影 (text-shadow)
+             if (customCss) {
+               var shadowMatch = customCss.match(/text-shadow:\s*([^;]+)/i);
+               if (shadowMatch) {
+                 var shadows = shadowMatch[1].split(',').map(function(s) { return s.trim(); });
+                 // Canvas只支持单层shadow，如果有多个，只能画多次或者取第一个
+                 // 这里尝试画多次
+                 shadows.forEach(function(shadow) {
+                   var parts = shadow.match(/([\d.-]+)px\s+([\d.-]+)px\s+([\d.-]+)px\s+(.+)/);
+                   if (parts) {
+                     ctx.save();
+                     ctx.shadowOffsetX = parseFloat(parts[1]);
+                     ctx.shadowOffsetY = parseFloat(parts[2]);
+                     ctx.shadowBlur = parseFloat(parts[3]);
+                     ctx.shadowColor = parts[4];
+                     ctx.fillStyle = fillColor;
+                     ctx.fillText(text, x, y);
+                     ctx.restore();
+                   }
+                 });
+                 // 如果有阴影，为了避免叠加颜色过深，这里可能不需要再画一次纯色，除非阴影是外发光
+                 // 但Canvas shadow绘制机制是：阴影+源图像。所以上面已经画了文字。
+                 // 如果只是普通的描边+填充，下面继续
+               }
+             }
+             
+             // 描边
+             if (strokeWidth > 0) {
+               ctx.strokeStyle = strokeColor;
+               ctx.lineWidth = strokeWidth;
+               ctx.lineJoin = 'round';
+               ctx.strokeText(text, x, y);
+             }
+             
+             // 填充
+             ctx.fillStyle = fillColor;
+             ctx.fillText(text, x, y);
+             
+             ctx.restore();
+          },
+
+          badgeExport: function() {
+             var canvas = this.$refs.badgeCanvas;
+             if (!canvas) return;
+             var name = this.badge.current.name || 'badge';
+             var filename = this.getTimestampFilename(name, 'png');
+             var dataUrl = canvas.toDataURL('image/png');
+             var a = document.createElement('a');
+             a.href = dataUrl;
+             a.download = filename;
+             a.click();
           }
         }
       });
