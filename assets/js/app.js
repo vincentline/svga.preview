@@ -3067,27 +3067,9 @@ function initApp() {
       },
 
       copyMaterialName: function (name) {
-        var _this = this;
-        // 使用 Clipboard API 复制文本
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(name).catch(function () {
-            // 静默失败
-          });
-        } else {
-          // 降级方案：使用 textarea
-          var textarea = document.createElement('textarea');
-          textarea.value = name;
-          textarea.style.position = 'fixed';
-          textarea.style.opacity = '0';
-          document.body.appendChild(textarea);
-          textarea.select();
-          try {
-            document.execCommand('copy');
-          } catch (err) {
-            // 静默失败
-          }
-          document.body.removeChild(textarea);
-        }
+        this.utils.copyToClipboard(name, function (success, message) {
+          this.showToast(message);
+        }.bind(this));
       },
 
       /* 解析SVGA二进制数据以提取音频 */
@@ -8668,6 +8650,11 @@ function initApp() {
 
       // Material Replacement
       this.originalVideoItem = null;
+
+      // 用节流优化高频事件，提升性能
+      // this.onMouseMove = this.utils.throttle(this.onMouseMove, 16); // ~60fps
+      // this.onWheel = this.utils.throttle(this.onWheel, 50);
+      // this.seekToFrame = this.utils.throttle(this.seekToFrame, 100);
     },
     watch: {
       bgColorKey: function () {
