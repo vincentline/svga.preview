@@ -768,13 +768,15 @@ function initApp() {
 
       /* ==================== 文件加载与拖拽上传 ==================== */
 
-      onDragOver: function () {
+      onDragOver: function (event) {
+        event.preventDefault();
         this.dropHover = true;
       },
       onDragLeave: function () {
         this.dropHover = false;
       },
       onDrop: function (event) {
+        event.preventDefault();
         this.dropHover = false;
         var files = event.dataTransfer && event.dataTransfer.files;
         if (!files || !files.length) return;
@@ -3067,9 +3069,12 @@ function initApp() {
       },
 
       copyMaterialName: function (name) {
-        this.utils.copyToClipboard(name, function (success, message) {
-          this.showToast(message);
-        }.bind(this));
+        var _this = this;
+        this.utils.copyToClipboard(name).then(function () {
+          _this.showToast('已复制到剪贴板');
+        }).catch(function (err) {
+          alert('复制失败: ' + err.message);
+        });
       },
 
       /* 解析SVGA二进制数据以提取音频 */
@@ -4072,6 +4077,32 @@ function initApp() {
       },
 
       /**
+       * 统一的导出限制确认函数
+       * @param {object} sourceInfo - 包含 duration 和 fileSizeBytes 的对象
+       * @param {string} type - 导出类型描述 (例如 'GIF', 'MP4')
+       * @returns {boolean} - 用户是否确认继续
+       */
+      confirmExportLimits: function (sourceInfo, type) {
+        var warnings = [];
+        var duration = sourceInfo.duration || 0;
+        var fileSize = sourceInfo.fileSizeBytes || 0;
+
+        if (fileSize > 10 * 1024 * 1024) {
+          warnings.push('文件大小超过10MB (' + this.formatBytes(fileSize) + ')，处理和导出可能需要较长时间');
+        }
+        if (duration > 60) {
+          warnings.push('动画时长超过60秒 (' + duration.toFixed(1) + '秒)，处理和导出可能需要较长时间');
+        }
+
+        if (warnings.length > 0) {
+          var confirmMsg = '注意 (导出' + type + ')：\n\n' + warnings.join('\n') + '\n\n确定要继续吗？';
+          return confirm(confirmMsg);
+        }
+
+        return true; // 没有警告，直接继续
+      },
+
+      /**
        * 开始导出GIF（统一入口）
        */
       startGifExport: async function () {
@@ -4082,23 +4113,10 @@ function initApp() {
           return;
         }
 
-        // 综合提醒：文件大小超10M或时长超60秒
-        var warnings = [];
-        var estimate = this.gifEstimate;
+        // 使用新的统一确认函数
         var sourceInfo = this.getGifSourceInfo();
-
-        if (estimate.fileSizeBytes > 10 * 1024 * 1024) {
-          warnings.push('预估文件大小超10M（' + estimate.fileSize + '），可能加载较慢');
-        }
-        if (sourceInfo.duration > 60) {
-          warnings.push('动画时长超60秒（' + sourceInfo.duration.toFixed(1) + '秒），导出时间可能较长');
-        }
-
-        if (warnings.length > 0) {
-          var confirmMsg = '注意：\n\n' + warnings.join('\n') + '\n\n确定要继续导出吗？';
-          if (!confirm(confirmMsg)) {
-            return;
-          }
+        if (!this.confirmExportLimits(sourceInfo, 'GIF')) {
+          return;
         }
 
         try {
@@ -4829,6 +4847,9 @@ function initApp() {
         var kf = this.speedRemapConfig.keyframes[index];
         if (!kf) return;
 
+        // 开头和结尾的K帧不允许编辑帧数
+        if (kf.isEndpoint) return;
+
         this.editingKeyframeIndex = index;
         this.editFrameInput = kf.originalFrame.toString();
         this.showEditFrameDialog = true;
@@ -5255,6 +5276,12 @@ function initApp() {
           return;
         }
 
+        // 添加统一的导出限制确认
+        var sourceInfo = this.getGifSourceInfo(); // 复用此函数获取信息
+        if (!this.confirmExportLimits(sourceInfo, 'SVGA 转 MP4')) {
+          return;
+        }
+
         // 初始化配置
         var videoItem = this.originalVideoItem;
         this.mp4Config.width = videoItem.videoSize.width;
@@ -5394,6 +5421,12 @@ function initApp() {
         }
 
         if (!this.confirmIfHasOngoingTasks('MP4转双通道', 'task')) {
+          return;
+        }
+
+        // 添加统一的导出限制确认
+        var sourceInfo = this.getGifSourceInfo(); // 复用此函数获取信息
+        if (!this.confirmExportLimits(sourceInfo, 'MP4 转双通道')) {
           return;
         }
 
@@ -6182,6 +6215,12 @@ function initApp() {
 
         // 检查是否有其他正在进行的任务
         if (!this.confirmIfHasOngoingTasks('转SVGA', 'task')) {
+          return;
+        }
+
+        // 添加统一的导出限制确认
+        var sourceInfo = this.getGifSourceInfo(); // 复用此函数获取信息
+        if (!this.confirmExportLimits(sourceInfo, 'MP4 转 SVGA')) {
           return;
         }
 
@@ -8673,6 +8712,10 @@ function initApp() {
     mounted: function () {
       var _this = this;
 
+      // 绑定全局拖拽事件
+      window.addEventListener('dragover', this.onDragOver);
+      window.addEventListener('drop', this.onDrop);
+
       // 强制重置弹窗状态，防止意外显示
       this.showEditFrameDialog = false;
       this.editingKeyframeIndex = -1;
@@ -8752,6 +8795,11 @@ function initApp() {
 
       // 预加载非关键库
       this.preloadLibraries();
+    },
+    beforeDestroy: function () {
+      // 移除全局事件监听器
+      window.removeEventListener('dragover', this.onDragOver);
+      window.removeEventListener('drop', this.onDrop);
     }
   });
 }

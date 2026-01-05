@@ -368,7 +368,9 @@ body.dark-mode .help-popup {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(255, 255, 255, 0.9);
+  background-color: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
   z-index: 9999;
   display: flex;
   align-items: center;
@@ -409,7 +411,7 @@ body.dark-mode .help-popup {
 
 /* 暗黑模式 */
 body.dark-mode .drop-overlay {
-  background-color: rgba(0, 0, 0, 0.9);
+  background-color: rgba(0, 0, 0, 0.7);
 }
 
 body.dark-mode .drop-hint {
