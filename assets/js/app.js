@@ -81,9 +81,28 @@
  *     - (使用独立模块 svga-builder.js 构建)
  * 
  * 16. 【格式转换：SVGA转MP4】
- *     - startMP4Conversion() - 开始转换
- *     - extractFrames() - 提取帧
- *     - composeDualChannelFrames() - 合成双通道
+ *     - openMP4Panel() - 打开弹窗
+ *     - startMP4Conversion() - 开始转换（旧版/保留）
+ * 
+ * 17. 【格式转换：普通MP4转双通道MP4】
+ *     - openMp4ToDualChannelPanel() - 打开弹窗
+ *     - startMp4ToDualChannelConversion() - 开始转换
+ * 
+ * 18. 【格式转换：Lottie转双通道MP4】
+ *     - openLottieToDualChannelPanel() - 打开弹窗
+ * 
+ * 19. 【格式转换：Lottie转SVGA】
+ *     - openLottieToSvgaPanel() - 打开弹窗
+ * 
+ * 20. 【格式转换：序列帧转SVGA】
+ *     - openFramesToSvgaPanel() - 打开弹窗
+ * 
+ * 21. 【格式转换：序列帧转双通道MP4】
+ *     - openFramesToDualChannelPanel() - 打开弹窗
+ * 
+ * 22. 【格式转换：转换为普通MP4】
+ *     - openStandardMp4Panel() - 打开弹窗（支持SVGA/双通道MP4）
+ *     - startStandardMp4Conversion() - 开始转换
  * 
  * ====================================================================
  */
@@ -288,6 +307,34 @@ function initApp() {
         // Lottie 导出状态
         isExportingLottie: false,
         lottieExportProgress: 0,
+
+        // 普通MP4转换配置
+        showStandardMp4Panel: false,
+        isConvertingStandardMp4: false,
+        standardMp4Progress: 0,
+        standardMp4Message: '',
+        standardMp4Config: {
+          width: 0,
+          height: 0,
+          quality: 80,
+          fps: 30,
+          muted: false
+        },
+        mp4Converter: null,
+
+        // 普通MP4转换配置
+        showStandardMp4Panel: false,
+        isConvertingStandardMp4: false,
+        standardMp4Progress: 0,
+        standardMp4Message: '',
+        standardMp4Config: {
+          width: 0,
+          height: 0,
+          quality: 80,
+          fps: 30,
+          muted: false
+        },
+        mp4Converter: null,
 
         // MP4 转换配置
         showMP4Panel: false,
@@ -676,6 +723,7 @@ function initApp() {
         this.showFramesToSvgaPanel = false;
         this.showFramesToDualChannelPanel = false;
         this.showGifPanel = false;
+        this.showStandardMp4Panel = false;
         this[panelName] = true;
       },
 
@@ -1359,8 +1407,9 @@ function initApp() {
         this.lottie.hasFile = true;
         // 性能优化：File 对象为只读数据，冻结后避免 Vue 响应式监听开销
         this.lottie.file = Object.freeze(file);
-        // 性能优化：Lottie 动画数据为静态JSON，冻结后减少内存占用
-        this.lottie.animationData = Object.freeze(animationData);
+        // 性能优化：不放入 Vue data，避免响应式开销；也不冻结，因为 lottie-web 会修改它
+        this._lottieAnimationData = animationData;
+        this.lottie.animationData = null;
         this.lottie.originalWidth = width;
         this.lottie.originalHeight = height;
         this.lottie.frameRate = frameRate;
@@ -1386,7 +1435,9 @@ function initApp() {
         this.loadLibrary('lottie', true).then(function () {
           _this.initLottiePlayer();
         }).catch(function (err) {
+          console.error('Lottie Load Error:', err);
           alert('Lottie库加载失败，请刷新页面重试');
+          _this.switchMode('svga');
         });
       },
 
@@ -1603,6 +1654,208 @@ function initApp() {
         };
       },
 
+      /* ==================== 普通MP4转换功能 ==================== */
+
+      openStandardMp4Panel: function (type) {
+        var info = type === 'svga' ? this.svga.fileInfo : this.yyeva.fileInfo;
+        if (!info) return;
+
+        // 解析尺寸
+        var width = 0, height = 0;
+        if (type === 'svga') {
+             width = this.svga.originalWidth;
+             height = this.svga.originalHeight;
+        } else if (type === 'yyeva') {
+             width = this.yyeva.displayWidth;
+             height = this.yyeva.displayHeight;
+        }
+
+        if (!width || !height) {
+            if (info.sizeWH) {
+              var parts = info.sizeWH.split('x');
+              if (parts.length === 2) {
+                width = parseInt(parts[0]);
+                height = parseInt(parts[1]);
+              } else {
+                 parts = info.sizeWH.split(' × ');
+                 if (parts.length === 2) {
+                   width = parseInt(parts[0]);
+                   height = parseInt(parts[1]);
+                 }
+              }
+            }
+        }
+
+        // 解析帧率
+        var fps = 30;
+        if (info.fps) {
+          fps = parseInt(info.fps) || 30;
+        }
+
+        this.standardMp4Config = {
+          width: width,
+          height: height,
+          quality: 80,
+          fps: fps,
+          muted: false
+        };
+
+        this.openRightPanel('showStandardMp4Panel');
+
+        // 预加载FFmpeg库
+        if (this.libraryLoader && !this.libraryLoader.loadedLibs['ffmpeg']) {
+          this.loadLibrary('ffmpeg', true).catch(function () {});
+        }
+      },
+
+      closeStandardMp4Panel: function () {
+        this.showStandardMp4Panel = false;
+      },
+
+      cancelStandardMp4Conversion: function () {
+        this.isConvertingStandardMp4 = false;
+      },
+
+      startStandardMp4Conversion: async function () {
+        if (this.isConvertingStandardMp4) return;
+
+        var config = this.standardMp4Config;
+        if (!config.width || !config.height) {
+          alert('请输入有效的尺寸');
+          return;
+        }
+
+        // 初始化转换器
+        if (!this.mp4Converter) {
+          if (typeof MP4Converter === 'undefined') {
+            alert('MP4转换器模块未加载');
+            return;
+          }
+          this.mp4Converter = Object.create(MP4Converter);
+        }
+
+        var _this = this;
+        this.isConvertingStandardMp4 = true;
+        this.standardMp4Progress = 0;
+        this.standardMp4Message = '准备中...';
+
+        try {
+          // 准备源信息
+          var sourceInfo = this.currentModule === 'svga' ? this.svga.fileInfo : this.yyeva.fileInfo;
+          
+          // 暂停播放
+          var wasPlaying = this.isPlaying;
+          await this.pauseForExport();
+
+          // 提取帧
+          var frames = [];
+          var exportFps = config.fps;
+
+          // 计算总导出帧数
+          var duration = this.totalDuration || 0;
+          if (duration <= 0) duration = 1;
+
+          var exportTotalFrames = Math.ceil(duration * exportFps);
+          var sourceFps = parseFloat(sourceInfo.fps) || 30;
+
+          var cancelCheck = function () {
+            if (!_this.isConvertingStandardMp4) throw new Error('User Cancelled');
+          };
+
+          for (var i = 0; i < exportTotalFrames; i++) {
+            cancelCheck();
+
+            // 计算当前时间点对应的源帧索引
+            var currentTime = i / exportFps;
+            var sourceFrameIndex = Math.round(currentTime * sourceFps);
+
+            // 跳转
+            await this.seekToFrame(sourceFrameIndex, sourceFps, sourceInfo);
+            await new Promise(function (r) { setTimeout(r, 20); }); // 等待渲染
+
+            var canvas = this.getCurrentFrameCanvas();
+            if (!canvas) continue;
+
+            // 处理背景和缩放
+            var exportCanvas = document.createElement('canvas');
+            exportCanvas.width = config.width;
+            exportCanvas.height = config.height;
+            var ctx = exportCanvas.getContext('2d');
+
+            // 填充背景
+            var bgColor = _this.currentBgColor;
+            if (_this.bgColorKey === 'pattern') {
+              bgColor = '#000000'; 
+            }
+            ctx.fillStyle = bgColor;
+            ctx.fillRect(0, 0, config.width, config.height);
+
+            // 绘制帧（拉伸）
+            ctx.drawImage(canvas, 0, 0, config.width, config.height);
+
+            // 转Blob
+            var blob = await new Promise(function (resolve) {
+              exportCanvas.toBlob(resolve, 'image/jpeg', 0.95);
+            });
+            frames.push(blob);
+
+            _this.standardMp4Progress = Math.round((i + 1) / exportTotalFrames * 30); // 提取占30%
+            _this.standardMp4Message = '提取帧 ' + (i + 1) + '/' + exportTotalFrames;
+          }
+
+          // 准备音频
+          var audioFile = null;
+          if (!config.muted && this.currentModule === 'yyeva') {
+            audioFile = this.yyeva.file;
+          }
+
+          // 开始转换
+          this.standardMp4Message = 'FFmpeg转换中...';
+          var mp4Blob = await this.mp4Converter.convert({
+            frames: frames,
+            fps: exportFps,
+            quality: config.quality,
+            audioFile: audioFile,
+            muted: config.muted,
+            onProgress: function (p) {
+              _this.standardMp4Progress = 30 + Math.round(p * 70);
+              if (p < 0.3) _this.standardMp4Message = '写入文件...';
+              else if (p < 0.9) _this.standardMp4Message = '编码中...';
+              else _this.standardMp4Message = '生成文件中...';
+            },
+            checkCancelled: function () {
+              return !_this.isConvertingStandardMp4;
+            }
+          });
+
+          // 下载
+          var currentName = (this.currentModule === 'svga' ? this.svga.fileInfo.name : this.yyeva.fileInfo.name) || 'output';
+          var fileName = currentName.replace(/\.[^/.]+$/, "") + '.mp4';
+          var url = URL.createObjectURL(mp4Blob);
+          var a = document.createElement('a');
+          a.href = url;
+          a.download = fileName;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+
+          alert('转换成功！');
+          this.closeStandardMp4Panel();
+
+        } catch (e) {
+          if (e.message === 'User Cancelled') {
+            // ignore
+          } else {
+            console.error(e);
+            alert('转换失败: ' + e.message);
+          }
+        } finally {
+          this.isConvertingStandardMp4 = false;
+          if (wasPlaying) this.resumeAfterExport();
+        }
+      },
+
       /* ==================== 播放控制 ==================== */
 
       /**
@@ -1767,7 +2020,7 @@ function initApp() {
           renderer: 'canvas',
           loop: true,
           autoplay: false,
-          animationData: this.lottie.animationData
+          animationData: this._lottieAnimationData
         });
 
         // 监听帧更新
@@ -1858,6 +2111,7 @@ function initApp() {
           originalHeight: 0,
           animationData: null
         };
+        this._lottieAnimationData = null;
 
         // 重置播放状态
         this.isPlaying = false;
