@@ -1359,8 +1359,9 @@ function initApp() {
         this.lottie.hasFile = true;
         // 性能优化：File 对象为只读数据，冻结后避免 Vue 响应式监听开销
         this.lottie.file = Object.freeze(file);
-        // 性能优化：Lottie 动画数据为静态JSON，冻结后减少内存占用
-        this.lottie.animationData = Object.freeze(animationData);
+        // 性能优化：不放入 Vue data，避免响应式开销；也不冻结，因为 lottie-web 会修改它
+        this._lottieAnimationData = animationData;
+        this.lottie.animationData = null;
         this.lottie.originalWidth = width;
         this.lottie.originalHeight = height;
         this.lottie.frameRate = frameRate;
@@ -1386,7 +1387,9 @@ function initApp() {
         this.loadLibrary('lottie', true).then(function () {
           _this.initLottiePlayer();
         }).catch(function (err) {
+          console.error('Lottie Load Error:', err);
           alert('Lottie库加载失败，请刷新页面重试');
+          _this.switchMode('svga');
         });
       },
 
@@ -1767,7 +1770,7 @@ function initApp() {
           renderer: 'canvas',
           loop: true,
           autoplay: false,
-          animationData: this.lottie.animationData
+          animationData: this._lottieAnimationData
         });
 
         // 监听帧更新
@@ -1858,6 +1861,7 @@ function initApp() {
           originalHeight: 0,
           animationData: null
         };
+        this._lottieAnimationData = null;
 
         // 重置播放状态
         this.isPlaying = false;
