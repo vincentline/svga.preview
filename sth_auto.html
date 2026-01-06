@@ -1401,7 +1401,7 @@
 
       <!-- 用户勋章：生成图片弹窗 -->
       <div class="modal-overlay" :class="{show: badge.showGenModal}">
-        <div class="modal-container" style="width: 500px; height: auto;">
+        <div class="modal-container" style=" height: auto;">
           <button class="modal-close-btn" @click="closeBadgeGenModal" title="关闭">
             <svg viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
@@ -1531,7 +1531,8 @@
               genOffset: { x: 0, y: 0 },
               genScale: 1,
               dragging: false,
-              dragStartPos: { x: 0, y: 0 }
+              dragStartPos: { x: 0, y: 0 },
+              cachedImage: null
             }
           };
         },
@@ -2633,14 +2634,23 @@
             this.badge.genOffset = { x: 0, y: 0 };
             this.badge.genScale = 1;
             this.badge.showGenModal = true;
-            this.$nextTick(function() {
-              this.badgeRenderCanvas();
-            }.bind(this));
+            this.badge.cachedImage = null;
+            
+            var img = new Image();
+            var _this = this;
+            img.onload = function() {
+              _this.badge.cachedImage = img;
+              _this.$nextTick(function() {
+                _this.badgeRenderCanvas();
+              });
+            };
+            img.src = item.url;
           },
 
           closeBadgeGenModal: function() {
             this.badge.showGenModal = false;
             this.badge.current = null;
+            this.badge.cachedImage = null;
           },
 
           badgeStartDrag: function(e) {
@@ -2658,7 +2668,7 @@
 
           badgeRenderCanvas: function() {
             var canvas = this.$refs.badgeCanvas;
-            if (!canvas || !this.badge.current) return;
+            if (!canvas || !this.badge.current || !this.badge.cachedImage) return;
             var item = this.badge.current;
             
             // 设置画布尺寸为图片尺寸
@@ -2676,17 +2686,12 @@
             var ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            var _this = this;
-            var img = new Image();
-            img.onload = function() {
-              ctx.drawImage(img, 0, 0);
+            ctx.drawImage(this.badge.cachedImage, 0, 0);
               
-              // 绘制文字
-              if (_this.badge.genText) {
-                _this.badgeDrawText(ctx, item.width, item.height);
-              }
-            };
-            img.src = item.url;
+            // 绘制文字
+            if (this.badge.genText) {
+              this.badgeDrawText(ctx, item.width, item.height);
+            }
           },
 
           badgeDrawText: function(ctx, width, height) {
