@@ -79,6 +79,10 @@
     'lottie': {
       name: 'Lottie',
       url: 'https://cdn.jsdelivr.net/npm/lottie-web@5.12.2/build/player/lottie.min.js',
+      fallbackUrls: [
+        'https://unpkg.com/lottie-web@5.12.2/build/player/lottie.min.js',
+        'https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js'
+      ],
       checkFn: function () { return typeof lottie !== 'undefined'; },
       priority: 5
     },

@@ -415,17 +415,17 @@
                         <span v-if="!svga.hasFile" class="tooltip-text">请先拖入 SVGA 文件</span>
                         {{ isExportingGIF ? '导出中 ' + gifExportProgress + '%' : '导出GIF' }}
                       </button>
-                      <button class="btn-large-primary" :class="{'tooltip': !svga.hasFile}"
-                        :disabled="!svga.hasFile || isExportingLottie" @click="exportLottie">
-                        <span v-if="!svga.hasFile" class="tooltip-text">请先拖入 SVGA 文件</span>
-                        {{ isExportingLottie ? '导出中 ' + lottieExportProgress + '%' : '导出Lottie(实验性)' }}
-                      </button>
                       <button class="btn-large-primary" @click="openMaterialPanel" v-if="svga.hasFile">
                         素材图管理
                       </button>
                       <button class="btn-large-primary tooltip" v-else>
                         <span class="tooltip-text">请先拖入 SVGA 文件</span>
                         素材图管理
+                      </button>
+                      <button class="btn-large-secondary" :class="{'tooltip': !svga.hasFile}" :disabled="!svga.hasFile"
+                        @click="openStandardMp4Panel('svga')">
+                        <span v-if="!svga.hasFile" class="tooltip-text">请先拖入 SVGA 文件</span>
+                        转MP4
                       </button>
                       <button class="btn-large-secondary" :class="{'tooltip': !svga.hasFile}" :disabled="!svga.hasFile"
                         @click="openMP4Panel">
@@ -447,6 +447,11 @@
                         :disabled="!yyeva.hasFile || isExportingGIF" @click="openGifPanel">
                         <span v-if="!yyeva.hasFile" class="tooltip-text">请先拖入 MP4 文件</span>
                         {{ isExportingGIF ? '导出中 ' + gifExportProgress + '%' : '导出GIF' }}
+                      </button>
+                      <button class="btn-large-secondary" :class="{'tooltip': !yyeva.hasFile}"
+                        :disabled="!yyeva.hasFile" @click="openStandardMp4Panel('yyeva')">
+                        <span v-if="!yyeva.hasFile" class="tooltip-text">请先拖入 MP4 文件</span>
+                        转MP4
                       </button>
                       <button class="btn-large-secondary" :class="{'tooltip': !yyeva.hasFile}"
                         :disabled="!yyeva.hasFile || isConvertingSVGA" @click="openSVGAPanel">
@@ -1945,6 +1950,78 @@
     <input type="file" ref="changePreviewFileInput" accept=".svga,.json,.lottie,.mp4,.png,.jpg,.jpeg" multiple
       style="display: none;" @change="handleChangePreviewFile" />
 
+    <!-- 普通MP4转换弹窗 -->
+    <div class="mp4-panel" :class="{'show': showStandardMp4Panel}">
+      <div class="mp4-panel-container">
+        <div class="mp4-panel-header">
+          <h3 class="mp4-panel-title">转换为普通MP4格式</h3>
+          <div class="mp4-panel-divider"></div>
+        </div>
+        <div class="mp4-info-section">
+          <div class="mp4-info-row">
+            <template v-if="currentModule === 'svga'">SVGA尺寸：{{ svga.fileInfo.sizeWH }} 时长：{{ svga.fileInfo.duration }}</template>
+            <template v-else-if="currentModule === 'yyeva'">MP4尺寸：{{ yyeva.fileInfo.sizeWH }} 时长：{{ yyeva.fileInfo.duration }}</template>
+          </div>
+          <div class="mp4-compress-hint">注意：第一次转换需要加载FFmpeg（25M），请耐心等待<br>压缩质量调越低，文件就越小，画面越糊。</div>
+        </div>
+        <div class="mp4-config-section" :class="{disabled: isConvertingStandardMp4}">
+          <div class="mp4-config-item">
+            <div class="mp4-config-label">尺寸：</div>
+            <div class="mp4-size-container">
+              <div class="mp4-size-input-wrapper">
+                <input type="number" class="mp4-input" v-model.number="standardMp4Config.width" :disabled="isConvertingStandardMp4" min="0" max="3000" />
+              </div>
+              <div class="mp4-size-lock">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4.66667 7.33333V5.33333C4.66667 3.86057 5.86057 2.66667 7.33333 2.66667H8.66667C10.1394 2.66667 11.3333 3.86057 11.3333 5.33333V7.33333M5.33333 7.33333H10.6667C11.403 7.33333 12 7.93029 12 8.66667V12C12 12.7364 11.403 13.3333 10.6667 13.3333H5.33333C4.59695 13.3333 4 12.7364 4 12V8.66667C4 7.93029 4.59695 7.33333 5.33333 7.33333Z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+              </div>
+              <div class="mp4-size-input-wrapper">
+                <input type="number" class="mp4-input" v-model.number="standardMp4Config.height" :disabled="isConvertingStandardMp4" min="0" max="3000" />
+              </div>
+            </div>
+          </div>
+          <div class="mp4-config-item">
+            <div class="mp4-config-label">压缩到质量：</div>
+            <div class="mp4-value-container">
+              <div class="mp4-value-input-wrapper">
+                <input type="number" class="mp4-input" v-model.number="standardMp4Config.quality" :disabled="isConvertingStandardMp4" min="1" max="100" />
+              </div>
+              <div class="mp4-value-unit">%</div>
+            </div>
+          </div>
+          <div class="mp4-config-item">
+            <div class="mp4-config-label">帧率修改：</div>
+            <div class="mp4-value-container">
+              <div class="mp4-value-input-wrapper">
+                <input type="number" class="mp4-input" v-model.number="standardMp4Config.fps" :disabled="isConvertingStandardMp4" min="1" max="120" />
+              </div>
+              <div class="mp4-value-unit">FPS</div>
+            </div>
+          </div>
+          <div class="mp4-config-item">
+            <div class="mp4-config-label">静音</div>
+            <div class="mp4-mute-toggle" :class="{active: standardMp4Config.muted, disabled: isConvertingStandardMp4}" @click="!isConvertingStandardMp4 && (standardMp4Config.muted = !standardMp4Config.muted)">
+              <div class="mp4-mute-toggle-handle"></div>
+            </div>
+          </div>
+        </div>
+        <div class="mp4-panel-footer">
+          <button v-if="!isConvertingStandardMp4" class="material-btn-back" @click="closeStandardMp4Panel" title="返回">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M12 16L6 10L12 4" stroke="#333333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+          </button>
+          <button v-else class="material-btn-back mp4-btn-cancel" @click="cancelStandardMp4Conversion" title="取消转换">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M5 5L15 15M15 5L5 15" stroke="#ff4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+          </button>
+          <button class="btn-large-secondary" :class="{'mp4-btn-converting': isConvertingStandardMp4}" :data-progress="standardMp4Progress" :disabled="isConvertingStandardMp4" @click="startStandardMp4Conversion">
+            <template v-if="isConvertingStandardMp4">
+              <span class="mp4-progress-text">{{ standardMp4Progress }}%</span>
+              <span class="mp4-stage-text">{{ standardMp4Message }}</span>
+            </template>
+            <template v-else>开始转换MP4</template>
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- 序列帧帧率设置弹窗（复用通用居中弹窗样式） -->
     <div class="center-modal-overlay" :class="{'show': showFramesFpsDialog}">
       <div class="center-modal-dialog" style="width: 400px;">
@@ -1969,6 +2046,9 @@
   </div>
 
   </div>
+
+  <!-- MP4转换器模块 -->
+  <script src="assets/js/mp4-converter.js"></script>
 
   <!-- 双通道图像合成器模块 -->
   <script src="assets/js/dual-channel-composer.js"></script>
