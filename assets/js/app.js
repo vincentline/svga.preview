@@ -1451,7 +1451,6 @@ function initApp() {
           if (taskId !== _this.currentLoadTaskId) return;
           _this.initLottiePlayer();
         }).catch(function (err) {
-          if (taskId !== _this.currentLoadTaskId) return;
           console.error('Lottie Load Error:', err);
           alert('Lottie库加载失败，请刷新页面重试');
           _this.switchMode('svga');
