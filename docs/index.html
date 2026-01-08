@@ -2101,7 +2101,7 @@
           <!-- 左侧预览区 -->
           <div class="editor-preview-area" @mousedown="onPreviewAreaMouseDown" @wheel="onPreviewAreaWheel">
             <div class="editor-preview-wrapper" ref="editorPreviewContent"
-              :style="{ width: editor.baseImageWidth + 'px', height: editor.baseImageHeight + 'px', transform: 'scale(' + editor.scale + ') translate(' + editor.offsetX + 'px, ' + editor.offsetY + 'px)' }">
+              :style="{ width: editor.baseImageWidth + 'px', height: editor.baseImageHeight + 'px', transform: 'translate(' + editor.offsetX + 'px, ' + editor.offsetY + 'px) scale(' + editor.scale + ')' }">
 
               <!-- 内容容器，确保html2canvas截图正确 -->
               <div class="editor-preview-content"
@@ -2111,18 +2111,30 @@
                 <div v-if="editor.showImage && editor.baseImage" class="editor-image-wrapper"
                   :class="{ 'active': editor.activeElement === 'image' }" :style="{ 
                     transform: 'translate(' + editor.imageOffsetX + 'px, ' + editor.imageOffsetY + 'px) scale(' + editor.imageScale + ')',
-                    pointerEvents: editor.activeElement === 'none' || editor.activeElement === 'image' ? 'auto' : 'none'
+                    pointerEvents: editor.activeElement === 'image' ? 'auto' : 'none',
+                    outlineWidth: editor.activeElement === 'image' ? (2 / (editor.scale * editor.imageScale)) + 'px' : '0'
                   }" @mousedown.stop="onImageMouseDown" @wheel.stop="onImageWheel">
                   <img :src="editor.baseImage" class="editor-base-image" draggable="false" />
+                  <!-- 底图激活状态标签（反向缩放保持固定尺寸） -->
+                  <div v-if="editor.activeElement === 'image'" class="editor-layer-tag editor-layer-tag--image" :style="{ 
+                      transform: 'scale(' + (1 / (editor.scale * editor.imageScale)) + ')',
+                      top: (-24 / (editor.scale * editor.imageScale)) + 'px'
+                    }">底图</div>
                 </div>
 
                 <!-- 文字层 Canvas -->
                 <div v-if="editor.showText" class="editor-canvas-wrapper"
-                  :class="{ 'active': editor.activeElement === 'text' }"
-                  :style="{ pointerEvents: editor.activeElement === 'none' || editor.activeElement === 'text' ? 'auto' : 'none' }"
-                  @mousedown.stop="onTextMouseDown" @wheel.stop="onTextWheel">
+                  :class="{ 'active': editor.activeElement === 'text' }" :style="{ 
+                    pointerEvents: editor.activeElement === 'text' ? 'auto' : 'none',
+                    outlineWidth: editor.activeElement === 'text' ? (2 / editor.scale) + 'px' : '0'
+                  }" @mousedown.stop="onTextMouseDown" @wheel.stop="onTextWheel">
                   <canvas ref="editorTextCanvas" class="editor-text-canvas" :width="editor.baseImageWidth"
                     :height="editor.baseImageHeight"></canvas>
+                  <!-- 文字层激活状态标签（反向缩放保持固定尺寸） -->
+                  <div v-if="editor.activeElement === 'text'" class="editor-layer-tag editor-layer-tag--text" :style="{ 
+                      transform: 'scale(' + (1 / editor.scale) + ')',
+                      top: (-24 / editor.scale) + 'px'
+                    }">文案</div>
                 </div>
               </div>
             </div>

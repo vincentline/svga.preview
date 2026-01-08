@@ -313,40 +313,41 @@
                 this.editor.lastClickTime = 0;
 
                 // 获取当前显示的图片
-                var imgUrl = material.previewUrl; // 默认为SVGA原图
-                // 编辑器底图逻辑：
-                // 1. 如果有保存的编辑状态中的自定义底图，优先使用
-                // 2. 否则，如果有被替换的图（replacedImages），使用替换图（注意：这里的替换图可能是之前编辑生成的，也可能是外部替换的）
-                // 3. 最后使用原图
+                // 首先尝试使用原始图（originalUrl），如果不存在则使用previewUrl
+                var imgUrl = material.originalUrl || material.previewUrl;
 
-                // 修正逻辑：如果 replacedImages 中有图，说明当前显示的就是这张图。
-                // 编辑器应该基于当前显示的图进行编辑，除非用户有未保存的草稿？
-                // 这里的 savedState 实际上就是已保存的编辑状态。
+                // 编辑器底图逻辑（重要！）：
+                // 1. 如果有保存的编辑状态中的customBaseImage，使用它（用户上传的自定义底图）
+                // 2. 否则使用material.originalUrl或material.previewUrl（SVGA原始图）
+                // 
+                // 注意：replacedImages和material.previewUrl是最终合成的图片（底图+文字），
+                // 不应该用作编辑器的底图，否则会导致文字重复显示
 
                 if (savedState && savedState.customBaseImage) {
+                    // 使用保存的自定义底图（用户通过“更换底图”上传的图）
                     imgUrl = savedState.customBaseImage;
-                } else if (this.replacedImages[material.imageKey]) {
-                    // 这种情况可能是单纯的“替换此图”操作，没有经过编辑器。
-                    // 此时底图就是这张替换图。
-                    imgUrl = this.replacedImages[material.imageKey];
                 }
+                // 否则使用原始图（material.originalUrl或material.previewUrl）
 
                 this.editor.baseImage = imgUrl;
 
                 // 获取图片尺寸以便计算比例
                 var img = new Image();
                 img.onload = function () {
-                    _this.editor.baseImageWidth = img.width;
-                    _this.editor.baseImageHeight = img.height;
+                    // 只有第一次打开编辑器时才设置画布尺寸，之后保持固定
+                    if (_this.editor.baseImageWidth === 0 || _this.editor.baseImageHeight === 0) {
+                        _this.editor.baseImageWidth = img.width;
+                        _this.editor.baseImageHeight = img.height;
+                    }
 
                     // 图片加载完成后，计算默认缩放比例
                     // 使 .editor-preview-wrapper 按 .editor-preview-area 容器50%宽度等比例显示
                     _this.$nextTick(function () {
                         var previewArea = document.querySelector('.editor-preview-area');
-                        if (previewArea && img.width > 0) {
+                        if (previewArea && _this.editor.baseImageWidth > 0) {
                             var containerWidth = previewArea.clientWidth;
-                            // 默认缩放：容器宽度的50% / 图片原始宽度
-                            var defaultScale = (containerWidth * 0.5) / img.width;
+                            // 默认缩放：容器宽度的50% / 画布固定宽度
+                            var defaultScale = (containerWidth * 0.5) / _this.editor.baseImageWidth;
                             // 限制缩放范围
                             if (defaultScale > 5.0) defaultScale = 5.0;
                             if (defaultScale < 0.1) defaultScale = 0.1;
@@ -370,10 +371,55 @@
              * 预览区域鼠标按下，处理整体拖拽和取消激活
              */
             onPreviewAreaMouseDown: function (e) {
+                var _this = this;
+
                 // 如果点击的是空白区域，取消激活状态
                 if (e.target.classList.contains('editor-preview-area') ||
                     e.target.classList.contains('editor-preview-wrapper') ||
                     e.target.classList.contains('editor-preview-content')) {
+
+                    // 检查是否点击在图层范围内（即使 pointer-events 为 none）
+                    var clickedOnLayer = this.checkClickOnLayer(e);
+
+                    if (clickedOnLayer) {
+                        // 点击在图层范围内，需要判断是点击还是拖动
+                        var startX = e.clientX;
+                        var startY = e.clientY;
+                        var hasMoved = false;
+                        var startOffsetX = this.editor.offsetX;
+                        var startOffsetY = this.editor.offsetY;
+
+                        var onMouseMove = function (moveEvent) {
+                            var dx = moveEvent.clientX - startX;
+                            var dy = moveEvent.clientY - startY;
+
+                            // 移动超过3像素认为是拖动
+                            if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+                                hasMoved = true;
+                                // 拖动时移动画布
+                                _this.editor.offsetX = startOffsetX + dx;
+                                _this.editor.offsetY = startOffsetY + dy;
+                            }
+                        };
+
+                        var onMouseUp = function () {
+                            document.removeEventListener('mousemove', onMouseMove);
+                            document.removeEventListener('mouseup', onMouseUp);
+
+                            // 只有没有移动时才激活图层
+                            if (!hasMoved) {
+                                _this.editor.activeElement = clickedOnLayer;
+                                _this.editor.lastClickElement = clickedOnLayer;
+                                _this.editor.lastClickTime = Date.now();
+                            }
+                        };
+
+                        document.addEventListener('mousemove', onMouseMove);
+                        document.addEventListener('mouseup', onMouseUp);
+                        return;
+                    }
+
+                    // 点击在空白区域，取消激活
                     this.editor.activeElement = 'none';
 
                     // 开始拖拽预览区域
@@ -381,7 +427,6 @@
                     var startY = e.clientY;
                     var startOffsetX = this.editor.offsetX;
                     var startOffsetY = this.editor.offsetY;
-                    var _this = this;
 
                     var onMouseMove = function (moveEvent) {
                         var dx = moveEvent.clientX - startX;
@@ -401,13 +446,66 @@
             },
 
             /**
+             * 检查点击是否在图层范围内
+             * @param {MouseEvent} e - 鼠标事件
+             * @returns {string|null} - 'image' 或 'text' 或 null
+             */
+            checkClickOnLayer: function (e) {
+                // 获取预览区域和内容容器
+                var previewArea = document.querySelector('.editor-preview-area');
+                var previewWrapper = document.querySelector('.editor-preview-wrapper');
+                if (!previewArea || !previewWrapper) return null;
+
+                // 计算点击位置相对于预览区域的坐标
+                var areaRect = previewArea.getBoundingClientRect();
+                var clickX = e.clientX - areaRect.left;
+                var clickY = e.clientY - areaRect.top;
+
+                // 计算 wrapper 的实际位置（考虑 scale 和 offset）
+                var wrapperWidth = this.editor.baseImageWidth * this.editor.scale;
+                var wrapperHeight = this.editor.baseImageHeight * this.editor.scale;
+                var wrapperLeft = (areaRect.width - wrapperWidth) / 2 + this.editor.offsetX;
+                var wrapperTop = (areaRect.height - wrapperHeight) / 2 + this.editor.offsetY;
+
+                // 点击位置相对于 wrapper 的坐标
+                var relativeX = (clickX - wrapperLeft) / this.editor.scale;
+                var relativeY = (clickY - wrapperTop) / this.editor.scale;
+
+                // 检查文字层（文字层在上层，优先检查）
+                if (this.editor.showText && this.editor.textContent) {
+                    // 文字层覆盖整个画布，检查是否在画布范围内
+                    if (relativeX >= 0 && relativeX <= this.editor.baseImageWidth &&
+                        relativeY >= 0 && relativeY <= this.editor.baseImageHeight) {
+                        return 'text';
+                    }
+                }
+
+                // 检查底图层（支持画框外点击）
+                if (this.editor.showImage && this.editor.baseImage) {
+                    // 计算底图层的实际位置（考虑 imageOffset 和 imageScale）
+                    var imageLeft = wrapperLeft + this.editor.imageOffsetX * this.editor.scale;
+                    var imageTop = wrapperTop + this.editor.imageOffsetY * this.editor.scale;
+                    var imageWidth = this.editor.baseImageWidth * this.editor.scale * this.editor.imageScale;
+                    var imageHeight = this.editor.baseImageHeight * this.editor.scale * this.editor.imageScale;
+
+                    // 检查点击是否在底图层范围内
+                    if (clickX >= imageLeft && clickX <= imageLeft + imageWidth &&
+                        clickY >= imageTop && clickY <= imageTop + imageHeight) {
+                        return 'image';
+                    }
+                }
+
+                return null;
+            },
+
+            /**
              * 预览区域滚轮，缩放预览
              */
             onPreviewAreaWheel: function (e) {
                 // 如果没有激活元素，缩放预览区域
                 if (this.editor.activeElement === 'none') {
                     e.preventDefault();
-                    var delta = e.deltaY > 0 ? -0.1 : 0.1;
+                    var delta = e.deltaY > 0 ? -0.02 : 0.02;
                     this.handleEditorZoom(delta);
                 }
             },
@@ -484,11 +582,11 @@
                 if (this.editor.activeElement === 'image') {
                     e.preventDefault();
                     e.stopPropagation();
-                    var delta = e.deltaY > 0 ? -0.1 : 0.1;
+                    var delta = e.deltaY > 0 ? -0.02 : 0.02;
                     var newScale = this.editor.imageScale + delta;
                     if (newScale < 0.1) newScale = 0.1;
                     if (newScale > 10.0) newScale = 10.0;
-                    this.editor.imageScale = parseFloat(newScale.toFixed(1));
+                    this.editor.imageScale = parseFloat(newScale.toFixed(2));
                 }
             },
 
@@ -578,13 +676,8 @@
                 reader.onload = function (event) {
                     _this.editor.baseImage = event.target.result;
 
-                    // 更新尺寸
-                    var img = new Image();
-                    img.onload = function () {
-                        _this.editor.baseImageWidth = img.width;
-                        _this.editor.baseImageHeight = img.height;
-                    };
-                    img.src = event.target.result;
+                    // 上传新图片时，不改变画布尺寸，保持导出区域固定
+                    // baseImageWidth 和 baseImageHeight 保持不变
                 };
                 reader.readAsDataURL(file);
                 e.target.value = '';
@@ -597,11 +690,11 @@
                 if (this.editor.activeElement === 'text') {
                     e.preventDefault();
                     e.stopPropagation();
-                    var delta = e.deltaY > 0 ? -0.1 : 0.1;
+                    var delta = e.deltaY > 0 ? -0.02 : 0.02;
                     var newScale = this.editor.textScale + delta;
                     if (newScale < 0.1) newScale = 0.1;
                     if (newScale > 10.0) newScale = 10.0;
-                    this.editor.textScale = parseFloat(newScale.toFixed(1));
+                    this.editor.textScale = parseFloat(newScale.toFixed(2));
                 }
             },
 
@@ -612,7 +705,7 @@
                 var newScale = this.editor.scale + delta;
                 if (newScale < 0.1) newScale = 0.1;
                 if (newScale > 5.0) newScale = 5.0;
-                this.editor.scale = parseFloat(newScale.toFixed(1));
+                this.editor.scale = parseFloat(newScale.toFixed(2));
             },
 
             /**
@@ -660,11 +753,76 @@
                 if (this.editor.showImage && this.editor.baseImage) {
                     drawProcess = drawProcess.then(function () {
                         return loadImage(_this.editor.baseImage).then(function (img) {
-                            // 应用素材图的偏移和缩放
+                            // ==================== 重要说明 ====================
+                            // 此处的Canvas绘制逻辑必须与HTML预览保持完全一致！
+                            // 
+                            // HTML预览结构：
+                            // <div class="editor-image-wrapper" 
+                            //      style="transform: translate(imageOffsetX, imageOffsetY) scale(imageScale);
+                            //             transform-origin: 50% 50%;">
+                            //   <img style="object-fit: contain;" />
+                            // </div>
+                            // 
+                            // CSS transform 特性：
+                            // 1. transform-origin默认为center center（画布中心）
+                            // 2. 变换顺序：先translate（平移）后scale（缩放）
+                            // 3. 所有变换都围绕transform-origin进行
+                            // 
+                            // Canvas等价实现（关键步骤，顺序不可改）：
+                            // 1. 图片先按object-fit:contain适配到画布尺寸
+                            // 2. 移动坐标原点到画布中心（模拟transform-origin）
+                            // 3. 应用translate平移
+                            // 4. 应用scale缩放
+                            // 5. 绘制图片（坐标相对于中心点）
+                            // 
+                            // ⚠️ 注意事项：
+                            // - translate和scale的顺序不能颠倒！
+                            // - 图片坐标必须相对于中心点计算（减去width/2和height/2）
+                            // - 修改此处逻辑前请先验证HTML预览效果是否一致
+                            // ==================================================
+
+                            // 步骤1：计算图片如何适配到画布（object-fit: contain）
+                            var imgRatio = img.width / img.height;
+                            var canvasRatio = width / height;
+                            var fitWidth, fitHeight, fitX, fitY;
+
+                            if (imgRatio > canvasRatio) {
+                                // 图片更宽，以画布宽度为准，高度按比例缩小，垂直居中
+                                fitWidth = width;
+                                fitHeight = width / imgRatio;
+                                fitX = 0;
+                                fitY = (height - fitHeight) / 2;
+                            } else {
+                                // 图片更高或同比，以画布高度为准，宽度按比例缩小，水平居中
+                                fitHeight = height;
+                                fitWidth = height * imgRatio;
+                                fitX = (width - fitWidth) / 2;
+                                fitY = 0;
+                            }
+
+                            // 步骤2：应用CSS transform等价变换
                             ctx.save();
+
+                            // 2.1 移动坐标原点到画布中心（模拟transform-origin: center center）
+                            ctx.translate(width / 2, height / 2);
+
+                            // 2.2 应用用户的平移操作（对应CSS的translate）
+                            // 注意：必须在scale之前，顺序不可颠倒！
                             ctx.translate(_this.editor.imageOffsetX, _this.editor.imageOffsetY);
+
+                            // 2.3 应用用户的缩放操作（对应CSS的scale）
+                            // 缩放围绕当前坐标原点（即画布中心+平移后的位置）
                             ctx.scale(_this.editor.imageScale, _this.editor.imageScale);
-                            ctx.drawImage(img, 0, 0, width, height);
+
+                            // 步骤3：绘制适配后的图片
+                            // 坐标必须相对于中心点（因为原点已移到中心）
+                            ctx.drawImage(img,
+                                fitX - width / 2,  // X坐标 = 适配位置 - 画布中心X
+                                fitY - height / 2,  // Y坐标 = 适配位置 - 画布中心Y
+                                fitWidth,           // 适配后的宽度
+                                fitHeight           // 适配后的高度
+                            );
+
                             ctx.restore();
                         });
                     });
@@ -673,7 +831,24 @@
                 // 2.2 绘制文字 (使用 Canvas API 替代 SVG foreignObject 以避免 Tainted Canvas)
                 if (this.editor.showText && this.editor.textContent) {
                     drawProcess = drawProcess.then(function () {
+                        // 计算文字位置
+                        var centerX = (width * _this.editor.textPosX) / 100;
+                        var centerY = (height * _this.editor.textPosY) / 100;
+
+                        // 保存状态
+                        ctx.save();
+
+                        // 移动到文字中心点
+                        ctx.translate(centerX, centerY);
+
+                        // 应用缩放
+                        ctx.scale(_this.editor.textScale, _this.editor.textScale);
+
+                        // 使用 drawRichText 绘制带样式的文字
                         _this.drawRichText(ctx, width, height);
+
+                        // 恢复状态
+                        ctx.restore();
                     });
                 }
 
@@ -740,8 +915,8 @@
                     imageOffsetX: this.editor.imageOffsetX,
                     imageOffsetY: this.editor.imageOffsetY,
                     imageScale: this.editor.imageScale,
-                    // 如果底图不是原图，需要保存自定义底图
-                    customBaseImage: this.editor.baseImage !== material.previewUrl ? this.editor.baseImage : null
+                    // 保存当前的底图（原始图或用户上传的图）
+                    customBaseImage: this.editor.baseImage
                 });
 
                 // 生成 blob URL 并替换素材
@@ -753,6 +928,10 @@
                     _this.$set(_this.replacedImages, material.imageKey, url);
 
                     // 2. 更新 material 对象 (用于列表缩略图显示)
+                    // 保留原始图片的引用（首次保存时）
+                    if (!material.originalUrl) {
+                        material.originalUrl = material.previewUrl;
+                    }
                     material.previewUrl = url;
                     material.isReplaced = true;
 
@@ -855,21 +1034,20 @@
 
                 ctx.save();
 
-                // 1. 定位
-                var x = width * (this.editor.textPosX / 100);
-                var y = height * (this.editor.textPosY / 100);
-                ctx.translate(x, y);
-                ctx.scale(this.editor.textScale, this.editor.textScale);
-
-                // 2. 字体设置
+                // 1. 字体设置
                 ctx.font = fontStyle + ' ' + fontWeight + ' ' + fontSize + 'px "' + fontFamily + '"';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
 
-                // 3. 解析渐变（如果有）
+                // 2. 解析渐变（如果有）
                 var fillStyle = style['color'] || '#000000';
                 var bgStr = style['background'] || style['background-image'];
                 var hasBackgroundClip = style['-webkit-background-clip'] === 'text' || style['background-clip'] === 'text';
+
+                // 将文本按换行符分割成多行（提前计算，用于渐变计算）
+                var lines = text.split('\n');
+                var lineHeight = fontSize * 1.2; // 行高为字体大小的1.2倍
+                var totalHeight = lines.length * lineHeight;
 
                 if (bgStr && bgStr.indexOf('gradient') !== -1 && hasBackgroundClip) {
                     // 解析渐变方向
@@ -901,24 +1079,32 @@
                             colors[colors.length - 1].stop = 1;
                         }
 
-                        // 根据角度设置渐变方向
+                        // 根据角度设置渐变方向（使用总高度）
                         var x0, y0, x1, y1;
-                        var textHeight = fontSize;
 
                         if (angle === 0) {
                             // 0deg: 从下到上
-                            x0 = 0; y0 = textHeight * 0.6; x1 = 0; y1 = -textHeight * 0.6;
+                            x0 = 0; y0 = totalHeight / 2; x1 = 0; y1 = -totalHeight / 2;
                         } else if (angle === 90) {
                             // 90deg: 从左到右
-                            var textWidth = ctx.measureText(text).width;
-                            x0 = -textWidth / 2; y0 = 0; x1 = textWidth / 2; y1 = 0;
+                            // 使用最长一行的宽度
+                            var maxWidth = 0;
+                            for (var i = 0; i < lines.length; i++) {
+                                var w = ctx.measureText(lines[i]).width;
+                                if (w > maxWidth) maxWidth = w;
+                            }
+                            x0 = -maxWidth / 2; y0 = 0; x1 = maxWidth / 2; y1 = 0;
                         } else if (angle === 270) {
                             // 270deg: 从右到左
-                            var textWidth = ctx.measureText(text).width;
-                            x0 = textWidth / 2; y0 = 0; x1 = -textWidth / 2; y1 = 0;
+                            var maxWidth = 0;
+                            for (var i = 0; i < lines.length; i++) {
+                                var w = ctx.measureText(lines[i]).width;
+                                if (w > maxWidth) maxWidth = w;
+                            }
+                            x0 = maxWidth / 2; y0 = 0; x1 = -maxWidth / 2; y1 = 0;
                         } else {
                             // 180deg 或默认: 从上到下
-                            x0 = 0; y0 = -textHeight * 0.6; x1 = 0; y1 = textHeight * 0.6;
+                            x0 = 0; y0 = -totalHeight / 2; x1 = 0; y1 = totalHeight / 2;
                         }
 
                         var grad = ctx.createLinearGradient(x0, y0, x1, y1);
@@ -931,7 +1117,10 @@
                     }
                 }
 
-                // 4. 绘制投影 (text-shadow) - 多层阴影
+                // 3. 绘制投影 (text-shadow) - 多层阴影
+                // 计算居中起始位置
+                var startY = -(totalHeight / 2) + (lineHeight / 2); // 居中起始Y坐标
+
                 if (style['text-shadow']) {
                     var shadowsStr = style['text-shadow'];
 
@@ -944,7 +1133,7 @@
                         return s.replace(/\|/g, ',').trim();
                     });
 
-                    // 绘制每层阴影
+                    // 绘制每层阴影（逐行绘制）
                     for (var i = 0; i < shadowsArr.length; i++) {
                         var shadow = shadowsArr[i];
                         // 解析: offsetX offsetY blur color
@@ -957,9 +1146,12 @@
                             ctx.shadowBlur = parseFloat(shadowMatch[3]);
                             ctx.shadowColor = shadowMatch[4];
 
-                            // 绘制阴影（使用渐变或纯色作为 fillStyle）
+                            // 绘制每一行的阴影（使用渐变或纯色作为 fillStyle）
                             ctx.fillStyle = fillStyle;
-                            ctx.fillText(text, 0, 0);
+                            for (var lineIdx = 0; lineIdx < lines.length; lineIdx++) {
+                                var lineY = startY + (lineIdx * lineHeight);
+                                ctx.fillText(lines[lineIdx], 0, lineY);
+                            }
                             ctx.restore();
                         }
                     }
@@ -970,7 +1162,7 @@
                     ctx.shadowBlur = 0;
                 }
 
-                // 5. 绘制描边 (Stroke)
+                // 4. 绘制描边 (Stroke)（逐行绘制）
                 var strokeStr = style['-webkit-text-stroke'] || style['border'];
                 if (strokeStr) {
                     var stroke = this.parseStroke(strokeStr);
@@ -978,13 +1170,19 @@
                         ctx.lineWidth = stroke.width;
                         ctx.strokeStyle = stroke.color;
                         ctx.lineJoin = 'round';
-                        ctx.strokeText(text, 0, 0);
+                        for (var lineIdx = 0; lineIdx < lines.length; lineIdx++) {
+                            var lineY = startY + (lineIdx * lineHeight);
+                            ctx.strokeText(lines[lineIdx], 0, lineY);
+                        }
                     }
                 }
 
-                // 6. 绘制填充 (Fill)
+                // 5. 绘制填充 (Fill)（逐行绘制）
                 ctx.fillStyle = fillStyle;
-                ctx.fillText(text, 0, 0);
+                for (var lineIdx = 0; lineIdx < lines.length; lineIdx++) {
+                    var lineY = startY + (lineIdx * lineHeight);
+                    ctx.fillText(lines[lineIdx], 0, lineY);
+                }
 
                 ctx.restore();
             },

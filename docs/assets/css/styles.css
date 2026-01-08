@@ -199,7 +199,17 @@ body.dark-mode .input-unit--hint {
 
 .textarea-input--lg {
   height: 144px;
-  overflow: hidden;
+  overflow-y: auto;
+  /* 隐藏滚动条 */
+  scrollbar-width: none;
+  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE 10+ */
+}
+
+.textarea-input--lg::-webkit-scrollbar {
+  display: none;
+  /* Chrome, Safari, Edge */
 }
 
 /* ==================== 顶部导航栏 ==================== */
@@ -2530,7 +2540,7 @@ body.dark-mode .material-btn-replace:hover {
   justify-content: center;
   align-items: center;
   border-radius: 8px;
-  
+
   width: 28px;
   height: 28px;
   background: #FFFFFF;
@@ -4441,7 +4451,7 @@ body.dark-mode .editor-preview-area {
   width: 100%;
   height: 100%;
   display: block;
-  object-fit: fill;
+  object-fit: contain;
   pointer-events: none;
   /* 图片不响应鼠标，由 wrapper 响应 */
 }
@@ -4456,10 +4466,13 @@ body.dark-mode .editor-preview-area {
   cursor: move;
   transition: none;
   /* pointer-events 由 Vue 动态控制 */
+  outline: none;
 }
 
 .editor-image-wrapper.active {
-  outline: 2px solid #00B4FF;
+  /* outline 宽度通过 HTML 动态计算以保持固定 2px */
+  outline-color: #00B4FF;
+  outline-style: solid;
   outline-offset: -2px;
 }
 
@@ -4475,10 +4488,13 @@ body.dark-mode .editor-preview-area {
   z-index: 1;
   /* 文字层在上层，但通过 pointer-events 控制事件响应 */
   /* pointer-events 由 Vue 动态控制 */
+  outline: none;
 }
 
 .editor-canvas-wrapper.active {
-  outline: 2px solid #ff00ff;
+  /* outline 宽度通过 HTML 动态计算以保持固定 2px */
+  outline-color: #ff00ff;
+  outline-style: solid;
   outline-offset: -2px;
 }
 
@@ -4488,6 +4504,33 @@ body.dark-mode .editor-preview-area {
   height: 100%;
   display: block;
   pointer-events: none;
+}
+
+/* 激活状态标签（固定尺寸，不受缩放影响） */
+.editor-layer-tag {
+  position: absolute;
+  top: -24px;
+  left: 0;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #ffffff;
+  border-radius: 4px;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 10;
+  /* 通过 transform 反向缩放来抵消父元素的 scale */
+  transform-origin: left top;
+}
+
+/* 底图标签样式 */
+.editor-layer-tag--image {
+  background-color: #00B4FF;
+}
+
+/* 文字层标签样式 */
+.editor-layer-tag--text {
+  background-color: #ff00ff;
 }
 
 /* 文字层选中/悬停时的辅助框 - 已移除 */
@@ -4593,15 +4636,13 @@ body.dark-mode .editor-preview-area {
   width: 300px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  padding: 24px 24px 24px 0;
-  /* 右侧padding */
   overflow-y: auto;
 }
 
 .editor-control-group {
   display: flex;
   flex-direction: column;
+  gap: 24px;
 }
 
 body.dark-mode .editor-control-group {
@@ -5647,7 +5688,8 @@ body.dark-mode .editor-zoom-controls button {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  padding-left: 20px;
+  /*margin-right: 16px; */
+
   overflow-y: auto;
 }
 

@@ -313,7 +313,9 @@
      * 通过分析30%和70%位置的帧，检测左右两半的饱和度和亮度差异
      * 
      * @param {File} file - MP4文件
-     * @param {Function} callback - 回调函数，参数为isDualChannel(boolean)
+     * @param {Function} callback - 回调函数，参数为 callback(isDualChannel, alphaPosition)
+     *                               isDualChannel: boolean - 是否为双通道
+     *                               alphaPosition: 'left' | 'right' | null - alpha通道位置（仅双通道时有效）
      */
     FileValidator.prototype.detectMp4Type = function (file, callback) {
         var objectUrl = URL.createObjectURL(file);
@@ -342,6 +344,7 @@
 
             var frameIndex = 0;
             var isDualChannel = false;
+            var alphaPosition = null; // 'left' | 'right' - 记录alpha通道位置
 
             // 计算区域平均饱和度和亮度
             function calculateMetrics(imageData) {
@@ -414,7 +417,12 @@
 
                 var result = hasBlackSide && (hasSaturationDiff || hasBrightnessDiff);
 
-                return result;
+                // 判断alpha通道在哪一侧：饱和度低的一侧是灰度图（alpha通道）
+                if (result) {
+                    return leftMetrics.saturation < rightMetrics.saturation ? 'left' : 'right';
+                }
+
+                return null;
             }
 
             // 检查下一帧
@@ -422,7 +430,7 @@
                 if (frameIndex >= CONFIG.checkFramePositions.length) {
                     // 所有帧检查完成
                     URL.revokeObjectURL(objectUrl);
-                    callback(isDualChannel);
+                    callback(isDualChannel, alphaPosition);
                     return;
                 }
 
@@ -431,9 +439,13 @@
             }
 
             video.onseeked = function () {
-                var isFrameDualChannel = analyzeFrame();
-                if (isFrameDualChannel) {
+                var frameAlphaPosition = analyzeFrame();
+                if (frameAlphaPosition) {
                     isDualChannel = true;
+                    // 记录alpha位置（如果多帧检测结果一致，保留第一次的结果）
+                    if (!alphaPosition) {
+                        alphaPosition = frameAlphaPosition;
+                    }
                 }
                 frameIndex++;
                 checkNextFrame();
@@ -441,7 +453,7 @@
 
             video.onerror = function () {
                 URL.revokeObjectURL(objectUrl);
-                callback(false); // 出错默认为普通视频
+                callback(false, null); // 出错默认为普通视频
             };
 
             // 开始检测第一帧
@@ -450,7 +462,7 @@
 
         video.onerror = function () {
             URL.revokeObjectURL(objectUrl);
-            callback(false); // 出错默认为普通视频
+            callback(false, null); // 出错默认为普通视频
         };
     };
 

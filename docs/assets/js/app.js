@@ -924,32 +924,54 @@ function initApp() {
         } else if (name.endsWith('.json') || name.endsWith('.lottie')) {
           fileType = 'lottie';
         } else if (name.endsWith('.mp4')) {
-          // MP4需要先检测是否为双通
-          this.detectMp4Type(file, function (isDualChannel) {
+          // MP4需要先检测是否为双通道
+          // 注意：在检测前生成taskId，避免检测过程中taskId变化导致误判任务取消
+          var detectionTaskId = ++this.currentLoadTaskId;
+
+          this.detectMp4Type(file, function (isDualChannel, alphaPosition) {
+            // 检查检测任务是否已过期
+            if (detectionTaskId !== _this.currentLoadTaskId) {
+              console.warn('MP4检测任务已取消 (TaskId mismatch)', detectionTaskId);
+              return;
+            }
+
             var mp4Type = isDualChannel ? 'yyeva' : 'mp4';
             // 验证文件
             _this.validateFile(file, mp4Type)
               .then(function (validatedData) {
+                // 再次检查任务是否过期（用户可能在验证期间拖入了新文件）
+                if (detectionTaskId !== _this.currentLoadTaskId) {
+                  return;
+                }
+
                 // 验证通过，检查任务冲突
                 if (!_this.confirmIfHasOngoingTasks('播放新文件', 'load')) {
                   return;
                 }
                 // 加载文件
                 if (mp4Type === 'yyeva') {
+                  // 将检测到的alpha位置传递给loadYyeva
+                  validatedData.alphaPosition = alphaPosition || 'right'; // 默认右侧为alpha通道
+                  validatedData.detectionTaskId = detectionTaskId; // 传递检测任务ID
                   _this.loadYyeva(validatedData);
                 } else {
                   _this.loadMp4File(validatedData);
                 }
               })
               .catch(function (errorMsg) {
+                // 检查任务是否过期
+                if (detectionTaskId !== _this.currentLoadTaskId) {
+                  return;
+                }
                 // 错误只弹提示，不影响当前播放
                 alert(errorMsg);
               });
           });
-          return;
+          return; // 重要：MP4处理完毕，直接返回，不继续执行后面的代码
         } else {
+          // 不支持的文件类型
           alert('不支持的文件类型，只支持 .svga / .json / .lottie / .mp4');
-          return;
+          return; // 直接返回，不继续执行
         }
 
         // 验证文件（SVGA/Lottie）
@@ -1094,12 +1116,14 @@ function initApp() {
         var currentMode = this.currentModule;
         var currentFile = null;
         var originalVideoItem = this.originalVideoItem;
+        var savedAlphaPosition = null; // 保存yyeva的alpha位置
 
         // 根据当前模式获取原始文件（支持5种模式）
         if (currentMode === 'svga' && this.svga.hasFile) {
           currentFile = this.svga.file;
         } else if (currentMode === 'yyeva' && this.yyeva.hasFile) {
           currentFile = this.yyeva.file;
+          savedAlphaPosition = this.yyeva.alphaPosition; // 保存alpha位置用于恢复
         } else if (currentMode === 'mp4' && this.mp4.hasFile) {
           currentFile = this.mp4.file;
         } else if (currentMode === 'lottie' && this.lottie.hasFile) {
@@ -1173,7 +1197,8 @@ function initApp() {
           });
         } else if (currentMode === 'yyeva') {
           this.loadYyeva({
-            file: currentFile
+            file: currentFile,
+            alphaPosition: savedAlphaPosition // 传递保存的alpha位置
           });
         } else if (currentMode === 'mp4') {
           this.loadMp4File({ file: currentFile });
@@ -1459,14 +1484,28 @@ function initApp() {
 
       /**
        * 加载双通MP4文件（验证已完成，直接加载）
-       * @param {Object} validatedData - 验证后的数据：{ file }
+       * @param {Object} validatedData - 验证后的数据：{ file, alphaPosition, detectionTaskId }
        */
       loadYyeva: function (validatedData) {
         var _this = this;
         var file = validatedData.file;
+        var detectedAlphaPosition = validatedData.alphaPosition || 'right'; // 使用检测到的alpha位置
 
         // 生成加载任务ID，用于处理异步加载的竞态条件
-        var taskId = ++this.currentLoadTaskId;
+        // 注意：如果有detectionTaskId，说明是从Mp4检测流程过来的，taskId已经生成过了
+        var taskId;
+        if (validatedData.detectionTaskId) {
+          // 使用传入的taskId，保持一致性（不修改currentLoadTaskId）
+          taskId = validatedData.detectionTaskId;
+          // 验证taskId是否仍然有效
+          if (taskId !== this.currentLoadTaskId) {
+            console.warn('YYEVA加载任务已过期 (TaskId mismatch)', taskId, '当前:', this.currentLoadTaskId);
+            return;
+          }
+        } else {
+          // 直接调用loadYyeva（如恢复播放），需要生成新taskId
+          taskId = ++this.currentLoadTaskId;
+        }
 
         // 切换模式
         this.switchMode('yyeva');
@@ -1520,6 +1559,9 @@ function initApp() {
           _this.yyevaVideo = video;
           _this.yyevaAlphaPosition = 'left';
 
+          // 设置检测到的alpha位置（优先使用检测结果）
+          _this.yyeva.alphaPosition = detectedAlphaPosition;
+
           // 检测是否包含音频
           _this.yyevaHasAudio = _this.detectVideoHasAudio(video);
 
@@ -1536,11 +1578,16 @@ function initApp() {
             }
 
             // 检测 alpha 位置并渲染第一帧
+            // 注意：detectAlphaPosition会重新检测并覆盖alphaPosition，但已经在上面设置了检测结果
+            // 为了兼容性，保留这个调用，但如果已有检测结果就不再重复检测
             video.onseeked = function () {
               video.onseeked = null;
               if (taskId !== _this.currentLoadTaskId) return;
 
-              _this.detectAlphaPosition(video);
+              // 只有在未检测到alpha位置时才重新检测
+              if (!detectedAlphaPosition) {
+                _this.detectAlphaPosition(video);
+              }
               _this.renderYyevaFrame();
 
               // 自动播放
@@ -9086,7 +9133,7 @@ function initApp() {
       this.emptyStateSvgaPlayer = null;
       this.emptyStateSvgaParser = null;
 
-      // YYEVA
+      // 双通道MP4 YYEVA
       this.yyevaVideo = null;
       this.yyevaCanvas = null;
       this.yyevaCtx = null;
@@ -9142,9 +9189,10 @@ function initApp() {
     mounted: function () {
       var _this = this;
 
-      // 绑定全局拖拽事件
-      window.addEventListener('dragover', this.onDragOver);
-      window.addEventListener('drop', this.onDrop);
+      // 注意：拖拽事件已在 Vue 模板中通过 @drop.prevent="onDrop" 绑定
+      // 此处不再重复绑定，避免同一文件被处理两次
+      // window.addEventListener('dragover', this.onDragOver);
+      // window.addEventListener('drop', this.onDrop);
 
       // 强制重置弹窗状态，防止意外显示
       this.showEditFrameDialog = false;
