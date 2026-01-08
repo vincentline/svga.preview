@@ -345,12 +345,14 @@ convertToYYEVAMP4: async function() {
 - ✅ 文件加载与预览
 - ✅ 播放控制（播放/暂停/进度条/帧数显示）
 - ✅ Alpha通道位置自动检测（左右/上下并排）
+- ✅ **Alpha通道位置智能识别**（检测时返回alpha位置，支持左灰右彩和左彩右灰）
 - ✅ 音频播放支持
 - ✅ 透明通道正确渲染
 - ✅ 模式切换优化（自动资源清理）
 - ✅ 导出GIF功能
 - ✅ 转换为SVGA功能
 - ✅ **MP4双通道自动检测**（拖入MP4自动识别普通/双通道）
+- ✅ **TaskId管理优化**（修复重复事件绑定导致的任务冲突问题）
 
 #### 2. SVGA转双通道MP4 ✅
 - ✅ 逐帧渲染到Canvas
@@ -374,6 +376,17 @@ convertToYYEVAMP4: async function() {
 4. **资源管理**：模式切换时自动清理video/canvas资源
 5. **格式互转**：SVGA↔MP4双向转换
 6. **音频支持**：双通道MP4保留音轨
+7. **Alpha通道智能识别（2026-01-09）**：
+   - 检测时通过分析左右两侧的饱和度差异自动判断哪侧是alpha通道
+   - 支持左灰右彩和左彩右灰两种布局
+   - 修复file-validator.js的detectMp4Type方法，返回alphaPosition参数
+   - 优化app.js的loadYyeva方法，使用检测结果而非默认值
+8. **TaskId管理优化（2026-01-09）**：
+   - 修复重复绑定drop事件导致的同一文件被处理两次问题
+   - 移除mounted中重复的window.addEventListener绑定
+   - 保留Vue模板中的@drop.prevent绑定，符合Vue最佳实践
+   - 修复detectionTaskId的生成时机，确保整个检测流程使用同一个taskId
+   - 修复loadYyeva中的taskId验证逻辑，避免覆盖currentLoadTaskId
 
 ### 待完成
 
