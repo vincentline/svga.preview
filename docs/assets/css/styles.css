@@ -2458,8 +2458,9 @@ body.dark-mode .material-meta {
   align-self: stretch;
   position: relative;
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   flex-direction: row;
+  gap: 4px;
 }
 
 /* 鏇挎崲鎸夐挳 (btn01_Medium) */
@@ -2469,14 +2470,10 @@ body.dark-mode .material-meta {
   flex-direction: row;
   justify-content: center;
   align-items: center;
-  padding: 6px;
+  padding: 2px 6px;
   width: auto;
-  gap: 10px;
-  position: absolute;
   min-width: 60px;
   height: 28px;
-  left: 0px;
-  top: 0px;
   background: #FFFFFF;
   border: 1px solid #e6e6e6;
   border-radius: 8px;
@@ -2533,7 +2530,7 @@ body.dark-mode .material-btn-replace:hover {
   justify-content: center;
   align-items: center;
   border-radius: 8px;
-  position: absolute;
+  
   width: 28px;
   height: 28px;
   background: #FFFFFF;
@@ -2633,13 +2630,9 @@ body.dark-mode .restore-playback-btn:hover {
   justify-content: center;
   align-items: center;
   border-radius: 8px;
-  padding: 0px 4px;
   gap: 10px;
-  position: absolute;
-  width: 32px;
+  width: 28px;
   height: 28px;
-  left: 129px;
-  top: 0px;
   background: #FFFFFF;
   border: 1px solid #e6e6e6;
   cursor: pointer;
@@ -3318,7 +3311,7 @@ body.dark-mode .mp4-input:disabled {
 }
 
 /* MP4侧边弹窗中的大按钮需要flex布局 */
-.mp4-panel-footer .btn-large-secondary {}
+/*.mp4-panel-footer .btn-large-secondary {}*/
 
 .mp4-btn {
   display: flex;
@@ -4466,7 +4459,7 @@ body.dark-mode .editor-preview-area {
 }
 
 .editor-image-wrapper.active {
-  outline: 2px solid #333333;
+  outline: 2px solid #00B4FF;
   outline-offset: -2px;
 }
 
@@ -4485,7 +4478,7 @@ body.dark-mode .editor-preview-area {
 }
 
 .editor-canvas-wrapper.active {
-  outline: 2px solid #333333;
+  outline: 2px solid #ff00ff;
   outline-offset: -2px;
 }
 
@@ -4583,13 +4576,10 @@ body.dark-mode .editor-preview-area {
 /* 底部按钮组 */
 .editor-bottom-actions {
   position: absolute;
-  bottom: 20px;
-  left: 0;
-  right: 0;
+  bottom: 10px;
   display: flex;
   justify-content: center;
   gap: 16px;
-  padding: 0 20px;
   pointer-events: none;
   /* 让事件穿透到下层，按钮自身开启 pointer-events */
 }
@@ -5584,11 +5574,11 @@ body.dark-mode .keyframe-speed-preset:hover {
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid #e6e6e6;
+  border: 1px solid #333333;
 }
 
 body.dark-mode .editor-preview-wrapper {
-  border-color: #404040;
+  border-color: #F5F5F5;
 }
 
 .editor-preview-content {
@@ -5644,13 +5634,12 @@ body.dark-mode .editor-zoom-controls button {
   color: #ccc;
 }
 
-/* 底部按钮 */
+/* 底部按钮 
 .editor-bottom-actions {
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 12px;
-}
+} */
 
 /* 右侧设置 */
 .editor-controls-area {
@@ -5673,13 +5662,8 @@ body.dark-mode .editor-controls-area {
   justify-content: center;
   align-items: center;
   border-radius: 8px;
-  padding: 0px 4px;
-  gap: 10px;
-  position: absolute;
-  width: 32px;
+  width: 28px;
   height: 28px;
-  left: 87px;
-  top: 0px;
   background: #FFFFFF;
   border: 1px solid #e6e6e6;
   cursor: pointer;
