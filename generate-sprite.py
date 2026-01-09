@@ -123,6 +123,12 @@ ICONS = {
         'mini_mute_on_hover.png',
         'mini_mute_on_dark.png',
         'mini_mute_on_hover_dark.png',
+    ],
+    'AI_img': [
+        'AI_img.png',
+        'AI_img_hover.png',
+        'AI_img_dark.png',
+        'AI_img_hover_dark.png',
     ]
 }
 

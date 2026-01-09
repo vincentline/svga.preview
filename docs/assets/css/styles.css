@@ -320,7 +320,7 @@ body.dark-mode .theme-toggle svg {
   fill: #e0e0e0;
 }
 
-/* Tooltip 姘旀场 */
+/* Tooltip 气泡 */
 .tooltip {
   position: relative;
   display: inline-block;
@@ -439,7 +439,7 @@ body.dark-mode .library-loading-indicator .loading-text {
   background: none;
   /* 使用雪碧图 - 原始80x80，通过background-size缩小50%到40x40显示 */
   background-image: url('../img/controls-sprite.png');
-  background-size: 400px 320px;
+  background-size: 400px 360px;
   background-position: 0px 0px;
   background-repeat: no-repeat;
   transition: opacity 0.2s;
@@ -1209,7 +1209,7 @@ body.dark-mode .info-item-value {
   background-color: transparent;
   /* 使用雪碧图 - 原始80x80，通过background-size缩小50%显示 */
   background-image: url('../img/controls-sprite.png');
-  background-size: 400px 320px;
+  background-size: 400px 360px;
   background-position: -160px 0px;
   background-repeat: no-repeat;
   cursor: pointer;
@@ -1271,7 +1271,7 @@ body.dark-mode .play-btn.is-playing:active {
   background-color: transparent;
   /* 使用雪碧图 - 原始80x80，通过background-size缩小50%显示 */
   background-image: url('../img/controls-sprite.png');
-  background-size: 400px 320px;
+  background-size: 400px 360px;
   background-position: -240px -40px;
   background-repeat: no-repeat;
   cursor: pointer;
@@ -1591,6 +1591,45 @@ body.dark-mode .btn-large-primary:disabled {
   color: #666666;
 }
 
+/* AI生图按钮图标样式（24px显示） */
+.btn-icon-ai {
+  width: 24px;
+  height: 24px;
+}
+
+/* AI图标位置调整（原始640px, 560px -> 缩小到1/2 = -320px, -280px） */
+.sprite-AI-img.btn-icon-ai {
+  background-position: -320px -280px;
+  background-size: 400px 360px;
+  background-repeat: no-repeat;
+  width: 24px;
+  height: 24px;
+}
+
+/* AI图标hover状态（原始720px, 560px -> 缩小到1/2 = -360px, -280px） */
+.sprite-AI-img.btn-icon-ai:hover {
+  background-position: -360px -280px;
+}
+
+/* 暗黑模式下的AI图标（原始0px, 640px -> 缩小到1/2 = 0px, -320px） */
+body.dark-mode .sprite-AI-img.btn-icon-ai {
+  background-position: 0px -320px;
+}
+
+/* 暗黑模式hover状态（原始80px, 640px -> 缩小到1/2 = -40px, -320px） */
+body.dark-mode .sprite-AI-img.btn-icon-ai:hover {
+  background-position: -40px -320px;
+}
+
+/* AI生图按钮特殊样式：宽度自适应，图标居中显示 */
+.btn-large-primary.btn-ai-generate {
+  min-width: 44px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* 大按钮 - 次要按钮（btn02_Large） */
 .btn-large-secondary {
   background-color: #5b5b5b;
@@ -1624,7 +1663,7 @@ body.dark-mode .btn-large-primary:disabled {
   background-color: transparent;
   /* 使用雪碧图 - 原始80x80，通过background-size缩小50%显示 */
   background-image: url('../img/controls-sprite.png');
-  background-size: 400px 320px;
+  background-size: 400px 360px;
   background-repeat: no-repeat;
   cursor: pointer;
   outline: none;
@@ -1666,7 +1705,7 @@ body.dark-mode .zoom-btn[data-type="in"]:hover {
   background-position: -200px -120px;
 }
 
-/* 鐧惧垎姣旀樉绀?*/
+/* 显示缩放百分比*/
 .scale-percentage {
   width: 60px;
   font-family: 'Segoe UI', sans-serif;
@@ -1690,7 +1729,7 @@ body.dark-mode .scale-percentage {
   background-color: transparent;
   /* 使用雪碧图 - 原始80x80，通过background-size缩小50%显示 */
   background-image: url('../img/controls-sprite.png');
-  background-size: 400px 320px;
+  background-size: 400px 360px;
   background-position: -320px -120px;
   /* one2one.png */
   background-repeat: no-repeat;
@@ -1764,7 +1803,7 @@ body.dark-mode .reset-scale-btn.is-contain:hover {
   border: none;
   background-color: transparent;
   background-image: url('../img/controls-sprite.png');
-  background-size: 400px 320px;
+  background-size: 400px 360px;
   background-position: -80px -200px;
   /* minimize.png */
   background-repeat: no-repeat;
@@ -1816,7 +1855,7 @@ body.dark-mode .footer-mini {
   border: none;
   background-color: transparent;
   background-image: url('../img/controls-sprite.png');
-  background-size: 400px 320px;
+  background-size: 400px 360px;
   background-position: 0px -240px;
   /* mini_play.png */
   background-repeat: no-repeat;
@@ -1867,7 +1906,7 @@ body.dark-mode .mini-play-btn.is-playing:hover {
   border: none;
   background-color: transparent;
   background-image: url('../img/controls-sprite.png');
-  background-size: 400px 320px;
+  background-size: 400px 360px;
   background-position: -320px -240px;
   /* mini_mute.png */
   background-repeat: no-repeat;
@@ -1930,7 +1969,7 @@ body.dark-mode .mini-mute-btn.is-disabled {
   border: none;
   background-color: transparent;
   background-image: url('../img/controls-sprite.png');
-  background-size: 400px 320px;
+  background-size: 400px 360px;
   background-position: -320px -120px;
   /* one2one.png */
   background-repeat: no-repeat;
@@ -1981,7 +2020,7 @@ body.dark-mode .mini-scale-btn.is-contain:hover {
   border: none;
   background-color: transparent;
   background-image: url('../img/controls-sprite.png');
-  background-size: 400px 320px;
+  background-size: 400px 360px;
   background-position: -240px -200px;
   /* maximize.png */
   background-repeat: no-repeat;
@@ -2062,7 +2101,7 @@ body.dark-mode .clear-btn svg path {
   stroke: #e0e0e0;
 }
 
-/* 绌虹姸鎬佸簳閮ㄦ彁绀?*/
+/* 空状态底部提示 */
 .footer-empty-tip {
   display: flex;
   flex-direction: column;
@@ -2549,7 +2588,7 @@ body.dark-mode .material-btn-replace:hover {
   transition: all 0.15s ease;
   /* 使用雪碧图 - recover图标，原始80x80通过background-size缩小50%显示 */
   background-image: url('../img/controls-sprite.png');
-  background-size: 400px 320px;
+  background-size: 400px 360px;
   background-position: -239px -159px;
   background-repeat: no-repeat;
 }
@@ -2604,7 +2643,7 @@ body.dark-mode .material-btn-close:hover {
   transition: all 0.15s ease;
   /* 使用雪碧图 - recover图标，原始80x80通过background-size缩小50%显示 */
   background-image: url('../img/controls-sprite.png');
-  background-size: 400px 320px;
+  background-size: 400px 360px;
   background-position: -238px -158px;
   /* recover.png */
   background-repeat: no-repeat;
@@ -4620,15 +4659,102 @@ body.dark-mode .editor-preview-area {
 .editor-bottom-actions {
   position: absolute;
   bottom: 10px;
+  left: 0;
+  right: 0;
   display: flex;
-  justify-content: center;
-  gap: 16px;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
   pointer-events: none;
   /* 让事件穿透到下层，按钮自身开启 pointer-events */
 }
 
 .editor-bottom-actions>* {
   pointer-events: auto;
+}
+
+/* 左侧按钮组 */
+.editor-bottom-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* 右侧按钮组 */
+.editor-bottom-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* 视图模式切换按钮（1:1/适应高度） */
+.editor-view-btn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background-color: transparent;
+  background-image: url('../img/controls-sprite.png');
+  background-size: 400px 360px;
+  background-position: -320px -120px;
+  /* one2one.png: 原始-640px -240px -> 缩小到1/2 */
+  background-repeat: no-repeat;
+  cursor: pointer;
+  outline: none;
+  transition: opacity 0.2s;
+  flex-shrink: 0;
+}
+
+.editor-view-btn:hover {
+  background-position: -360px -120px;
+  /* one2one_hover.png: 原始-720px -240px -> 缩小到1/2 */
+}
+
+/* 适应高度按钮（当one-to-one模式下显示） */
+.editor-view-btn.is-contain {
+  background-position: -80px -160px;
+  /* contain.png: 原始-160px -320px -> 缩小到1/2 */
+}
+
+.editor-view-btn.is-contain:hover {
+  background-position: -120px -160px;
+  /* contain_hover.png: 原始-240px -320px -> 缩小到1/2 */
+}
+
+/* 暗黑模式 */
+body.dark-mode .editor-view-btn {
+  background-position: 0px -160px;
+  /* one2one_dark.png: 原始0px -320px -> 缩小到1/2 */
+}
+
+body.dark-mode .editor-view-btn:hover {
+  background-position: -40px -160px;
+  /* one2one_hover_dark.png: 原始-80px -320px -> 缩小到1/2 */
+}
+
+body.dark-mode .editor-view-btn.is-contain {
+  background-position: -160px -160px;
+  /* contain_dark.png: 原始-320px -320px -> 缩小到1/2 */
+}
+
+body.dark-mode .editor-view-btn.is-contain:hover {
+  background-position: -200px -160px;
+  /* contain_hover_dark.png: 原始-400px -320px -> 缩小到1/2 */
+}
+
+/* 编辑器缩放百分比显示 */
+.editor-scale-percentage {
+  width: 60px;
+  font-family: 'Segoe UI', sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 1.33;
+  color: #818181;
+  text-align: left;
+  transition: color 0.3s;
+}
+
+body.dark-mode .editor-scale-percentage {
+  color: #999999;
 }
 
 /* 右侧控制区 */
@@ -5193,7 +5319,7 @@ body.dark-mode .speed-remap-duration-label {
   width: 24px;
   height: 24px;
   background-image: url('../img/controls-sprite.png');
-  background-size: 400px 320px;
+  background-size: 400px 360px;
   background-position: -240px -160px;
   background-repeat: no-repeat;
   flex-shrink: 0;

@@ -31,6 +31,7 @@
                     loading: false,      // 生成中状态
 
                     // 视图状态
+                    viewMode: 'fit-height',  // 视图模式：'fit-height'(适应高度) 或 'one-to-one'(1:1显示)
                     scale: 1.0,          // 预览缩放
                     offsetX: 0,          // 预览X位移
                     offsetY: 0,          // 预览Y位移
@@ -275,6 +276,7 @@
                 this.editor.targetKey = material.imageKey;
                 this.editor.show = true;
                 this.editor.loading = false;
+                this.editor.viewMode = 'fit-height'; // 默认适应高度模式
                 this.editor.scale = 1.0;
                 this.editor.offsetX = 0;
                 this.editor.offsetY = 0;
@@ -331,23 +333,54 @@
 
                 this.editor.baseImage = imgUrl;
 
+                // 设置画布尺寸（重要！）：
+                // 画布尺寸必须始终等于SVGA原始素材的尺寸，不受底图尺寸影响
+                // 这样生成的图片才能与SVGA素材保持一致
+                if (material.originalWidth && material.originalHeight) {
+                    // 使用SVGA原始素材的尺寸
+                    this.editor.baseImageWidth = material.originalWidth;
+                    this.editor.baseImageHeight = material.originalHeight;
+                } else {
+                    // 备用方案：如果material没有原始尺寸，才使用图片尺寸
+                    console.warn('Material缺少originalWidth/originalHeight，使用图片尺寸作为备用');
+                    this.editor.baseImageWidth = 0; // 标记为需要从图片获取
+                    this.editor.baseImageHeight = 0;
+                }
+
                 // 获取图片尺寸以便计算比例
                 var img = new Image();
                 img.onload = function () {
-                    // 只有第一次打开编辑器时才设置画布尺寸，之后保持固定
+                    // 只有在备用方案时（画布尺寸为0）才从图片获取尺寸
                     if (_this.editor.baseImageWidth === 0 || _this.editor.baseImageHeight === 0) {
                         _this.editor.baseImageWidth = img.width;
                         _this.editor.baseImageHeight = img.height;
+                        console.log('使用图片尺寸作为画布尺寸（备用）:', img.width, 'x', img.height);
                     }
 
                     // 图片加载完成后，计算默认缩放比例
-                    // 使 .editor-preview-wrapper 按 .editor-preview-area 容器50%宽度等比例显示
+                    // 适应高度模式：智能适应，优先按容器高度75%，如果宽度超出则按宽度100%
                     _this.$nextTick(function () {
                         var previewArea = document.querySelector('.editor-preview-area');
-                        if (previewArea && _this.editor.baseImageWidth > 0) {
+                        if (previewArea && _this.editor.baseImageHeight > 0) {
+                            var containerHeight = previewArea.clientHeight;
                             var containerWidth = previewArea.clientWidth;
-                            // 默认缩放：容器宽度的50% / 画布固定宽度
-                            var defaultScale = (containerWidth * 0.5) / _this.editor.baseImageWidth;
+
+                            // 1. 先按高度75%计算缩放比例
+                            var fitByHeightScale = (containerHeight * 0.75) / _this.editor.baseImageHeight;
+
+                            // 2. 计算此时的宽度
+                            var widthAfterHeightFit = _this.editor.baseImageWidth * fitByHeightScale;
+
+                            // 3. 判断宽度是否超出容器
+                            var defaultScale;
+                            if (widthAfterHeightFit > containerWidth) {
+                                // 宽度超出，改为按宽度100%缩放
+                                defaultScale = containerWidth / _this.editor.baseImageWidth;
+                            } else {
+                                // 宽度未超出，使用高度75%的缩放
+                                defaultScale = fitByHeightScale;
+                            }
+
                             // 限制缩放范围
                             if (defaultScale > 5.0) defaultScale = 5.0;
                             if (defaultScale < 0.1) defaultScale = 0.1;
@@ -665,6 +698,48 @@
              */
             triggerEditorUpload: function () {
                 this.$refs.editorFileInput.click();
+            },
+
+            /**
+             * 切换视图模式（1:1 <-> 适应高度）
+             */
+            toggleEditorViewMode: function () {
+                var _this = this;
+                var previewArea = document.querySelector('.editor-preview-area');
+                if (!previewArea || !this.editor.baseImageHeight) return;
+
+                if (this.editor.viewMode === 'fit-height') {
+                    // 切换到1:1模式
+                    this.editor.viewMode = 'one-to-one';
+                    this.editor.scale = 1.0;
+                } else {
+                    // 切换到适应高度模式（智能适应：优先按高度75%，如果宽度超出则按宽度100%）
+                    this.editor.viewMode = 'fit-height';
+
+                    var containerHeight = previewArea.clientHeight;
+                    var containerWidth = previewArea.clientWidth;
+
+                    // 1. 先按高度75%计算缩放比例
+                    var fitByHeightScale = (containerHeight * 0.75) / this.editor.baseImageHeight;
+
+                    // 2. 计算此时的宽度
+                    var widthAfterHeightFit = this.editor.baseImageWidth * fitByHeightScale;
+
+                    // 3. 判断宽度是否超出容器
+                    var fitScale;
+                    if (widthAfterHeightFit > containerWidth) {
+                        // 宽度超出，改为按宽度100%缩放
+                        fitScale = containerWidth / this.editor.baseImageWidth;
+                    } else {
+                        // 宽度未超出，使用高度75%的缩放
+                        fitScale = fitByHeightScale;
+                    }
+
+                    // 限制缩放范围
+                    if (fitScale > 5.0) fitScale = 5.0;
+                    if (fitScale < 0.1) fitScale = 0.1;
+                    this.editor.scale = parseFloat(fitScale.toFixed(2));
+                }
             },
 
             onEditorFileChange: function (e) {

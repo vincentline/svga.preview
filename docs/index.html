@@ -32,6 +32,7 @@
   <script src="coi-serviceworker.js?v=8"></script>
 
   <!-- 外部样式表（优先加载） -->
+  <link rel="stylesheet" href="assets/css/sprite-generated.css" />
   <link rel="stylesheet" href="assets/css/styles.css" />
 
   <!-- 库加载管理器（优先加载，独立模块） -->
@@ -1236,6 +1237,17 @@
             </div>
           </div>
           <div class="compress-hint">PNG压缩级别，1最低压缩，6最高压缩，3平衡。</div>
+
+          <!-- 静音导出开关 -->
+          <div class="svga-config-item svga-config-item--mt">
+            <div class="svga-config-label">导出静音SVGA</div>
+            <div class="svga-mute-toggle"
+              :class="{active: compressConfig.exportMuted, disabled: isCompressingMaterials}"
+              @click="!isCompressingMaterials && (compressConfig.exportMuted = !compressConfig.exportMuted)">
+              <div class="svga-mute-toggle-handle"></div>
+            </div>
+          </div>
+          <div class="compress-hint">开启后导出的SVGA文件将不包含任何音频数据。</div>
         </div>
         <div class="center-modal-footer">
           <!-- 如果已压缩过，显示撤销按钮 -->
@@ -2141,13 +2153,25 @@
 
             <!-- 底部按钮组 -->
             <div class="editor-bottom-actions">
-              <input type="file" ref="editorFileInput" accept="image/png,image/jpeg" style="display: none"
-                @change="onEditorFileChange">
-              <button class="btn-large-primary" @click="triggerEditorUpload">上传图片</button>
-              <button class="btn-large-primary tooltip">
-                AI生图（求赞助）
-                <span class="tooltip-text">开发中...</span>
-              </button>
+              <!-- 左侧按钮组 -->
+              <div class="editor-bottom-left">
+                <!-- 1:1/适应高度切换按钮 -->
+                <button class="editor-view-btn" :class="{'is-contain': editor.viewMode === 'one-to-one'}"
+                  @click="toggleEditorViewMode" :title="editor.viewMode === 'fit-height' ? '1:1显示' : '适应高度'"></button>
+                <!-- 缩放百分比 -->
+                <div class="editor-scale-percentage">{{ Math.round(editor.scale * 100) }}%</div>
+              </div>
+
+              <!-- 右侧按钮组 -->
+              <div class="editor-bottom-right">
+                <input type="file" ref="editorFileInput" accept="image/png,image/jpeg" style="display: none"
+                  @change="onEditorFileChange">
+                <button class="btn-large-primary" @click="triggerEditorUpload">上传图片</button>
+                <button class="btn-large-primary btn-ai-generate tooltip">
+                  <i class="sprite-icon sprite-AI-img btn-icon-ai"></i>
+                  <span class="tooltip-text">开发中...</span>
+                </button>
+              </div>
             </div>
           </div>
 

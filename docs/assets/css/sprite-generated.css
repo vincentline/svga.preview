@@ -1,5 +1,5 @@
 /* 自动生成的雪碧图样式 - 请勿手动编辑 */
-/* 生成时间: 2026-01-01 15:31:17 */
+/* 生成时间: 2026-01-10 02:55:11 */
 
 /* 雪碧图基础样式 */
 .sprite-icon {
@@ -424,6 +424,28 @@
 }
 .sprite-mini-mute-on-hover-dark {
   background-position: -560px -560px;
+  width: 80px;
+  height: 80px;
+}
+
+/* AI_IMG 图标 */
+.sprite-AI-img {
+  background-position: -640px -560px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-AI-img-hover {
+  background-position: -720px -560px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-AI-img-dark {
+  background-position: 0px -640px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-AI-img-hover-dark {
+  background-position: -80px -640px;
   width: 80px;
   height: 80px;
 }

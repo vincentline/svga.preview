@@ -278,7 +278,8 @@ function initApp() {
         compressProgress: 0,                // 压缩进度 0-100
         compressConfig: {
           scalePercent: 70,                 // 缩小比例 10-100%
-          level: 3                          // PNG压缩级别 1-6，3平衡
+          level: 3,                         // PNG压缩级别 1-6，3平衡
+          exportMuted: false                // 是否导出静音SVGA（不包含音频）
         },
         hasCompressedMaterials: false,      // 是否压缩过素材
         preCompressMaterials: null,         // 压缩前的素材状态（用于撤销）
@@ -3619,7 +3620,7 @@ function initApp() {
 
         if (!videoItem || !videoItem.images) return;
 
-        // 初始化内存占用显示为"计算中..."
+        // 初始化内存占用显示为“计算中...”
         this.svga.fileInfo.memoryText = '计算中...';
 
         var imageKeys = Object.keys(videoItem.images);
@@ -3627,9 +3628,62 @@ function initApp() {
         var processedCount = 0;
         var totalBytes = 0;
 
+        // 收集所有音频key（用于排除）
+        var audioKeys = new Set();
+        if (videoItem.audios && videoItem.audios.length > 0) {
+          videoItem.audios.forEach(function (audio) {
+            if (audio.audioKey) {
+              // 添加所有可能的音频key格式
+              audioKeys.add(audio.audioKey);
+              audioKeys.add(audio.audioKey + '.mp3');
+              audioKeys.add(audio.audioKey + '.wav');
+              audioKeys.add('audio_' + audio.audioKey);
+              var keyWithoutExt = audio.audioKey.replace(/\.[^.]+$/, '');
+              if (keyWithoutExt !== audio.audioKey) {
+                audioKeys.add(keyWithoutExt);
+              }
+            }
+          });
+        }
 
         imageKeys.forEach(function (imageKey) {
+          // 跳过音频key（音频数据存储在images字典中，但不是图片）
+          if (audioKeys.has(imageKey)) {
+            console.log('跳过音频key:', imageKey);
+            processedCount++;
+            return;
+          }
+
           var imgData = videoItem.images[imageKey];
+
+          // 额外检查：如果数据是Uint8Array且以ID3标签开头，则是音频数据
+          if (imgData && imgData.constructor === Uint8Array) {
+            // 检查是否以 "ID3" 开头（MP3标签）
+            if (imgData.length >= 3 &&
+              imgData[0] === 0x49 && imgData[1] === 0x44 && imgData[2] === 0x33) {
+              console.log('跳过音频数据（ID3标签）:', imageKey);
+              processedCount++;
+              return;
+            }
+          }
+
+          // 额外检查：如果是base64格式的字符串，解码后检查是否为MP3
+          if (imgData && typeof imgData === 'string') {
+            var base64Data = imgData.startsWith('data:') ? imgData.split(',')[1] : imgData;
+            try {
+              // 解码base64的前3个字节
+              var decoded = atob(base64Data.substring(0, 8)); // 解码前8个字符（足够得到3字节）
+              if (decoded.length >= 3 && decoded.charCodeAt(0) === 0x49 &&
+                decoded.charCodeAt(1) === 0x44 && decoded.charCodeAt(2) === 0x33) {
+                console.log('跳过音频数据（base64 ID3）:', imageKey);
+                processedCount++;
+                return;
+              }
+            } catch (e) {
+              // 解码失败，继续处理
+            }
+          }
+
           var previewUrl = '';
 
           // 处理图片数据，生成预览 URL
@@ -4156,10 +4210,15 @@ function initApp() {
       _loadImage: function (src) {
         return new Promise(function (resolve, reject) {
           var img = new Image();
-          // 设置 crossOrigin 属性以允许加载跨域图片
-          // 注意：如果服务器未正确配置 CORS 头，这可能会导致加载失败
-          // 对于 data URI，此设置无影响
-          img.crossOrigin = 'Anonymous';
+
+          // 重要：只对 blob URL 设置 crossOrigin，对 data URI 不设置
+          // 原因：对 data URI 设置 crossOrigin 会在某些浏览器中导致加载失败
+          // 特别是编辑素材图后生成的 data URI 图片
+          if (src.startsWith('blob:')) {
+            img.crossOrigin = 'Anonymous';
+          }
+          // data URI 不需要设置 crossOrigin
+
           img.onload = function () { resolve(img); };
           img.onerror = function (e) {
             // 详细错误日志，帮助排查问题
@@ -4243,6 +4302,40 @@ function initApp() {
 
                   // 解码（直接操作 protobuf 消息对象）
                   var movieData = MovieEntity.decode(inflatedData);
+
+                  // 处理静音导出（如果开启了exportMuted选项）
+                  if (_this.compressConfig.exportMuted) {
+                    // 收集所有音频key
+                    var audioKeysToRemove = [];
+                    if (movieData.audios && movieData.audios.length > 0) {
+                      movieData.audios.forEach(function (audio) {
+                        if (audio.audioKey) {
+                          // 添加所有可能的音频key格式
+                          audioKeysToRemove.push(audio.audioKey);
+                          audioKeysToRemove.push(audio.audioKey + '.mp3');
+                          audioKeysToRemove.push(audio.audioKey + '.wav');
+                          audioKeysToRemove.push('audio_' + audio.audioKey);
+                          var keyWithoutExt = audio.audioKey.replace(/\.[^.]+$/, '');
+                          if (keyWithoutExt !== audio.audioKey) {
+                            audioKeysToRemove.push(keyWithoutExt);
+                          }
+                        }
+                      });
+                    }
+
+                    // 清空音频列表
+                    movieData.audios = [];
+
+                    // 从movieData.images中删除音频数据
+                    if (movieData.images && audioKeysToRemove.length > 0) {
+                      audioKeysToRemove.forEach(function (key) {
+                        if (movieData.images[key]) {
+                          delete movieData.images[key];
+                          console.log('删除音频数据:', key);
+                        }
+                      });
+                    }
+                  }
 
                   // 替换图片数据
                   var replacedCount = 0;

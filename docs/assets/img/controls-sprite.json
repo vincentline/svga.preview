@@ -466,5 +466,29 @@
     "y": -560,
     "width": 80,
     "height": 80
+  },
+  "AI_img.png": {
+    "x": -640,
+    "y": -560,
+    "width": 80,
+    "height": 80
+  },
+  "AI_img_hover.png": {
+    "x": -720,
+    "y": -560,
+    "width": 80,
+    "height": 80
+  },
+  "AI_img_dark.png": {
+    "x": 0,
+    "y": -640,
+    "width": 80,
+    "height": 80
+  },
+  "AI_img_hover_dark.png": {
+    "x": -80,
+    "y": -640,
+    "width": 80,
+    "height": 80
   }
 }
