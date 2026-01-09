@@ -3145,64 +3145,35 @@ function initApp() {
         this.videoConvertProgress = 0;
 
         try {
-          // 1. 加载FFmpeg
-          await this.loadFFmpeg();
-          this.videoConvertProgress = 10;
+          // 1. 初始化FFmpeg服务
+          await FFmpegService.init({
+            onProgress: function (info) {
+              // 初始化进度 0-10%
+              _this.videoConvertProgress = Math.round(info.progress * 10);
+            }
+          });
 
           if (!this.isConverting) throw new Error('用户取消');
 
-          // 2. 读取原始视频文件
+          // 2. 使用FFmpegService转换视频格式
           var file = this.mp4.file;
           if (!file) throw new Error('视频文件不存在');
 
-          var fileData = await file.arrayBuffer();
-          this.ffmpeg.FS('writeFile', 'input.mp4', new Uint8Array(fileData));
-          this.videoConvertProgress = 20;
-
-          if (!this.isConverting) throw new Error('用户取消');
-
-          // 3. 转换为兼容格式
-          this.ffmpeg.setProgress(function (p) {
-            // 进度 20-90%
-            _this.videoConvertProgress = 20 + Math.round(p.ratio * 70);
+          var blob = await FFmpegService.convertVideoFormat({
+            inputFile: file,
+            maxWidth: 1280,
+            onProgress: function (progress) {
+              // 转换进度 10-95%
+              _this.videoConvertProgress = 10 + Math.round(progress * 85);
+            },
+            checkCancelled: function () {
+              return !_this.isConverting;
+            }
           });
-
-          // 检查视频尺寸，如果太大则缩小到1280p
-          var maxWidth = 1280;
-          var scaleFilter = '';
-
-          // 由于无法直接获取视频尺寸，使用-vf scale限制最大宽度
-          scaleFilter = 'scale=\'min(' + maxWidth + ',iw)\':-2';
-
-          await this.ffmpeg.run(
-            '-i', 'input.mp4',
-            '-vf', scaleFilter,
-            '-c:v', 'libx264',
-            '-profile:v', 'baseline',
-            '-level', '3.0',
-            '-crf', '28',  // 提高CRF降低码率
-            '-preset', 'ultrafast',  // 使用最快预设
-            '-c:a', 'aac',
-            '-b:a', '96k',  // 降低音频码率
-            '-max_muxing_queue_size', '1024',
-            'output.mp4'
-          );
-
-          if (!this.isConverting) throw new Error('用户取消');
-
-          this.videoConvertProgress = 90;
-
-          // 4. 读取转换后的文件
-          var outputData = this.ffmpeg.FS('readFile', 'output.mp4');
-          var blob = new Blob([outputData.buffer], { type: 'video/mp4' });
-
-          // 清理FFmpeg文件系统
-          this.ffmpeg.FS('unlink', 'input.mp4');
-          this.ffmpeg.FS('unlink', 'output.mp4');
 
           this.videoConvertProgress = 95;
 
-          // 5. 重新加载视频
+          // 3. 重新加载视频
           var convertedFile = new File([blob], file.name.replace(/\.mp4$/, '_converted.mp4'), { type: 'video/mp4' });
 
           // 清理旧视频
@@ -3293,6 +3264,12 @@ function initApp() {
           this.isConverting = false;
         }
       },
+
+      // 旧代码 - 已迁移至FFmpegService.convertVideoFormat()
+      // confirmConvertVideo: async function () { ... }
+      // 原实现：直接调用this.loadFFmpeg()和this.ffmpeg.run()
+      // 新实现：调用FFmpegService.convertVideoFormat()
+      // 迁移日期：2026-01-10
 
       /**
        * 取消转换视频
@@ -6346,31 +6323,15 @@ function initApp() {
        * atempo参数范围是0.5-2.0，如果超出需要链式处理
        */
       buildAudioTempoFilter: function (speedRatio) {
-        if (speedRatio >= 0.5 && speedRatio <= 2.0) {
-          // 在范围内，直接使用
-          return 'atempo=' + speedRatio.toFixed(4);
-        }
-
-        // 超出范围，需要链式处理
-        var filters = [];
-        var remaining = speedRatio;
-
-        while (remaining > 2.0) {
-          filters.push('atempo=2.0');
-          remaining /= 2.0;
-        }
-
-        while (remaining < 0.5) {
-          filters.push('atempo=0.5');
-          remaining /= 0.5;
-        }
-
-        if (Math.abs(remaining - 1.0) > 0.01) {
-          filters.push('atempo=' + remaining.toFixed(4));
-        }
-
-        return filters.join(',');
+        // 直接调用FFmpegService的统一方法
+        return FFmpegService.buildAudioTempoFilter(speedRatio);
       },
+
+      // 旧代码 - 已迁移至FFmpegService.buildAudioTempoFilter()
+      // buildAudioTempoFilter: function (speedRatio) { ... }
+      // 原实现：手动构建链式滤镜字符串
+      // 新实现：直接调用FFmpegService的统一方法
+      // 迁移日期：2026-01-10
 
       /**
        * 下载双通道MP4
@@ -8072,106 +8033,17 @@ function initApp() {
         }
       },
 
-      // 加载 ffmpeg.wasm (0.11版本)
+      // 旧代码 - 已迁移至FFmpegService.init()
+      // 保留此方法以兼容其他代码调用，内部转发到FFmpegService
+      // 迁移日期：2026-01-10
       loadFFmpeg: async function () {
-        // 检查 SharedArrayBuffer 支持
-        // FFmpeg.wasm 需要 SharedArrayBuffer，这要求页面必须处于"跨域隔离"(Cross-Origin Isolation)状态
-        // 即必须有 Cross-Origin-Opener-Policy: same-origin 和 Cross-Origin-Embedder-Policy: credentialless 响应头
-        if (typeof SharedArrayBuffer === 'undefined') {
-          // 检查 Service Worker 是否已激活
-          if ('serviceWorker' in navigator) {
-            var registration = await navigator.serviceWorker.getRegistration();
-            if (registration && registration.active) {
-              // Service Worker 已激活，但 SharedArrayBuffer 仍未可用
-              // 这通常意味着需要刷新页面让 Service Worker 的响应头生效
-              var errorMsg = 'SharedArrayBuffer 未启用，需要刷新页面。\n\n' +
-                'Service Worker 已就绪，但需要刷新页面才能启用跨域隔离。\n' +
-                '点击"确定"将自动刷新页面。';
+        // 转发到FFmpegService的统一初始化
+        await FFmpegService.init();
 
-              if (confirm(errorMsg)) {
-                window.location.reload();
-              }
-              throw new Error('需要刷新页面启用 SharedArrayBuffer');
-            } else {
-              // Service Worker 未激活
-              var errorMsg = '您的浏览器环境不支持 SharedArrayBuffer，无法加载 FFmpeg。\n\n' +
-                '这通常是因为网站未开启"跨域隔离"(Cross-Origin Isolation)。\n' +
-                '如果是线上部署，请检查：\n' +
-                '1. 必须使用 HTTPS 访问（localhost 除外）\n' +
-                '2. Service Worker (coi-serviceworker.js) 必须正确加载并运行\n' +
-                '3. 请打开控制台(Console)查看是否有 Service Worker 相关报错';
-
-              alert(errorMsg);
-              throw new Error(errorMsg);
-            }
-          } else {
-            var errorMsg = '您的浏览器不支持 Service Worker，无法启用 SharedArrayBuffer。\n\n' +
-              '请使用现代浏览器（Chrome 67+、Firefox 79+、Safari 15.2+）。';
-
-            alert(errorMsg);
-            throw new Error(errorMsg);
-          }
-        }
-
-        if (this.ffmpegLoaded) return;
-        if (this.ffmpegLoading) {
-          // 等待加载完成
-          while (this.ffmpegLoading) {
-            await new Promise(function (r) { setTimeout(r, 100); });
-          }
-          return;
-        }
-
-        this.ffmpegLoading = true;
-
-        try {
-          // 动态加载 FFmpeg 库（如果尚未加载）
-          if (typeof FFmpeg === 'undefined' || typeof FFmpeg.createFFmpeg === 'undefined') {
-            this.mp4ConvertMessage = '正在加载FFmpeg库...';
-
-            await new Promise(function (resolve, reject) {
-              var script = document.createElement('script');
-              script.src = 'https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js';
-              script.onload = resolve;
-              script.onerror = function () {
-                reject(new Error('FFmpeg库加载失败，请检查网络'));
-              };
-              document.head.appendChild(script);
-            });
-
-            // 等待FFmpeg对象可用
-            var maxWait = 50; // 最多等待5秒
-            while ((typeof FFmpeg === 'undefined' || typeof FFmpeg.createFFmpeg === 'undefined') && maxWait > 0) {
-              await new Promise(function (r) { setTimeout(r, 100); });
-              maxWait--;
-            }
-
-            if (typeof FFmpeg === 'undefined' || typeof FFmpeg.createFFmpeg === 'undefined') {
-              throw new Error('FFmpeg库加载超时');
-            }
-          }
-
-          // 创建ffmpeg实例（配置使用CDN加载核心文件）
-          // 使用jsdelivr CDN，支持CORS
-          this.ffmpeg = FFmpeg.createFFmpeg({
-            log: true,
-            corePath: 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js',
-            progress: function (p) {
-              // 静默处理进度
-            }
-          });
-
-          // 加载 ffmpeg core
-          this.mp4ConvertMessage = '正在加载编码器（约25MB，首次加载较慢）...';
-          await this.ffmpeg.load();
-
-          this.ffmpegLoaded = true;
-        } catch (error) {
-          console.error('FFmpeg 加载失败:', error);
-          throw new Error('加载转换器失败：' + error.message);
-        } finally {
-          this.ffmpegLoading = false;
-        }
+        // 同步状态（保持兼容性）
+        this.ffmpegLoaded = FFmpegService.isLoaded;
+        this.ffmpegLoading = FFmpegService.isLoading;
+        this.ffmpeg = FFmpegService.ffmpeg;
       },
 
       /**
@@ -8182,23 +8054,19 @@ function initApp() {
        * @returns {Promise<Array|null>} - 音频数据数组，无音频时返回null
        */
       extractAudioFromMp4: async function (videoFile, totalFrames, fps) {
-        if (!this.ffmpegLoaded || !this.ffmpeg) {
-          return null;
+        // 确保FFmpeg已初始化
+        if (!FFmpegService.isLoaded) {
+          try {
+            await FFmpegService.init();
+          } catch (error) {
+            console.error('FFmpeg初始化失败:', error);
+            return null;
+          }
         }
 
         try {
-          var ffmpeg = this.ffmpeg;
-          var inputName = 'input_audio.mp4';
-          var outputName = 'audio.mp3';
-
-          // 写入视频文件（使用v0.11.6 API）
-          var videoData = await videoFile.arrayBuffer();
-          ffmpeg.FS('writeFile', inputName, new Uint8Array(videoData));
-
           // 计算音频变速比例（如果启用了变速）
           var audioSpeedRatio = 1.0;
-          var needSpeedAdjust = false;
-
           if (this.speedRemapConfig.enabled && this.speedRemapConfig.keyframes && this.speedRemapConfig.keyframes.length >= 2) {
             // 原始视频时长
             var originalDuration = this.mp4Video ? this.mp4Video.duration : 0;
@@ -8206,54 +8074,28 @@ function initApp() {
               // 变速后的时长
               var outputDuration = totalFrames / fps;
               audioSpeedRatio = originalDuration / outputDuration;
-              needSpeedAdjust = Math.abs(audioSpeedRatio - 1.0) > 0.01;
             }
           }
 
-          // 构建ffmpeg命令
-          var ffmpegArgs = [
-            '-i', inputName,
-            '-vn',           // 不处理视频
-            '-acodec', 'libmp3lame',
-            '-q:a', '2'      // 高质量
-          ];
-
-          // 如果需要变速，添加atempo滤镜
-          if (needSpeedAdjust) {
-            var tempoFilter = this.buildAudioTempoFilter(audioSpeedRatio);
-            ffmpegArgs.push('-af', tempoFilter);
-          }
-
-          ffmpegArgs.push('-y', outputName);
-
-          // 执行提取（使用v0.11.6 API）
-          await ffmpeg.run.apply(ffmpeg, ffmpegArgs);
-
-          // 读取音频数据（使用v0.11.6 API）
-          var audioData = ffmpeg.FS('readFile', outputName);
-
-          // 清理临时文件（使用v0.11.6 API）
-          try { ffmpeg.FS('unlink', inputName); } catch (e) { }
-          try { ffmpeg.FS('unlink', outputName); } catch (e) { }
-
-          if (!audioData || audioData.length === 0) {
-            return null;
-          }
-
-          // 返回音频数据数组（SVGA格式）
-          return [{
-            audioKey: 'audio_0',
-            audioData: new Uint8Array(audioData.buffer || audioData),
-            startFrame: 0,
-            endFrame: totalFrames,
-            startTime: 0,
-            totalTime: 0
-          }];
+          // 使用FFmpegService提取音频
+          return await FFmpegService.extractAudio({
+            videoFile: videoFile,
+            totalFrames: totalFrames,
+            fps: fps,
+            speedRatio: audioSpeedRatio
+          });
 
         } catch (error) {
+          console.error('音频提取失败:', error);
           return null;
         }
       },
+
+      // 旧代码 - 已迁移至FFmpegService.extractAudio()
+      // extractAudioFromMp4: async function (videoFile, totalFrames, fps) { ... }
+      // 原实现：直接调用this.ffmpeg.run()，手动构建ffmpeg命令
+      // 新实现：调用FFmpegService.extractAudio()，统一处理
+      // 迁移日期：2026-01-10
 
       // 提取序列帧（优化版：Canvas复用 + 动态等待 + 官方API）
       extractFrames: async function () {
