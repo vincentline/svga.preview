@@ -110,26 +110,33 @@ if (typeof window === 'undefined') {
     // 注册Service Worker
     const scriptUrl = document.currentScript ? document.currentScript.src : window.location.origin + '/coi-serviceworker.js';
 
-    navigator.serviceWorker.register(scriptUrl)
-      .then(registration => {
-        console.log('[COI] Service Worker registered:', registration.scope);
+    const registerSW = () => {
+      navigator.serviceWorker.register(scriptUrl)
+        .then(registration => {
+          console.log('[COI] Service Worker registered:', registration.scope);
 
-        // 检查Service Worker状态
-        if (registration.active && navigator.serviceWorker.controller) {
-          // Service Worker已激活且已控制页面，不需要刷新
-          console.log('[COI] Service Worker already controlling page');
-          return;
-        }
+          // 检查Service Worker状态
+          if (registration.active && navigator.serviceWorker.controller) {
+            console.log('[COI] Service Worker already controlling page');
+            return;
+          }
 
-        // 首次注册，需要刷新一次来激活Service Worker
-        if (!navigator.serviceWorker.controller) {
-          console.log('[COI] First registration, reloading to activate...');
-          sessionStorage.setItem('coi_reloaded', 'yes');
-          window.location.reload();
-        }
-      })
-      .catch(err => {
-        console.error('[COI] Service Worker registration failed:', err);
-      });
+          // 首次注册，需要刷新一次来激活Service Worker
+          if (!navigator.serviceWorker.controller) {
+            console.log('[COI] First registration, reloading to activate...');
+            sessionStorage.setItem('coi_reloaded', 'yes');
+            window.location.reload();
+          }
+        })
+        .catch(err => {
+          console.error('[COI] Service Worker registration failed:', err);
+        });
+    };
+
+    if (document.readyState === 'complete') {
+      registerSW();
+    } else {
+      window.addEventListener('load', registerSW);
+    }
   })();
 }

@@ -73,6 +73,16 @@
                 return this.config;
             }
 
+            // 检测本地环境，直接使用默认配置，避免 CORS 问题
+            // 兼容 file:// 协议（hostname 为空）
+            const isLocalhost = ['localhost', '127.0.0.1', '0.0.0.0', ''].includes(window.location.hostname);
+            if (isLocalhost) {
+                console.log('[SiteConfig] 本地环境，使用默认配置');
+                this.config = DEFAULT_CONFIG;
+                this.loaded = true;
+                return DEFAULT_CONFIG;
+            }
+
             try {
                 // 构造防缓存URL（每次请求带时间戳参数）
                 const url = this.buildCacheBustingUrl(configUrl);

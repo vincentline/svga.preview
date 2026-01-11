@@ -57,6 +57,34 @@
         isBusy: false,              // 是否正在执行任务
 
         /**
+         * 获取最佳的 Core Path (CDN 测速)
+         * @private
+         * @returns {Promise<string>}
+         */
+        _getBestCorePath: async function () {
+            var candidates = [
+                'https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js',
+                'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js'
+            ];
+
+            // 并发检测 HEAD 请求
+            try {
+                var promises = candidates.map(function (url) {
+                    return fetch(url, { method: 'HEAD', mode: 'cors' })
+                        .then(function (res) {
+                            if (res.ok) return url;
+                            throw new Error('Network response was not ok');
+                        });
+                });
+                // 返回最快成功的那个
+                return await Promise.any(promises);
+            } catch (e) {
+                console.warn('CDN测速失败，使用默认Core Path');
+                return candidates[0];
+            }
+        },
+
+        /**
          * ==================== 初始化与加载 ====================
          * 初始化FFmpeg（支持插队优先加载）
          * @param {Object} options - 配置项
@@ -70,7 +98,6 @@
             options = options || {};
             var onProgress = options.onProgress || function () { };
             var highPriority = options.highPriority || false;
-            var corePath = options.corePath || 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js';
             var log = options.log !== undefined ? options.log : false;
 
             // 已加载，直接返回
@@ -107,7 +134,15 @@
                     }
                 }
 
-                // 3. 创建FFmpeg实例
+                // 3. 确定 Core Path
+                var corePath = options.corePath;
+                if (!corePath) {
+                    onProgress({ stage: 'checking-cdn', progress: 0.2, message: '正在优选最佳线路...' });
+                    corePath = await this._getBestCorePath();
+                    console.log('Selected FFmpeg Core Path:', corePath);
+                }
+
+                // 4. 创建FFmpeg实例
                 onProgress({ stage: 'creating-instance', progress: 0.3, message: '正在创建FFmpeg实例...' });
                 this.ffmpeg = FFmpeg.createFFmpeg({
                     log: log,
@@ -117,7 +152,7 @@
                     }
                 });
 
-                // 4. 加载FFmpeg Core
+                // 5. 加载FFmpeg Core
                 onProgress({ stage: 'loading-core', progress: 0.5, message: '正在加载编码器（约25MB，首次加载较慢）...' });
                 await this.ffmpeg.load();
 
@@ -725,7 +760,13 @@
 
                     // 使用 padStart 保证文件名排序正确
                     var frameName = 'frame_' + String(i).padStart(6, '0') + '.jpg';
-                    ffmpeg.FS('writeFile', frameName, frames[i]);
+
+                    var frameData = frames[i];
+                    if (frameData instanceof Blob) {
+                        frameData = new Uint8Array(await frameData.arrayBuffer());
+                    }
+
+                    ffmpeg.FS('writeFile', frameName, frameData);
 
                     if (i % 5 === 0) {
                         onProgress(0.4 * (i / frameCount));

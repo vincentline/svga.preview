@@ -406,10 +406,10 @@
                       </button>
                     </div>
                     <div class="footer-actions">
-                      <button class="btn-large-primary" :class="{'tooltip': !svga.hasFile}"
-                        :disabled="!svga.hasFile || isExportingGIF" @click="openGifPanel">
+                      <button class="btn-large-primary" :class="{'tooltip': !svga.hasFile}" :disabled="!svga.hasFile"
+                        @click="openGifPanel">
                         <span v-if="!svga.hasFile" class="tooltip-text">请先拖入 SVGA 文件</span>
-                        {{ isExportingGIF ? '导出中 ' + gifExportProgress + '%' : '导出GIF' }}
+                        {{ isExportingGIF ? '导出中 ' + gifExportProgress + '%' : '转GIF' }}
                       </button>
                       <button class="btn-large-primary" @click="openMaterialPanel" v-if="svga.hasFile">
                         素材图管理
@@ -439,10 +439,10 @@
                       </button>
                     </div>
                     <div class="footer-actions">
-                      <button class="btn-large-primary" :class="{'tooltip': !yyeva.hasFile}"
-                        :disabled="!yyeva.hasFile || isExportingGIF" @click="openGifPanel">
+                      <button class="btn-large-primary" :class="{'tooltip': !yyeva.hasFile}" :disabled="!yyeva.hasFile"
+                        @click="openGifPanel">
                         <span v-if="!yyeva.hasFile" class="tooltip-text">请先拖入 MP4 文件</span>
-                        {{ isExportingGIF ? '导出中 ' + gifExportProgress + '%' : '导出GIF' }}
+                        {{ isExportingGIF ? '导出中 ' + gifExportProgress + '%' : '转GIF' }}
                       </button>
                       <button class="btn-large-secondary" :class="{'tooltip': !yyeva.hasFile}"
                         :disabled="!yyeva.hasFile" @click="openStandardMp4Panel('yyeva')">
@@ -476,10 +476,10 @@
                       </button>
                     </div>
                     <div class="footer-actions">
-                      <button class="btn-large-primary" :class="{'tooltip': !mp4.hasFile}"
-                        :disabled="!mp4.hasFile || isExportingGIF" @click="openGifPanel">
+                      <button class="btn-large-primary" :class="{'tooltip': !mp4.hasFile}" :disabled="!mp4.hasFile"
+                        @click="openGifPanel">
                         <span v-if="!mp4.hasFile" class="tooltip-text">请先拖入 MP4 文件</span>
-                        {{ isExportingGIF ? '导出中 ' + gifExportProgress + '%' : '导出GIF' }}
+                        {{ isExportingGIF ? '导出中 ' + gifExportProgress + '%' : '转GIF' }}
                       </button>
 
                       <button class="btn-large-primary" :class="{'tooltip': !mp4.hasFile}" :disabled="!mp4.hasFile"
@@ -504,9 +504,9 @@
                     </div>
                     <div class="footer-actions">
                       <button class="btn-large-primary" :class="{'tooltip': !lottie.hasFile}"
-                        :disabled="!lottie.hasFile || isExportingGIF" @click="openGifPanel">
+                        :disabled="!lottie.hasFile" @click="openGifPanel">
                         <span v-if="!lottie.hasFile" class="tooltip-text">请先拖入 Lottie 文件</span>
-                        {{ isExportingGIF ? '导出中 ' + gifExportProgress + '%' : '导出GIF' }}
+                        {{ isExportingGIF ? '导出中 ' + gifExportProgress + '%' : '转GIF' }}
                       </button>
                       <button class="btn-large-secondary" :class="{'tooltip': !lottie.hasFile}"
                         :disabled="!lottie.hasFile" @click="openLottieToSvgaPanel">
@@ -533,9 +533,9 @@
                     </div>
                     <div class="footer-actions">
                       <button class="btn-large-primary" :class="{'tooltip': !frames.hasFile}"
-                        :disabled="!frames.hasFile || isExportingGIF" @click="openGifPanel">
+                        :disabled="!frames.hasFile" @click="openGifPanel">
                         <span v-if="!frames.hasFile" class="tooltip-text">请先拖入序列帧图片</span>
-                        {{ isExportingGIF ? '导出中 ' + gifExportProgress + '%' : '导出GIF' }}
+                        {{ isExportingGIF ? '导出中 ' + gifExportProgress + '%' : '转GIF' }}
                       </button>
                       <button class="btn-large-secondary" :class="{'tooltip': !frames.hasFile}"
                         :disabled="!frames.hasFile" @click="openFramesToSvgaPanel">
@@ -804,7 +804,7 @@
 
           <!-- 转换按钮 -->
           <button class="btn-large-secondary" :class="{'mp4-btn-converting': isConvertingMP4}"
-            :data-progress="mp4ConvertProgress" :disabled="isConvertingMP4" @click="startMP4Conversion">
+            :data-progress="mp4ConvertProgress" :disabled="isGlobalTaskRunning" @click="startMP4Conversion">
             <template v-if="isConvertingMP4">
               <span class="mp4-progress-text">{{ mp4ConvertProgress }}%</span>
               <span class="mp4-stage-text">{{ mp4ConvertMessage }}</span>
@@ -940,7 +940,8 @@
           </button>
 
           <button class="btn-large-secondary" :class="{'mp4-btn-converting': isConvertingMP4}"
-            :data-progress="mp4ConvertProgress" :disabled="isConvertingMP4" @click="startMp4ToDualChannelConversion">
+            :data-progress="mp4ConvertProgress" :disabled="isGlobalTaskRunning"
+            @click="startMp4ToDualChannelConversion">
             <template v-if="isConvertingMP4">
               <span class="mp4-progress-text">{{ mp4ConvertProgress }}%</span>
               <span class="mp4-stage-text">{{ mp4ConvertMessage }}</span>
@@ -1075,7 +1076,8 @@
           </button>
 
           <button class="btn-large-secondary" :class="{'mp4-btn-converting': isConvertingMP4}"
-            :data-progress="mp4ConvertProgress" :disabled="isConvertingMP4" @click="startLottieToDualChannelConversion">
+            :data-progress="mp4ConvertProgress" :disabled="isGlobalTaskRunning"
+            @click="startLottieToDualChannelConversion">
             <template v-if="isConvertingMP4">
               <span class="mp4-progress-text">{{ mp4ConvertProgress }}%</span>
               <span class="mp4-stage-text">{{ mp4ConvertMessage }}</span>
@@ -1192,7 +1194,7 @@
 
           <!-- 转换按钮 -->
           <button class="btn-large-secondary" :class="{'svga-btn-converting': isConvertingSVGA}"
-            :data-progress="svgaConvertProgress" :disabled="isConvertingSVGA" @click="startSVGAConversion">
+            :data-progress="svgaConvertProgress" :disabled="isGlobalTaskRunning" @click="startSVGAConversion">
             <template v-if="isConvertingSVGA">
               <span class="svga-progress-text">{{ svgaConvertProgress }}%</span>
               <span class="svga-stage-text">{{ svgaConvertMessage }}</span>
@@ -1426,7 +1428,7 @@
 
           <!-- 转换按钮 -->
           <button class="btn-large-secondary" :class="{'svga-btn-converting': isConvertingMp4ToSvga}"
-            :data-progress="mp4ToSvgaProgress" :disabled="isConvertingMp4ToSvga" @click="startMp4ToSvgaConversion">
+            :data-progress="mp4ToSvgaProgress" :disabled="isGlobalTaskRunning" @click="startMp4ToSvgaConversion">
             <template v-if="isConvertingMp4ToSvga">
               <span class="svga-progress-text">{{ mp4ToSvgaProgress }}%</span>
               <span class="svga-stage-text">{{ mp4ToSvgaMessage }}</span>
@@ -1534,8 +1536,7 @@
 
           <!-- 转换按钮 -->
           <button class="btn-large-secondary" :class="{'svga-btn-converting': isConvertingLottieToSvga}"
-            :data-progress="lottieToSvgaProgress" :disabled="isConvertingLottieToSvga"
-            @click="startLottieToSvgaConversion">
+            :data-progress="lottieToSvgaProgress" :disabled="isGlobalTaskRunning" @click="startLottieToSvgaConversion">
             <template v-if="isConvertingLottieToSvga">
               <span class="svga-progress-text">{{ lottieToSvgaProgress }}%</span>
               <span class="svga-stage-text">{{ lottieToSvgaMessage }}</span>
@@ -1643,8 +1644,7 @@
 
           <!-- 转换按钮 -->
           <button class="btn-large-secondary" :class="{'svga-btn-converting': isConvertingFramesToSvga}"
-            :data-progress="framesToSvgaProgress" :disabled="isConvertingFramesToSvga"
-            @click="startFramesToSvgaConversion">
+            :data-progress="framesToSvgaProgress" :disabled="isGlobalTaskRunning" @click="startFramesToSvgaConversion">
             <template v-if="isConvertingFramesToSvga">
               <span class="svga-progress-text">{{ framesToSvgaProgress }}%</span>
               <span class="svga-stage-text">{{ framesToSvgaMessage }}</span>
@@ -1777,7 +1777,7 @@
 
           <!-- 转换按钮 -->
           <button class="btn-large-secondary" :class="{'mp4-btn-converting': isConvertingFramesToDualChannel}"
-            :data-progress="framesToDualChannelProgress" :disabled="isConvertingFramesToDualChannel"
+            :data-progress="framesToDualChannelProgress" :disabled="isGlobalTaskRunning"
             @click="startFramesToDualChannelConversion">
             <template v-if="isConvertingFramesToDualChannel">
               <span class="mp4-progress-text">{{ framesToDualChannelProgress }}%</span>
@@ -1796,7 +1796,7 @@
       <div class="svga-panel-container">
         <!-- 标题区 -->
         <div class="svga-panel-header">
-          <h3 class="svga-panel-title">导出为GIF动图</h3>
+          <h3 class="svga-panel-title">转成GIF动图</h3>
           <div class="svga-panel-divider"></div>
         </div>
 
@@ -1911,13 +1911,13 @@
 
           <!-- 导出按钮 -->
           <button class="btn-large-secondary" :class="{'svga-btn-converting': isExportingGIF}"
-            :data-progress="gifExportProgress" :disabled="isExportingGIF" @click="startGifExport">
+            :data-progress="gifExportProgress" :disabled="isGlobalTaskRunning" @click="startGifExport">
             <template v-if="isExportingGIF">
               <span class="svga-progress-text">{{ gifExportProgress }}%</span>
               <span class="svga-stage-text">{{ gifExportMessage }}</span>
             </template>
             <template v-else>
-              开始导出GIF
+              开始转GIF
             </template>
           </button>
         </div>
@@ -2009,7 +2009,7 @@
             <div class="mp4-size-container">
               <div class="input-wrapper input-wrapper--lg mp4-size-input-wrapper">
                 <input type="number" class="base-input" v-model.number="standardMp4Config.width"
-                  :disabled="isConvertingStandardMp4" min="0" max="3000" />
+                  @input="onStandardMp4WidthChange" :disabled="isConvertingStandardMp4" min="1" max="3000" />
               </div>
               <div class="mp4-size-lock">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -2020,7 +2020,7 @@
               </div>
               <div class="input-wrapper input-wrapper--lg mp4-size-input-wrapper">
                 <input type="number" class="base-input" v-model.number="standardMp4Config.height"
-                  :disabled="isConvertingStandardMp4" min="0" max="3000" />
+                  @input="onStandardMp4HeightChange" :disabled="isConvertingStandardMp4" min="1" max="3000" />
               </div>
             </div>
           </div>
@@ -2068,8 +2068,7 @@
             <span>取消</span>
           </button>
           <button class="btn-large-secondary" :class="{'mp4-btn-converting': isConvertingStandardMp4}"
-            :data-progress="standardMp4Progress" :disabled="isConvertingStandardMp4"
-            @click="startStandardMp4Conversion">
+            :data-progress="standardMp4Progress" :disabled="isGlobalTaskRunning" @click="startStandardMp4Conversion">
             <template v-if="isConvertingStandardMp4">
               <span class="mp4-progress-text">{{ standardMp4Progress }}%</span>
               <span class="mp4-stage-text">{{ standardMp4Message }}</span>
@@ -2263,7 +2262,7 @@
   <script src="assets/js/mixins/mixin-ui.js"></script>
   -->
   <!-- 应用主逻辑 -->
-  <script src="assets/js/app.js"></script>
+  <script src="assets/js/app.js?v=1.5"></script>
 </body>
 
 </html>

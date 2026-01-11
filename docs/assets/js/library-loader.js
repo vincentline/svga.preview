@@ -66,20 +66,30 @@
   var LIBRARY_CONFIG = {
     'vue': {
       name: 'Vue.js',
-      url: 'https://cdn.jsdelivr.net/npm/vue@2.7.14/dist/vue.min.js',
+      url: 'assets/js/lib/vue.min.js',
+      fallbackUrls: [
+        'https://cdn.jsdelivr.net/npm/vue@2.7.14/dist/vue.min.js',
+        'https://unpkg.com/vue@2.7.14/dist/vue.min.js',
+        'https://cdnjs.cloudflare.com/ajax/libs/vue/2.7.14/vue.min.js'
+      ],
       checkFn: function () { return typeof Vue !== 'undefined'; },
       priority: 0 // 最高优先级
     },
     'svgaplayer': {
       name: 'SVGA Player',
-      url: 'https://cdn.jsdelivr.net/npm/svgaplayerweb@2.3.1/build/svga.min.js',
+      url: 'assets/js/lib/svga.min.js',
+      fallbackUrls: [
+        'https://cdn.jsdelivr.net/npm/svgaplayerweb@2.3.1/build/svga.min.js',
+        'https://unpkg.com/svgaplayerweb@2.3.1/build/svga.min.js'
+      ],
       checkFn: function () { return typeof SVGA !== 'undefined' && SVGA.Player; },
       priority: 1
     },
     'lottie': {
       name: 'Lottie',
-      url: 'https://cdn.jsdelivr.net/npm/lottie-web@5.12.2/build/player/lottie.min.js',
+      url: 'assets/js/lib/lottie.min.js',
       fallbackUrls: [
+        'https://cdn.jsdelivr.net/npm/lottie-web@5.12.2/build/player/lottie.min.js',
         'https://unpkg.com/lottie-web@5.12.2/build/player/lottie.min.js',
         'https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js'
       ],
@@ -88,44 +98,63 @@
     },
     'howler': {
       name: 'Howler.js',
-      url: 'https://cdn.jsdelivr.net/npm/howler@2.2.3/dist/howler.min.js',
+      url: 'assets/js/lib/howler.min.js',
+      fallbackUrls: [
+        'https://cdn.jsdelivr.net/npm/howler@2.2.3/dist/howler.min.js'
+      ],
       checkFn: function () { return typeof Howl !== 'undefined'; },
       priority: 6
     },
     'marked': {
       name: 'Marked',
-      url: 'https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js',
+      url: 'assets/js/lib/marked.min.js',
+      fallbackUrls: [
+        'https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js'
+      ],
       checkFn: function () { return typeof marked !== 'undefined'; },
       priority: 20
     },
     'gif': {
       name: 'GIF.js',
-      url: 'https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.js',
+      url: 'assets/js/lib/gif.js',
+      fallbackUrls: [
+        'https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.js'
+      ],
       checkFn: function () { return typeof GIF !== 'undefined'; },
       priority: 15
     },
     'protobuf': {
       name: 'Protobuf.js',
-      url: 'https://cdn.jsdelivr.net/npm/protobufjs@7.2.5/dist/protobuf.min.js',
+      url: 'assets/js/lib/protobuf.min.js',
+      fallbackUrls: [
+        'https://cdn.jsdelivr.net/npm/protobufjs@7.2.5/dist/protobuf.min.js'
+      ],
       checkFn: function () { return typeof protobuf !== 'undefined'; },
       priority: 25
     },
     'pako': {
       name: 'Pako',
-      url: 'https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js',
+      url: 'assets/js/lib/pako.min.js',
+      fallbackUrls: [
+        'https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js'
+      ],
       checkFn: function () { return typeof pako !== 'undefined'; },
       priority: 25
     },
     'jszip': {
       name: 'JSZip',
-      url: 'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js',
+      url: 'assets/js/lib/jszip.min.js',
+      fallbackUrls: [
+        'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js'
+      ],
       checkFn: function () { return typeof JSZip !== 'undefined'; },
       priority: 25
     },
     'pngquant': {
       name: 'PNG Compressor (Pako)',
-      url: 'https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js',
+      url: 'assets/js/lib/pako.min.js',
       fallbackUrls: [
+        'https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js',
         'https://unpkg.com/pako@2.1.0/dist/pako.min.js',
         'https://cdn.jsdelivr.net/npm/pako@2.0.4/dist/pako.min.js',
         'https://unpkg.com/pako@2.0.4/dist/pako.min.js'
@@ -145,13 +174,21 @@
     },
     'ffmpeg': {
       name: 'FFmpeg',
-      url: 'https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js',
+      url: 'assets/js/lib/ffmpeg.min.js',
+      fallbackUrls: [
+        'https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js',
+        'https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js',
+        'https://cdnjs.cloudflare.com/ajax/libs/ffmpeg/0.11.6/ffmpeg.min.js'
+      ],
       checkFn: function () { return typeof FFmpeg !== 'undefined'; },
       priority: 30
     },
     'html2canvas': {
       name: 'html2canvas',
-      url: 'https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js',
+      url: 'assets/js/lib/html2canvas.min.js',
+      fallbackUrls: [
+        'https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js'
+      ],
       checkFn: function () { return typeof html2canvas !== 'undefined'; },
       priority: 25
     }
