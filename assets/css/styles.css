@@ -830,67 +830,69 @@ body.dark-mode .mode-name-label {
   color: #e0e0e0;
 }
 
-/* 娓呯┖鐢诲竷鎸夐挳锛堝彸涓婅锛?*/
+/* 清空画布按钮（右上角） */
 .clear-canvas-btn {
   box-sizing: border-box;
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  padding: 0px 4px;
-  gap: 10px;
+  display: block;
+  padding: 0;
   width: 28px;
   height: 28px;
-  background: #ffffff7d;
+  background-color: #ffffff7d;
   border: none;
   border-radius: 8px;
   cursor: pointer;
   outline: none;
   transition: background-color 0.15s;
   position: relative;
+  overflow: hidden;
+  /* 使用雪碧图 - close图标，原始80x80通过background-size缩小50%显示 */
+  background-image: url('../img/controls-sprite.png');
+  background-size: 410px 376px;
+  background-position: -326px -166px;
+  /* -320*0.5 - 6 = -326, -320*0.5 - 6 = -166 */
+  background-repeat: no-repeat;
 }
 
-.clear-canvas-btn svg {
-  width: 24px;
-  height: 24px;
-}
-
-.clear-canvas-btn svg path {
-  stroke: #333333;
-  transition: stroke 0.15s;
+.clear-canvas-btn .btn-icon-close {
+  display: none;
 }
 
 .clear-canvas-btn:hover {
-  background: #FF8888;
+  background-color: #FF8888;
 }
 
 .clear-canvas-btn:active {
-  background: #FF5252;
+  background-color: #FF5252;
 }
 
 /* 鏆楅粦妯″紡 */
 body.dark-mode .clear-canvas-btn {
-  background: #4040407d;
+  background-color: #4040407d;
+  background-position: -366px -166px;
+  /* -360*0.5 - 6 = -366 */
 }
 
-body.dark-mode .clear-canvas-btn svg path {
-  stroke: #e0e0e0;
+body.dark-mode .clear-canvas-btn .sprite-close {
+  display: none;
 }
 
 body.dark-mode .clear-canvas-btn:hover {
-  background: #FF8888;
+  background-color: #FF8888;
+  background-position: -326px -166px;
+  /* hover时用回黑色图标（因为背景变红了） */
 }
 
-body.dark-mode .clear-canvas-btn:hover svg path {
-  stroke: #333333;
+body.dark-mode .clear-canvas-btn:hover .sprite-close {
+  display: none;
 }
 
 body.dark-mode .clear-canvas-btn:active {
-  background: #FF5252;
+  background-color: #FF5252;
+  background-position: -326px -166px;
 }
 
-body.dark-mode .clear-canvas-btn:active svg path {
-  stroke: #333333;
+body.dark-mode .clear-canvas-btn:active .sprite-close {
+  display: none;
 }
 
 /* 搴曢儴涓绘帶鍒跺尯 */
