@@ -182,44 +182,25 @@ MP4 Blob
 #### 3.1.2 加载策略
 
 ```javascript
+// 统一使用FFmpegService进行加载
 // 懒加载 - 仅在用户点击转换时加载
 loadFFmpeg: async function() {
-  // 1. 检查SharedArrayBuffer支持（0.11虽不强制要求，但检测有助于提示）
-  if (typeof SharedArrayBuffer === 'undefined') {
-    // 弹窗警告并引导用户
-  }
-  
-  // 2. 避免重复加载
-  if (this.ffmpegLoaded) return;
-  if (this.ffmpegLoading) {
-    // 等待加载完成
-    while (this.ffmpegLoading) {
-      await new Promise(r => setTimeout(r, 100));
-    }
-    return;
-  }
-  
-  // 3. 动态加载脚本（从CDN）
-  if (typeof FFmpeg === 'undefined') {
-    const script = document.createElement('script');
-    script.src = 'https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js';
-    // 监听加载事件
-  }
-  
-  // 4. 创建实例并加载核心WASM文件（约25MB）
-  this.ffmpeg = FFmpeg.createFFmpeg({
-    log: true,
-    corePath: 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js'
+  // 转发到FFmpegService的统一初始化
+  await FFmpegService.init({
+    highPriority: true // MP4转换需要高优先级
   });
-  await this.ffmpeg.load();
+  
+  // 同步状态（保持兼容性）
+  this.ffmpegLoaded = FFmpegService.isLoaded;
+  this.ffmpegLoading = FFmpegService.isLoading;
+  this.ffmpeg = FFmpegService.ffmpeg;
 }
 ```
 
 **关键点**:
-- ✅ CDN加速: 使用unpkg和jsdelivr双CDN保证可用性
-- ✅ 进度提示: 加载25MB WASM文件时显示"正在加载编码器"
-- ✅ 错误处理: 网络失败时提供明确的错误提示
-- ✅ 单例模式: 全局共享一个ffmpeg实例
+- ✅ **统一服务**: 所有FFmpeg相关操作集中在FFmpegService
+- ✅ **高优先级**: MP4转换作为用户触发的阻塞操作，享有高优先级
+- ✅ **状态同步**: 保持Vue组件状态与Service状态同步
 
 ### 3.2 序列帧提取
 
@@ -503,69 +484,36 @@ const blob = await new Promise(resolve => {
 
 ### 3.5 FFmpeg编码
 
-#### 3.5.1 编码参数
+#### 3.5.1 统一编码服务
+
+所有编码逻辑已封装在 `FFmpegService.convertFramesToMp4` 方法中，不再需要在组件层手动构建FFmpeg参数。
 
 ```javascript
-const crf = Math.round(51 - (quality / 100) * 33);
-// quality 100% → CRF 18 (最高质量)
-// quality 80%  → CRF 24 (高质量)
-// quality 0%   → CRF 51 (最低质量)
-
-const ffmpegArgs = [
-  '-framerate', String(fps),          // 帧率
-  '-i', 'frame_%04d.jpg',              // 输入序列帧
-  '-c:v', 'libx264',                   // H.264编码
-  '-profile:v', 'high',                // High profile
-  '-level', '4.0',                     // Level 4.0
-  '-pix_fmt', 'yuv420p',               // Windows兼容
-  '-crf', String(crf),                 // 质量控制
-  '-preset', 'medium',                 // 编码速度
-  '-movflags', '+faststart',           // 支持流式播放
-  'output.mp4'
-];
+// 直接调用FFmpegService的统一方法
+const mp4Blob = await FFmpegService.convertFramesToMp4({
+  frames: frames,             // 输入帧数据（JPEG Blob数组 或 ImageData数组）
+  fps: fps,                   // 输出帧率
+  quality: quality,           // 质量 (0-100)
+  audioData: audioData,       // 音频数据
+  audioSpeedRatio: 1.0,       // 音频变速比率
+  onProgress: (p) => {        // 进度回调
+    this.mp4ConvertProgress = Math.round(p * 100);
+  },
+  checkCancelled: () => {     // 取消检查
+    return this.mp4ConvertCancelled;
+  }
+});
 ```
 
-**参数说明**:
+#### 3.5.2 内部实现逻辑
 
-| 参数 | 值 | 说明 |
-|------|---|------|
-| `-framerate` | 用户配置 | 帧率（1-120fps） |
-| `-i` | frame_%04d.jpg | 输入模式（frame_0000.jpg, frame_0001.jpg, ...） |
-| `-c:v` | libx264 | 使用H.264编码器 |
-| `-profile:v` | high | High Profile（支持更多特性） |
-| `-level` | 4.0 | Level 4.0（兼容性好） |
-| `-pix_fmt` | yuv420p | YUV420P格式（Windows Media Player兼容） |
-| `-crf` | 18-51 | 恒定质量因子（数值越小质量越高） |
-| `-preset` | medium | 编码速度预设（ultrafast/veryfast/fast/medium/slow） |
-| `-movflags` | +faststart | MP4元数据前置（支持边下边播） |
-
-#### 3.5.2 音频处理
-
-```javascript
-// 检查SVGA是否包含音频
-const hasAudioData = this.svgaAudioData && Object.keys(this.svgaAudioData).length > 0;
-
-if (hasAudioData && !muted) {
-  // 写入音频文件
-  const audioKeys = Object.keys(this.svgaAudioData);
-  const audioKey = audioKeys[0];
-  const audioData = this.svgaAudioData[audioKey];
-  ffmpeg.FS('writeFile', 'audio.mp3', audioData);
-  
-  // 添加音频输入
-  ffmpegArgs.push('-i', 'audio.mp3');
-  
-  // 音频编码参数
-  ffmpegArgs.push(
-    '-c:a', 'aac',      // AAC编码
-    '-b:a', '128k',     // 码率128kbps
-    '-shortest'         // 视频和音频长度取最短
-  );
-} else {
-  // 无音频或静音
-  ffmpegArgs.push('-an');
-}
-```
+`FFmpegService` 内部自动处理以下逻辑：
+1. **CRF计算**: 根据quality参数自动计算CRF值 (18-51)
+2. **虚拟文件写入**: 自动将帧数据和音频数据写入MEMFS
+3. **参数构建**: 自动构建最佳的FFmpeg参数（preset, tune等）
+4. **音频处理**: 自动处理音频合成、变速、静音逻辑
+5. **错误恢复**: 音频编码失败时自动降级尝试无音频编码
+6. **资源清理**: 无论成功失败，自动清理所有临时文件
 
 #### 3.5.3 虚拟文件系统
 
@@ -617,17 +565,17 @@ sequenceDiagram
     participant V as Vue组件
     participant S as SVGA播放器
     participant C as Canvas API
+    participant FS as FFmpegService
     participant F as FFmpeg.wasm
     
     U->>V: 点击"开始转换MP4"
     V->>V: 验证配置参数
-    V->>V: 保存配置到localStorage
     
     Note over V: 阶段1: 加载FFmpeg
-    V->>F: loadFFmpeg()
-    F->>F: 动态加载脚本
-    F->>F: 加载WASM核心(25MB)
-    F-->>V: 加载完成
+    V->>FS: init(highPriority)
+    FS->>F: load()
+    F-->>FS: ready
+    FS-->>V: loaded
     
     Note over V: 阶段2: 提取序列帧
     loop 遍历每一帧
@@ -640,37 +588,26 @@ sequenceDiagram
     Note over V: 阶段3: 合成双通道
     loop 遍历每帧ImageData
         V->>V: composeDualChannel()
-        V->>V: 反预乘Alpha
-        V->>V: 分离RGB和Alpha
         V->>C: putImageData()
         C-->>V: 双通道Canvas
     end
     
-    Note over V: 阶段4: JPEG预处理+编码
-    loop 遍历双通道Canvas
-        V->>C: 手动合成黑底
-        C->>C: toBlob(JPEG, 0.6)
-        C-->>V: JPEG Blob
-        V->>F: FS('writeFile', frame.jpg)
+    Note over V: 阶段4: 编码为MP4
+    V->>FS: convertFramesToMp4(frames, options)
+    
+    loop 内部处理
+        FS->>C: 预处理(转JPEG)
+        FS->>F: writeFile(frame.jpg)
+        FS->>F: writeFile(audio.mp3)
+        FS->>F: run(...args)
+        F->>F: 编码中...
+        FS->>F: readFile(output.mp4)
     end
     
-    opt 有音频且未静音
-        V->>F: FS('writeFile', audio.mp3)
-    end
-    
-    V->>F: run(...ffmpegArgs)
-    F->>F: 编码MP4
-    F-->>V: 编码完成
-    
-    V->>F: FS('readFile', output.mp4)
-    F-->>V: MP4数据
+    FS-->>V: MP4 Blob
     
     Note over V: 阶段5: 下载
-    V->>V: 生成Blob URL
     V->>U: 触发下载
-    
-    V->>F: 清理虚拟文件系统
-    V->>V: 重置状态
 ```
 
 ### 4.2 阶段详解
@@ -731,33 +668,20 @@ this.mp4ConvertMessage = '合成双通道 ' + (i + 1) + '/' + frames.length;
 this.mp4ConvertStage = 'encoding';
 this.mp4ConvertMessage = '正在编码为MP4...';
 
-const mp4Blob = await this.encodeToMP4(dualFrames);
+// 调用统一服务
+const mp4Blob = await FFmpegService.convertFramesToMp4({
+  frames: dualFrames,
+  fps: this.mp4Config.fps,
+  quality: this.mp4Config.quality,
+  // ... 其他参数
+});
 ```
 
-**分为两个子步骤**:
-
-**4.1 转换JPEG帧 (50%进度)**
-```javascript
-for (let i = 0; i < frameCount; i++) {
-  // 手动合成黑底
-  // 转JPEG
-  // 写入FFmpeg
-  this.mp4ConvertProgress = Math.round((i + 1) / frameCount * 50);
-  this.mp4ConvertMessage = '转换JPG帧 ' + (i + 1) + '/' + frameCount;
-}
-```
-
-**耗时**: 30帧约2秒，60帧约4秒
-
-**4.2 FFmpeg编码 (50%-90%进度)**
-```javascript
-this.mp4ConvertMessage = '正在编码视频...';
-this.mp4ConvertProgress = 50;
-
-await ffmpeg.run(...ffmpegArgs);
-
-this.mp4ConvertProgress = 90;
-```
+**内部流程**:
+1. **预处理**: 将Canvas/ImageData转为JPEG Blob (并行处理)
+2. **写入**: 将JPEG文件和音频文件写入内存文件系统
+3. **编码**: 调用FFmpeg执行H.264编码
+4. **清理**: 自动清理临时文件
 
 **耗时**: 
 - 小尺寸（400x400, 30帧）: 5-10秒
@@ -840,8 +764,13 @@ data: {
 // 主流程
 async startMP4Conversion(): void
 
-// FFmpeg加载
-async loadFFmpeg(): void
+// FFmpeg服务 (单例)
+FFmpegService: {
+  init(options): Promise<void>
+  convertFramesToMp4(options): Promise<Blob>
+  extractAudio(file): Promise<Uint8Array>
+  // ...
+}
 
 // 序列帧提取
 async extractFrames(): Promise<ImageData[]>
@@ -851,9 +780,6 @@ async composeDualChannelFrames(frames: ImageData[]): Promise<Canvas[]>
 
 // 双通道合成（单帧）
 composeDualChannel(imageData: ImageData, isColorLeftAlphaRight: boolean): Canvas
-
-// MP4编码
-async encodeToMP4(dualFrames: Canvas[]): Promise<Blob>
 
 // 文件下载
 downloadMP4(blob: Blob): void
