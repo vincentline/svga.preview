@@ -3507,11 +3507,7 @@ function initApp() {
         }
       },
 
-      // 旧代码 - 已迁移至FFmpegService.convertVideoFormat()
-      // confirmConvertVideo: async function () { ... }
-      // 原实现：直接调用this.loadFFmpeg()和this.ffmpeg.run()
-      // 新实现：调用FFmpegService.convertVideoFormat()
-      // 迁移日期：2026-01-10
+
 
       /**
        * 取消转换视频
@@ -6526,15 +6522,7 @@ function initApp() {
       /**
        * 合成双通道帧（普通MP4用）
        */
-      // [已移除] 逻辑已迁移至 FFmpegService.convertFramesToMp4
-      /*
-      // 编码双通道MP4（统一编码函数，支持多入口复用）
-      encodeMp4DualChannel: async function (jpegFrames, config, audioOptions) {
-        // ... (旧代码已注释) ...
-        console.warn('调用了已废弃的 encodeMp4DualChannel，请检查代码');
-        throw new Error('此方法已废弃，请使用 FFmpegService.convertFramesToMp4');
-      },
-      */
+
 
       /**
        * 构建音频变速滤镜（atempo）
@@ -6545,11 +6533,7 @@ function initApp() {
         return FFmpegService.buildAudioTempoFilter(speedRatio);
       },
 
-      // 旧代码 - 已迁移至FFmpegService.buildAudioTempoFilter()
-      // buildAudioTempoFilter: function (speedRatio) { ... }
-      // 原实现：手动构建链式滤镜字符串
-      // 新实现：直接调用FFmpegService的统一方法
-      // 迁移日期：2026-01-10
+
 
       /**
        * 下载双通道MP4
@@ -8418,9 +8402,6 @@ function initApp() {
         }
       },
 
-      // 旧代码 - 已迁移至FFmpegService.init()
-      // 保留此方法以兼容其他代码调用，内部转发到FFmpegService
-      // 迁移日期：2026-01-10
       loadFFmpeg: async function () {
         // 转发到FFmpegService的统一初始化
         await FFmpegService.init();
@@ -8569,12 +8550,6 @@ function initApp() {
         }
       },
 
-      // 旧代码 - 已迁移至FFmpegService.extractAudio()
-      // extractAudioFromMp4: async function (videoFile, totalFrames, fps) { ... }
-      // 原实现：直接调用this.ffmpeg.run()，手动构建ffmpeg命令
-      // 新实现：调用FFmpegService.extractAudio()，统一处理
-      // 迁移日期：2026-01-10
-
       // 提取序列帧（优化版：Canvas复用 + 动态等待 + 官方API）
       extractFrames: async function () {
         var _this = this;
@@ -8685,204 +8660,7 @@ function initApp() {
         });
       },
 
-      // [已移除] 逻辑已迁移至 FFmpegService.convertFramesToMp4
-      /*
-      // 编码为MP4 (0.11版本API，优化：接收已转换的JPEG数据)
-      encodeToMP4: async function (jpegFrames) {
-      var _this = this;
-      var ffmpeg = this.ffmpeg;
-      var outputFps = this.mp4Config.fps || 30;  // 用户设置的输出帧率
-      var quality = this.mp4Config.quality || 80;
-      var muted = this.mp4Config.muted;
-      var frameCount = jpegFrames.length;
-       
-      // 获取SVGA原始帧率作为输入帧率
-      var videoItem = this.originalVideoItem;
-      var inputFps = videoItem.FPS || videoItem.fps || 30;
-       
-      // CRF值：quality 100 对应 CRF 18（最高质量），quality 0 对应 CRF 51（最低质量）
-      var crf = Math.round(51 - (quality / 100) * 33);
-       
-      try {
-        // 将已转换的JPEG帧写入ffmpeg虚拟文件系统
-        for (var i = 0; i < frameCount; i++) {
-          if (this.mp4ConvertCancelled) throw new Error('用户取消转换');
-       
-          var filename = 'frame_' + String(i).padStart(4, '0') + '.jpg';
-          ffmpeg.FS('writeFile', filename, jpegFrames[i]);
-       
-          // 更新进度（写入阶段卐50%）
-          this.mp4ConvertProgress = Math.round((i + 1) / frameCount * 50);
-          this.mp4ConvertMessage = '写入帧数据 ' + (i + 1) + '/' + frameCount;
-        }
-       
-        // 执行编码
-        if (this.mp4ConvertCancelled) throw new Error('用户取消转换');
-       
-        this.mp4ConvertMessage = '正在编码视频...';
-        this.mp4ConvertProgress = 50;
-       
-        // 检查是否有音频数据
-        var hasAudioData = this.svgaAudioData && Object.keys(this.svgaAudioData).length > 0;
-        var audioWritten = false;
-        var audioError = null;
-       
-        // 仅在有音频数据且未静音时处理音频
-        if (hasAudioData && !muted) {
-          try {
-            var audioKeys = Object.keys(this.svgaAudioData);
-            var audioKey = audioKeys[0];
-            var audioData = this.svgaAudioData[audioKey];
-       
-            if (!audioData || audioData.length === 0) {
-              throw new Error('音频数据为空');
-            }
-       
-            ffmpeg.FS('writeFile', 'audio.mp3', audioData);
-            audioWritten = true;
-       
-          } catch (audioErr) {
-            audioError = audioErr.message || '未知错误';
-       
-            var continueMsg = '音频处理失败：' + audioError + '\n\n是否继续转换（生成的MP4将没有声音）？';
-            if (!confirm(continueMsg)) {
-              throw new Error('用户取消转换');
-            }
-          }
-        }
-       
-        var ffmpegArgs = [
-          '-thread_queue_size', '512',  // 增大线程队列，避免阻塞（必须在-i前面）
-          '-framerate', String(inputFps),  // 输入帧率：SVGA原始帧率
-          '-i', 'frame_%04d.jpg'
-        ];
-       
-        // 如果有音频，添加音频输入
-        if (audioWritten) {
-          ffmpegArgs.push('-i', 'audio.mp3');
-        }
-       
-        ffmpegArgs.push(
-          // 已在JPG生成时加了黑底，无需滚镜处理
-          '-r', String(outputFps),  // 输出帧率：用户设置的帧率
-          '-c:v', 'libx264',
-          '-profile:v', 'high',
-          '-level', '4.0',
-          '-pix_fmt', 'yuv420p',  // Windows兼容性
-          '-crf', String(crf),
-          '-preset', 'fast',      // 修复卡死：veryfast在wasm中可能卡顿，改用fast
-          '-tune', 'animation',   // 针对动画内容优化
-          '-movflags', '+faststart'
-        );
-       
-        // 处理音频轨道
-        if (muted || !audioWritten) {
-          ffmpegArgs.push('-an');
-        } else {
-          ffmpegArgs.push(
-            '-c:a', 'aac',
-            '-b:a', '128k',
-            '-shortest'
-          );
-        }
-       
-        ffmpegArgs.push('output.mp4');
-       
-        // 添加FFmpeg进度监听（避免卡死）
-        var _this = this;
-        var encodeStartTime = Date.now();
-       
-        ffmpeg.setProgress(function (progress) {
-          // FFmpeg进度回调：progress.ratio 可能为 0~1 或 undefined
-          // progress.time 和 progress.duration 是微秒单位
-          var ratio = 0;
-       
-          if (progress.ratio !== undefined && progress.ratio > 0) {
-            ratio = progress.ratio;
-          } else if (progress.time && progress.duration && progress.duration > 0) {
-            // 使用时间计算进度
-            ratio = Math.min(1, progress.time / progress.duration);
-          }
-       
-          // 更新UI进度（编码阶段占后50%）
-          _this.mp4ConvertProgress = Math.round(50 + ratio * 50);
-          _this.mp4ConvertMessage = '正在编码视频... ' + Math.round(ratio * 100) + '%';
-        });
-       
-        // 执行FFmpeg编码（异步执行）
-        try {
-          await ffmpeg.run.apply(ffmpeg, ffmpegArgs);
-        } catch (ffmpegErr) {
-          // 检查是否是音频相关错误
-          var errorMsg = String(ffmpegErr.message || ffmpegErr);
-          if (audioWritten && (errorMsg.includes('audio') || errorMsg.includes('aac'))) {
-            var retryMsg = '音频编码失败：' + errorMsg + '\n\n是否尝试不带音频重新编码？';
-            if (confirm(retryMsg)) {
-              // 移除音频相关参数，添加-an
-              var retryArgs = ffmpegArgs.filter(function (arg, idx) {
-                if (arg === 'audio.mp3') return false;
-                if (arg === '-i' && ffmpegArgs[idx + 1] === 'audio.mp3') return false;
-                if (arg === '-c:a' || arg === '-b:a' || arg === '-shortest') return false;
-                if (ffmpegArgs[idx - 1] === '-c:a' || ffmpegArgs[idx - 1] === '-b:a') return false;
-                return true;
-              });
-       
-              var outputIdx = retryArgs.indexOf('output.mp4');
-              retryArgs.splice(outputIdx, 0, '-an');
-       
-              await ffmpeg.run.apply(ffmpeg, retryArgs);
-              audioWritten = false;
-            } else {
-              throw ffmpegErr;
-            }
-          } else {
-            throw ffmpegErr;
-          }
-        } finally {
-          // 清理进度监听器
-          ffmpeg.setProgress(function () { });
-        }
-       
-        this.mp4ConvertProgress = 90;
-        this.mp4ConvertMessage = '正在读取输出文件...';
-       
-        // 读取输出文件 (0.11版本API)
-        var data = ffmpeg.FS('readFile', 'output.mp4');
-        var mp4Blob = new Blob([data.buffer], { type: 'video/mp4' });
-       
-        // 清理虚拟文件系统
-        for (var j = 0; j < frameCount; j++) {
-          var fname = 'frame_' + String(j).padStart(4, '0') + '.jpg';  // 从.png改为.jpg
-          try {
-            ffmpeg.FS('unlink', fname);
-          } catch (e) { }
-        }
-        try {
-          ffmpeg.FS('unlink', 'output.mp4');
-        } catch (e) { }
-        if (audioWritten) {
-          try {
-            ffmpeg.FS('unlink', 'audio.mp3');
-          } catch (e) { }
-        }
-       
-        return mp4Blob;
-       
-      } catch (error) {
-        console.error('[FFmpeg编码] 错误:', error);
-        // 清理可能残留的文件
-        for (var k = 0; k < frameCount; k++) {
-          try {
-            ffmpeg.FS('unlink', 'frame_' + String(k).padStart(4, '0') + '.png');
-          } catch (e) { }
-        }
-        try {
-          ffmpeg.FS('unlink', 'output.mp4');
-        } catch (e) { }
-        throw error;
-      }
-      },
-        */
+
 
       // 下载MP4文件
       downloadMP4: function (blob) {
@@ -9585,7 +9363,6 @@ function initApp() {
       this.mp4ObjectUrl = null;
 
       // Tools
-      this.ffmpeg = null;
       this.chromaKeyRenderLoop = null;
 
       // Frames
