@@ -5,6 +5,10 @@ $ErrorActionPreference = 'Stop'
 # 自动定位到脚本所在目录
 Set-Location $PSScriptRoot
 
+# 解决 schannel: failed to receive handshake 报错
+# 强制当前仓库使用 openssl 后端
+git config http.sslBackend openssl
+
 Write-Host "==== Git 安全推送 ====" -ForegroundColor Cyan
 
 # 0. 检查当前分支
