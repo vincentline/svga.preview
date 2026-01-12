@@ -398,7 +398,7 @@
                   <template v-if="currentModule === 'svga'">
                     <div class="footer-actions">
                       <button class="btn-large-primary" @click="triggerChangePreviewFile" v-if="svga.hasFile">
-                        更换预览文件
+                        打开文件...
                       </button>
                       <button class="btn-large-primary" @click="openMaterialPanel" v-if="svga.hasFile">
                         素材图管理
@@ -439,7 +439,7 @@
                   <template v-else-if="currentModule === 'yyeva'">
                     <div class="footer-actions">
                       <button class="btn-large-primary" @click="triggerChangePreviewFile">
-                        更换预览文件
+                        打开文件...
                       </button>
                     </div>
                     <div class="footer-actions">
@@ -473,7 +473,7 @@
                   <template v-else-if="currentModule === 'mp4'">
                     <div class="footer-actions">
                       <button class="btn-large-primary" @click="triggerChangePreviewFile">
-                        更换预览文件
+                        打开文件...
                       </button>
                       <button class="btn-large-primary" :class="{'tooltip': !mp4.hasFile}" :disabled="!mp4.hasFile"
                         @click="openChromaKeyPanel">
@@ -518,7 +518,7 @@
                   <template v-else-if="currentModule === 'lottie'">
                     <div class="footer-actions">
                       <button class="btn-large-primary" @click="triggerChangePreviewFile">
-                        更换预览文件
+                        打开文件...
                       </button>
                     </div>
                     <div class="footer-actions">
@@ -557,7 +557,7 @@
                   <template v-else-if="currentModule === 'frames'">
                     <div class="footer-actions">
                       <button class="btn-large-primary" @click="triggerChangePreviewFile">
-                        更换预览文件
+                        打开文件...
                       </button>
                       <button class="btn-large-primary" @click="openChangeFpsDialog">
                         改变帧率
@@ -2017,7 +2017,7 @@
     <!-- 隐藏的文件输入框，用于重传SVGA -->
     <input type="file" ref="reuploadSvgaInput" accept=".svga" style="display: none;" @change="handleReuploadSVGA" />
 
-    <!-- 隐藏的文件输入框，用于更换预览文件（支持SVGA、Lottie、MP4、序列帧） -->
+    <!-- 隐藏的文件输入框，用于打开文件...（支持SVGA、Lottie、MP4、序列帧） -->
     <input type="file" ref="changePreviewFileInput" accept=".svga,.json,.lottie,.mp4,.png,.jpg,.jpeg" multiple
       style="display: none;" @change="handleChangePreviewFile" />
 
