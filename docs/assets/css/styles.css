@@ -214,6 +214,26 @@ body.dark-mode .input-unit--hint {
 
 /* ==================== 顶部导航栏 ==================== */
 
+.header-logo {
+  height: 24px;
+  width: auto;
+  margin-right: 12px;
+  content: url('../img/logo.png');
+  transition: all 0.2s ease;
+}
+
+.header-logo:hover {
+  content: url('../img/logo_hover.png');
+}
+
+body.dark-mode .header-logo {
+  content: url('../img/logo_dark.png');
+}
+
+body.dark-mode .header-logo:hover {
+  content: url('../img/logo_hover.png');
+}
+
 .header-navbar {
   width: 100%;
   height: 56px;

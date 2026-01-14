@@ -96,8 +96,7 @@
   <div id="app" v-cloak>
     <!-- 顶部导航栏 -->
     <div class="header-navbar" :class="{'header-hidden': isImmersiveMode}">
-      <img :src="isDarkMode ? './assets/img/logo_dark.png' : './assets/img/logo.png'" alt="Logo"
-        style="height: 24px; width: auto; ">
+      <img class="header-logo" src="./assets/img/logo.png" alt="Logo">
       <!-- <a href="sth_auto.html" class="nav-link">素材自助</a> -->
       <div class="header-navbar-title"
         v-if="!svga.hasFile && !yyeva.hasFile && !lottie.hasFile && !mp4.hasFile && !frames.hasFile">
