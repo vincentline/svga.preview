@@ -493,6 +493,95 @@
     },
 
     /**
+     * 解析 SVGA 数据 (Decode)
+     * @param {ArrayBuffer|Blob} data - SVGA 文件数据
+     * @param {Object} dependencies - 依赖库 {protobuf, pako}
+     * @param {String} protoPath - proto文件路径（可选）
+     * @returns {Promise<Object>} - 解析后的 MovieEntity 对象
+     */
+    decode: function (data, dependencies, protoPath) {
+      this._validateDependencies(dependencies);
+      protoPath = protoPath || this.defaults.protoPath;
+      var protobuf = dependencies.protobuf;
+      var pako = dependencies.pako;
+
+      return new Promise(function (resolve, reject) {
+        var arrayBufferPromise = data instanceof Blob ? data.arrayBuffer() : Promise.resolve(data);
+
+        arrayBufferPromise.then(function (arrayBuffer) {
+          try {
+            var uint8Array = new Uint8Array(arrayBuffer);
+            var inflatedData = pako.inflate(uint8Array);
+
+            protobuf.load(protoPath, function (err, root) {
+              if (err) {
+                reject(new Error('Proto加载失败: ' + err.message));
+                return;
+              }
+
+              var MovieEntity = root.lookupType('com.opensource.svga.MovieEntity');
+              if (!MovieEntity) {
+                reject(new Error('Proto文件中未找到MovieEntity定义'));
+                return;
+              }
+
+              var movieData = MovieEntity.decode(inflatedData);
+              resolve(movieData);
+            });
+          } catch (e) {
+            reject(new Error('SVGA解析失败: ' + e.message));
+          }
+        }).catch(reject);
+      });
+    },
+
+    /**
+     * 编码 SVGA 数据 (Encode)
+     * @param {Object} movieData - MovieEntity 对象
+     * @param {Object} dependencies - 依赖库 {protobuf, pako}
+     * @param {String} protoPath - proto文件路径（可选）
+     * @returns {Promise<Blob>} - SVGA 文件 Blob
+     */
+    encode: function (movieData, dependencies, protoPath) {
+      this._validateDependencies(dependencies);
+      protoPath = protoPath || this.defaults.protoPath;
+      var protobuf = dependencies.protobuf;
+      var pako = dependencies.pako;
+
+      return new Promise(function (resolve, reject) {
+        protobuf.load(protoPath, function (err, root) {
+          if (err) {
+            reject(new Error('Proto加载失败: ' + err.message));
+            return;
+          }
+
+          try {
+            var MovieEntity = root.lookupType('com.opensource.svga.MovieEntity');
+            if (!MovieEntity) {
+              reject(new Error('Proto文件中未找到MovieEntity定义'));
+              return;
+            }
+
+            var errMsg = MovieEntity.verify(movieData);
+            if (errMsg) {
+              reject(new Error('MovieEntity验证失败: ' + errMsg));
+              return;
+            }
+
+            var message = MovieEntity.create(movieData);
+            var buffer = MovieEntity.encode(message).finish();
+            var deflatedData = pako.deflate(buffer);
+            var blob = new Blob([deflatedData], { type: 'application/octet-stream' });
+
+            resolve(blob);
+          } catch (e) {
+            reject(new Error('SVGA编码失败: ' + e.message));
+          }
+        });
+      });
+    },
+
+    /**
      * 创建 PNG chunk
      * @private
      */
