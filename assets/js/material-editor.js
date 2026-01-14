@@ -40,6 +40,8 @@
                     baseImage: null,     // 当前底图 (Image Object or DataURL)
                     baseImageWidth: 0,   // 底图原始宽度
                     baseImageHeight: 0,  // 底图原始高度
+                    defaultBaseImage: null, // 原始底图 (用于对比是否变更)
+                    showRestoreBtn: false,  // 显式控制恢复按钮的显示
 
                     // 编辑状态
                     showImage: true,     // 显示底图
@@ -110,7 +112,9 @@
                     'transform', 'transform-origin',
                     'float', 'clear',
                     'white-space',
-                    'overflow', 'overflow-x', 'overflow-y'
+                    'overflow', 'overflow-x', 'overflow-y',
+                    'line-height',
+                    'text-decoration', 'text-decoration-line', 'text-decoration-style', 'text-decoration-color', 'text-decoration-thickness'
                 ];
 
                 for (var i = 0; i < rules.length; i++) {
@@ -134,10 +138,13 @@
                 }
 
                 // 自动修复：如果使用了 background-clip: text，必须确保文字颜色透明
+                // 仅当背景是渐变时才自动修复（因为我们只支持渐变背景，不支持图片背景）
                 var hasBackgroundClip = styles['-webkit-background-clip'] === 'text' || styles['background-clip'] === 'text';
                 var hasTransparentColor = styles['color'] === 'transparent' || styles['-webkit-text-fill-color'] === 'transparent' || styles['text-fill-color'] === 'transparent';
+                var bg = styles['background'] || styles['background-image'] || '';
+                var isGradient = bg.indexOf('gradient') !== -1;
 
-                if (hasBackgroundClip && !hasTransparentColor) {
+                if (hasBackgroundClip && !hasTransparentColor && isGradient) {
                     styles['color'] = 'transparent';
                     // 某些浏览器可能需要这个
                     if (!styles['-webkit-text-fill-color']) {
@@ -160,10 +167,31 @@
                     }
                 }
                 return str;
+            },
+
+            /**
+             * 判断是否有编辑信息（已废弃，改用 editor.showRestoreBtn）
+             */
+            hasEditInfo: function () {
+                return this.editor.showRestoreBtn;
             }
         },
 
         watch: {
+            // 监听所有可能改变编辑状态的属性
+            'editor.baseImage': function() { this.updateRestoreBtnState(); },
+            'editor.showImage': function() { this.updateRestoreBtnState(); },
+            'editor.showText': function() { 
+                var _this = this;
+                this.updateRestoreBtnState();
+                this.$nextTick(function () {
+                    _this.renderEditorPreview();
+                });
+            },
+            'editor.imageOffsetX': function() { this.updateRestoreBtnState(); },
+            'editor.imageOffsetY': function() { this.updateRestoreBtnState(); },
+            'editor.imageScale': function() { this.updateRestoreBtnState(); },
+
             // 监听文字内容变化，实时更新 Canvas 预览
             'editor.textContent': function () {
                 var _this = this;
@@ -189,16 +217,36 @@
             'editor.textScale': function () {
                 this.renderEditorPreview();
             },
-            // 监听显示文字开关
-            'editor.showText': function () {
-                var _this = this;
-                this.$nextTick(function () {
-                    _this.renderEditorPreview();
-                });
-            }
+            // 监听显示文字开关 (这个监听器之前已经存在，为了避免重复，我们合并到上面的批量监听中)
+            // 'editor.showText': function () { ... } 
+            // 注意：上面的批量监听已经覆盖了 showText 的 renderEditorPreview 逻辑
+
         },
 
         methods: {
+            /**
+             * 更新恢复按钮的显示状态
+             * 手动计算，避免 computed 响应式问题
+             */
+            updateRestoreBtnState: function () {
+                var show = false;
+                
+                // 1. 检查底图是否变更
+                var defaultImg = this.editor.defaultBaseImage;
+                if (defaultImg && this.editor.baseImage !== defaultImg) show = true;
+
+                // 2. 检查显示开关
+                else if (!this.editor.showImage) show = true;
+                else if (this.editor.showText) show = true;
+
+                // 3. 检查底图变换
+                else if (this.editor.imageOffsetX !== 0) show = true;
+                else if (this.editor.imageOffsetY !== 0) show = true;
+                else if (Math.abs(this.editor.imageScale - 1.0) > 0.001) show = true;
+
+                this.editor.showRestoreBtn = show;
+            },
+
             /**
              * 渲染编辑器预览 Canvas
              */
@@ -241,6 +289,71 @@
                     // 恢复状态
                     ctx.restore();
                 });
+            },
+
+            /**
+             * 清理拖拽事件监听器
+             */
+            clearDragListeners: function () {
+                if (this.editor.dragHandlers) {
+                    if (this.editor.dragHandlers.mousemove) {
+                        document.removeEventListener('mousemove', this.editor.dragHandlers.mousemove);
+                    }
+                    if (this.editor.dragHandlers.mouseup) {
+                        document.removeEventListener('mouseup', this.editor.dragHandlers.mouseup);
+                    }
+                    this.editor.dragHandlers = null;
+                }
+            },
+
+            /**
+             * 恢复原图
+             * 点击后文字样式输入框里内容恢复默认、关闭显示文案按钮、素材图恢复为原始素材图
+             */
+            restoreOriginalMaterial: function () {
+                var targetKey = this.editor.targetKey;
+                if (!targetKey) return;
+
+                // 1. 清除编辑状态记录
+                if (this.materialEditStates[targetKey]) {
+                    this.$delete(this.materialEditStates, targetKey);
+                }
+
+                // 2. 恢复素材列表中的预览图为原图
+                var material = this.materialList.find(function (item) {
+                    return item.imageKey === targetKey;
+                });
+
+                if (material) {
+                    // 恢复 previewUrl 为 originalUrl
+                    if (material.originalUrl) {
+                        material.previewUrl = material.originalUrl;
+                    }
+                    
+                    // 3. 重置编辑器内部状态为默认值
+                    this.editor.showImage = true;
+                    this.editor.showText = false; // 关闭显示文案按钮
+                    this.editor.textContent = '示例文案'; // 内容恢复默认
+                    this.editor.textStyle = 'color: white;\ntext-shadow: 1px 1px 2px #000000;\nfont-size: 24px;\nfont-weight: bold;';
+                    this.editor.textPosX = 50;
+                    this.editor.textPosY = 50;
+                    this.editor.textScale = 1.0;
+                    this.editor.imageOffsetX = 0;
+                    this.editor.imageOffsetY = 0;
+                    this.editor.imageScale = 1.0;
+                    this.editor.showRestoreBtn = false; // 显式重置按钮状态
+                    
+                    // 4. 恢复底图为原始图
+                    this.editor.baseImage = material.originalUrl || material.previewUrl;
+                    
+                    // 重新渲染预览
+                    this.renderEditorPreview();
+                    
+                    // 提示用户
+                    if (this.showToast) {
+                        this.showToast('已恢复原图');
+                    }
+                }
             },
 
             /**
@@ -317,6 +430,11 @@
                 // 获取当前显示的图片
                 // 首先尝试使用原始图（originalUrl），如果不存在则使用previewUrl
                 var imgUrl = material.originalUrl || material.previewUrl;
+                
+                // 设置默认底图，用于 hasEditInfo 比较
+                this.editor.defaultBaseImage = imgUrl;
+                // 初始化按钮状态
+                this.updateRestoreBtnState();
 
                 // 编辑器底图逻辑（重要！）：
                 // 1. 如果有保存的编辑状态中的customBaseImage，使用它（用户上传的自定义底图）
@@ -397,6 +515,7 @@
              * 关闭编辑器
              */
             closeMaterialEditor: function () {
+                this.clearDragListeners();
                 this.editor.show = false;
             },
 
@@ -405,6 +524,9 @@
              */
             onPreviewAreaMouseDown: function (e) {
                 var _this = this;
+
+                // 清理可能存在的旧监听器
+                this.clearDragListeners();
 
                 // 如果点击的是空白区域，取消激活状态
                 if (e.target.classList.contains('editor-preview-area') ||
@@ -436,8 +558,7 @@
                         };
 
                         var onMouseUp = function () {
-                            document.removeEventListener('mousemove', onMouseMove);
-                            document.removeEventListener('mouseup', onMouseUp);
+                            _this.clearDragListeners();
 
                             // 只有没有移动时才激活图层
                             if (!hasMoved) {
@@ -445,6 +566,11 @@
                                 _this.editor.lastClickElement = clickedOnLayer;
                                 _this.editor.lastClickTime = Date.now();
                             }
+                        };
+
+                        this.editor.dragHandlers = {
+                            mousemove: onMouseMove,
+                            mouseup: onMouseUp
                         };
 
                         document.addEventListener('mousemove', onMouseMove);
@@ -469,8 +595,12 @@
                     };
 
                     var onMouseUp = function () {
-                        document.removeEventListener('mousemove', onMouseMove);
-                        document.removeEventListener('mouseup', onMouseUp);
+                        _this.clearDragListeners();
+                    };
+
+                    this.editor.dragHandlers = {
+                        mousemove: onMouseMove,
+                        mouseup: onMouseUp
                     };
 
                     document.addEventListener('mousemove', onMouseMove);
@@ -549,6 +679,9 @@
             onImageMouseDown: function (e) {
                 e.stopPropagation();
 
+                // 清理可能存在的旧监听器
+                this.clearDragListeners();
+
                 // 重置移动标记
                 this.editor.imageMouseMoved = false;
 
@@ -580,8 +713,7 @@
 
                 var onMouseUp = function () {
                     _this.editor.imageDragging = false;
-                    document.removeEventListener('mousemove', onMouseMove);
-                    document.removeEventListener('mouseup', onMouseUp);
+                    _this.clearDragListeners();
 
                     // 如果没有移动，认为是点击事件
                     if (!_this.editor.imageMouseMoved) {
@@ -602,6 +734,11 @@
                         }
                         _this.editor.lastClickTime = now;
                     }
+                };
+
+                this.editor.dragHandlers = {
+                    mousemove: onMouseMove,
+                    mouseup: onMouseUp
                 };
 
                 document.addEventListener('mousemove', onMouseMove);
@@ -628,6 +765,9 @@
              */
             onTextMouseDown: function (e) {
                 e.stopPropagation();
+
+                // 清理可能存在的旧监听器
+                this.clearDragListeners();
 
                 // 重置移动标记
                 this.editor.textMouseMoved = false;
@@ -665,8 +805,7 @@
 
                 var onMouseUp = function () {
                     _this.editor.textDragging = false;
-                    document.removeEventListener('mousemove', onMouseMove);
-                    document.removeEventListener('mouseup', onMouseUp);
+                    _this.clearDragListeners();
 
                     // 如果没有移动，认为是点击事件
                     if (!_this.editor.textMouseMoved) {
@@ -687,6 +826,11 @@
                         }
                         _this.editor.lastClickTime = now;
                     }
+                };
+
+                this.editor.dragHandlers = {
+                    mousemove: onMouseMove,
+                    mouseup: onMouseUp
                 };
 
                 document.addEventListener('mousemove', onMouseMove);
@@ -1059,15 +1203,15 @@
              */
             parseShadows: function (shadowStr) {
                 var shadows = [];
-                // 匹配模式: x y blur color (支持 hex 和 rgba)
-                // 示例: 0px 1px 0px #EF9A4B
-                var regex = /(-?\d+(?:px)?)\s+(-?\d+(?:px)?)\s+(-?\d+(?:px)?)\s+(#[0-9a-fA-F]+|rgba?\([^)]+\))/g;
+                // 匹配模式: x y [blur] color (支持 hex 和 rgba)
+                // 示例: 0px 1px 0px #EF9A4B 或 1px 1px #000
+                var regex = /(-?[\d.]+(?:px)?)\s+(-?[\d.]+(?:px)?)(?:\s+(-?[\d.]+(?:px)?))?\s+(#[0-9a-fA-F]+|rgba?\([^)]+\))/g;
                 var match;
                 while ((match = regex.exec(shadowStr)) !== null) {
                     shadows.push({
                         x: parseFloat(match[1]),
                         y: parseFloat(match[2]),
-                        blur: parseFloat(match[3]),
+                        blur: match[3] ? parseFloat(match[3]) : 0,
                         color: match[4]
                     });
                 }
@@ -1079,8 +1223,8 @@
              */
             parseStroke: function (strokeStr) {
                 // 匹配模式: width [style] color
-                // 示例: 1px solid #FFF3B9 或 1px #FFF
-                var regex = /(\d+(?:px)?)\s+(?:solid\s+)?(#[0-9a-fA-F]+|rgba?\([^)]+\))/;
+                // 示例: 1px solid #FFF3B9 或 1px #FFF 或 1px transparent
+                var regex = /(\d+(?:px)?)\s+(?:solid\s+)?(#[0-9a-fA-F]+|rgba?\([^)]+\)|transparent)/i;
                 var match = strokeStr.match(regex);
                 if (match) {
                     return {
@@ -1211,14 +1355,14 @@
                     // 绘制每层阴影（逐行绘制）
                     for (var i = 0; i < shadowsArr.length; i++) {
                         var shadow = shadowsArr[i];
-                        // 解析: offsetX offsetY blur color
-                        var shadowMatch = shadow.match(/(-?[\d.]+)px\s+(-?[\d.]+)px\s+(-?[\d.]+)px\s+(#[0-9a-fA-F]+|rgba?\([^)]+\))/i);
+                        // 解析: offsetX offsetY [blur] color
+                        var shadowMatch = shadow.match(/(-?[\d.]+(?:px)?)\s+(-?[\d.]+(?:px)?)(?:\s+(-?[\d.]+(?:px)?))?\s+(#[0-9a-fA-F]+|rgba?\([^)]+\))/i);
 
                         if (shadowMatch) {
                             ctx.save();
                             ctx.shadowOffsetX = parseFloat(shadowMatch[1]);
                             ctx.shadowOffsetY = parseFloat(shadowMatch[2]);
-                            ctx.shadowBlur = parseFloat(shadowMatch[3]);
+                            ctx.shadowBlur = shadowMatch[3] ? parseFloat(shadowMatch[3]) : 0;
                             ctx.shadowColor = shadowMatch[4];
 
                             // 绘制每一行的阴影（使用渐变或纯色作为 fillStyle）
@@ -1243,7 +1387,13 @@
                     var stroke = this.parseStroke(strokeStr);
                     if (stroke) {
                         ctx.lineWidth = stroke.width;
-                        ctx.strokeStyle = stroke.color;
+                        
+                        // 特殊处理：如果描边颜色是 transparent 且有渐变填充，则使用渐变作为描边色
+                        // 这样可以实现文字描边渐变的效果（需配合 background-clip: text 和 transparent 描边色）
+                        ctx.strokeStyle = (stroke.color === 'transparent' && fillStyle instanceof CanvasGradient)
+                            ? fillStyle
+                            : stroke.color;
+
                         ctx.lineJoin = 'round';
                         for (var lineIdx = 0; lineIdx < lines.length; lineIdx++) {
                             var lineY = startY + (lineIdx * lineHeight);

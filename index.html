@@ -2200,6 +2200,11 @@
                 <input type="file" ref="editorFileInput" accept="image/png,image/jpeg" style="display: none"
                   @change="onEditorFileChange">
                 <button class="btn-large-primary" @click="triggerEditorUpload">上传图片</button>
+                <!-- 恢复原图按钮 -->
+                <button v-if="editor.showRestoreBtn" class="btn-large-primary btn-editor-recover" @click="restoreOriginalMaterial"
+                  title="恢复原图" :disabled="editor.loading">
+                  <div class="icon-editor-recover"></div>
+                </button>
                 <button class="btn-large-primary btn-ai-generate tooltip">
                   <i class="sprite-icon sprite-AI-img btn-icon-ai"></i>
                   <span class="tooltip-text">开发中...</span>

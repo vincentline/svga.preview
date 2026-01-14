@@ -368,6 +368,23 @@
             checkFramePositions: [0.3, 0.7] // 检测30%和70%位置的帧
         };
 
+        // 清理资源的辅助函数
+        function cleanup() {
+            if (video) {
+                video.onloadedmetadata = null;
+                video.onseeked = null;
+                video.onerror = null;
+                video.removeAttribute('src');
+                try {
+                    video.load(); // 强制停止加载
+                } catch (e) { /* 忽略清理时的错误 */ }
+            }
+            if (objectUrl) {
+                URL.revokeObjectURL(objectUrl);
+                objectUrl = null;
+            }
+        }
+
         video.onloadedmetadata = function () {
             var videoWidth = video.videoWidth;
             var videoHeight = video.videoHeight;
@@ -481,12 +498,30 @@
             function checkNextFrame() {
                 if (frameIndex >= CONFIG.checkFramePositions.length) {
                     // 所有帧检查完成
-                    URL.revokeObjectURL(objectUrl);
+                    cleanup();
                     callback(isDualChannel, alphaPosition);
                     return;
                 }
 
                 var position = CONFIG.checkFramePositions[frameIndex];
+                // 确保 seek 位置有效
+                if (!isFinite(duration) || duration <= 0) {
+                     // 无法获取时长，仅检测第一帧（当前位置）
+                     if (frameIndex === 0) {
+                         var frameAlphaPosition = analyzeFrame();
+                         if (frameAlphaPosition) {
+                             isDualChannel = true;
+                             alphaPosition = frameAlphaPosition;
+                         }
+                         cleanup();
+                         callback(isDualChannel, alphaPosition);
+                     } else {
+                         cleanup();
+                         callback(isDualChannel, alphaPosition);
+                     }
+                     return;
+                }
+                
                 video.currentTime = duration * position;
             }
 
@@ -504,7 +539,7 @@
             };
 
             video.onerror = function () {
-                URL.revokeObjectURL(objectUrl);
+                cleanup();
                 callback(false, null); // 出错默认为普通视频
             };
 
@@ -513,7 +548,7 @@
         };
 
         video.onerror = function () {
-            URL.revokeObjectURL(objectUrl);
+            cleanup();
             callback(false, null); // 出错默认为普通视频
         };
     };

@@ -1630,6 +1630,36 @@ body.dark-mode .sprite-AI-img.btn-icon-ai:hover {
   justify-content: center;
 }
 
+/* 恢复原图按钮特殊样式 */
+.btn-editor-recover {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  margin: 0;
+  min-width: 44px;
+}
+
+.icon-editor-recover {
+  background-image: url('../img/controls-sprite.png');
+  background-repeat: no-repeat;
+  background-position: -232px -152px;
+  background-size: 400px 360px;
+  width: 40px;
+  height: 40px;
+  transform: scale(1.4);
+}
+
+/* 恢复原图按钮特殊样式
+.btn-editor-recover {
+  background-image: url('../img/controls-sprite.png');
+  background-repeat: no-repeat;
+  background-position: -235px -154px;
+  background-size: 400px 360px;
+  width: 40px;
+  height: 40px;
+  transform: scale(1.2);
+} */
+
 /* 大按钮 - 次要按钮（btn02_Large） */
 .btn-large-secondary {
   background-color: #5b5b5b;

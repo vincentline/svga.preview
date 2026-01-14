@@ -42,6 +42,14 @@
     // 进度转换（用于变速等特殊场景）
     transformPercentage: function(p) { return p; }
   };
+
+  // 自动检测并初始化 GlobalAudioManager
+  var checkHowl = setInterval(function() {
+    if (typeof Howl !== 'undefined') {
+      GlobalAudioManager.init();
+      clearInterval(checkHowl);
+    }
+  }, 200);
   
   // ==================== Lottie 播放器适配器 ====================
   
@@ -65,7 +73,10 @@
   };
   
   LottiePlayerAdapter.prototype.seekTo = function(percentage) {
-    var targetFrame = Math.round(percentage * this.state.totalFrames);
+    // 考虑起始帧偏移 (ip)，确保跳转位置准确
+    var firstFrame = (this.state.lottiePlayer && this.state.lottiePlayer.firstFrame) || 0;
+    var targetFrame = firstFrame + Math.round(percentage * this.state.totalFrames);
+    
     // 根据播放状态选择是否继续播放
     if (this.state.isPlaying) {
       this.state.lottiePlayer.goToAndPlay(targetFrame, true);
@@ -143,12 +154,21 @@
   
   YyevaPlayerAdapter.prototype.seekTo = function(percentage) {
     VideoPlayerAdapter.prototype.seekTo.call(this, percentage);
-    // 立即渲染一帧（暂停时也能更新画面）
+    // 确保在跳转完成后渲染一帧（暂停时也能更新画面）
     if (this.state.renderYyevaFrame) {
       var _this = this;
-      setTimeout(function() {
+      // 监听 seeked 事件确保视频数据已就绪
+      var onSeeked = function() {
         _this.state.renderYyevaFrame();
-      }, 50);
+        _this.video.removeEventListener('seeked', onSeeked);
+      };
+      
+      // 如果正在跳转中，等待 seeked；否则直接渲染
+      if (this.video.seeking) {
+        this.video.addEventListener('seeked', onSeeked);
+      } else {
+        this.state.renderYyevaFrame();
+      }
     }
   };
   
@@ -164,6 +184,12 @@
   Mp4PlayerAdapter.prototype.afterPlay = function() {
     if (this.state.startMp4ProgressLoop) {
       this.state.startMp4ProgressLoop();
+    }
+  };
+
+  Mp4PlayerAdapter.prototype.afterPause = function() {
+    if (this.state.stopMp4ProgressLoop) {
+      this.state.stopMp4ProgressLoop();
     }
   };
   
@@ -239,116 +265,171 @@
   // ==================== SVGA 播放器适配器 ====================
   
   /**
+   * 全局音频管理器
+   * 负责接管所有 Howl 实例的生命周期
+   * 原理：通过劫持 Howl.prototype.init，自动注册所有新创建的音频实例
+   */
+  var GlobalAudioManager = {
+    instances: [],
+    initialized: false,
+
+    init: function() {
+      if (this.initialized || typeof Howl === 'undefined') return;
+      
+      var _this = this;
+      var originalInit = Howl.prototype.init;
+      
+      // 劫持初始化方法
+      Howl.prototype.init = function(o) {
+        // 执行原始初始化
+        var result = originalInit.call(this, o);
+        
+        // 注册到管理器 (使用 setTimeout 确保实例已完全初始化)
+        var self = this;
+        setTimeout(function() {
+          _this.add(self);
+        }, 0);
+        
+        return result;
+      };
+
+      this.initialized = true;
+    },
+
+    add: function(howl) {
+      if (this.instances.indexOf(howl) === -1) {
+        this.instances.push(howl);
+        // 监听卸载事件，自动移除
+        var _this = this;
+        howl.on('unload', function() {
+          _this.remove(howl);
+        });
+      }
+    },
+
+    remove: function(howl) {
+      var index = this.instances.indexOf(howl);
+      if (index !== -1) {
+        this.instances.splice(index, 1);
+      }
+    },
+
+    /**
+     * 停止所有音频
+     */
+    stopAll: function() {
+      this.instances.forEach(function(howl) {
+        if (howl.playing()) howl.stop();
+      });
+    },
+
+    /**
+     * 暂停所有音频
+     */
+    pauseAll: function() {
+      this.instances.forEach(function(howl) {
+        if (howl.playing()) howl.pause();
+      });
+    },
+
+    /**
+     * 设置所有音频静音
+     */
+    muteAll: function(muted) {
+      this.instances.forEach(function(howl) {
+        howl.mute(muted);
+      });
+    },
+
+    /**
+     * 卸载并清空所有音频
+     */
+    unloadAll: function() {
+      // 复制一份数组进行遍历，因为 unload 会触发 remove 修改数组
+      var list = this.instances.slice();
+      list.forEach(function(howl) {
+        try {
+          howl.unload();
+        } catch (e) {
+          console.warn('Unload error:', e);
+        }
+      });
+      this.instances = [];
+    }
+  };
+
+  /**
    * SVGA 播放器适配器
    * 功能：统一 SVGA 播放控制接口，支持音频同步管理
    */
   function SvgaPlayerAdapter(state) {
     PlayerAdapter.call(this, state);
+    // 确保音频管理器已初始化
+    GlobalAudioManager.init();
   }
-  
+
   SvgaPlayerAdapter.prototype = Object.create(PlayerAdapter.prototype);
   SvgaPlayerAdapter.prototype.constructor = SvgaPlayerAdapter;
-  
+
   SvgaPlayerAdapter.prototype.canHandle = function() {
     return this.state.hasFile && this.state.svgaPlayer;
   };
-  
-  /**
-   * 播放控制：从当前位置继续播放
-   * 关键技术：
-   * 1. 记录现有的 Howler 音频实例
-   * 2. 调用 SVGA 的 stepToPercentage 继续播放（会创建新的音频实例）
-   * 3. 延迟停止新创建的音频实例，恢复旧实例
-   * 4. 避免音频重复播放和从头开始的问题
-   */
+
   SvgaPlayerAdapter.prototype.play = function() {
-    var _this = this;
     try {
-      // 记录当前的音频实例
-      var existingHowls = [];
-      if (typeof Howler !== 'undefined' && Howler._howls) {
-        existingHowls = Howler._howls.slice(); // 复制数组
-      }
-      
-      // 从当前位置继续播放（SVGA 可能会创建新的音频实例）
       var currentPercentage = (this.state.progress || 0) / 100;
+      
+      // 1. 停止当前所有正在播放的音频，防止重叠
+      GlobalAudioManager.stopAll();
+      
+      // 2. 播放动画 (SVGA 内部会根据 percentage 触发音频播放)
       this.state.svgaPlayer.stepToPercentage(currentPercentage, true);
       
-      // 立即处理音频：停止新创建的实例，恢复旧实例
-      setTimeout(function() {
-        if (typeof Howler !== 'undefined' && Howler._howls) {
-          // 找出新创建的音频实例并停止
-          Howler._howls.forEach(function(howl) {
-            if (howl && existingHowls.indexOf(howl) === -1) {
-              // 这是新创建的实例，停止它
-              howl.stop();
-            }
-          });
-          
-          // 恢复旧的音频实例（如果不是静音）
-          if (!_this.state.isMuted) {
-            existingHowls.forEach(function(howl) {
-              if (howl && !howl.playing()) {
-                howl.play();
-              }
-            });
-          }
-        }
-      }, 50);
+      // 3. 同步静音状态
+      GlobalAudioManager.muteAll(this.state.isMuted);
+      
     } catch (e) {
       console.error('播放失败:', e);
     }
   };
-  
-  /**
-   * 暂停控制：暂停动画和音频
-   * 直接暂停所有 Howler 音频实例，保留当前播放位置
-   */
+
   SvgaPlayerAdapter.prototype.pause = function() {
     try {
-      // 暂停动画
       this.state.svgaPlayer.pauseAnimation();
-      
-      // 暂停所有 Howler 音频（保留播放位置）
-      if (typeof Howler !== 'undefined' && Howler._howls) {
-        Howler._howls.forEach(function(howl) {
-          if (howl && howl.playing()) {
-            howl.pause();
-          }
-        });
-      }
+      // 暂停所有音频
+      GlobalAudioManager.pauseAll();
     } catch (e) {
       console.error('暂停失败:', e);
     }
   };
-  
-  /**
-   * 进度跳转：跳转到指定位置
-   * 停止所有音频防止叠加，然后跳转
-   */
-  SvgaPlayerAdapter.prototype.seekTo = function(percentage) {
+
+  SvgaPlayerAdapter.prototype.seekTo = function(percentage, isScrubbing) {
     try {
-      // 拖动进度条时先停止所有音频，防止多个音频实例叠加
-      if (typeof Howler !== 'undefined') {
-        Howler.stop();
-      }
+      // 拖拽/跳转时，必须先停止所有音频
+      GlobalAudioManager.stopAll();
       
-      // 跳转到指定位置
-      this.state.svgaPlayer.stepToPercentage(percentage, this.state.isPlaying);
+      // 如果是拖拽中 (isScrubbing)，强制不播放；否则跟随当前播放状态
+      var shouldPlay = this.state.isPlaying && !isScrubbing;
       
-      // 如果是播放状态且未静音，恢复音频
-      if (this.state.isPlaying && typeof Howler !== 'undefined' && !this.state.isMuted) {
-        Howler.mute(false);
+      this.state.svgaPlayer.stepToPercentage(percentage, shouldPlay);
+      
+      // 如果处于播放状态，SVGA stepToPercentage 可能会触发音频播放
+      // 我们再次确保静音状态正确
+      if (shouldPlay) {
+        GlobalAudioManager.muteAll(this.state.isMuted);
       }
     } catch (e) {
       console.error('跳转失败:', e);
     }
   };
-  
+
   SvgaPlayerAdapter.prototype.setMuted = function(muted) {
-    if (typeof Howler !== 'undefined') {
-      Howler.mute(muted);
-    }
+    GlobalAudioManager.muteAll(muted);
+  };
+  
+  // 销毁时清理音频
+  SvgaPlayerAdapter.prototype.destroy = function() {
+    GlobalAudioManager.unloadAll();
   };
   
   // ==================== 播放控制器 ====================
@@ -433,8 +514,9 @@
   /**
    * 跳转到指定进度（重构后：统一接口，无if-else分支）
    * @param {number} percentage 进度百分比 0-1
+   * @param {boolean} isScrubbing 是否正在拖拽（scrubbing）
    */
-  PlayerController.prototype.seekTo = function(percentage) {
+  PlayerController.prototype.seekTo = function(percentage, isScrubbing) {
     percentage = Math.max(0, Math.min(1, percentage));
     var state = this.getPlayerState();
     var adapter = this.getAdapter();
@@ -451,7 +533,12 @@
       this.onProgressChange(progress, currentFrame);
       
       // 跳转到指定位置
-      adapter.seekTo(percentage);
+      // 检查适配器是否支持 isScrubbing 参数 (SvgaPlayerAdapter 支持)
+      if (adapter instanceof SvgaPlayerAdapter) {
+        adapter.seekTo(percentage, isScrubbing);
+      } else {
+        adapter.seekTo(percentage);
+      }
     } catch (e) {
       console.error('跳转失败:', e);
     }
@@ -487,9 +574,10 @@
     var onDragStart = function(e) {
       e.preventDefault();
       _this.isDragging = true;
+      _this.wasPlaying = _this.getPlayerState().isPlaying; // 记录拖拽前的播放状态
       
-      // 立即跳转到点击位置
-      updateProgress(e);
+      // 立即跳转到点击位置（标记为 scrubbing）
+      updateProgress(e, true);
       
       // 添加全局事件监听
       document.addEventListener('mousemove', onDragMove);
@@ -498,11 +586,31 @@
       document.addEventListener('touchend', onDragEnd);
     };
     
-    // 拖拽中
+    // 节流工具函数
+    var throttle = function(func, limit) {
+      var inThrottle;
+      return function() {
+        var args = arguments;
+        var context = this;
+        if (!inThrottle) {
+          func.apply(context, args);
+          inThrottle = true;
+          setTimeout(function() {
+            inThrottle = false;
+          }, limit);
+        }
+      }
+    };
+
+    // 拖拽中（增加节流防止高频触发 seek）
+    var updateProgressThrottled = throttle(function(e) {
+      updateProgress(e, true); // 标记为 scrubbing
+    }, 50); // 50ms 节流 (20fps)
+
     var onDragMove = function(e) {
       if (!_this.isDragging) return;
       e.preventDefault();
-      updateProgress(e);
+      updateProgressThrottled(e);
     };
     
     // 拖拽结束
@@ -514,10 +622,16 @@
       document.removeEventListener('mouseup', onDragEnd);
       document.removeEventListener('touchmove', onDragMove);
       document.removeEventListener('touchend', onDragEnd);
+
+      // 如果拖拽前是播放状态，恢复播放（因为 scrubbing 导致暂停了）
+      if (_this.wasPlaying) {
+        var adapter = _this.getAdapter();
+        if (adapter) adapter.play();
+      }
     };
     
     // 更新进度
-    var updateProgress = function(e) {
+    var updateProgress = function(e, isScrubbing) {
       var clientX = e.clientX || (e.touches && e.touches[0] && e.touches[0].clientX);
       if (!clientX) return;
       
@@ -525,7 +639,7 @@
       var x = clientX - rect.left;
       var percentage = x / rect.width;
       
-      _this.seekTo(percentage);
+      _this.seekTo(percentage, isScrubbing);
     };
     
     // 绑定滑块事件
@@ -538,7 +652,7 @@
       if (e.target === progressThumb || progressThumb.contains(e.target)) {
         return;
       }
-      updateProgress(e);
+      updateProgress(e, false); // 点击是直接跳转，不是 scrubbing
     };
     progressBar.addEventListener('click', onProgressBarClick);
     
