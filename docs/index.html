@@ -99,34 +99,38 @@
       <img :src="isDarkMode ? './assets/img/logo_dark.png' : './assets/img/logo.png'" alt="Logo"
         style="height: 24px; width: auto; margin-right: 12px;">
       <!-- <a href="sth_auto.html" class="nav-link">素材自助</a> -->
-      <div class="header-navbar-title">
+      <div class="header-navbar-title"
+        v-if="!svga.hasFile && !yyeva.hasFile && !lottie.hasFile && !mp4.hasFile && !frames.hasFile">
         SVGA、双通道MP4、Lottie动画在线预览
       </div>
-      <button class="theme-toggle tooltip" @click="toggleTheme">
-        <span class="tooltip-text">{{ isDarkMode ? '切换到白天模式' : '切换到暗黑模式' }}</span>
-        <svg v-if="!isDarkMode" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <!-- 太阳图标 -->
-          <circle cx="12" cy="12" r="5" />
-          <line x1="12" y1="1" x2="12" y2="3" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-          <line x1="12" y1="21" x2="12" y2="23" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" stroke="currentColor" stroke-width="2"
-            stroke-linecap="round" />
-          <line x1="1" y1="12" x2="3" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-          <line x1="21" y1="12" x2="23" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" stroke="currentColor" stroke-width="2"
-            stroke-linecap="round" />
-          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" stroke="currentColor" stroke-width="2"
-            stroke-linecap="round" />
-        </svg>
-        <svg v-else viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <!-- 月亮图标 -->
-          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-        </svg>
-      </button>
-      <a href="https://saysth.design/" target="_blank" class="avatar-link">
-        <img src="./assets/img/toux.png" alt="" class="avatar-icon">
-      </a>
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <button class="theme-toggle tooltip" @click="toggleTheme">
+          <span class="tooltip-text">{{ isDarkMode ? '切换到白天模式' : '切换到暗黑模式' }}</span>
+          <svg v-if="!isDarkMode" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <!-- 太阳图标 -->
+            <circle cx="12" cy="12" r="5" />
+            <line x1="12" y1="1" x2="12" y2="3" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            <line x1="12" y1="21" x2="12" y2="23" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" />
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" />
+            <line x1="1" y1="12" x2="3" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            <line x1="21" y1="12" x2="23" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" />
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" />
+          </svg>
+          <svg v-else viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <!-- 月亮图标 -->
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+          </svg>
+        </button>
+        <a href="https://saysth.design/" target="_blank" class="avatar-link">
+          <img src="./assets/img/toux.png" alt="" class="avatar-icon">
+        </a>
+      </div>
     </div>
 
     <!-- Toast提示 -->
@@ -410,7 +414,7 @@
                       </button>
                     </div>
                     <div class="footer-actions">
-                      <button class="btn-large-primary tooltip" >
+                      <button class="btn-large-primary tooltip">
                         <span class="tooltip-text">功能开发中...</span>
                         转序列帧
                       </button>
@@ -419,7 +423,7 @@
                         <span v-if="!svga.hasFile" class="tooltip-text">请先拖入 SVGA 文件</span>
                         {{ isExportingGIF ? '导出中 ' + gifExportProgress + '%' : '转GIF' }}
                       </button>
-                      <button class="btn-large-primary tooltip" >
+                      <button class="btn-large-primary tooltip">
                         <span class="tooltip-text">功能开发中...</span>
                         转webp
                       </button>
@@ -444,7 +448,7 @@
                       </button>
                     </div>
                     <div class="footer-actions">
-                      <button class="btn-large-primary tooltip" >
+                      <button class="btn-large-primary tooltip">
                         <span class="tooltip-text">功能开发中...</span>
                         转序列帧
                       </button>
@@ -453,7 +457,7 @@
                         <span v-if="!yyeva.hasFile" class="tooltip-text">请先拖入 MP4 文件</span>
                         {{ isExportingGIF ? '导出中 ' + gifExportProgress + '%' : '转GIF' }}
                       </button>
-                      <button class="btn-large-primary tooltip" >
+                      <button class="btn-large-primary tooltip">
                         <span class="tooltip-text">功能开发中...</span>
                         转webp
                       </button>
@@ -489,7 +493,7 @@
                       </button>
                     </div>
                     <div class="footer-actions">
-                      <button class="btn-large-primary tooltip" >
+                      <button class="btn-large-primary tooltip">
                         <span class="tooltip-text">功能开发中...</span>
                         转序列帧
                       </button>
@@ -498,7 +502,7 @@
                         <span v-if="!mp4.hasFile" class="tooltip-text">请先拖入 MP4 文件</span>
                         {{ isExportingGIF ? '导出中 ' + gifExportProgress + '%' : '转GIF' }}
                       </button>
-                      <button class="btn-large-primary tooltip" >
+                      <button class="btn-large-primary tooltip">
                         <span class="tooltip-text">功能开发中...</span>
                         转webp
                       </button>
@@ -523,7 +527,7 @@
                       </button>
                     </div>
                     <div class="footer-actions">
-                      <button class="btn-large-primary tooltip" >
+                      <button class="btn-large-primary tooltip">
                         <span class="tooltip-text">功能开发中...</span>
                         转序列帧
                       </button>
@@ -532,7 +536,7 @@
                         <span v-if="!lottie.hasFile" class="tooltip-text">请先拖入 Lottie 文件</span>
                         {{ isExportingGIF ? '导出中 ' + gifExportProgress + '%' : '转GIF' }}
                       </button>
-                      <button class="btn-large-primary tooltip" >
+                      <button class="btn-large-primary tooltip">
                         <span class="tooltip-text">功能开发中...</span>
                         转webp
                       </button>
@@ -570,7 +574,7 @@
                         <span v-if="!frames.hasFile" class="tooltip-text">请先拖入序列帧图片</span>
                         {{ isExportingGIF ? '导出中 ' + gifExportProgress + '%' : '转GIF' }}
                       </button>
-                      <button class="btn-large-primary tooltip" >
+                      <button class="btn-large-primary tooltip">
                         <span class="tooltip-text">功能开发中...</span>
                         转webp
                       </button>
@@ -2202,8 +2206,8 @@
                   @change="onEditorFileChange">
                 <button class="btn-large-primary" @click="triggerEditorUpload">上传图片</button>
                 <!-- 恢复原图按钮 -->
-                <button v-if="editor.showRestoreBtn" class="btn-large-primary btn-editor-recover" @click="restoreOriginalMaterial"
-                  title="恢复原图" :disabled="editor.loading">
+                <button v-if="editor.showRestoreBtn" class="btn-large-primary btn-editor-recover"
+                  @click="restoreOriginalMaterial" title="恢复原图" :disabled="editor.loading">
                   <div class="icon-editor-recover"></div>
                 </button>
                 <button class="btn-large-primary btn-ai-generate tooltip">
