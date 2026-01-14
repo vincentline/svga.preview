@@ -861,10 +861,6 @@ function initApp() {
         if (this.viewportController) {
           this.viewportController.setScale(1, true);
           this.viewportController.setOffset(0, 0, true);
-        } else {
-          this.viewerScale = 1;
-          this.viewerOffsetX = 0;
-          this.viewerOffsetY = 0;
         }
       },
 
@@ -2176,14 +2172,8 @@ function initApp() {
             this.currentModule === 'lottie' ? this.lottie.fileInfo.name :
               this.yyeva.fileInfo.name) || 'output';
           var fileName = currentName.replace(/\.[^/.]+$/, "") + '.mp4';
-          var url = URL.createObjectURL(mp4Blob);
-          var a = document.createElement('a');
-          a.href = url;
-          a.download = fileName;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
+          
+          this.utils.downloadFile(mp4Blob, fileName);
 
           alert('转换成功！');
           this.closeStandardMp4Panel();
@@ -2469,18 +2459,10 @@ function initApp() {
 
       /* ==================== 序列帧加载与播放 ==================== */
 
-      /**
-       * 排序序列帧文件（按文件名中的数字升序）
-       * @param {Array<File>} files - 文件数组
-       * @returns {Array<File>} 排序后的文件数组
-       */
+      // 排序序列帧文件（按文件名中的数字升序）
+      // 代理到 utils.sortFilesByName
       sortFrameFiles: function (files) {
-        return files.sort(function (a, b) {
-          // 提取文件名中的数字
-          var numA = parseInt((a.name.match(/\d+/) || ['0'])[0]);
-          var numB = parseInt((b.name.match(/\d+/) || ['0'])[0]);
-          return numA - numB;
-        });
+        return this.utils.sortFilesByName(files);
       },
 
       /**
@@ -2496,7 +2478,7 @@ function initApp() {
         }
 
         // 排序文件
-        var sortedFiles = this.sortFrameFiles(files);
+        var sortedFiles = this.utils.sortFilesByName(files);
 
         // 加载第一帧获取尺寸信息
         var firstFile = sortedFiles[0];
@@ -2520,7 +2502,7 @@ function initApp() {
               fileInfo: {
                 name: firstFile.name + ' 等 ' + sortedFiles.length + ' 帧',
                 size: totalSize,
-                sizeText: _this.formatBytes(totalSize),
+                sizeText: _this.utils.formatBytes(totalSize),
                 fps: 25,
                 sizeWH: img.width + ' x ' + img.height,
                 duration: (sortedFiles.length / 25).toFixed(2) + 's'
@@ -3598,20 +3580,6 @@ function initApp() {
       },
 
       /**
-       * 居中播放器 (centerViewer)
-       * 调用时机：拖入文件、点击 1:1 按钮时
-       * 功能：计算 offsetY 让播放器在可用区域内垂直居中
-       * 布局基础：
-       *   - .viewer-area 使用 align-items: flex-start，内容从 y=0 开始
-       *   - .viewer-area 的 padding-bottom: 154px 为底部浮层留空
-       *   - .viewer-container 使用 transform-origin: top center，缩放从顶部开始
-       * 计算逻辑：
-       *   1. 可用高度 = 窗口高度 - 底部浮层高度(154px)
-       *   2. 内容高度 = 原始高度 * viewerScale
-       *   3. 如果内容 < 可用高度：offsetY = (可用高度 - 内容高度) / 2
-       *   4. 如果内容 >= 可用高度：offsetY = 0（顶部对齐）
-       */
-      /**
        * 居中视图（委托给 ViewportController）
        */
       centerViewer: function () {
@@ -3657,8 +3625,6 @@ function initApp() {
       resetScale: function () {
         if (!this.viewportController) return;
         this.viewportController.toggleViewMode();
-        // 同步视图模式状态
-        this.viewMode = this.viewportController.getViewMode();
       },
 
       /**
@@ -3767,6 +3733,10 @@ function initApp() {
 
             try {
               var MovieEntity = root.lookupType('com.opensource.svga.MovieEntity');
+              if (!MovieEntity) {
+                console.error('Proto文件中未找到MovieEntity定义');
+                return;
+              }
               var movieData = MovieEntity.decode(inflatedData);
               _this.svgaMovieData = movieData;
 
@@ -4138,13 +4108,8 @@ function initApp() {
         // 生成文件名：使用imageKey或索引
         var fileName = (material.imageKey || 'material_' + index) + '.png';
 
-        // 创建临时链接下载
-        var link = document.createElement('a');
-        link.href = imageUrl;
-        link.download = fileName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        // 使用 utils 下载
+        this.utils.downloadFromDataURL(imageUrl, fileName);
       },
 
       applyReplacedMaterials: function () {
@@ -4486,34 +4451,12 @@ function initApp() {
               var arrayBuffer = e.target.result;
               var uint8Array = new Uint8Array(arrayBuffer);
 
-              // 解压缩
-              var inflatedData = pako.inflate(uint8Array);
-
-              // 使用 protobuf.js 动态加载 proto 并解码
-              protobuf.load('./svga.proto', async function (err, root) {
-                if (err) {
-                  console.error('Proto加载错误:', err);
-                  alert('加载 proto 定义失败: ' + err.message);
-                  return;
-                }
-
-                // 检查root是否有效
-                if (!root) {
-                  alert('Proto根对象为空');
-                  return;
-                }
-
+              // 使用 SVGABuilder 解码
+              SVGABuilder.decode(arrayBuffer, {
+                protobuf: protobuf,
+                pako: pako
+              }).then(function (movieData) {
                 try {
-                  // 获取 MovieEntity 类型
-                  var MovieEntity = root.lookupType('com.opensource.svga.MovieEntity');
-
-                  if (!MovieEntity) {
-                    alert('MovieEntity类型未找到，请检查proto文件');
-                    return;
-                  }
-
-                  // 解码（直接操作 protobuf 消息对象）
-                  var movieData = MovieEntity.decode(inflatedData);
 
                   // 处理静音导出（如果开启了exportMuted选项）
                   if (_this.compressConfig.exportMuted) {
@@ -4643,33 +4586,26 @@ function initApp() {
                     });
                   }
 
-                  // 直接编码 protobuf 消息
-                  var buffer = MovieEntity.encode(movieData).finish();
-
-                  // 压缩
-                  var deflatedData = pako.deflate(buffer);
-
-                  // 创建 Blob 并下载
-                  var blob = new Blob([deflatedData], { type: 'application/octet-stream' });
-                  var url = URL.createObjectURL(blob);
-                  var a = document.createElement('a');
-                  a.href = url;
-                  var originalName = _this.svga.fileInfo.name.replace(/\.svga$/i, '');
-                  a.download = originalName + '_modified.svga';
-                  document.body.appendChild(a);
-                  a.click();
-                  document.body.removeChild(a);
-
-                  setTimeout(function () {
-                    URL.revokeObjectURL(url);
-                  }, 100);
-
-                  _this.showToast('导出成功！已替换 ' + replacedCount + ' 个素材。');
+                  // 使用 SVGABuilder 编码
+                  SVGABuilder.encode(movieData, {
+                    protobuf: protobuf,
+                    pako: pako
+                  }).then(function (blob) {
+                    var originalName = _this.svga.fileInfo.name.replace(/\.svga$/i, '');
+                    _this.utils.downloadFile(blob, originalName + '_modified.svga');
+                    _this.showToast('导出成功！已替换 ' + replacedCount + ' 个素材。');
+                  }).catch(function (err) {
+                    console.error('编码失败:', err);
+                    alert('编码失败: ' + err.message);
+                  });
 
                 } catch (decodeErr) {
-                  console.error('编解码失败:', decodeErr);
-                  alert('编解码失败: ' + decodeErr.message);
+                  console.error('逻辑处理失败:', decodeErr);
+                  alert('逻辑处理失败: ' + decodeErr.message);
                 }
+              }).catch(function (err) {
+                console.error('SVGA解码失败:', err);
+                alert('SVGA解码失败: ' + err.message);
               });
 
             } catch (err) {
@@ -4849,7 +4785,7 @@ function initApp() {
         var fileSize = sourceInfo.fileSizeBytes || 0;
 
         if (fileSize > 10 * 1024 * 1024) {
-          warnings.push('文件大小超过10MB (' + this.formatBytes(fileSize) + ')，处理和导出可能需要较长时间');
+          warnings.push('文件大小超过10MB (' + this.utils.formatBytes(fileSize) + ')，处理和导出可能需要较长时间');
         }
         if (duration > 60) {
           warnings.push('动画时长超过60秒 (' + duration.toFixed(1) + '秒)，处理和导出可能需要较长时间');
@@ -5244,17 +5180,8 @@ function initApp() {
           // 导出 JSON 文件
           var jsonString = JSON.stringify(lottieData, null, 2);
           var blob = new Blob([jsonString], { type: 'application/json' });
-          var url = URL.createObjectURL(blob);
-          var a = document.createElement('a');
-          a.href = url;
-          a.download = (this.svga.fileInfo.name.replace(/\.svga$/i, '') || 'animation') + '.json';
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-
-          setTimeout(function () {
-            URL.revokeObjectURL(url);
-          }, 100);
+          
+          this.utils.downloadFile(blob, (this.svga.fileInfo.name.replace(/\.svga$/i, '') || 'animation') + '.json');
 
           this.lottieExportProgress = 100;
 
@@ -6546,14 +6473,7 @@ function initApp() {
           baseName = this.lottie.fileInfo.name.replace(/\.json$/i, '');
         }
 
-        var url = URL.createObjectURL(blob);
-        var a = document.createElement('a');
-        a.href = url;
-        a.download = baseName + '_dual.mp4';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        setTimeout(function () { URL.revokeObjectURL(url); }, 100);
+        this.utils.downloadFile(blob, baseName + '_dual.mp4');
       },
 
       /* Lottie转双通道MP4功能 */
@@ -8737,14 +8657,7 @@ function initApp() {
        * @param {String} fileName - 文件名（包含.svga后缀）
        */
       downloadSVGA: function (blob, fileName) {
-        var url = URL.createObjectURL(blob);
-        var a = document.createElement('a');
-        a.href = url;
-        a.download = fileName;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        setTimeout(function () { URL.revokeObjectURL(url); }, 100);
+        this.utils.downloadFile(blob, fileName);
       },
 
       // 取消MP4转换
@@ -8927,15 +8840,9 @@ function initApp() {
 
         // 计算文件大小预估
         // 转换前：MP4文件大小
-        var beforeFileSizeKB = 0;
         var beforeFileSizeText = '0kb';
         if (this.yyeva.fileInfo && this.yyeva.fileInfo.size) {
-          beforeFileSizeKB = this.yyeva.fileInfo.size / 1024;
-          if (beforeFileSizeKB >= 1024) {
-            beforeFileSizeText = (beforeFileSizeKB / 1024).toFixed(2) + 'M';
-          } else {
-            beforeFileSizeText = beforeFileSizeKB.toFixed(0) + 'kb';
-          }
+          beforeFileSizeText = this.utils.formatBytes(this.yyeva.fileInfo.size);
         }
 
         // 转换后文件大小预估：
@@ -8951,15 +8858,7 @@ function initApp() {
           estimatedTotalBytes += audioSizeBytes;
         }
 
-        var afterFileSizeKB = estimatedTotalBytes / 1024;
-        var afterFileSizeText = '？';
-        if (frames > 0) {
-          if (afterFileSizeKB >= 1024) {
-            afterFileSizeText = (afterFileSizeKB / 1024).toFixed(2) + 'M';
-          } else {
-            afterFileSizeText = afterFileSizeKB.toFixed(0) + 'kb';
-          }
-        }
+        var afterFileSizeText = frames > 0 ? this.utils.formatBytes(estimatedTotalBytes) : '？';
 
         return {
           frames: frames,
@@ -8998,15 +8897,9 @@ function initApp() {
 
         // 计算文件大小预估
         // 转换前：MP4文件大小
-        var beforeFileSizeKB = 0;
         var beforeFileSizeText = '0kb';
         if (this.mp4.fileInfo && this.mp4.fileInfo.size) {
-          beforeFileSizeKB = this.mp4.fileInfo.size / 1024;
-          if (beforeFileSizeKB >= 1024) {
-            beforeFileSizeText = (beforeFileSizeKB / 1024).toFixed(2) + 'M';
-          } else {
-            beforeFileSizeText = beforeFileSizeKB.toFixed(0) + 'kb';
-          }
+          beforeFileSizeText = this.utils.formatBytes(this.mp4.fileInfo.size);
         }
 
         // 转换后文件大小预估：
@@ -9015,15 +8908,7 @@ function initApp() {
         var estimatedFrameSizeBytes = scaledWidth * scaledHeight * 0.5;
         var estimatedTotalBytes = estimatedFrameSizeBytes * frames * 0.7; // pako压缩后
 
-        var afterFileSizeKB = estimatedTotalBytes / 1024;
-        var afterFileSizeText = '？';
-        if (frames > 0) {
-          if (afterFileSizeKB >= 1024) {
-            afterFileSizeText = (afterFileSizeKB / 1024).toFixed(2) + 'M';
-          } else {
-            afterFileSizeText = afterFileSizeKB.toFixed(0) + 'kb';
-          }
-        }
+        var afterFileSizeText = frames > 0 ? this.utils.formatBytes(estimatedTotalBytes) : '？';
 
         return {
           frames: frames,
@@ -9065,14 +8950,9 @@ function initApp() {
         var estimatedFrameSizeBytes = scaledWidth * scaledHeight * 0.5;
         var estimatedTotalBytes = estimatedFrameSizeBytes * frames * 0.7; // pako压缩后
 
-        var afterFileSizeKB = estimatedTotalBytes / 1024;
         var afterFileSizeText = '？';
         if (frames > 0) {
-          if (afterFileSizeKB >= 1024) {
-            afterFileSizeText = (afterFileSizeKB / 1024).toFixed(2) + 'M';
-          } else {
-            afterFileSizeText = afterFileSizeKB.toFixed(0) + 'kb';
-          }
+          afterFileSizeText = this.utils.formatBytes(estimatedTotalBytes);
         }
 
         return {
@@ -9108,14 +8988,9 @@ function initApp() {
         var estimatedFrameSizeBytes = scaledWidth * scaledHeight * 0.5;
         var estimatedTotalBytes = estimatedFrameSizeBytes * frames * 0.7; // pako压缩后
 
-        var afterFileSizeKB = estimatedTotalBytes / 1024;
         var afterFileSizeText = '？';
         if (frames > 0) {
-          if (afterFileSizeKB >= 1024) {
-            afterFileSizeText = (afterFileSizeKB / 1024).toFixed(2) + 'M';
-          } else {
-            afterFileSizeText = afterFileSizeKB.toFixed(0) + 'kb';
-          }
+          afterFileSizeText = this.utils.formatBytes(estimatedTotalBytes);
         }
 
         return {
@@ -9155,11 +9030,7 @@ function initApp() {
 
         var fileSizeText = '？';
         if (totalFrames > 0) {
-          if (totalBytes >= 1024 * 1024) {
-            fileSizeText = (totalBytes / 1024 / 1024).toFixed(2) + 'M';
-          } else {
-            fileSizeText = Math.round(totalBytes / 1024) + 'kb';
-          }
+          fileSizeText = this.utils.formatBytes(totalBytes);
         }
 
         return {
