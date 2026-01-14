@@ -5,7 +5,7 @@
  * 这个文件只负责"操作页面上的广告位 DOM"（显示 / 隐藏），
  * 不保存配置数据本身。
  * 
- * 【配置数据来源】
+ * 【配置数据来源 】
  * 配置信息来自 SiteConfigLoader：
  *   const adConfig = SiteConfigLoader.getFeature('advertisement');
  *   // 形如：{ enabled: true, position: 'right-float' }
