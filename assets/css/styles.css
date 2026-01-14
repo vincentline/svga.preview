@@ -270,13 +270,13 @@ body.dark-mode .nav-link {
 }
 
 body.dark-mode .header-navbar {
-  background-color: #2a2a2a;
-  border-bottom-color: #404040;
+  background-color: none;
+  border-bottom-color: none;
 }
 
 .header-navbar-title {
   font-family: 'Noto Sans SC', sans-serif;
-  font-weight: 900;
+  font-weight: 500;
   font-size: 12px;
   line-height: 1.2;
   color: #2c3e50;
