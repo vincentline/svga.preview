@@ -96,41 +96,41 @@
 
   <!-- 页面加载超时检测脚本（独立运行，防止业务脚本阻塞导致无法提示） -->
   <script>
-    (function() {
+    (function () {
       // 全局状态标记
       window.APP_LOADED = false;
-      
+
       var checkCount = 0;
       var maxChecks = 300; // 30秒 (300 * 100ms)
       var retryCount = 0;  // 重试次数记录
-      
+
       function checkAppLoaded() {
         if (window.APP_LOADED) return; // 加载成功，停止检测
 
         checkCount++;
-        
+
         // 10秒提示 (100次)
         if (checkCount === 100) {
           var textNode = document.getElementById('loading-text');
           if (textNode) textNode.innerText = '网络较慢，正在加载核心组件，请稍候...';
         }
-        
+
         // 30秒超时 (300次)
         if (checkCount >= maxChecks) {
           var skeleton = document.getElementById('loading-skeleton');
           if (skeleton) {
             // 根据重试次数显示不同提示
             var isLastRetry = retryCount >= 1; // 已经重试过一次了
-            var tipText = isLastRetry 
-              ? '加载依然失败，点击屏幕刷新页面' 
+            var tipText = isLastRetry
+              ? '加载依然失败，点击屏幕刷新页面'
               : '加载失败，点击屏幕重试';
 
             skeleton.innerHTML = '<div style="text-align: center; color: red; cursor: pointer; padding: 20px;">' + tipText + '</div>';
-            
+
             // 点击处理逻辑
-            var onAction = function() {
+            var onAction = function () {
               skeleton.removeEventListener('click', onAction);
-              
+
               if (isLastRetry) {
                 // 第二次超时，直接刷新页面
                 location.reload();
@@ -139,13 +139,13 @@
                 retryCount++;
                 // 恢复 Loading 状态
                 skeleton.style.cursor = 'default';
-                skeleton.innerHTML = 
+                skeleton.innerHTML =
                   '<div style="text-align: center;">' +
-                    '<div style="width: 48px; height: 48px; margin: 0 auto 16px; border: 4px solid #e0e0e0; border-top-color: #666; border-radius: 50%; animation: spin 1s linear infinite;"></div>' +
-                    '<div id="loading-text" style="color: #666; font-size: 14px;">正在重新加载...</div>' +
+                  '<div style="width: 48px; height: 48px; margin: 0 auto 16px; border: 4px solid #e0e0e0; border-top-color: #666; border-radius: 50%; animation: spin 1s linear infinite;"></div>' +
+                  '<div id="loading-text" style="color: #666; font-size: 14px;">正在重新加载...</div>' +
                   '</div>';
-                
-                checkCount = 0; 
+
+                checkCount = 0;
                 setTimeout(checkAppLoaded, 100);
               }
             };
