@@ -90,9 +90,77 @@
           border-radius: 50%;
           animation: spin 1s linear infinite;
         "></div>
-      <div style="color: #666; font-size: 14px;">加载中...</div>
+      <div id="loading-text" style="color: #666; font-size: 14px;">加载中...</div>
     </div>
   </div>
+
+  <!-- 页面加载超时检测脚本（独立运行，防止业务脚本阻塞导致无法提示） -->
+  <script>
+    (function() {
+      // 全局状态标记
+      window.APP_LOADED = false;
+      
+      var checkCount = 0;
+      var maxChecks = 300; // 30秒 (300 * 100ms)
+      var retryCount = 0;  // 重试次数记录
+      
+      function checkAppLoaded() {
+        if (window.APP_LOADED) return; // 加载成功，停止检测
+
+        checkCount++;
+        
+        // 10秒提示 (100次)
+        if (checkCount === 100) {
+          var textNode = document.getElementById('loading-text');
+          if (textNode) textNode.innerText = '网络较慢，正在加载核心组件，请稍候...';
+        }
+        
+        // 30秒超时 (300次)
+        if (checkCount >= maxChecks) {
+          var skeleton = document.getElementById('loading-skeleton');
+          if (skeleton) {
+            // 根据重试次数显示不同提示
+            var isLastRetry = retryCount >= 1; // 已经重试过一次了
+            var tipText = isLastRetry 
+              ? '加载依然失败，点击屏幕刷新页面' 
+              : '加载失败，点击屏幕重试';
+
+            skeleton.innerHTML = '<div style="text-align: center; color: red; cursor: pointer; padding: 20px;">' + tipText + '</div>';
+            
+            // 点击处理逻辑
+            var onAction = function() {
+              skeleton.removeEventListener('click', onAction);
+              
+              if (isLastRetry) {
+                // 第二次超时，直接刷新页面
+                location.reload();
+              } else {
+                // 第一次超时，尝试软重试
+                retryCount++;
+                // 恢复 Loading 状态
+                skeleton.style.cursor = 'default';
+                skeleton.innerHTML = 
+                  '<div style="text-align: center;">' +
+                    '<div style="width: 48px; height: 48px; margin: 0 auto 16px; border: 4px solid #e0e0e0; border-top-color: #666; border-radius: 50%; animation: spin 1s linear infinite;"></div>' +
+                    '<div id="loading-text" style="color: #666; font-size: 14px;">正在重新加载...</div>' +
+                  '</div>';
+                
+                checkCount = 0; 
+                setTimeout(checkAppLoaded, 100);
+              }
+            };
+            skeleton.addEventListener('click', onAction);
+            return; // 停止当前轮询
+          }
+        }
+
+        setTimeout(checkAppLoaded, 100);
+      }
+
+      // 启动检测
+      setTimeout(checkAppLoaded, 100);
+    })();
+  </script>
 
   <div id="app" v-cloak>
     <!-- 顶部导航栏 -->
@@ -2345,16 +2413,6 @@
   <!-- 用户配置管理器模块 -->
   <script src="assets/js/config-manager.js"></script>
 
-  <!-- Mixins (模块化重构) 已经回滚，已经废弃
-  <script src="assets/js/mixins/mixin-core.js"></script>
-  <script src="assets/js/mixins/mixin-file.js"></script>
-  <script src="assets/js/mixins/mixin-svga.js"></script>
-  <script src="assets/js/mixins/mixin-lottie.js"></script>
-  <script src="assets/js/mixins/mixin-yyeva.js"></script>
-  <script src="assets/js/mixins/mixin-mp4.js"></script>
-  <script src="assets/js/mixins/mixin-frames.js"></script>
-  <script src="assets/js/mixins/mixin-converter.js"></script>
-  <script src="assets/js/mixins/mixin-ui.js"></script>
   -->
   <!-- 应用主逻辑 -->
   <script src="assets/js/app.js?v=1.7"></script>

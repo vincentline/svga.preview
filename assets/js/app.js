@@ -9530,23 +9530,31 @@ function initApp() {
     initApp();
   }
 
-  // 如果已加载，直接启动
-  if (checkLibraries()) {
-    start();
-  } else {
-    // 否则等待加载完成
-    var maxWait = 100; // 10秒超时
-    var interval = setInterval(function () {
-      if (checkLibraries()) {
-        clearInterval(interval);
-        start();
-      } else if (--maxWait <= 0) {
-        clearInterval(interval);
-        var skeleton = document.getElementById('loading-skeleton');
-        if (skeleton) {
-          skeleton.innerHTML = '<div style="text-align: center; color: red;">加载失败，请刷新页面重试</div>';
-        }
-      }
-    }, 100);
+  // 标记应用加载完成（配合 index.html 中的超时检测脚本）
+  window.APP_LOADED = true;
+
+  // 检查库是否已加载
+  function checkLibraries() {
+    return typeof Vue !== 'undefined' && typeof SVGA !== 'undefined';
   }
+
+  function start() {
+    // 隐藏骨架屏
+    var skeleton = document.getElementById('loading-skeleton');
+    if (skeleton) {
+      skeleton.style.display = 'none';
+    }
+
+    // 启动应用
+    initApp();
+  }
+
+  // 启动逻辑
+  // 这里的轮询仅为了等待 Vue/SVGA 等异步库就绪，超时逻辑已移交给 index.html 处理
+  var interval = setInterval(function () {
+    if (checkLibraries()) {
+      clearInterval(interval);
+      start();
+    }
+  }, 100);
 })();
