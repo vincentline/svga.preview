@@ -778,6 +778,74 @@ function initApp() {
       },
 
       /**
+       * 加载用户配置
+       */
+      loadUserConfig: function () {
+        if (!this.configManager) return;
+
+        // 迁移旧数据 (localStorage -> ConfigManager)
+        // 这是一个一次性的迁移逻辑，确保用户的老数据不会丢失
+        this._migrateOldData();
+
+        // 背景色
+        var savedBg = this.configManager.get('bgColorKey');
+        if (savedBg) this.bgColorKey = savedBg;
+
+        // 恢复模式
+        var lastMode = this.configManager.get('lastMode');
+        var validModes = ['svga', 'lottie', 'mp4', 'frames', 'yyeva'];
+        if (lastMode && validModes.indexOf(lastMode) !== -1) {
+          this.currentModule = lastMode;
+        }
+
+        // GIF 配置
+        var savedGifConfig = this.configManager.get('gifConfig');
+        if (savedGifConfig) {
+          if (savedGifConfig.fps) this.gifConfig.fps = savedGifConfig.fps;
+          if (savedGifConfig.quality) this.gifConfig.quality = savedGifConfig.quality;
+          if (savedGifConfig.transparent !== undefined) this.gifConfig.transparent = savedGifConfig.transparent;
+          if (savedGifConfig.dither !== undefined) this.gifConfig.dither = savedGifConfig.dither;
+          // 恢复尺寸偏好
+          if (savedGifConfig.width) this.gifConfig.width = savedGifConfig.width;
+          if (savedGifConfig.height) this.gifConfig.height = savedGifConfig.height;
+        }
+      },
+
+      /**
+       * 迁移旧版本数据到 ConfigManager
+       * @private
+       */
+      _migrateOldData: function () {
+        if (!this.configManager) return;
+
+        // 1. 迁移主题 (theme)
+        var oldTheme = localStorage.getItem('theme');
+        if (oldTheme) {
+          this.configManager.set('theme', oldTheme);
+          localStorage.removeItem('theme');
+        }
+
+        // 2. 迁移背景色 (svga_preview_bg)
+        var oldBg = localStorage.getItem('svga_preview_bg');
+        if (oldBg) {
+          this.configManager.set('bgColorKey', oldBg);
+          localStorage.removeItem('svga_preview_bg');
+        }
+
+        // 3. 迁移 GIF 配置
+        // 之前可能没有保存 GIF 配置，如果有散落的 key 也可以在这里迁移
+      },
+
+      /**
+       * 保存用户配置
+       */
+      saveUserConfig: function (key, value) {
+        if (this.configManager) {
+          this.configManager.set(key, value);
+        }
+      },
+
+      /**
        * 打开/关闭右侧弹窗（互斥，同时只能打开一个）
        * @param {string} panelName - 弹窗变量名
        */
@@ -2172,7 +2240,7 @@ function initApp() {
             this.currentModule === 'lottie' ? this.lottie.fileInfo.name :
               this.yyeva.fileInfo.name) || 'output';
           var fileName = currentName.replace(/\.[^/.]+$/, "") + '.mp4';
-          
+
           this.utils.downloadFile(mp4Blob, fileName);
 
           alert('转换成功！');
@@ -2219,6 +2287,10 @@ function initApp() {
               onProgressChange: function (progress, currentFrame) {
                 _this.progress = progress;
                 _this.currentFrame = currentFrame;
+                // 修复：拖拽进度条时，同步更新 currentTime，确保快进快退基于最新时间计算
+                if (_this.totalDuration > 0) {
+                  _this.currentTime = (progress / 100) * _this.totalDuration;
+                }
               },
               onPlayStateChange: function (isPlaying) {
                 _this.isPlaying = isPlaying;
@@ -2229,6 +2301,8 @@ function initApp() {
                   isPlaying: _this.isPlaying,
                   progress: _this.progress,
                   totalFrames: _this.totalFrames,
+                  totalDuration: _this.totalDuration, // 补充时长
+                  currentTime: _this.currentTime,     // 补充当前时间
                   hasFile: _this.svga.hasFile || _this.yyeva.hasFile || _this.mp4.hasFile || _this.lottie.hasFile || _this.frames.hasFile,
                   svgaPlayer: _this.svgaPlayer,
                   lottiePlayer: _this.lottiePlayer,
@@ -3514,10 +3588,10 @@ function initApp() {
         this.isDarkMode = !this.isDarkMode;
         if (this.isDarkMode) {
           document.body.classList.add('dark-mode');
-          localStorage.setItem('theme', 'dark');
+          if (this.configManager) this.configManager.set('theme', 'dark');
         } else {
           document.body.classList.remove('dark-mode');
-          localStorage.setItem('theme', 'light');
+          if (this.configManager) this.configManager.set('theme', 'light');
         }
       },
 
@@ -4638,11 +4712,29 @@ function initApp() {
           return;
         }
 
-        // 初始化配置：使用当前模式的原始尺寸和帧率
+        // 初始化配置
         var sourceInfo = this.getGifSourceInfo();
-        this.gifConfig.width = sourceInfo.width || 300;
-        this.gifConfig.height = sourceInfo.height || 300;
-        this.gifConfig.fps = Math.min(60, Math.max(1, sourceInfo.fps || 30));
+
+        // 智能尺寸逻辑：如果有保存的偏好宽度（非0），则保持宽度并重算高度
+        // 否则使用素材原始尺寸
+        if (this.gifConfig.width > 0 && this.configManager && this.configManager.get('gifConfig')) {
+          // 保持当前 width (可能是恢复的偏好)，按比例更新 height
+          if (sourceInfo.width && sourceInfo.height) {
+            var ratio = sourceInfo.height / sourceInfo.width;
+            this.gifConfig.height = Math.floor(this.gifConfig.width * ratio);
+          }
+        } else {
+          // 无偏好，使用原始尺寸
+          this.gifConfig.width = sourceInfo.width || 300;
+          this.gifConfig.height = sourceInfo.height || 300;
+        }
+
+        // 帧率逻辑：如果有保存的配置，保持不变；否则使用源帧率
+        if (this.configManager && this.configManager.get('gifConfig')) {
+          // 保持当前 gifConfig.fps
+        } else {
+          this.gifConfig.fps = Math.min(60, Math.max(1, sourceInfo.fps || 30));
+        }
 
         // 使用统一的弹窗管理
         this.openRightPanel('showGifPanel');
@@ -5180,7 +5272,7 @@ function initApp() {
           // 导出 JSON 文件
           var jsonString = JSON.stringify(lottieData, null, 2);
           var blob = new Blob([jsonString], { type: 'application/json' });
-          
+
           this.utils.downloadFile(blob, (this.svga.fileInfo.name.replace(/\.svga$/i, '') || 'animation') + '.json');
 
           this.lottieExportProgress = 100;
@@ -6004,19 +6096,17 @@ function initApp() {
         var originalFps = videoItem.FPS || videoItem.fps || 30;
         this.mp4Config.fps = originalFps;
 
-        // 读取localStorage中保存的配置（包括帧率和压缩质量）
-        try {
-          var savedFps = localStorage.getItem('mp4_fps');
-          if (savedFps !== null) {
+        // 读取配置管理器中保存的配置（包括帧率和压缩质量）
+        if (this.configManager) {
+          var savedFps = this.configManager.get('mp4_fps');
+          if (savedFps !== undefined) {
             this.mp4Config.fps = parseInt(savedFps);
           }
 
-          var savedQuality = localStorage.getItem('mp4_quality');
-          if (savedQuality !== null) {
+          var savedQuality = this.configManager.get('mp4_quality');
+          if (savedQuality !== undefined) {
             this.mp4Config.quality = parseInt(savedQuality);
           }
-        } catch (e) {
-          // 静默失败，使用默认配置
         }
 
         // 使用统一的右侧弹窗管理
@@ -6064,9 +6154,11 @@ function initApp() {
 
         // 读取保存的配置
         try {
-          var savedQuality = localStorage.getItem('mp4_quality');
-          if (savedQuality !== null) {
-            this.mp4DualChannelConfig.quality = parseInt(savedQuality);
+          if (this.configManager) {
+            var savedQuality = this.configManager.get('mp4_quality');
+            if (savedQuality !== undefined) {
+              this.mp4DualChannelConfig.quality = parseInt(savedQuality);
+            }
           }
         } catch (e) {
           // 静默失败，使用默认配置
@@ -6168,7 +6260,9 @@ function initApp() {
 
         // 保存配置
         try {
-          localStorage.setItem('mp4_quality', config.quality);
+          if (this.configManager) {
+            this.configManager.set('mp4_quality', config.quality);
+          }
         } catch (e) { }
 
         this.isConvertingMP4 = true;
@@ -6279,6 +6373,11 @@ function initApp() {
           setTimeout(function () {
             alert('✅ 转换完成！');
           }, 500);
+
+          // 保存配置
+          if (this.configManager) {
+            this.configManager.set('mp4_quality', config.quality);
+          }
 
         } catch (error) {
           if (error.message === '用户取消转换') {
@@ -6496,9 +6595,11 @@ function initApp() {
         this.lottieDualChannelConfig.fps = Math.min(120, Math.max(1, Math.round(fr)));
 
         try {
-          var savedQuality = localStorage.getItem('mp4_quality');
-          if (savedQuality !== null) {
-            this.lottieDualChannelConfig.quality = parseInt(savedQuality);
+          if (this.configManager) {
+            var savedQuality = this.configManager.get('mp4_quality');
+            if (savedQuality !== undefined) {
+              this.lottieDualChannelConfig.quality = parseInt(savedQuality);
+            }
           }
         } catch (e) { }
 
@@ -6583,7 +6684,9 @@ function initApp() {
         }
 
         try {
-          localStorage.setItem('mp4_quality', config.quality);
+          if (this.configManager) {
+            this.configManager.set('mp4_quality', config.quality);
+          }
         } catch (e) { }
 
         this.isConvertingMP4 = true;
@@ -6640,6 +6743,11 @@ function initApp() {
           setTimeout(function () {
             alert('✅ 转换完成！');
           }, 500);
+
+          // 保存配置
+          if (this.configManager) {
+            this.configManager.set('mp4_quality', config.quality);
+          }
 
         } catch (error) {
           if (error.message === '用户取消转换') {
@@ -6737,13 +6845,13 @@ function initApp() {
         var videoFps = this.yyeva.fileInfo.fps || 30;
         this.svgaConfig.fps = Math.min(60, Math.max(1, Math.round(parseFloat(videoFps))));
 
-        // 读取localStorage中保存的配置
-        try {
-          var savedQuality = localStorage.getItem('svga_quality');
-          if (savedQuality !== null) {
+        // 读取配置管理器中保存的配置
+        if (this.configManager) {
+          var savedQuality = this.configManager.get('svga_quality');
+          if (savedQuality !== undefined) {
             this.svgaConfig.quality = parseInt(savedQuality);
           }
-        } catch (e) { }
+        }
 
         // 使用统一的右侧弹窗管理
         this.openRightPanel('showSVGAPanel');
@@ -6801,14 +6909,13 @@ function initApp() {
         var videoFps = this.mp4.fileInfo.fps || 30;
         this.mp4ToSvgaConfig.fps = Math.min(60, Math.max(1, Math.round(parseFloat(videoFps))));
 
-        // 读取localStorage中保存的配置
-        try {
-          var savedConfig = localStorage.getItem('mp4ToSvgaConfig');
+        // 读取配置管理器中保存的配置
+        if (this.configManager) {
+          var savedConfig = this.configManager.get('mp4ToSvgaConfig');
           if (savedConfig) {
-            var parsed = JSON.parse(savedConfig);
-            if (parsed.quality) this.mp4ToSvgaConfig.quality = parsed.quality;
+            if (savedConfig.quality) this.mp4ToSvgaConfig.quality = savedConfig.quality;
           }
-        } catch (e) { /* 忽略 */ }
+        }
 
         // 使用统一的弹窗管理
         this.openRightPanel('showMp4ToSvgaPanel');
@@ -7015,12 +7122,12 @@ function initApp() {
 
           alert('✅ 转换完成！\n\n已成功生成SVGA文件。');
 
-          // 保存配置到localStorage
-          try {
-            localStorage.setItem('mp4ToSvgaConfig', JSON.stringify({
+          // 保存配置到 configManager
+          if (this.configManager) {
+            this.configManager.set('mp4ToSvgaConfig', {
               quality: this.mp4ToSvgaConfig.quality
-            }));
-          } catch (e) { /* 忽略 */ }
+            });
+          }
 
           // 重置状态
           setTimeout(function () {
@@ -7190,14 +7297,13 @@ function initApp() {
         var fps = this.lottie.frameRate || 30;
         this.lottieToSvgaConfig.fps = Math.min(60, Math.max(1, Math.round(fps)));
 
-        // 读取localStorage中保存的配置
-        try {
-          var savedConfig = localStorage.getItem('lottieToSvgaConfig');
+        // 读取配置管理器中保存的配置
+        if (this.configManager) {
+          var savedConfig = this.configManager.get('lottieToSvgaConfig');
           if (savedConfig) {
-            var parsed = JSON.parse(savedConfig);
-            if (parsed.quality) this.lottieToSvgaConfig.quality = parsed.quality;
+            if (savedConfig.quality) this.lottieToSvgaConfig.quality = savedConfig.quality;
           }
-        } catch (e) { }
+        }
 
         this.openRightPanel('showLottieToSvgaPanel');
 
@@ -7316,10 +7422,8 @@ function initApp() {
 
           alert('✅ 转换完成！\n\n已成功生成SVGA文件。');
 
-          try {
-            localStorage.setItem('lottieToSvgaConfig', JSON.stringify({ quality: quality }));
-          } catch (e) {
-            // 静默失败
+          if (this.configManager) {
+            this.configManager.set('lottieToSvgaConfig', { quality: quality });
           }
 
           setTimeout(function () {
@@ -7428,14 +7532,13 @@ function initApp() {
         this.framesToSvgaConfig.height = this.frames.originalHeight || 0;
         this.framesToSvgaConfig.fps = this.frames.fileInfo.fps || 25;
 
-        // 读取localStorage中保存的配置
-        try {
-          var savedConfig = localStorage.getItem('framesToSvgaConfig');
+        // 读取配置管理器中保存的配置
+        if (this.configManager) {
+          var savedConfig = this.configManager.get('framesToSvgaConfig');
           if (savedConfig) {
-            var parsed = JSON.parse(savedConfig);
-            if (parsed.quality) this.framesToSvgaConfig.quality = parsed.quality;
+            if (savedConfig.quality) this.framesToSvgaConfig.quality = savedConfig.quality;
           }
-        } catch (e) { }
+        }
 
         this.openRightPanel('showFramesToSvgaPanel');
 
@@ -7563,9 +7666,9 @@ function initApp() {
 
           alert('✅ 转换完成！\n\n已成功生成SVGA文件。');
 
-          try {
-            localStorage.setItem('framesToSvgaConfig', JSON.stringify({ quality: quality }));
-          } catch (e) { }
+          if (this.configManager) {
+            this.configManager.set('framesToSvgaConfig', { quality: quality });
+          }
 
           setTimeout(function () {
             _this.isConvertingFramesToSvga = false;
@@ -7606,9 +7709,11 @@ function initApp() {
 
         // 读取保存的配置
         try {
-          var savedQuality = localStorage.getItem('mp4_quality');
-          if (savedQuality !== null) {
-            this.framesToDualChannelConfig.quality = parseInt(savedQuality);
+          if (this.configManager) {
+            var savedQuality = this.configManager.get('mp4_quality');
+            if (savedQuality !== undefined) {
+              this.framesToDualChannelConfig.quality = parseInt(savedQuality);
+            }
           }
         } catch (e) { }
 
@@ -7695,7 +7800,9 @@ function initApp() {
 
         // 保存配置
         try {
-          localStorage.setItem('mp4_quality', config.quality);
+          if (this.configManager) {
+            this.configManager.set('mp4_quality', config.quality);
+          }
         } catch (e) { }
 
         this.isConvertingFramesToDualChannel = true;
@@ -7758,6 +7865,11 @@ function initApp() {
           setTimeout(function () {
             alert('✅ 转换完成！');
           }, 500);
+
+          // 保存配置
+          if (this.configManager) {
+            this.configManager.set('mp4_quality', config.quality);
+          }
 
         } catch (error) {
           if (error.message === '用户取消转换') {
@@ -7902,10 +8014,10 @@ function initApp() {
           return;
         }
 
-        // 保存配置到localStorage
-        try {
-          localStorage.setItem('svga_quality', this.svgaConfig.quality);
-        } catch (e) { }
+        // 保存配置到 configManager
+        if (this.configManager) {
+          this.configManager.set('svga_quality', this.svgaConfig.quality);
+        }
 
         this.isConvertingSVGA = true;
         this.svgaConvertProgress = 0;
@@ -8178,9 +8290,9 @@ function initApp() {
         }
 
         // 检查是否有其他正在进行的任务
-        // if (!this.confirmIfHasOngoingTasks('SVGA转MP4', 'task')) {
-        //   return; // 用户取消
-        // }
+        if (!this.confirmIfHasOngoingTasks('SVGA转MP4', 'task')) {
+          return; // 用户取消
+        }
 
         // 参数验证
         var width = this.mp4Config.width;
@@ -8212,10 +8324,12 @@ function initApp() {
           return;
         }
 
-        // 保存配置到localStorage
+        // 保存配置到 configManager
         try {
-          localStorage.setItem('mp4_quality', this.mp4Config.quality);
-          localStorage.setItem('mp4_fps', this.mp4Config.fps);
+          if (this.configManager) {
+            this.configManager.set('mp4_quality', this.mp4Config.quality);
+            this.configManager.set('mp4_fps', this.mp4Config.fps);
+          }
         } catch (e) {
           // 静默失败
         }
@@ -9202,6 +9316,12 @@ function initApp() {
       this.fileValidator = new FileValidator(this.libraryLoader);
       this.utils = window.SvgaUtils;
 
+      // 初始化配置管理器
+      if (typeof ConfigManager !== 'undefined') {
+        this.configManager = new ConfigManager();
+        this.loadUserConfig();
+      }
+
       // SVGA
       this.svgaPlayer = null;
       this.svgaParser = null;
@@ -9252,11 +9372,29 @@ function initApp() {
       // this.seekToFrame = this.utils.throttle(this.seekToFrame, 100);
     },
     watch: {
-      bgColorKey: function () {
+      bgColorKey: function (val) {
         var _this = this;
+        this.saveUserConfig('bgColorKey', val);
         this.$nextTick(function () {
           _this.applyCanvasBackground();
         });
+      },
+      currentModule: function (val) {
+        this.saveUserConfig('lastMode', val);
+      },
+      gifConfig: {
+        handler: function (val) {
+          var configToSave = {
+            fps: val.fps,
+            quality: val.quality,
+            transparent: val.transparent,
+            dither: val.dither,
+            width: val.width,
+            height: val.height
+          };
+          this.saveUserConfig('gifConfig', configToSave);
+        },
+        deep: true
       },
       // 监听footer内容显示状态，初始化播放控制器
       footerContentVisible: function (newVal) {
@@ -9270,8 +9408,7 @@ function initApp() {
 
       // 注意：拖拽事件已在 Vue 模板中通过 @drop.prevent="onDrop" 绑定
       // 此处不再重复绑定，避免同一文件被处理两次
-      // window.addEventListener('dragover', this.onDragOver);
-      // window.addEventListener('drop', this.onDrop);
+
 
       // 强制重置弹窗状态，防止意外显示
       this.showEditFrameDialog = false;
@@ -9283,7 +9420,7 @@ function initApp() {
       this.initEmptyStateSvgaPlayer();
       this.initViewportController();
 
-      var savedTheme = localStorage.getItem('theme');
+      var savedTheme = this.configManager ? this.configManager.get('theme') : null;
       if (savedTheme === 'dark') {
         this.isDarkMode = true;
         document.body.classList.add('dark-mode');
@@ -9330,22 +9467,33 @@ function initApp() {
         console.warn('libraryLoader not found');
       }
 
-      // 空格键控制播放/暂停
+      // 键盘快捷键监听
       document.addEventListener('keydown', function (e) {
-        // 空格键（keyCode 32 或 key === ' '）
-        if (e.keyCode === 32 || e.key === ' ') {
-          // 检查焦点是否在输入框或文本域
-          var activeElement = document.activeElement;
-          var isInputFocused = activeElement && (
-            activeElement.tagName === 'INPUT' ||
-            activeElement.tagName === 'TEXTAREA' ||
-            activeElement.isContentEditable
-          );
+        // 检查焦点是否在输入框或文本域
+        var activeElement = document.activeElement;
+        var isInputFocused = activeElement && (
+          activeElement.tagName === 'INPUT' ||
+          activeElement.tagName === 'TEXTAREA' ||
+          activeElement.isContentEditable
+        );
 
-          // 只有在非输入状态且有文件加载时才触发播放/暂停
-          if (!isInputFocused && !_this.isEmpty) {
-            e.preventDefault(); // 阻止页面滚动
-            _this.togglePlay();
+        // 如果在输入状态或没有加载文件，不响应快捷键
+        if (isInputFocused || _this.isEmpty) {
+          return;
+        }
+
+        // 空格键：播放/暂停
+        if (e.keyCode === 32 || e.key === ' ') {
+          e.preventDefault(); // 阻止页面滚动
+          _this.togglePlay();
+        }
+        // 左右方向键：快进/快退
+        else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+          e.preventDefault(); // 阻止水平滚动
+
+          if (_this.playerController) {
+            var direction = e.key === 'ArrowLeft' ? -1 : 1;
+            _this.playerController.step(direction);
           }
         }
       });
