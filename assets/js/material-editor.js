@@ -21,6 +21,10 @@
 (function (window) {
     'use strict';
 
+    // Ensure namespace
+    window.SvgaPreview = window.SvgaPreview || {};
+    window.SvgaPreview.Mixins = window.SvgaPreview.Mixins || {};
+
     var MaterialEditor = {
         data: function () {
             return {
@@ -1421,7 +1425,7 @@
         }
     };
 
-    // 导出
-    window.MaterialEditor = MaterialEditor;
+    // 导出到全局命名空间
+    window.SvgaPreview.Mixins.MaterialEditor = MaterialEditor;
 
 })(window);

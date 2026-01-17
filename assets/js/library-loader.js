@@ -48,6 +48,10 @@
 (function (window) {
   'use strict';
 
+  // Ensure namespace
+  window.SvgaPreview = window.SvgaPreview || {};
+  window.SvgaPreview.Core = window.SvgaPreview.Core || {};
+
   /**
    * 库配置表
    * 包含所有需要动态加载的外部库的配置信息
@@ -276,8 +280,8 @@
 
           import(currentUrl)
             .then(function (module) {
-              // 将模块存储到 window
-              window.oxipngModule = module;
+              // 将模块存储到 SvgaPreview 命名空间
+              window.SvgaPreview.Core.oxipngModule = module;
 
               _this.currentLib.progress = 50;
               _this.notifyProgress();
@@ -525,10 +529,10 @@
     return libKey ? LIBRARY_CONFIG[libKey] : LIBRARY_CONFIG;
   };
 
-  // 暴露到全局
-  window.LibraryLoader = LibraryLoader;
+  // 暴露到全局命名空间
+  window.SvgaPreview.Core.LibraryLoader = LibraryLoader;
 
   // 创建全局单例
-  window.libraryLoader = new LibraryLoader();
+  window.SvgaPreview.Core.libraryLoader = new LibraryLoader();
 
 })(window);

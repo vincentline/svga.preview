@@ -18,13 +18,16 @@
  *   shouldCancel: () => false  // 返回true时取消导出
  * });
  */
+(function(global) {
+    'use strict';
 
-(function (global) {
-  'use strict';
+    // Ensure namespace
+    window.SvgaPreview = window.SvgaPreview || {};
+    window.SvgaPreview.Exporters = window.SvgaPreview.Exporters || {};
 
-  var GIFExporter = {
-    // Worker脚本路径
-    workerScript: 'assets/js/gif.worker.js',
+    const GIFExporter = {
+        // GIF编码器实例
+        encoder: null,
 
     /**
      * 导出GIF
@@ -293,7 +296,7 @@
     }
   };
 
-  // 导出到全局
-  global.GIFExporter = GIFExporter;
+  // 导出到全局命名空间
+  global.SvgaPreview.Exporters.GifExporter = GIFExporter;
 
 })(typeof window !== 'undefined' ? window : this);

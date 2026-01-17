@@ -19,12 +19,16 @@
  * 2. 从已编码PNG构建（双通道MP4等）：
  *    SVGABuilder.buildFromPNG({ frames: [Uint8Array], scaledWidth, displayWidth, audios, muted, ... })
  */
-(function (global) {
-  'use strict';
+(function(global) {
+    'use strict';
 
-  var SVGABuilder = {
+    // Ensure namespace
+    window.SvgaPreview = window.SvgaPreview || {};
+    window.SvgaPreview.Services = window.SvgaPreview.Services || {};
 
-    /**
+    const SVGABuilder = {
+        
+        /**
      * 默认配置
      */
     defaults: {
@@ -639,7 +643,7 @@
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = SVGABuilder;
   } else {
-    global.SVGABuilder = SVGABuilder;
+    global.SvgaPreview.Services.SvgaBuilder = SVGABuilder;
   }
 
 })(typeof window !== 'undefined' ? window : this);

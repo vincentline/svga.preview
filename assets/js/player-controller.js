@@ -19,6 +19,10 @@
 (function (global) {
   'use strict';
 
+  // Ensure namespace
+  global.SvgaPreview = global.SvgaPreview || {};
+  global.SvgaPreview.Controllers = global.SvgaPreview.Controllers || {};
+
   // ==================== 播放器适配器基类 ====================
 
   /**
@@ -714,7 +718,7 @@
     this.progressThumb = null;
   };
 
-  // 导出到全局
-  global.PlayerController = PlayerController;
+  // 导出到全局命名空间
+  global.SvgaPreview.Controllers.PlayerController = PlayerController;
 
 })(typeof window !== 'undefined' ? window : this);

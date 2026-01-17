@@ -58,6 +58,9 @@
 (function (window) {
     'use strict';
 
+    // Define root namespace
+    window.SvgaPreview = window.SvgaPreview || {};
+
     var SvgaUtils = {};
 
     /* ==================== 文件处理 ==================== */
@@ -530,7 +533,7 @@
         return id;
     };
 
-    // 导出到全局
-    window.SvgaUtils = SvgaUtils;
+    // 导出到全局命名空间
+    window.SvgaPreview.Utils = SvgaUtils;
 
 })(window);
