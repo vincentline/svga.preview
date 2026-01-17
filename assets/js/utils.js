@@ -533,6 +533,48 @@
         return id;
     };
 
+    /* ==================== UI 工具 ==================== */
+
+    /**
+     * 显示全局 Toast 提示
+     * @param {string} message 提示内容
+     * @param {number} duration 显示时长(ms)，默认3000
+     */
+    SvgaUtils.showToast = function (message, duration) {
+        duration = duration || 3000;
+        
+        // 查找或创建容器
+        var container = document.querySelector('.toast-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.className = 'toast-container';
+            var msgDiv = document.createElement('div');
+            msgDiv.className = 'toast-message';
+            container.appendChild(msgDiv);
+            document.body.appendChild(container);
+        }
+        
+        var msgElement = container.querySelector('.toast-message');
+        if (msgElement) {
+            msgElement.textContent = message;
+        }
+        
+        // 清除之前的定时器
+        if (container.hideTimer) {
+            clearTimeout(container.hideTimer);
+        }
+        
+        // 显示 (使用 requestAnimationFrame 确保 transition 生效)
+        requestAnimationFrame(function() {
+            container.classList.add('visible');
+        });
+
+        // 设置隐藏定时器
+        container.hideTimer = setTimeout(function () {
+            container.classList.remove('visible');
+        }, duration);
+    };
+
     // 导出到全局命名空间
     window.SvgaPreview.Utils = SvgaUtils;
 

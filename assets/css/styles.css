@@ -1644,6 +1644,22 @@ body.dark-mode .btn-large-primary:disabled {
   color: #666666;
 }
 
+/* 打开文件按钮特殊样式 */
+.btn-open-file {
+  width: 44px !important;
+  min-width: 44px !important;
+  padding: 0 !important;
+  flex: none !important;
+  background-image: url('../img/open_file.png');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 24px 24px;
+}
+
+body.dark-mode .btn-open-file {
+  background-image: url('../img/open_file_dark.png');
+}
+
 /* AI生图按钮图标样式（24px显示） */
 .btn-icon-ai {
   width: 24px;
@@ -3626,9 +3642,16 @@ body.dark-mode .library-loading-indicator .loading-bar {
   top: 48px;
   /* 在header-navbar下方24px */
   left: 50%;
-  transform: translateX(-50%);
+  transform: translateX(-50%) translateY(-10px);
   z-index: 9999;
   pointer-events: none;
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+.toast-container.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
 }
 
 .toast-message {
@@ -3650,38 +3673,6 @@ body.dark-mode .toast-message {
   border-color: #404040;
   color: #cccccc;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-}
-
-/* Toast淡入淡出动画 */
-.toast-fade-enter-active {
-  transition: all 0.3s ease;
-}
-
-.toast-fade-leave-active {
-  transition: all 0.3s ease;
-}
-
-/* 初始状态：完全透明且在上方 */
-.toast-fade-enter-from {
-  opacity: 0;
-  transform: translateX(-50%) translateY(-10px);
-}
-
-/* 离开状态：淡出到上方 */
-.toast-fade-leave-to {
-  opacity: 0;
-  transform: translateX(-50%) translateY(-10px);
-}
-
-/* 显示状态：完全不透明且在原位 */
-.toast-fade-enter-to {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
-}
-
-.toast-fade-leave-from {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
 }
 
 /* ==================== SVGA转换弹窗（双通道MP4转SVGA） ==================== */

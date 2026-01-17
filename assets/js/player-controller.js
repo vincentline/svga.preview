@@ -3,6 +3,43 @@
  * 封装多模式统一的播放控制逻辑（播放/暂停、进度跳转、拖拽滑块、静音控制）
  * 使用适配器模式统一不同播放器的接口，避免重复的if-else判断
  * 
+ * 模块索引：
+ * 
+ * 1. 【PlayerAdapter】 - 播放器适配器基类
+ *    - 定义统一接口 (play, pause, seekTo, setMuted, canHandle)
+ * 
+ * 2. 【GlobalAudioManager】 - 全局音频管理器
+ *    - 接管所有 Howl 实例的生命周期
+ *    - 提供统一的 stopAll, pauseAll, muteAll, unloadAll 方法
+ * 
+ * 3. 【LottiePlayerAdapter】 - Lottie 播放器适配器
+ *    - 适配 lottie-web 播放器
+ * 
+ * 4. 【VideoPlayerAdapter】 - 视频播放器适配器基类
+ *    - 封装 HTMLVideoElement 的通用操作
+ * 
+ * 5. 【YyevaPlayerAdapter】 - YYEVA 双通道MP4适配器
+ *    - 继承自 VideoPlayerAdapter
+ *    - 处理 YYEVA 特有的渲染循环 (startYyevaRenderLoop)
+ * 
+ * 6. 【Mp4PlayerAdapter】 - MP4 播放器适配器
+ *    - 继承自 VideoPlayerAdapter
+ *    - 实现变速播放逻辑 (transformPercentage)
+ * 
+ * 7. 【FramesPlayerAdapter】 - 序列帧播放器适配器
+ *    - 控制序列帧的播放循环
+ * 
+ * 8. 【SvgaPlayerAdapter】 - SVGA 播放器适配器 (核心)
+ *    - 适配 svga-player 播放器
+ *    - [CRITICAL] 核心音频同步逻辑 (syncAudio)(修改请先查阅SVGA_AUDIO_IMPL.md)
+ *    - 音频实例管理 (getHowlInstance)
+ * 
+ * 9. 【PlayerController】 - 主控制器
+ *    - 对外暴露统一的控制接口
+ *    - 管理当前适配器实例
+ *    - 处理进度条拖拽交互
+ *    - 监听播放状态变更 (handlePlayStateChange)
+ * 
  * 使用方式：
  * var controller = new PlayerController({
  *   onProgressChange: function(progress, currentFrame) {},
@@ -44,16 +81,24 @@
     // 检查是否可用
     canHandle: function () { return this.state.hasFile; },
     // 进度转换（用于变速等特殊场景）
-    transformPercentage: function (p) { return p; }
+    transformPercentage: function (p) { return p; },
+    // 更新状态（新增：支持适配器缓存复用）
+    updateState: function (state) { this.state = state; }
   };
 
   // 自动检测并初始化 GlobalAudioManager
-  var checkHowl = setInterval(function () {
-    if (typeof Howl !== 'undefined') {
-      GlobalAudioManager.init();
-      clearInterval(checkHowl);
-    }
-  }, 200);
+  // 1. 立即尝试初始化
+  if (typeof Howl !== 'undefined') {
+    GlobalAudioManager.init();
+  } else {
+    // 2. 如果未定义，轮询检测（保留作为兜底）
+    var checkHowl = setInterval(function () {
+      if (typeof Howl !== 'undefined') {
+        GlobalAudioManager.init();
+        clearInterval(checkHowl);
+      }
+    }, 100); // 缩短检测间隔
+  }
 
   // ==================== Lottie 播放器适配器 ====================
 
@@ -271,43 +316,40 @@
   /**
    * 全局音频管理器
    * 负责接管所有 Howl 实例的生命周期
-   * 原理：通过劫持 Howl.prototype.init，自动注册所有新创建的音频实例
    */
   var GlobalAudioManager = {
     instances: [],
     initialized: false,
 
     init: function () {
-      if (this.initialized || typeof Howl === 'undefined') return;
-
-      var _this = this;
-      var originalInit = Howl.prototype.init;
-
-      // 劫持初始化方法
-      Howl.prototype.init = function (o) {
-        // 执行原始初始化
-        var result = originalInit.call(this, o);
-
-        // 注册到管理器 (使用 setTimeout 确保实例已完全初始化)
-        var self = this;
-        setTimeout(function () {
-          _this.add(self);
-        }, 0);
-
-        return result;
-      };
-
+      // 移除全局劫持逻辑，改为手动注册
+      // 避免与 SVGA 内部或其他库的 Howl 初始化逻辑冲突
       this.initialized = true;
     },
 
     add: function (howl) {
+      if (!howl) return;
+
       if (this.instances.indexOf(howl) === -1) {
         this.instances.push(howl);
         // 监听卸载事件，自动移除
         var _this = this;
-        howl.on('unload', function () {
-          _this.remove(howl);
-        });
+        // 检查 on 方法是否存在（防御性编程）
+        if (typeof howl.on === 'function') {
+          try {
+            howl.on('unload', function () {
+              _this.remove(howl);
+            });
+          } catch (e) {
+            console.warn('Failed to attach unload listener to Howl instance:', e);
+            // [CRITICAL] 不要在这里移除！
+            // 即使绑定 unload 失败（常见于 Howler 兼容性问题），我们仍需在列表中持有该实例
+            // 否则后续执行 pauseAll/stopAll 时将无法控制此音频，导致“关不掉”的声音。
+            // 详情参考：SVGA_AUDIO_IMPL.md #3.4
+
+            // this.instances.splice(this.instances.indexOf(howl), 1);
+          }
+        }
       }
     },
 
@@ -370,6 +412,7 @@
     PlayerAdapter.call(this, state);
     // 确保音频管理器已初始化
     GlobalAudioManager.init();
+    this.audioCache = {}; // 缓存音频实例
   }
 
   SvgaPlayerAdapter.prototype = Object.create(PlayerAdapter.prototype);
@@ -386,10 +429,14 @@
       // 1. 停止当前所有正在播放的音频，防止重叠
       GlobalAudioManager.stopAll();
 
-      // 2. 播放动画 (SVGA 内部会根据 percentage 触发音频播放)
+      // 2. 播放动画
       this.state.svgaPlayer.stepToPercentage(currentPercentage, true);
 
-      // 3. 同步静音状态
+      // 3. 手动同步音频（核心修复）
+      var currentFrame = currentPercentage * this.state.totalFrames;
+      this.syncAudio(currentFrame);
+
+      // 4. 同步静音状态
       GlobalAudioManager.muteAll(this.state.isMuted);
 
     } catch (e) {
@@ -400,8 +447,8 @@
   SvgaPlayerAdapter.prototype.pause = function () {
     try {
       this.state.svgaPlayer.pauseAnimation();
-      // 暂停所有音频
-      GlobalAudioManager.pauseAll();
+      // 停止所有音频
+      GlobalAudioManager.stopAll();
     } catch (e) {
       console.error('暂停失败:', e);
     }
@@ -417,14 +464,216 @@
 
       this.state.svgaPlayer.stepToPercentage(percentage, shouldPlay);
 
-      // 如果处于播放状态，SVGA stepToPercentage 可能会触发音频播放
-      // 我们再次确保静音状态正确
+      // 如果处于播放状态，立即同步音频
       if (shouldPlay) {
+        var currentFrame = percentage * this.state.totalFrames;
+        this.syncAudio(currentFrame);
         GlobalAudioManager.muteAll(this.state.isMuted);
       }
     } catch (e) {
       console.error('跳转失败:', e);
     }
+  };
+
+  // 核心音频同步逻辑
+  // [CRITICAL] 这是音频同步的心脏，修改前请务必阅读 SVGA_AUDIO_IMPL.md
+  SvgaPlayerAdapter.prototype.syncAudio = function (currentFrame) {
+    if (!this.state.isPlaying) return;
+
+    var audios = this.state.svgaAudios; // 从 state 中获取音频配置
+    if (!audios || !audios.length) {
+      // 仅在首次检测到无音频时警告，避免刷屏
+      if (!this._hasWarnedNoAudio) {
+        console.warn('SyncAudio: No audios configuration found in state.');
+        this._hasWarnedNoAudio = true;
+      }
+      return;
+    }
+    // 有音频配置，重置警告标志
+    this._hasWarnedNoAudio = false;
+
+    var fps = this.state.videoItem.FPS || 30;
+    var _this = this;
+
+    audios.forEach(function (audio) {
+      // 判断当前帧是否在音频的播放范围内 [startFrame, endFrame)
+      // 注意：endFrame 可能为 0 或者未定义，如果为0且startFrame为0，可能表示全长播放？
+
+      // 修复：如果 startFrame/endFrame 未定义，设置默认值
+      // [FIX] 必须处理 undefined 情况，否则会因 return 而跳过播放
+      var startFrame = typeof audio.startFrame === 'number' ? audio.startFrame : 0;
+      var endFrame = typeof audio.endFrame === 'number' ? audio.endFrame : 0;
+
+      // 如果 endFrame 为 0，则尝试使用 totalFrames 或默认为无穷大（全长播放）
+      // SVGA 协议中，如果 endFrame 为 0，通常意味着直到动画结束
+      if (endFrame === 0) {
+        endFrame = _this.state.totalFrames || 999999;
+      }
+
+      // 暂时按照标准逻辑：必须有明确的区间
+      // if (typeof audio.startFrame !== 'number' || typeof audio.endFrame !== 'number') return;
+
+      if (currentFrame >= startFrame && currentFrame < endFrame) {
+        var howl = _this.getHowlInstance(audio.audioKey);
+        if (howl) {
+          // 如果音频未播放，则进行 Seek 并播放
+          if (!howl.playing()) {
+            // 计算偏移时间 (秒)
+            var offset = (currentFrame - startFrame) / fps;
+            var startTime = (audio.startTime || 0) / 1000; // ms 转 s
+            var seekPos = Math.max(0, startTime + offset);
+
+            console.log('Sync Audio Playing:', audio.audioKey, 'Frame:', currentFrame, 'Seek:', seekPos);
+
+            // 核心修复：Howler 2.x 的 seek 必须在 play 之后或者 load 之后生效
+            // 且为了保证移动端兼容性，必须先 mute 再 play 再 seek 再 unmute (如果未静音)
+
+            // 1. 设置静音状态
+            // howl.mute(true); 
+
+            // 2. 播放
+            // var id = howl.play();
+
+            // 3. 跳转
+            // howl.seek(seekPos, id);
+
+            // 4. 恢复静音状态
+            // 注意：howl.play() 是异步的吗？通常是同步返回 id，但音频上下文可能需要时间 resume
+            // 这里加一个小延时或者直接设置，通常没问题
+            // setTimeout(function () { 
+            //   howl.mute(_this.state.isMuted, id);
+            // }, 10);
+
+            // 简化版：直接播放，不搞复杂操作，先验证能不能出声
+            // [FIX] 简化播放逻辑，避免复杂的 mute/unmute 时序问题
+            howl.seek(seekPos);
+            howl.play();
+            howl.mute(_this.state.isMuted);
+
+          }
+        } else {
+          console.warn('Howl instance not found for:', audio.audioKey);
+        }
+      } else {
+        // 如果不在播放范围内但正在播放，则停止
+        if (_this.audioCache[audio.audioKey]) {
+          var h = _this.audioCache[audio.audioKey];
+          if (h.playing()) h.stop();
+        }
+      }
+    });
+  };
+
+  // 获取或创建 Howl 实例
+  SvgaPlayerAdapter.prototype.getHowlInstance = function (audioKey) {
+    if (this.audioCache[audioKey]) return this.audioCache[audioKey];
+
+    // 优先从 svgaAudioData (app.js 手动解析的数据) 中获取
+    var audioDataMap = this.state.svgaAudioData || {};
+    var videoItem = this.state.videoItem;
+    var images = videoItem && videoItem.images ? videoItem.images : {};
+
+    // 尝试获取音频数据（兼容不同的 key 后缀，参考 app.js 的逻辑）
+    var possibleKeys = [
+      audioKey,
+      audioKey + '.mp3',
+      audioKey + '.wav',
+      'audio_' + audioKey,
+      audioKey.replace(/\.[^.]+$/, ''),
+      'audio_' + audioKey.replace(/\.[^.]+$/, '')
+    ];
+
+    // 新增：如果 key 包含 .mp3 后缀，尝试去掉后缀的 key
+    if (audioKey.endsWith('.mp3')) {
+      possibleKeys.push(audioKey.replace('.mp3', ''));
+    }
+
+    var data = null;
+
+    // 1. 先查 svgaAudioData (protobuf 解析出的原始数据)
+    for (var i = 0; i < possibleKeys.length; i++) {
+      if (audioDataMap[possibleKeys[i]]) {
+        data = audioDataMap[possibleKeys[i]];
+        break;
+      }
+    }
+
+    // 2. 如果没找到，再查 videoItem.images (SVGA Parser 解析出的数据，可能不包含音频)
+    if (!data) {
+      // 先检查 images 是否存在
+      if (images) {
+        for (var i = 0; i < possibleKeys.length; i++) {
+          if (images[possibleKeys[i]]) {
+            data = images[possibleKeys[i]];
+            break;
+          }
+        }
+      }
+    }
+
+    if (!data) {
+      // 最终尝试：遍历 audioDataMap 的所有 key，看是否有包含关系的（模糊匹配）
+      // [FIX] 模糊匹配策略：解决 Key 不一致问题（audio_296 vs 296），详见 SVGA_AUDIO_IMPL.md #3.2
+      // 很多时候 key 是 "audio_296" 但 audioKey 是 "296" 或者 "audio_296.mp3"
+      var allAudioKeys = Object.keys(audioDataMap);
+      for (var j = 0; j < allAudioKeys.length; j++) {
+        var k = allAudioKeys[j];
+        // 只有当长度足够（>3）才进行包含匹配，避免 "1" 匹配到 "10" 这种误伤
+        if (k.length > 3 && audioKey.length > 3) {
+          if (k.indexOf(audioKey) !== -1 || audioKey.indexOf(k) !== -1) {
+            data = audioDataMap[k];
+            console.log('Fuzzy match found:', k, 'for', audioKey);
+            break;
+          }
+        }
+      }
+    }
+
+    if (!data) {
+      // console.warn('Audio data not found for key:', audioKey);
+      return null;
+    }
+
+    var src = null;
+    if (typeof data === 'string') {
+      src = data.startsWith('data:') ? data : 'data:audio/mp3;base64,' + data;
+    } else if (data instanceof Uint8Array) {
+      var blob = new Blob([data], { type: 'audio/mp3' });
+      src = URL.createObjectURL(blob);
+    }
+
+    if (!src) return null;
+
+    console.log('Creating Howl instance for:', audioKey, 'Src length:', src.length);
+
+    var howl = new Howl({
+      src: [src],
+      format: ['mp3', 'wav'],
+      html5: false, // 使用 Web Audio API 以获得更精准的 Seek 控制
+      loop: false,
+      autoplay: false,
+      onload: function () {
+        // 音频加载完成后，如果当前处于播放状态，尝试同步
+        // 这可以解决音频加载延迟导致的首次播放无声问题
+        console.log('Audio Loaded:', audioKey);
+      },
+      onloaderror: function (id, err) {
+        console.error('Howl Load Error:', err, 'for key:', audioKey);
+      },
+      onplayerror: function (id, err) {
+        console.error('Howl Play Error:', err, 'for key:', audioKey);
+        // 尝试解锁音频上下文
+        if (typeof Howler !== 'undefined' && Howler.ctx && Howler.ctx.state === 'suspended') {
+          Howler.ctx.resume();
+        }
+      }
+    });
+
+    // 手动注册到全局管理器
+    GlobalAudioManager.add(howl);
+
+    this.audioCache[audioKey] = howl;
+    return howl;
   };
 
   SvgaPlayerAdapter.prototype.setMuted = function (muted) {
@@ -434,6 +683,7 @@
   // 销毁时清理音频
   SvgaPlayerAdapter.prototype.destroy = function () {
     GlobalAudioManager.unloadAll();
+    this.audioCache = {};
   };
 
   // ==================== 播放控制器 ====================
@@ -445,13 +695,28 @@
   function PlayerController(options) {
     this.options = options || {};
     this.onProgressChange = options.onProgressChange || function () { };
-    this.onPlayStateChange = options.onPlayStateChange || function () { };
+    // 拦截外部传入的 onPlayStateChange，注入内部处理逻辑
+    var externalOnPlayStateChange = options.onPlayStateChange || function () { };
+    var _this = this;
+    this.onPlayStateChange = function (isPlaying) {
+      // 先调用内部逻辑
+      _this.handlePlayStateChange(isPlaying);
+      // 再调用外部回调
+      externalOnPlayStateChange(isPlaying);
+    };
     this.getPlayerState = options.getPlayerState || function () { return {}; };
 
     // 进度条拖拽状态
     this.isDragging = false;
     this.progressBar = null;
     this.progressThumb = null;
+
+    // 适配器缓存（新增：避免每帧重新创建）
+    this.currentAdapter = null;
+    this.currentMode = null;
+    // 强制绑定上下文，确保在事件回调中 this 指向正确
+    this.getAdapter = this.getAdapter.bind(this);
+    this.handlePlayStateChange = this.handlePlayStateChange.bind(this); // 新增绑定
 
     // 初始化进度条拖拽
     if (options.progressBar && options.progressThumb) {
@@ -465,6 +730,20 @@
   PlayerController.prototype.getAdapter = function () {
     var state = this.getPlayerState();
     var mode = state.mode;
+
+    // 如果当前已有适配器且模式相同，直接复用（核心修复：保持适配器单例）
+    if (this.currentAdapter && this.currentMode === mode) {
+      this.currentAdapter.updateState(state);
+      return this.currentAdapter;
+    }
+
+    // 模式改变，销毁旧适配器
+    if (this.currentAdapter) {
+      if (this.currentAdapter.destroy) {
+        this.currentAdapter.destroy();
+      }
+      this.currentAdapter = null;
+    }
 
     // 根据模式返回对应的适配器
     var adapter = null;
@@ -488,8 +767,11 @@
 
     // 检查适配器是否可用
     if (adapter && adapter.canHandle()) {
+      this.currentAdapter = adapter;
+      this.currentMode = mode;
       return adapter;
     }
+
     return null;
   };
 
@@ -595,6 +877,34 @@
     if (duration > 0) {
       var percentage = newTime / duration;
       this.seekTo(percentage);
+    }
+  };
+
+  /**
+   * 暴露给外部驱动的音频同步方法
+   * 必须由 app.js 在 onFrame 回调中显式调用
+   */
+  PlayerController.prototype.syncAudio = function (currentFrame) {
+    // 这里使用 this.getAdapter()，需要确保 this 上下文正确
+    var adapter = this.getAdapter();
+    if (adapter && adapter instanceof SvgaPlayerAdapter && adapter.syncAudio) {
+      adapter.syncAudio(currentFrame);
+    }
+  };
+
+  /**
+   * 监听播放状态变更（内部使用）
+   * 用于在外部暂停（如SVGA播放完一次loop）时同步暂停音频
+   */
+  PlayerController.prototype.handlePlayStateChange = function (isPlaying) {
+    var adapter = this.currentAdapter; // 直接获取当前适配器，不重新获取
+    if (adapter && adapter instanceof SvgaPlayerAdapter) {
+      // 如果是 SVGA 且暂停了，通知 adapter 暂停音频
+      if (!isPlaying) {
+        console.log('PlayerController: Detected Pause, syncing audio stop.');
+        // [CRITICAL] 必须强制停止所有音频，防止“余音绕梁”。详见 SVGA_AUDIO_IMPL.md #3.5
+        adapter.pause();
+      }
     }
   };
 
@@ -710,6 +1020,14 @@
    * 销毁控制器
    */
   PlayerController.prototype.destroy = function () {
+    if (this.currentAdapter) {
+      if (this.currentAdapter.destroy) {
+        this.currentAdapter.destroy();
+      }
+      this.currentAdapter = null;
+    }
+    this.currentMode = null;
+
     if (this._cleanupDrag) {
       this._cleanupDrag();
       this._cleanupDrag = null;
@@ -720,5 +1038,8 @@
 
   // 导出到全局命名空间
   global.SvgaPreview.Controllers.PlayerController = PlayerController;
+
+  // 将 GlobalAudioManager 暴露给外部 (例如 ResourceManager) 使用
+  global.SvgaPreview.Controllers.GlobalAudioManager = GlobalAudioManager;
 
 })(typeof window !== 'undefined' ? window : this);

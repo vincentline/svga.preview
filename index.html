@@ -11,14 +11,14 @@
 
   <!-- Open Graph / 社交分享优化 -->
   <meta property="og:type" content="website" />
-  <meta property="og:title" content="MeeWoo - SVGA、Lottie、双通道MP4动画在线预览工具" />
+  <meta property="og:title" content="MeeWoo - SVGA、Lottie、双通道MP4动画在线预览和转换工具" />
   <meta property="og:description" content="MeeWoo - 免费在线预览和编辑SVGA、Lottie、双通道MP4动画，支持素材管理、GIF导出、变速编辑" />
   <meta property="og:url" content="https://svga.io" />
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content="SVGA、Lottie动画在线预览工具" />
-  <meta name="twitter:description" content="免费在线预览SVGA、Lottie、双通道MP4动画，支持素材管理和导出" />
+  <meta name="twitter:title" content="MeeWoo - SVGA、Lottie、双通道MP4动画在线预览和转换工具" />
+  <meta name="twitter:description" content="MeeWoo - 免费在线预览和编辑SVGA、Lottie、双通道MP4动画，支持素材管理、GIF导出、变速编辑" />
 
   <!-- 搜索引擎优化 -->
   <meta name="robots" content="index, follow" />
@@ -37,6 +37,8 @@
 
   <!-- 库加载管理器（优先加载，独立模块） -->
   <script src="assets/js/library-loader.js"></script>
+  <!-- 资源管理器（管理 ObjectURL 生命周期） -->
+  <script src="assets/js/resource-manager.js"></script>
   <script>
     // 立即加载核心库（Vue 和 SVGA Player）
     (function () {
@@ -201,12 +203,7 @@
       </div>
     </div>
 
-    <!-- Toast提示 -->
-    <transition name="toast-fade">
-      <div v-if="toastVisible" class="toast-container">
-        <div class="toast-message">{{ toastMessage }}</div>
-      </div>
-    </transition>
+    <!-- Toast提示 (Moved to global utils) -->
 
     <!-- 库加载进度条 -->
     <div v-if="loadingLibraryInfo" class="library-loading-indicator">
@@ -474,8 +471,7 @@
                   <!-- SVGA 模式 -->
                   <template v-if="currentModule === 'svga'">
                     <div class="footer-actions">
-                      <button class="btn-large-primary" @click="triggerChangePreviewFile" v-if="svga.hasFile">
-                        打开文件...
+                      <button class="btn-large-primary btn-open-file" @click="triggerChangePreviewFile" v-if="svga.hasFile" title="打开文件...">
                       </button>
                       <button class="btn-large-primary" @click="openMaterialPanel" v-if="svga.hasFile">
                         素材图管理
@@ -515,8 +511,7 @@
                   <!-- 双通MP4 模式 -->
                   <template v-else-if="currentModule === 'yyeva'">
                     <div class="footer-actions">
-                      <button class="btn-large-primary" @click="triggerChangePreviewFile">
-                        打开文件...
+                      <button class="btn-large-primary btn-open-file" @click="triggerChangePreviewFile" title="打开文件...">
                       </button>
                     </div>
                     <div class="footer-actions">
@@ -549,8 +544,7 @@
                   <!-- 普通MP4 模式 -->
                   <template v-else-if="currentModule === 'mp4'">
                     <div class="footer-actions">
-                      <button class="btn-large-primary" @click="triggerChangePreviewFile">
-                        打开文件...
+                      <button class="btn-large-primary btn-open-file" @click="triggerChangePreviewFile" title="打开文件...">
                       </button>
                       <button class="btn-large-primary" :class="{'tooltip': !mp4.hasFile}" :disabled="!mp4.hasFile"
                         @click="openChromaKeyPanel">
@@ -594,8 +588,7 @@
                   <!-- Lottie 模式 -->
                   <template v-else-if="currentModule === 'lottie'">
                     <div class="footer-actions">
-                      <button class="btn-large-primary" @click="triggerChangePreviewFile">
-                        打开文件...
+                      <button class="btn-large-primary btn-open-file" @click="triggerChangePreviewFile" title="打开文件...">
                       </button>
                     </div>
                     <div class="footer-actions">
@@ -633,8 +626,7 @@
                   <!-- 序列帧模式 -->
                   <template v-else-if="currentModule === 'frames'">
                     <div class="footer-actions">
-                      <button class="btn-large-primary" @click="triggerChangePreviewFile">
-                        打开文件...
+                      <button class="btn-large-primary btn-open-file" @click="triggerChangePreviewFile" title="打开文件...">
                       </button>
                       <button class="btn-large-primary" @click="openChangeFpsDialog">
                         改变帧率
@@ -696,8 +688,7 @@
       </div>
 
       <!-- 全屏拖拽覆盖层（最顶层） -->
-      <div class="drop-overlay" :class="{'show': dropHover}" @dragover.prevent="onDragOver" @dragleave="onDragLeave"
-        @drop.prevent="onDrop">
+      <div class="drop-overlay" :class="{'show': dropHover}">
         <div class="drop-hint">
           <div class="drop-hint-text">松开鼠标！</div>
         </div>
@@ -2401,7 +2392,7 @@
   <script src="assets/js/input-controller.js"></script>
 
   <!-- 播放控制器模块 -->
-  <script src="assets/js/player-controller.js"></script>
+  <script src="assets/js/player-controller.js?v=13"></script>
 
   <!-- 视图控制器模块 -->
   <script src="assets/js/viewport-controller.js"></script>
@@ -2412,9 +2403,12 @@
   <!-- 用户配置管理器模块 -->
   <script src="assets/js/config-manager.js"></script>
 
+  <!-- 任务管理器模块 -->
+  <script src="assets/js/task-manager.js"></script>
+
   -->
   <!-- 应用主逻辑 -->
-  <script src="assets/js/app.js?v=1.7"></script>
+  <script src="assets/js/app.js?v=1.14"></script>
 </body>
 
 </html>

@@ -9,7 +9,7 @@
  *    - getOngoingTasks() - 获取进行中任务列表
  *    - cancelOngoingTasks() - 取消所有任务
  *    - confirmIfHasOngoingTasks() - 任务确认提示
- *    - switchMode() - 统一模式切换
+ *    - switchMode() - 统一模式切换 (策略模式)
  * 
  * 3. 【侧边弹窗管理】
  *    - closeAllPanels() - 关闭所有弹窗
@@ -34,20 +34,21 @@
  * 
  * 6. 【文件加载与拖拽上传】
  *    - handleFile() - 文件分发器
- *    - onDragOver/onDrop - 拖拽上传
  *    - triggerFileUpload() - 触发文件选择
+ *    - (InputController) - 全局拖拽事件监听（独立模块）
  * 
  * 7. 【资源清理】
- *    - clearAll() - 清空画布
+ *    - clearAll() - 清空画布 (调用 ResourceManager 释放资源)
  *    - cleanupSvga() - 清理SVGA资源
  *    - cleanupYyeva() - 清理MP4资源
+ *    - (ResourceManager) - ObjectURL 与音频统一管理（独立模块）
  * 
  * 8. 【工具函数】
- *    - showToast() - 提示消息
+ *    - (SvgaUtils.showToast) - 提示消息 (移至 utils.js)
  *    - loadHelpContent() - 加载帮助文档
  * 
- * 9. 【SVGA加载与播放】
- *    - initSvgaPlayer() - 初始化SVGA播放器
+ * 9. 【SVGA加载与播放】修改音频控制相关的，请先查阅SVGA_AUDIO_IMPL.md
+ *    - initSvgaPlayer() - 初始化SVGA播放器 (含音频同步驱动)
  *    - loadSvgaFile() - 加载SVGA文件
  *    - cleanupSvga() - 清理SVGA资源
  * 
@@ -55,6 +56,7 @@
  *     - togglePlay() - 播放/暂停
  *     - seekTo() - 跳转进度
  *     - updateProgress() - 更新进度
+ *     - (PlayerController) - 统一播放控制逻辑（独立模块）
  * 
  * 11. 【双通道MP4加载与播放】
  *     - loadYyeva() - 加载双通道MP4
@@ -70,6 +72,7 @@
  *     - openMaterialPanel() - 打开素材弹窗
  *     - replaceMaterial() - 替换素材
  *     - resetMaterial() - 重置素材
+ *     - parseSvgaAudioData() - [CRITICAL] 解析SVGA音频数据 (protobuf)
  * 
  * 14. 【导出GIF功能】
  *     - openGifPanel() - 打开GIF导出弹窗（统一入口）
@@ -234,6 +237,9 @@ function initApp() {
           originalHeight: 0,
           animationData: null
         },
+
+        // 任务管理器
+        taskManager: null, // 在 created 中初始化
 
         // Lottie 播放器实例（非响应式，在created中初始化）
         // lottiePlayer: null,
@@ -529,121 +535,11 @@ function initApp() {
 
       /**
        * 获取当前正在进行的任务列表
-       * 【开发规范】
-       * 如果添加新的转换/导出任务，必须遵循以下步骤：
-       * 1. 在 data 中定义 isConvertingXxx 状态标志
-       * 2. 在 getOngoingTasks 中添加该状态的检查
-       * 3. 在 cancelOngoingTasks 中添加取消逻辑
-       * 4. 确保任务启动函数中设置标志为 true，结束/取消时设为 false
        * 
-       * 这样可以确保 confirmIfHasOngoingTasks 能正确拦截操作，
-       * 并且 switchMode 能自动取消旧任务。
-       * 
-       * @returns {Array<{name: string, key: string, mode: string}>} 任务列表
+       * @returns {Array<{name: string}>} 任务列表
        */
       getOngoingTasks: function () {
-        var tasks = [];
-
-        // GIF导出（SVGA和双通道MP4模式都支持）
-        if (this.isExportingGIF) {
-          tasks.push({
-            name: 'GIF导出',
-            key: 'gif',
-            mode: this.currentModule
-          });
-        }
-
-        // SVGA转MP4 / MP4转双通道 / Lottie转双通道 (共用 isConvertingMP4 标志)
-        if (this.isConvertingMP4) {
-          var taskName = 'SVGA转MP4';
-          if (this.currentModule === 'mp4') {
-            taskName = 'MP4转双通道';
-          } else if (this.currentModule === 'lottie') {
-            taskName = 'Lottie转双通道';
-          } else if (this.currentModule === 'frames') {
-            taskName = '序列帧转双通道';
-          }
-
-          tasks.push({
-            name: taskName,
-            key: 'mp4',
-            mode: this.currentModule
-          });
-        }
-
-        // 双通道MP4转SVGA（双通道MP4模式）
-        if (this.isConvertingSVGA) {
-          tasks.push({
-            name: '转SVGA',
-            key: 'svga',
-            mode: 'yyeva'
-          });
-        }
-
-        // 普通MP4转SVGA（普通MP4模式）
-        if (this.isConvertingMp4ToSvga) {
-          tasks.push({
-            name: 'MP4转SVGA',
-            key: 'mp4tosvga',
-            mode: 'mp4'
-          });
-        }
-
-        // Lottie转SVGA（Lottie模式）
-        if (this.isConvertingLottieToSvga) {
-          tasks.push({
-            name: 'Lottie转SVGA',
-            key: 'lottietosvga',
-            mode: 'lottie'
-          });
-        }
-
-        // 序列帧转SVGA（序列帧模式）
-        if (this.isConvertingFramesToSvga) {
-          tasks.push({
-            name: '序列帧转SVGA',
-            key: 'framestosvga',
-            mode: 'frames'
-          });
-        }
-
-        // 序列帧转双通道MP4
-        if (this.isConvertingFramesToDualChannel) {
-          tasks.push({
-            name: '序列帧转双通道',
-            key: 'framestodual',
-            mode: 'frames'
-          });
-        }
-
-        // 转换为普通MP4（所有模式通用）
-        if (this.isConvertingStandardMp4) {
-          tasks.push({
-            name: '转换为普通MP4',
-            key: 'standardmp4',
-            mode: this.currentModule
-          });
-        }
-
-        // Lottie导出 (SVGA模式)
-        if (this.isExportingLottie) {
-          tasks.push({
-            name: 'Lottie导出',
-            key: 'lottie-export',
-            mode: 'svga'
-          });
-        }
-
-        // 视频格式转换 (普通MP4模式)
-        if (this.isConverting) {
-          tasks.push({
-            name: '视频格式转换',
-            key: 'video-convert',
-            mode: 'mp4'
-          });
-        }
-
-        return tasks;
+        return this.taskManager.getRunningTasks();
       },
 
       /**
@@ -652,90 +548,11 @@ function initApp() {
        * @returns {Array<string>} 被取消的任务名称列表
        */
       cancelOngoingTasks: function (silent) {
-        var cancelledTasks = [];
-
-        // 取消GIF导出
-        if (this.isExportingGIF) {
-          this.isExportingGIF = false;
-          this.gifExportProgress = 0;
-          cancelledTasks.push('GIF导出');
-        }
-
-        // 取消MP4转换
-        if (this.isConvertingMP4) {
-          this.isConvertingMP4 = false;
-          this.mp4ConvertProgress = 0;
-          this.mp4ConvertCancelled = true;
-          cancelledTasks.push('SVGA转MP4');
-        }
-
-        // 取消SVGA转换
-        if (this.isConvertingSVGA) {
-          this.isConvertingSVGA = false;
-          this.svgaConvertProgress = 0;
-          this.svgaConvertCancelled = true;
-          cancelledTasks.push('转SVGA');
-        }
-
-        // 取消普通MP4转SVGA
-        if (this.isConvertingMp4ToSvga) {
-          this.isConvertingMp4ToSvga = false;
-          this.mp4ToSvgaProgress = 0;
-          this.mp4ToSvgaCancelled = true;
-          cancelledTasks.push('MP4转SVGA');
-        }
-
-        // 取消序列帧转双通道MP4
-        if (this.isConvertingFramesToDualChannel) {
-          this.isConvertingFramesToDualChannel = false;
-          this.framesToDualChannelProgress = 0;
-          this.framesToDualChannelCancelled = true;
-          cancelledTasks.push('序列帧转双通道');
-        }
-
-        // 取消转换为普通MP4
-        if (this.isConvertingStandardMp4) {
-          this.isConvertingStandardMp4 = false;
-          this.standardMp4Progress = 0;
-          // 该任务通过检查 isConvertingStandardMp4 标志来取消，无需单独的cancelled标志
-          cancelledTasks.push('转换为普通MP4');
-        }
-
-        // 取消Lottie转SVGA
-        if (this.isConvertingLottieToSvga) {
-          this.isConvertingLottieToSvga = false;
-          this.lottieToSvgaProgress = 0;
-          this.lottieToSvgaCancelled = true;
-          cancelledTasks.push('Lottie转SVGA');
-        }
-
-        // 取消序列帧转SVGA
-        if (this.isConvertingFramesToSvga) {
-          this.isConvertingFramesToSvga = false;
-          this.framesToSvgaProgress = 0;
-          this.framesToSvgaCancelled = true;
-          cancelledTasks.push('序列帧转SVGA');
-        }
-
-        // 取消Lottie导出
-        if (this.isExportingLottie) {
-          this.isExportingLottie = false;
-          this.lottieExportProgress = 0;
-          // exportLottie 会检测标志位并自动停止
-          cancelledTasks.push('Lottie导出');
-        }
-
-        // 取消视频格式转换
-        if (this.isConverting) {
-          this.isConverting = false;
-          this.videoConvertProgress = 0;
-          this.showVideoConvertModal = false;
-          cancelledTasks.push('视频格式转换');
-        }
+        var cancelledTasks = this.taskManager.cancelAll();
 
         // 显示取消提示
         if (!silent && cancelledTasks.length > 0) {
-          this.showToast('已取消：' + cancelledTasks.join('、'));
+          SvgaPreview.Utils.showToast('已取消：' + cancelledTasks.join('、'));
         }
 
         return cancelledTasks;
@@ -885,7 +702,7 @@ function initApp() {
 
       /**
        * 统一的模式切换函数
-       * @param {string} targetMode - 目标模式（'svga' | 'yyeva' | 'lottie'）
+       * @param {string} targetMode - 目标模式（'svga' | 'yyeva' | 'lottie' | 'mp4' | 'frames'）
        * @param {Object} options - 选项 { skipCleanup: boolean }
        */
       switchMode: function (targetMode, options) {
@@ -900,34 +717,22 @@ function initApp() {
         // 1. 取消正在进行的任务（静默取消）
         this.cancelOngoingTasks(true);
 
-        // 2. 清理资源（根据模式决定清理哪些）
-        if (!options.skipCleanup) {
-          // 同模式切换：只清理当前模式资源
-          if (fromMode === targetMode) {
-            if (targetMode === 'svga') {
-              this.cleanupSvga();
-            } else if (targetMode === 'yyeva') {
-              this.cleanupYyeva();
-            } else if (targetMode === 'mp4') {
-              this.cleanupMp4();
-            } else if (targetMode === 'lottie') {
-              this.cleanupLottie();
-            } else if (targetMode === 'frames') {
-              this.cleanupFrames();
-            }
+        // 2. 动态清理资源
+        // 逻辑说明：无论是切换到新模式，还是重置当前模式，都需要清理"上一个状态"（fromMode）的资源
+        if (!options.skipCleanup && fromMode) {
+          var strategy = this.modeStrategies[fromMode];
+
+          if (strategy && typeof strategy.cleanup === 'function') {
+            // 使用 call(this) 确保方法内部的 this 指向 Vue 实例
+            strategy.cleanup.call(this);
           } else {
-            // 跨模式切换：清理旧模式资源
-            if (fromMode === 'svga') {
-              this.cleanupSvga();
-            } else if (fromMode === 'yyeva') {
-              this.cleanupYyeva();
-            } else if (fromMode === 'mp4') {
-              this.cleanupMp4();
-            } else if (fromMode === 'lottie') {
-              this.cleanupLottie();
-            } else if (fromMode === 'frames') {
-              this.cleanupFrames();
-            }
+            // 防御性编程：如果未找到策略，仅在控制台警告，不阻断流程
+            console.warn('[switchMode] 未找到模式的清理策略:', fromMode);
+          }
+
+          // 统一释放该模式下的所有 ObjectURL 资源
+          if (this.resourceManager) {
+            this.resourceManager.releaseGroup(fromMode);
           }
         }
 
@@ -967,27 +772,6 @@ function initApp() {
       },
 
       /* ==================== 文件加载与拖拽上传 ==================== */
-
-      onDragOver: function (event) {
-        event.preventDefault();
-        this.dropHover = true;
-      },
-      onDragLeave: function () {
-        this.dropHover = false;
-      },
-      onDrop: function (event) {
-        event.preventDefault();
-        this.dropHover = false;
-        var files = event.dataTransfer && event.dataTransfer.files;
-        if (!files || !files.length) return;
-
-        // 检查是否有正在进行的任务
-        if (!this.confirmIfHasOngoingTasks('播放新文件', 'load')) {
-          return;
-        }
-
-        this.handleFiles(files);
-      },
 
       triggerFileUpload: function () {
         this.$refs.fileInput.click();
@@ -1218,7 +1002,21 @@ function initApp() {
         }
 
         // 清理音频 (修复：清空后声音可能残留问题)
-        if (typeof Howler !== 'undefined') {
+        // 使用 ResourceManager 统一清理，避免直接调用 Howler 造成冲突
+        if (this.resourceManager) {
+          // 注意：releaseAll 会清理所有 ObjectURL 和音频，适合 clear 场景
+          // 但这里我们只希望清理音频，或者也可以保留 ObjectURL？
+          // 考虑到 clear 是彻底清空，releaseAll 是合适的。
+          // 但为了不误伤其他可能还没重新生成的资源，我们可以针对性清理。
+          // 由于 resourceManager.releaseAll() 已经集成了 GlobalAudioManager.unloadAll()
+          // 我们可以直接调用 GlobalAudioManager（如果暴露了）或者通过 releaseAll
+
+          // 简单起见，且 resourceManager 旨在管理所有资源，我们这里手动调用音频清理
+          if (window.SvgaPreview.Controllers && window.SvgaPreview.Controllers.GlobalAudioManager) {
+            window.SvgaPreview.Controllers.GlobalAudioManager.unloadAll();
+          }
+        } else if (typeof Howler !== 'undefined') {
+          // 降级处理
           Howler.unload();
         }
 
@@ -1316,7 +1114,7 @@ function initApp() {
         }
 
         if (!currentFile) {
-          this.showToast('没有文件可以恢复');
+          SvgaPreview.Utils.showToast('没有文件可以恢复');
           return;
         }
 
@@ -1391,32 +1189,10 @@ function initApp() {
           this.loadFrames({ file: currentFile });
         }
 
-        this.showToast('已恢复到初始状态');
+        SvgaPreview.Utils.showToast('已恢复到初始状态');
       },
 
       /* ==================== 工具函数 ==================== */
-
-      /**
-       * 显示Toast提示消息
-       * @param {string} message - 提示消息
-       */
-      showToast: function (message) {
-        var _this = this;
-        // 清除之前的定时器
-        if (this.toastTimer) {
-          clearTimeout(this.toastTimer);
-          this.toastTimer = null;
-        }
-
-        this.toastMessage = message;
-        this.toastVisible = true;
-
-        // 3秒后自动隐藏
-        this.toastTimer = setTimeout(function () {
-          _this.toastVisible = false;
-          _this.toastTimer = null;
-        }, 3000);
-      },
 
       loadHelpContent: function () {
         var _this = this;
@@ -1450,6 +1226,13 @@ function initApp() {
             _this.currentFrame = frame;
             _this.progress = Math.round((frame / _this.totalFrames) * 100);
             _this.currentTime = frame / (_this.svgaFps || 30);
+
+            // 核心修复：手动驱动 PlayerController 进行音频同步
+            // 增加 _this.isPlaying 检查，确保暂停后不再驱动音频
+            // [CRITICAL] 音频同步必须由 onFrame 驱动，且必须检查播放状态。详见 SVGA_AUDIO_IMPL.md #2.2 B
+            if (_this.playerController && _this.playerController.syncAudio && _this.isPlaying) {
+              _this.playerController.syncAudio(frame);
+            }
           }
         });
       },
@@ -1519,11 +1302,6 @@ function initApp() {
         // 切换模式
         this.switchMode('svga');
 
-        // 清理旧的音频实例 (修复：拖入新文件后旧声音残留问题)
-        if (typeof Howler !== 'undefined') {
-          Howler.unload();
-        }
-
         // 设置文件信息
         this.svga.hasFile = true;
         // 性能优化：File 对象为只读数据，冻结后避免 Vue 响应式监听开销
@@ -1581,7 +1359,33 @@ function initApp() {
             _this.initSvgaPlayer();
           }
 
+          // 创建objectUrl (如果原视频对象支持url，则创建，否则直接使用videoItem)
+          // 注意：当前的SVGA库通常直接支持 VideoItem 对象，不需要 createObjectURL
+          // 但如果旧逻辑中有用到 svgaObjectUrl，我们在这里做兼容
+          if (file) {
+            _this.svgaObjectUrl = _this.resourceManager.createObjectURL(file, 'svga');
+          }
+
           // 加载动画
+          // 备份并移除内置音频，接管音频播放权（解决seek不同步问题）
+          // 策略调整：优先使用手动解析的 protobuf 音频配置，因为官方解析器可能存在问题
+          var sourceAudios = null;
+
+          if (_this.svgaMovieData && _this.svgaMovieData.audios && _this.svgaMovieData.audios.length > 0) {
+            console.log('loadSvgaFile: Using trusted audio config from protobuf', _this.svgaMovieData.audios);
+            sourceAudios = _this.svgaMovieData.audios;
+          } else {
+            console.log('loadSvgaFile: Protobuf audio config not ready or empty, falling back to videoItem', videoItem.audios);
+            sourceAudios = videoItem.audios;
+          }
+
+          _this.svgaAudios = sourceAudios ? JSON.parse(JSON.stringify(sourceAudios)) : [];
+          console.log('Final SVGA Audios config used:', _this.svgaAudios);
+
+          if (videoItem.audios) {
+            videoItem.audios = []; // 清空内置音频，禁用 SVGA 自带播放逻辑
+          }
+
           _this.svgaPlayer.setVideoItem(videoItem);
 
           // 重要：setVideoItem 后重新设置 onFrame 回调（防止被重置）
@@ -1590,6 +1394,11 @@ function initApp() {
               _this.currentFrame = frame;
               _this.progress = Math.round((frame / _this.totalFrames) * 100);
               _this.currentTime = frame / (_this.svgaFps || 30);
+
+              // 新增：每一帧都尝试同步音频
+              if (_this.playerController && _this.playerController.syncAudio) {
+                _this.playerController.syncAudio(frame);
+              }
             }
           });
 
@@ -1711,11 +1520,12 @@ function initApp() {
         this.footerTransitioning = true;
         this.footerContentVisible = false;
 
-        var objectUrl = URL.createObjectURL(file);
+        var objectUrl = this.resourceManager.createObjectURL(file, 'yyeva');
         this.yyevaObjectUrl = objectUrl;
         var video = document.createElement('video');
         video.src = objectUrl;
         video.crossOrigin = 'anonymous';
+        video.preload = 'auto'; // [Optimize] 显式开启预加载
         video.loop = true;
         video.muted = true;
 
@@ -1726,7 +1536,10 @@ function initApp() {
             video.onerror = null; // 防止src清空触发onError
             video.pause();
             video.src = '';
-            URL.revokeObjectURL(objectUrl);
+            // 资源将由 ResourceManager 统一释放，或在此处手动释放
+            if (_this.resourceManager) {
+              _this.resourceManager.revokeObjectURL(objectUrl, 'yyeva');
+            }
             return;
           }
 
@@ -1819,7 +1632,9 @@ function initApp() {
 
         video.onerror = function () {
           if (taskId !== _this.currentLoadTaskId) return; // 忽略已取消任务的错误
-          URL.revokeObjectURL(objectUrl);
+          if (_this.resourceManager) {
+            _this.resourceManager.revokeObjectURL(objectUrl, 'mp4');
+          }
           alert('视频加载失败');
         };
       },
@@ -1857,12 +1672,13 @@ function initApp() {
         this.mp4.fileInfo.sizeText = this.utils.formatBytes(file.size);
 
         // 创建objectUrl
-        this.mp4ObjectUrl = URL.createObjectURL(file);
+        this.mp4ObjectUrl = this.resourceManager.createObjectURL(file, 'mp4');
 
         // 创建视频元素
         var video = document.createElement('video');
         video.src = this.mp4ObjectUrl;
         video.crossOrigin = 'anonymous';
+        video.preload = 'auto'; // [Optimize] 显式开启预加载
         video.muted = this.isMuted;
         video.loop = true;
         video.playsInline = true;
@@ -2315,6 +2131,7 @@ function initApp() {
                   totalFrames: _this.totalFrames,
                   totalDuration: _this.totalDuration, // 补充时长
                   currentTime: _this.currentTime,     // 补充当前时间
+                  isMuted: _this.isMuted,             // 补充静音状态（修复静音按钮无效问题）
                   hasFile: _this.svga.hasFile || _this.yyeva.hasFile || _this.mp4.hasFile || _this.lottie.hasFile || _this.frames.hasFile,
                   svgaPlayer: _this.svgaPlayer,
                   lottiePlayer: _this.lottiePlayer,
@@ -2322,6 +2139,10 @@ function initApp() {
                   yyevaAnimationId: _this.yyevaAnimationId,
                   mp4Video: _this.mp4Video,
                   speedRemapConfig: _this.speedRemapConfig,
+                  // 新增：传递音频配置和包含音频数据的 videoItem
+                  svgaAudios: _this.svgaAudios,
+                  svgaAudioData: _this.svgaAudioData, // 显式传递解析后的音频数据
+                  videoItem: _this.originalVideoItem,
                   startYyevaRenderLoop: function () { _this.startYyevaRenderLoop(); },
                   startMp4ProgressLoop: function () { _this.startMp4ProgressLoop(); },
                   stopFramesPlayLoop: function () { _this.stopFramesPlayLoop(); },
@@ -2701,11 +2522,6 @@ function initApp() {
         // 初始化数组，按索引填充 null，确保顺序
         this.framesImages = new Array(files.length).fill(null);
 
-        // 自动管理 Blob URL 并记录到 framesBlobUrls 数组
-        if (!this.framesBlobUrls) {
-          this.framesBlobUrls = [];
-        }
-
         // 并发限制
         var CONCURRENCY_LIMIT = 5;
         var queue = [];
@@ -2721,7 +2537,17 @@ function initApp() {
 
           var task = queue.shift();
           try {
-            var img = await _this.utils.loadImageFromFile(task.file, _this.framesBlobUrls);
+            // 使用 ResourceManager 创建并托管 ObjectURL
+            var objectUrl = _this.resourceManager.createObjectURL(task.file, 'frames');
+
+            // 加载图片
+            var img = await new Promise(function (resolve, reject) {
+              var image = new Image();
+              image.onload = function () { resolve(image); };
+              image.onerror = reject;
+              image.src = objectUrl;
+            });
+
             _this.framesImages[task.index] = img;
           } catch (e) {
             console.error('Failed to load frame ' + task.index, e);
@@ -2932,9 +2758,8 @@ function initApp() {
       cleanupFrames: function () {
         this.stopFramesPlayLoop();
 
-        // 释放所有 Blob URL（性能优化：防止内存泄漏）
-        if (this.framesBlobUrls && this.framesBlobUrls.length > 0) {
-          this.utils.revokeObjectURLs(this.framesBlobUrls);
+        // ObjectURL 由 ResourceManager 在 switchMode 中统一释放，这里无需手动 revoke
+        if (this.framesBlobUrls) {
           this.framesBlobUrls = [];
         }
 
@@ -3049,14 +2874,21 @@ function initApp() {
       // 双通道MP4 渲染循环
       startYyevaRenderLoop: function () {
         var _this = this;
+        var lastUIUpdate = 0; // [Optimize] UI更新节流
 
-        function render() {
+        function render(timestamp) {
           if (!_this.yyevaVideo || !_this.yyevaCanvas || !_this.yyevaCtx) {
             return;
           }
+          if (!timestamp) timestamp = performance.now();
 
           _this.renderYyevaFrame();
-          _this.updateYyevaProgress();
+
+          // [Optimize] 节流更新 UI (30ms)
+          if (timestamp - lastUIUpdate > 30) {
+            _this.updateYyevaProgress();
+            lastUIUpdate = timestamp;
+          }
 
           _this.yyevaAnimationId = requestAnimationFrame(render);
         }
@@ -3165,9 +2997,10 @@ function initApp() {
 
         // 清理objectUrl
         if (this.svgaObjectUrl) {
-          var url = this.svgaObjectUrl;
+          if (this.resourceManager) {
+            this.resourceManager.revokeObjectURL(this.svgaObjectUrl, 'svga');
+          }
           this.svgaObjectUrl = null;
-          setTimeout(function () { URL.revokeObjectURL(url); }, 100);
         }
 
         // 销毁播放控制器（清理进度条事件监听器）
@@ -3227,9 +3060,10 @@ function initApp() {
         }
 
         if (this.yyevaObjectUrl) {
-          var url = this.yyevaObjectUrl;
+          if (this.resourceManager) {
+            this.resourceManager.revokeObjectURL(this.yyevaObjectUrl, 'yyeva');
+          }
           this.yyevaObjectUrl = null;
-          setTimeout(function () { URL.revokeObjectURL(url); }, 100);
         }
 
         this.yyevaCanvas = null;
@@ -3291,9 +3125,11 @@ function initApp() {
         var stuckCount = 0;
         var maxStuckFrames = 120; // 2秒无进度视为卡死（60fps * 2）
         var hasWarned = false; // 防止重复警告
+        var lastUIUpdate = 0; // [Optimize] UI更新节流
 
-        function updateProgress() {
+        function updateProgress(timestamp) {
           if (!_this.mp4Video || _this.currentModule !== 'mp4') return;
+          if (!timestamp) timestamp = performance.now();
 
           // 检测视频是否卡住
           if (lastTime === video.currentTime && !video.paused && !video.ended) {
@@ -3351,9 +3187,14 @@ function initApp() {
               // 更新进度显示
               var lastKeyframe = keyframes[keyframes.length - 1];
               var remappedDuration = video.duration * lastKeyframe.position;
-              _this.progress = (remappedPosition / lastKeyframe.position) * 100;
-              _this.currentTime = remappedPosition * video.duration;
-              _this.totalDuration = remappedDuration;
+
+              // [Optimize] 节流更新 UI (30ms)
+              if (timestamp - lastUIUpdate > 30) {
+                _this.progress = (remappedPosition / lastKeyframe.position) * 100;
+                _this.currentTime = remappedPosition * video.duration;
+                _this.totalDuration = remappedDuration;
+                lastUIUpdate = timestamp;
+              }
 
               // 只在区间变化时重新计算并更新播放速度
               if (segmentIndex !== currentSegmentIndex && segmentIndex !== -1) {
@@ -3372,9 +3213,13 @@ function initApp() {
                 }
               }
             } else {
-              _this.currentTime = video.currentTime;
-              _this.totalDuration = video.duration;
-              _this.progress = (video.currentTime / video.duration) * 100;
+              // [Optimize] 节流更新 UI
+              if (timestamp - lastUIUpdate > 30) {
+                _this.currentTime = video.currentTime;
+                _this.totalDuration = video.duration;
+                _this.progress = (video.currentTime / video.duration) * 100;
+                lastUIUpdate = timestamp;
+              }
 
               // 未启用变速时恢复正常速度
               if (video.playbackRate !== 1) {
@@ -3412,10 +3257,15 @@ function initApp() {
         }
 
         if (this.mp4ObjectUrl) {
-          var url = this.mp4ObjectUrl;
+          if (this.resourceManager) {
+            // 延迟释放 ObjectURL，避免浏览器在视频元素卸载前报 net::ERR_ABORTED 错误
+            var url = this.mp4ObjectUrl;
+            var rm = this.resourceManager;
+            setTimeout(function () {
+              rm.revokeObjectURL(url, 'mp4');
+            }, 100);
+          }
           this.mp4ObjectUrl = null;
-          // 延迟释放，防止浏览器处理src=''时触发 net::ERR_FILE_NOT_FOUND
-          setTimeout(function () { URL.revokeObjectURL(url); }, 100);
         }
 
         // 销毁播放控制器（清理进度条事件监听器）
@@ -3517,7 +3367,7 @@ function initApp() {
           this.mp4.fileInfo.sizeText = this.utils.formatBytes(convertedFile.size);
 
           // 创建objectUrl
-          this.mp4ObjectUrl = URL.createObjectURL(blob);
+          this.mp4ObjectUrl = this.resourceManager.createObjectURL(blob, 'mp4');
 
           // 创建视频元素
           var newVideo = document.createElement('video');
@@ -3810,7 +3660,7 @@ function initApp() {
       copyMaterialName: function (name) {
         var _this = this;
         this.utils.copyToClipboard(name).then(function () {
-          _this.showToast('已复制到剪贴板');
+          SvgaPreview.Utils.showToast('已复制到剪贴板');
         }).catch(function (err) {
           alert('复制失败: ' + err.message);
         });
@@ -3846,6 +3696,25 @@ function initApp() {
               var movieData = MovieEntity.decode(inflatedData);
               _this.svgaMovieData = movieData;
 
+              // 尝试修复 svgaAudios (如果 videoItem 中丢失且 loadSvgaFile 已执行)
+              if (movieData.audios && movieData.audios.length > 0) {
+                // 强制更新：只要解析出数据，就覆盖 svgaAudios，确保使用最准确的数据
+                // 注意：这里需要检查是否已经加载了文件，避免覆盖了其他文件的配置
+                if (_this.svgaAudios) {
+                  console.log('parseSvgaAudioData: Overwriting audio config with trusted protobuf data', movieData.audios);
+                  // [CRITICAL] 必须覆盖！官方Parser经常解析失败。详见 SVGA_AUDIO_IMPL.md #3.1
+                  _this.svgaAudios = JSON.parse(JSON.stringify(movieData.audios));
+
+                  // 核心修复：解析完成后，必须主动通知 PlayerController 更新状态
+                  // 否则 PlayerController 里的 state 依然持有旧的（可能是空的）数据引用
+                  if (_this.playerController && _this.currentModule === 'svga') {
+                    console.log('parseSvgaAudioData: Forcing PlayerController state update');
+                    // 通过调用 getAdapter 来触发内部的 updateState
+                    _this.playerController.getAdapter();
+                  }
+                }
+              }
+
               // 提取音频数据
               if (movieData.audios && movieData.audios.length > 0 && movieData.images) {
                 var audioData = {};
@@ -3870,10 +3739,15 @@ function initApp() {
 
                 if (Object.keys(audioData).length > 0) {
                   _this.svgaAudioData = audioData;
+                  console.log('SVGA Parser: Extracted audio data', Object.keys(audioData));
+                } else {
+                  console.warn('SVGA Parser: No matching images found for audios');
                 }
+              } else {
+                console.log('SVGA Parser: No audios found in movieData');
               }
             } catch (decodeErr) {
-              // 静默失败
+              console.error('SVGA Parser: Decode error', decodeErr);
             }
           });
         } catch (err) {
@@ -4445,7 +4319,7 @@ function initApp() {
           // 应用到播放器预览
           this.applyReplacedMaterials();
 
-          this.showToast('压缩完成，共压缩 ' + total + ' 个素材');
+          SvgaPreview.Utils.showToast('压缩完成，共压缩 ' + total + ' 个素材');
 
         } catch (err) {
           console.error('压缩失败:', err);
@@ -4483,7 +4357,7 @@ function initApp() {
         // 应用到播放器预览
         this.applyReplacedMaterials();
 
-        this.showToast('已撤销压缩');
+        SvgaPreview.Utils.showToast('已撤销压缩');
       },
 
       /**
@@ -4699,7 +4573,7 @@ function initApp() {
                   }).then(function (blob) {
                     var originalName = _this.svga.fileInfo.name.replace(/\.svga$/i, '');
                     _this.utils.downloadFile(blob, originalName + '_modified.svga');
-                    _this.showToast('导出成功！已替换 ' + replacedCount + ' 个素材。');
+                    SvgaPreview.Utils.showToast('导出成功！已替换 ' + replacedCount + ' 个素材。');
                   }).catch(function (err) {
                     console.error('编码失败:', err);
                     alert('编码失败: ' + err.message);
@@ -5680,11 +5554,11 @@ function initApp() {
 
         // 验证输入
         if (isNaN(frameNum)) {
-          this.showToast('请输入有效的帧数');
+          SvgaPreview.Utils.showToast('请输入有效的帧数');
           return;
         }
         if (frameNum < 0 || frameNum > totalFrames) {
-          this.showToast('帧数范围: 0-' + totalFrames);
+          SvgaPreview.Utils.showToast('帧数范围: 0-' + totalFrames);
           return;
         }
 
@@ -5694,7 +5568,7 @@ function initApp() {
         // 检查是否与其他K帧重复
         for (var i = 0; i < keyframes.length; i++) {
           if (i !== index && keyframes[i].originalFrame === frameNum) {
-            this.showToast('该帧数已存在K帧');
+            SvgaPreview.Utils.showToast('该帧数已存在K帧');
             return;
           }
         }
@@ -5779,9 +5653,9 @@ function initApp() {
 
         // 显示提示
         if (hasOutOfRange) {
-          this.showToast('超出变速范围' + MIN_SPEED + '-' + MAX_SPEED + '，已自动调整为范围内速度');
+          SvgaPreview.Utils.showToast('超出变速范围' + MIN_SPEED + '-' + MAX_SPEED + '，已自动调整为范围内速度');
         } else if (hasSpeedChange) {
-          this.showToast('变速配置已应用');
+          SvgaPreview.Utils.showToast('变速配置已应用');
         }
 
         if (hasSpeedChange) {
@@ -5889,7 +5763,7 @@ function initApp() {
 
         // 限制最多10个K帧
         if (keyframes.length >= 10) {
-          this.showToast('最多支持10个关键帧');
+          SvgaPreview.Utils.showToast('最多支持10个关键帧');
           return;
         }
 
@@ -7048,6 +6922,11 @@ function initApp() {
         }
 
         try {
+          var taskId = this.taskManager.register('MP4转SVGA', function () {
+            _this.isConvertingMp4ToSvga = false;
+            _this.mp4ToSvgaProgress = 0;
+            _this.mp4ToSvgaCancelled = true;
+          });
           this.isConvertingMp4ToSvga = true;
           this.mp4ToSvgaProgress = 0;
           this.mp4ToSvgaCancelled = false;
@@ -7057,7 +6936,10 @@ function initApp() {
           // 加载必要的库
           await this.loadLibrary(['protobuf', 'pako'], false);
 
-          if (this.mp4ToSvgaCancelled) return;
+          if (this.mp4ToSvgaCancelled) {
+            this.taskManager.finish(taskId);
+            return;
+          }
 
           this.mp4ToSvgaStage = 'extracting';
           this.mp4ToSvgaMessage = '提取帧...';
@@ -7067,6 +6949,7 @@ function initApp() {
 
           if (this.mp4ToSvgaCancelled) {
             frames = null;
+            this.taskManager.finish(taskId);
             return;
           }
 
@@ -7141,7 +7024,10 @@ function initApp() {
             cancelledField: 'mp4ToSvgaCancelled'
           });
 
-          if (this.mp4ToSvgaCancelled) return;
+          if (this.mp4ToSvgaCancelled) {
+            this.taskManager.finish(taskId);
+            return;
+          }
 
           // 下载文件
           var originalName = (this.mp4.fileInfo.name || 'video').replace(/\.[^.]+$/, '');
@@ -7164,7 +7050,10 @@ function initApp() {
             _this.mp4ToSvgaMessage = '';
           }, 1000);
 
+          this.taskManager.finish(taskId);
+
         } catch (error) {
+          this.taskManager.finish(taskId);
           if (error.message === 'FFmpeg服务正忙，请稍后再试') {
             alert('FFmpeg服务正忙，请稍后再试');
           } else {
@@ -7411,16 +7300,28 @@ function initApp() {
         this.lottieToSvgaStage = 'loading';
         this.lottieToSvgaMessage = '加载库...';
 
+        var taskId = this.taskManager.register('Lottie转SVGA', function () {
+          _this.isConvertingLottieToSvga = false;
+          _this.lottieToSvgaProgress = 0;
+          _this.lottieToSvgaCancelled = true;
+        });
+
         try {
           await this.loadLibrary(['protobuf', 'pako'], false);
-          if (this.lottieToSvgaCancelled) return;
+          if (this.lottieToSvgaCancelled) {
+            this.taskManager.finish(taskId);
+            return;
+          }
 
           this.lottieToSvgaStage = 'extracting';
           this.lottieToSvgaMessage = '提取帧...';
 
           // 提取帧
           var frames = await this.extractLottieFramesForSvga();
-          if (this.lottieToSvgaCancelled) return;
+          if (this.lottieToSvgaCancelled) {
+            this.taskManager.finish(taskId);
+            return;
+          }
 
           this.lottieToSvgaStage = 'building';
           this.lottieToSvgaMessage = '生成SVGA...';
@@ -7442,7 +7343,10 @@ function initApp() {
             cancelledField: 'lottieToSvgaCancelled'
           });
 
-          if (this.lottieToSvgaCancelled) return;
+          if (this.lottieToSvgaCancelled) {
+            this.taskManager.finish(taskId);
+            return;
+          }
 
           // 下载文件
           var originalName = (this.lottie.file.name || 'animation').replace(/\.[^.]+$/, '');
@@ -7461,7 +7365,10 @@ function initApp() {
             _this.lottieToSvgaMessage = '';
           }, 1000);
 
+          this.taskManager.finish(taskId);
+
         } catch (error) {
+          this.taskManager.finish(taskId);
           if (error.message === 'FFmpeg服务正忙，请稍后再试') {
             alert('FFmpeg服务正忙，请稍后再试');
           } else {
@@ -7646,9 +7553,18 @@ function initApp() {
         this.framesToSvgaStage = 'loading';
         this.framesToSvgaMessage = '加载库...';
 
+        var taskId = this.taskManager.register('序列帧转SVGA', function () {
+          _this.isConvertingFramesToSvga = false;
+          _this.framesToSvgaProgress = 0;
+          _this.framesToSvgaCancelled = true;
+        });
+
         try {
           await this.loadLibrary(['protobuf', 'pako'], false);
-          if (this.framesToSvgaCancelled) return;
+          if (this.framesToSvgaCancelled) {
+            this.taskManager.finish(taskId);
+            return;
+          }
 
           this.framesToSvgaStage = 'extracting';
           this.framesToSvgaMessage = '处理帧...';
@@ -7657,12 +7573,18 @@ function initApp() {
           var frames = [];
           var files = this.frames.files;
           for (var i = 0; i < files.length; i++) {
-            if (this.framesToSvgaCancelled) break;
+            if (this.framesToSvgaCancelled) {
+              this.taskManager.finish(taskId);
+              break;
+            }
             frames.push({ index: i, blob: files[i] });
             _this.framesToSvgaProgress = Math.round((i / files.length) * 50);
           }
 
-          if (this.framesToSvgaCancelled) return;
+          if (this.framesToSvgaCancelled) {
+            this.taskManager.finish(taskId);
+            return;
+          }
 
           this.framesToSvgaStage = 'building';
 
@@ -7688,7 +7610,10 @@ function initApp() {
             cancelledField: 'framesToSvgaCancelled'
           });
 
-          if (this.framesToSvgaCancelled) return;
+          if (this.framesToSvgaCancelled) {
+            this.taskManager.finish(taskId);
+            return;
+          }
 
           // 下载文件
           this.downloadSVGA(svgaBlob, 'sequence.svga');
@@ -7706,7 +7631,10 @@ function initApp() {
             _this.framesToSvgaMessage = '';
           }, 1000);
 
+          this.taskManager.finish(taskId);
+
         } catch (error) {
+          this.taskManager.finish(taskId);
           if (error.message === 'FFmpeg服务正忙，请稍后再试') {
             alert('FFmpeg服务正忙，请稍后再试');
           } else {
@@ -8875,7 +8803,11 @@ function initApp() {
       // 检测当前动画是否包含音频
       hasAudio: function () {
         if (this.currentModule === 'svga') {
-          // SVGA: 检查是否有音频数据
+          // SVGA: 优先检查解析后的 VideoItem 是否有音频
+          if (this.originalVideoItem && this.originalVideoItem.audios && this.originalVideoItem.audios.length > 0) {
+            return true;
+          }
+          // 降级检查：检查手动提取的音频数据
           return this.svgaAudioData !== null ||
             (this.svgaMovieData && this.svgaMovieData.audios && this.svgaMovieData.audios.length > 0);
         } else if (this.currentModule === 'yyeva') {
@@ -9351,6 +9283,7 @@ function initApp() {
     created: function () {
       // 初始化非响应式属性（避免Vue深度代理导致的性能问题）
       this.libraryLoader = Core.libraryLoader;
+      this.resourceManager = Core.resourceManager;
       this.playerController = null;
 
       // 初始化文件验证器和工具库
@@ -9362,6 +9295,52 @@ function initApp() {
         this.configManager = new Core.ConfigManager();
         this.loadUserConfig();
       }
+
+      /**
+       * [模式策略配置表]
+       * 用于定义不同模式下的清理逻辑。
+       * 当 switchMode 发生时，会根据当前的 currentModule 查找对应的策略并执行 cleanup。
+       * 
+       * [开发指南]
+       * 1. 新增模式：如果增加了新的文件类型支持（如 gif），请在此处添加对应的 key 和 cleanup 方法。
+       * 2. 方法对应：确保 cleanup 指向的是 methods 中实际定义的清理函数。
+       * 3. 上下文：执行时会自动绑定 this 到 Vue 实例，无需手动 bind。
+       */
+      this.modeStrategies = {
+        'svga': { cleanup: this.cleanupSvga },
+        'yyeva': { cleanup: this.cleanupYyeva }, // 双通道MP4模式
+        'mp4': { cleanup: this.cleanupMp4 },     // 普通MP4模式
+        'lottie': { cleanup: this.cleanupLottie },
+        'frames': { cleanup: this.cleanupFrames }
+      };
+
+      // 从 URL 参数加载文件
+      var urlParams = new URLSearchParams(window.location.search);
+      var fileUrl = urlParams.get('src') || urlParams.get('file');
+
+      if (fileUrl) {
+        var _this = this;
+        // 如果是相对路径，转换为绝对路径（解决跨域问题）
+        if (fileUrl.indexOf('http') !== 0) {
+          var a = document.createElement('a');
+          a.href = fileUrl;
+          fileUrl = a.href;
+        }
+
+        fetch(fileUrl)
+          .then(function (res) { return res.blob(); })
+          .then(function (blob) {
+            var file = new File([blob], fileUrl.split('/').pop(), { type: blob.type });
+            // 使用统一的文件处理逻辑
+            _this.handleFile(file);
+          })
+          .catch(function (err) {
+            console.error('加载URL文件失败:', err);
+          });
+      }
+
+      // 任务管理器
+      this.taskManager = Core.taskManager;
 
       // SVGA
       this.svgaPlayer = null;
