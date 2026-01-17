@@ -109,7 +109,7 @@
 
 // 启动应用：先加载Vue和SVGA播放器，再创建Vue实例
 function initApp() {
-  // 引入命名空间
+  // 引入命名空间 
   var SP = window.SvgaPreview || {};
   var Utils = SP.Utils;
   var Core = SP.Core;
