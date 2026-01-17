@@ -35,6 +35,10 @@
 (function (window) {
     'use strict';
 
+    // Ensure namespace
+    window.SvgaPreview = window.SvgaPreview || {};
+    window.SvgaPreview.Services = window.SvgaPreview.Services || {};
+
     /**
      * 文件验证器构造函数
      * @param {Object} libraryLoader - 库加载器实例
@@ -138,16 +142,16 @@
                     // 1. 优先尝试读取 manifest.json (标准 .lottie 格式)
                     var manifestFile = zip.file('manifest.json');
                     if (manifestFile) {
-                        manifestFile.async('text').then(function(manifestText) {
+                        manifestFile.async('text').then(function (manifestText) {
                             try {
                                 var manifest = JSON.parse(manifestText);
                                 var animPath = '';
-                                
+
                                 // 获取主动画路径
                                 if (manifest.animations && manifest.animations.length > 0) {
                                     var activeId = manifest.activeAnimationId;
                                     var targetAnim = manifest.animations[0]; // 默认取第一个
-                                    
+
                                     // 如果有指定激活的动画ID，则查找对应动画
                                     if (activeId) {
                                         for (var k = 0; k < manifest.animations.length; k++) {
@@ -157,10 +161,10 @@
                                             }
                                         }
                                     }
-                                    
+
                                     // 拼接路径：.lottie 规范中通常在 animations/ 目录下
                                     animPath = 'animations/' + targetAnim.id + '.json';
-                                    
+
                                     // 尝试直接读取（有些非标准包可能直接放在根目录或路径不同）
                                     if (!zip.file(animPath)) {
                                         // 尝试直接用 id 作为文件名
@@ -171,7 +175,7 @@
                                         }
                                     }
                                 }
-                                
+
                                 if (animPath && zip.file(animPath)) {
                                     _this._readZipJsonFile(zip, animPath, file, resolve, reject);
                                 } else {
@@ -182,7 +186,7 @@
                                 // Manifest 解析失败，回退到遍历查找
                                 _this._findAndReadAnyJson(zip, file, resolve, reject);
                             }
-                        }).catch(function() {
+                        }).catch(function () {
                             _this._findAndReadAnyJson(zip, file, resolve, reject);
                         });
                     } else {
@@ -206,7 +210,7 @@
      * 辅助方法：遍历查找并读取任意 JSON 文件
      * @private
      */
-    FileValidator.prototype._findAndReadAnyJson = function(zip, file, resolve, reject) {
+    FileValidator.prototype._findAndReadAnyJson = function (zip, file, resolve, reject) {
         var _this = this;
         var jsonFiles = [];
         zip.forEach(function (relativePath, file) {
@@ -228,7 +232,7 @@
                 break;
             }
         }
-        
+
         _this._readZipJsonFile(zip, targetFile, file, resolve, reject);
     };
 
@@ -236,13 +240,13 @@
      * 辅助方法：读取 ZIP 中的 JSON 文件并验证
      * @private
      */
-    FileValidator.prototype._readZipJsonFile = function(zip, filePath, file, resolve, reject) {
+    FileValidator.prototype._readZipJsonFile = function (zip, filePath, file, resolve, reject) {
         var _this = this;
         zip.file(filePath).async('text').then(function (jsonText) {
             try {
                 var data = JSON.parse(jsonText);
                 var animationData = data;
-                
+
                 // 兼容旧的包装格式
                 if (data.animations && Array.isArray(data.animations) && data.animations.length > 0) {
                     if (data.animations[0].data) {
@@ -251,7 +255,7 @@
                         animationData = data.animations[0].animation;
                     }
                 }
-                
+
                 _this._validateLottieAnimationData(animationData, file, resolve, reject);
             } catch (err) {
                 reject('JSON解析失败：' + err.message);
@@ -310,11 +314,11 @@
      */
     FileValidator.prototype._validateYyeva = function (file, resolve, reject) {
         var _this = this;
-        
+
         // 使用 detectMp4Type 进行严格检测
-        this.detectMp4Type(file, function(isDualChannel, alphaPosition) {
+        this.detectMp4Type(file, function (isDualChannel, alphaPosition) {
             if (isDualChannel) {
-                resolve({ 
+                resolve({
                     file: file,
                     isDualChannel: true,
                     alphaDirection: alphaPosition
@@ -392,19 +396,19 @@
 
             // 创建临时canvas用于分析
             var canvas = document.createElement('canvas');
-            
+
             // 性能优化：限制分析分辨率
             // 将分析宽度限制在 320px 以内，大幅提升大分辨率视频的检测速度
             var MAX_ANALYZE_WIDTH = 320;
             var scale = Math.min(1, MAX_ANALYZE_WIDTH / videoWidth);
-            
+
             // 确保尺寸至少为 1
             var analyzeWidth = Math.max(1, Math.floor(videoWidth * scale));
             var analyzeHeight = Math.max(1, Math.floor(videoHeight * scale));
-            
+
             canvas.width = analyzeWidth;
             canvas.height = analyzeHeight;
-            
+
             var ctx = canvas.getContext('2d', { willReadFrequently: true });
 
             var frameIndex = 0;
@@ -421,7 +425,7 @@
                 // 抖样计算（步长根据尺寸动态调整，保证性能）
                 // 缩小后的图片像素已经很少，可以减小步长或不跳过
                 var step = 4; // 每次跳过一个像素（RGBA是4字节，所以+4是下一个像素）
-                
+
                 for (var i = 0; i < data.length; i += step) {
                     var r = data[i] / 255;
                     var g = data[i + 1] / 255;
@@ -506,22 +510,22 @@
                 var position = CONFIG.checkFramePositions[frameIndex];
                 // 确保 seek 位置有效
                 if (!isFinite(duration) || duration <= 0) {
-                     // 无法获取时长，仅检测第一帧（当前位置）
-                     if (frameIndex === 0) {
-                         var frameAlphaPosition = analyzeFrame();
-                         if (frameAlphaPosition) {
-                             isDualChannel = true;
-                             alphaPosition = frameAlphaPosition;
-                         }
-                         cleanup();
-                         callback(isDualChannel, alphaPosition);
-                     } else {
-                         cleanup();
-                         callback(isDualChannel, alphaPosition);
-                     }
-                     return;
+                    // 无法获取时长，仅检测第一帧（当前位置）
+                    if (frameIndex === 0) {
+                        var frameAlphaPosition = analyzeFrame();
+                        if (frameAlphaPosition) {
+                            isDualChannel = true;
+                            alphaPosition = frameAlphaPosition;
+                        }
+                        cleanup();
+                        callback(isDualChannel, alphaPosition);
+                    } else {
+                        cleanup();
+                        callback(isDualChannel, alphaPosition);
+                    }
+                    return;
                 }
-                
+
                 video.currentTime = duration * position;
             }
 
@@ -604,7 +608,7 @@
         return (maxSeq - minSeq + 1) <= imageFiles.length * 1.5; // 允许50%的缺失容忍度
     };
 
-    // 导出到全局
-    window.FileValidator = FileValidator;
+    // 导出到全局命名空间
+    window.SvgaPreview.Services.FileValidator = FileValidator;
 
 })(window);

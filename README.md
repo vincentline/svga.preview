@@ -1,12 +1,12 @@
-# SVGA、双通道MP4、Lottie 动画在线预览与转换工具
+# MeeWoo - SVGA、双通道MP4、Lottie 动画在线预览与转换工具
 
-一个面向设计师与前端工程师的 **在线动画预览与格式转换工具**，支持 SVGA、双通道 MP4（YYEVA 风格）、Lottie 多种动画格式，并提供素材替换与导出能力。
+**MeeWoo** 是一个面向设计师与前端工程师的 **在线动画预览与格式转换工具**，支持 SVGA、双通道 MP4（YYEVA 风格）、Lottie 多种动画格式，并提供素材替换与导出能力。
 
 ---
 
 ## 在线地址
 
-- 页面入口：<https://svga.saysth.design/>
+- 页面入口：<https://www.meewoo.me/>
 
 （打开即用，无需安装或下载依赖。）
 

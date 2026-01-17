@@ -18,8 +18,9 @@
  * 使用示例：
  *   // 初始化
  *   await FFmpegService.init({ 
- *     corePath: 'path/to/ffmpeg-core.js', // 可选，自定义core路径
- *     log: true // 可选，开启日志
+ *     corePath: 'assets/libs/ffmpeg-core.js',
+ *     workerPath: 'assets/libs/ffmpeg-core.worker.js',
+ *     wasmPath: 'assets/libs/ffmpeg-core.wasm'
  *   });
  * 
  *   // 提取音频
@@ -47,6 +48,10 @@
  */
 (function (window) {
     'use strict';
+
+    // Ensure namespace
+    window.SvgaPreview = window.SvgaPreview || {};
+    window.SvgaPreview.Services = window.SvgaPreview.Services || {};
 
     var FFmpegService = {
         // ==================== 状态管理 ====================
@@ -129,9 +134,9 @@
                 if (typeof FFmpeg === 'undefined' || typeof FFmpeg.createFFmpeg === 'undefined') {
                     onProgress({ stage: 'loading-library', progress: 0.1, message: '正在加载FFmpeg库...' });
 
-                    if (window.libraryLoader) {
+                    if (window.SvgaPreview.Core.libraryLoader) {
                         // 使用 library-loader 加载，支持优先级
-                        await window.libraryLoader.load(['ffmpeg'], highPriority);
+                        await window.SvgaPreview.Core.libraryLoader.load(['ffmpeg'], highPriority);
                     } else {
                         // 降级：手动加载
                         await this._loadFFmpegLibrary();
@@ -201,43 +206,43 @@
          * 动态加载FFmpeg库
          * @private
          */
-    // 30秒超时，增加备用源支持
-    _loadFFmpegLibrary: async function () {
-      var loadScript = function (url) {
-        return new Promise(function (resolve, reject) {
-          var timer = setTimeout(function () {
-            reject(new Error('加载超时(30s): ' + url));
-          }, 30000);
+        // 30秒超时，增加备用源支持
+        _loadFFmpegLibrary: async function () {
+            var loadScript = function (url) {
+                return new Promise(function (resolve, reject) {
+                    var timer = setTimeout(function () {
+                        reject(new Error('加载超时(30s): ' + url));
+                    }, 30000);
 
-          var script = document.createElement('script');
-          script.src = url;
-          script.onload = function () {
-            clearTimeout(timer);
-            resolve();
-          };
-          script.onerror = function () {
-            clearTimeout(timer);
-            reject(new Error('加载失败: ' + url));
-          };
-          document.head.appendChild(script);
-        });
-      };
+                    var script = document.createElement('script');
+                    script.src = url;
+                    script.onload = function () {
+                        clearTimeout(timer);
+                        resolve();
+                    };
+                    script.onerror = function () {
+                        clearTimeout(timer);
+                        reject(new Error('加载失败: ' + url));
+                    };
+                    document.head.appendChild(script);
+                });
+            };
 
-      var primary = 'https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js';
-      var backup = 'https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js';
+            var primary = 'https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js';
+            var backup = 'https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js';
 
-      try {
-        await loadScript(primary);
-      } catch (e) {
-        console.warn('FFmpeg主线路加载失败，尝试备用线路:', e.message);
-        await loadScript(backup);
-      }
+            try {
+                await loadScript(primary);
+            } catch (e) {
+                console.warn('FFmpeg主线路加载失败，尝试备用线路:', e.message);
+                await loadScript(backup);
+            }
 
-      // 再次确认对象是否存在
-      if (typeof FFmpeg === 'undefined' || typeof FFmpeg.createFFmpeg === 'undefined') {
-        throw new Error('FFmpeg库加载成功但对象未找到');
-      }
-    },
+            // 再次确认对象是否存在
+            if (typeof FFmpeg === 'undefined' || typeof FFmpeg.createFFmpeg === 'undefined') {
+                throw new Error('FFmpeg库加载成功但对象未找到');
+            }
+        },
 
         /**
          * ==================== 音频处理 ====================
@@ -354,26 +359,26 @@
          * @returns {String} - FFmpeg atempo滤镜字符串
          */
         buildAudioTempoFilter: function (speedRatio) {
-          // 限制变速范围 0.2 - 12.0
-          if (speedRatio < 0.2) {
-            console.warn('音频变速比例 ' + speedRatio + ' 过小，强制限制为 0.2');
-            speedRatio = 0.2;
-          } else if (speedRatio > 12.0) {
-            console.warn('音频变速比例 ' + speedRatio + ' 过大，强制限制为 12.0');
-            speedRatio = 12.0;
-          }
+            // 限制变速范围 0.2 - 12.0
+            if (speedRatio < 0.2) {
+                console.warn('音频变速比例 ' + speedRatio + ' 过小，强制限制为 0.2');
+                speedRatio = 0.2;
+            } else if (speedRatio > 12.0) {
+                console.warn('音频变速比例 ' + speedRatio + ' 过大，强制限制为 12.0');
+                speedRatio = 12.0;
+            }
 
-          if (speedRatio >= 0.5 && speedRatio <= 2.0) {
-            // 在范围内，直接使用
-            return 'atempo=' + speedRatio.toFixed(4);
-          }
+            if (speedRatio >= 0.5 && speedRatio <= 2.0) {
+                // 在范围内，直接使用
+                return 'atempo=' + speedRatio.toFixed(4);
+            }
 
-      // 超出范围，需要链式处理
-      var filters = [];
-      // 降级日志级别，因为这是正常支持的逻辑
-      console.log('音频变速比例 ' + speedRatio.toFixed(4) + ' 超出 0.5-2.0 范围，正在构建链式滤镜');
+            // 超出范围，需要链式处理
+            var filters = [];
+            // 降级日志级别，因为这是正常支持的逻辑
+            console.log('音频变速比例 ' + speedRatio.toFixed(4) + ' 超出 0.5-2.0 范围，正在构建链式滤镜');
 
-      var remaining = speedRatio;
+            var remaining = speedRatio;
 
             // 处理大于2.0的情况
             while (remaining > 2.0) {
@@ -503,19 +508,19 @@
 
                 // 3. 分段提取并变速
                 var segmentFiles = [];
-        var validSegments = segments.filter(seg => {
-          var adjustedStartTime = Math.max(0, Math.min(seg.startTime, originalDuration));
-          var adjustedDuration = Math.min(seg.duration, originalDuration - adjustedStartTime);
-          return adjustedDuration > 0;
-        });
+                var validSegments = segments.filter(seg => {
+                    var adjustedStartTime = Math.max(0, Math.min(seg.startTime, originalDuration));
+                    var adjustedDuration = Math.min(seg.duration, originalDuration - adjustedStartTime);
+                    return adjustedDuration > 0;
+                });
 
-        if (validSegments.length === 0) {
-          console.warn('无有效音频段(调整后)');
-          ffmpeg.FS('unlink', inputFileName);
-          return null;
-        }
+                if (validSegments.length === 0) {
+                    console.warn('无有效音频段(调整后)');
+                    ffmpeg.FS('unlink', inputFileName);
+                    return null;
+                }
 
-        var progressPerSegment = 0.6 / validSegments.length;
+                var progressPerSegment = 0.6 / validSegments.length;
 
                 for (var i = 0; i < segments.length; i++) {
                     var seg = segments[i];
@@ -800,29 +805,29 @@
                         frameData = new Uint8Array(await frameData.arrayBuffer());
                     }
 
-          // 确保是 Uint8Array
-          if (!(frameData instanceof Uint8Array)) {
-            frameData = new Uint8Array(frameData);
-          }
+                    // 确保是 Uint8Array
+                    if (!(frameData instanceof Uint8Array)) {
+                        frameData = new Uint8Array(frameData);
+                    }
 
-          ffmpeg.FS('writeFile', frameName, frameData);
+                    ffmpeg.FS('writeFile', frameName, frameData);
 
                     if (i % 5 === 0) {
                         onProgress(0.4 * (i / frameCount));
                     }
                 }
 
-        // 2. 写入音频数据 (如果有)
-        var hasAudio = false;
-        if (audioData && audioData.length > 0) {
-          // 确保是 Uint8Array
-          var audioDataToWrite = audioData;
-          if (!(audioData instanceof Uint8Array)) {
-            audioDataToWrite = new Uint8Array(audioData);
-          }
-          ffmpeg.FS('writeFile', audioName, audioDataToWrite);
-          hasAudio = true;
-        }
+                // 2. 写入音频数据 (如果有)
+                var hasAudio = false;
+                if (audioData && audioData.length > 0) {
+                    // 确保是 Uint8Array
+                    var audioDataToWrite = audioData;
+                    if (!(audioData instanceof Uint8Array)) {
+                        audioDataToWrite = new Uint8Array(audioData);
+                    }
+                    ffmpeg.FS('writeFile', audioName, audioDataToWrite);
+                    hasAudio = true;
+                }
 
                 // 3. 构建FFmpeg命令
                 onProgress(0.45);
@@ -893,34 +898,34 @@
                 var data = ffmpeg.FS('readFile', outputName);
                 var blob = new Blob([data.buffer], { type: 'video/mp4' });
 
-        // 6. 清理文件
-        // 只清理已生成的文件
-        var filesToClean = [outputName];
-        if (hasAudio) filesToClean.push(audioName);
+                // 6. 清理文件
+                // 只清理已生成的文件
+                var filesToClean = [outputName];
+                if (hasAudio) filesToClean.push(audioName);
 
-        // 批量清理帧文件 (只清理已处理的)
-        for (var i = 0; i < frameCount; i++) {
-          filesToClean.push('frame_' + String(i).padStart(6, '0') + '.jpg');
-        }
-        this._cleanupFiles(filesToClean);
+                // 批量清理帧文件 (只清理已处理的)
+                for (var i = 0; i < frameCount; i++) {
+                    filesToClean.push('frame_' + String(i).padStart(6, '0') + '.jpg');
+                }
+                this._cleanupFiles(filesToClean);
 
-        onProgress(1.0);
-        return blob;
+                onProgress(1.0);
+                return blob;
 
-      } catch (error) {
-        // 错误清理
-        var cleanupList = [outputName, audioName];
-        // 仅清理可能已创建的帧 (保守估计全部，因为无法精确知道哪一帧失败前已创建)
-        // 但为了避免几千次 unlink 异常，这里可以只清理前 i 帧? 
-        // 简单起见，还是清理所有可能的，但在 _cleanupFiles 里我们要保证不报错
-        for (var i = 0; i < frameCount; i++) {
-          cleanupList.push('frame_' + String(i).padStart(6, '0') + '.jpg');
-        }
-        this._cleanupFiles(cleanupList);
+            } catch (error) {
+                // 错误清理
+                var cleanupList = [outputName, audioName];
+                // 仅清理可能已创建的帧 (保守估计全部，因为无法精确知道哪一帧失败前已创建)
+                // 但为了避免几千次 unlink 异常，这里可以只清理前 i 帧? 
+                // 简单起见，还是清理所有可能的，但在 _cleanupFiles 里我们要保证不报错
+                for (var i = 0; i < frameCount; i++) {
+                    cleanupList.push('frame_' + String(i).padStart(6, '0') + '.jpg');
+                }
+                this._cleanupFiles(cleanupList);
 
-        if (error.message === '用户取消') throw error;
-        throw error;
-      } finally {
+                if (error.message === '用户取消') throw error;
+                throw error;
+            } finally {
                 // 清除进度回调
                 if (this.ffmpeg) {
                     this.ffmpeg.setProgress(function () { });
@@ -1047,7 +1052,7 @@
         }
     };
 
-    // 导出到全局
-    window.FFmpegService = FFmpegService;
+    // 导出到全局命名空间
+    window.SvgaPreview.Services.FFmpegService = FFmpegService;
 
 })(window);

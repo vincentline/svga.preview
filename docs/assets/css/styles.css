@@ -290,8 +290,8 @@ body.dark-mode .nav-link {
 }
 
 body.dark-mode .header-navbar {
-  background-color: none;
-  border-bottom-color: none;
+  background-color: transparent;
+  border-bottom-color: transparent;
 }
 
 .header-navbar-title {

@@ -13,6 +13,10 @@
 (function(global) {
   'use strict';
 
+  // Ensure namespace
+  window.SvgaPreview = window.SvgaPreview || {};
+  window.SvgaPreview.Services = window.SvgaPreview.Services || {};
+
   var DualChannelComposer = {
     
     /**
@@ -190,7 +194,7 @@
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = DualChannelComposer;
   } else {
-    global.DualChannelComposer = DualChannelComposer;
+    global.SvgaPreview.Services.DualChannelComposer = DualChannelComposer;
   }
 
 })(typeof window !== 'undefined' ? window : this);

@@ -23,8 +23,12 @@
  * - ad-controller.js：负责"根据配置操作 DOM"
  */
 
-(function(window) {
+(function (window) {
     'use strict';
+
+    // Ensure namespace
+    window.SvgaPreview = window.SvgaPreview || {};
+    window.SvgaPreview.Controllers = window.SvgaPreview.Controllers || {};
 
     /**
      * 广告位管理器
@@ -48,7 +52,9 @@
             }
 
             // 等待站点配置加载完成（SiteConfigLoader 会自动去拉远程 JSON）
-            await window.SiteConfigLoader.ready();
+            if (window.SvgaPreview && window.SvgaPreview.Core && window.SvgaPreview.Core.SiteConfig) {
+                await window.SvgaPreview.Core.SiteConfig.ready();
+            }
 
             // 查找所有广告位容器
             this.findAdContainers();
@@ -97,7 +103,7 @@
          */
         applyConfig() {
             const adConfig = window.SiteConfigLoader.getFeature('advertisement');
-            
+
             if (!adConfig) {
                 this.hideAllAds();
                 return;
@@ -123,7 +129,7 @@
             if (container) {
                 container.style.display = 'block';
                 container.setAttribute('data-ad-visible', 'true');
-                
+
                 // 初始化 Google AdSense 广告
                 this.initAdSense(container);
             } else {
@@ -168,7 +174,7 @@
             script.async = true;
             script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9291089781078791';
             script.crossOrigin = 'anonymous';
-            
+
             script.onerror = (e) => {
                 console.warn('[AdController] AdSense 脚本加载失败或被拦截 (正常现象):', e);
             };
@@ -213,17 +219,17 @@
         }
     }
 
-    // 创建全局实例：window.AdController
-    window.AdController = new AdController();
+    // 创建全局实例：window.SvgaPreview.Controllers.AdController
+    window.SvgaPreview.Controllers.AdController = new AdController();
 
     // 页面加载完成后自动初始化广告控制
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
-            window.AdController.init();
+            window.SvgaPreview.Controllers.AdController.init();
         });
     } else {
         // DOM已加载完成，立即初始化
-        window.AdController.init();
+        window.SvgaPreview.Controllers.AdController.init();
     }
 
 })(window);

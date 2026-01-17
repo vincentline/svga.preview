@@ -109,6 +109,15 @@
 
 // 启动应用：先加载Vue和SVGA播放器，再创建Vue实例
 function initApp() {
+  // 引入命名空间
+  var SP = window.SvgaPreview || {};
+  var Utils = SP.Utils;
+  var Core = SP.Core;
+  var Controllers = SP.Controllers;
+  var Services = SP.Services;
+  var Mixins = SP.Mixins;
+  var Exporters = SP.Exporters;
+
   // 捕获全局错误
   Vue.config.errorHandler = function (err, vm, info) {
     console.error('[Vue Error] ' + err.toString(), info);
@@ -117,7 +126,7 @@ function initApp() {
 
   var vueInstance = new Vue({
     el: '#app',
-    mixins: [MaterialEditor],
+    mixins: [Mixins.MaterialEditor],
     data: function () {
       return {
         currentModule: 'svga', // 'svga' | 'yyeva' | 'lottie' | 'mp4' | 'frames'
@@ -947,14 +956,14 @@ function initApp() {
        * @returns {Promise}
        */
       loadLibrary: function (libKeys, highPriority) {
-        return window.libraryLoader.load(libKeys, highPriority);
+        return Core.libraryLoader.load(libKeys, highPriority);
       },
 
       /**
        * 预加载非关键库
        */
       preloadLibraries: function () {
-        window.libraryLoader.preload();
+        Core.libraryLoader.preload();
       },
 
       /* ==================== 文件加载与拖拽上传 ==================== */
@@ -1521,7 +1530,7 @@ function initApp() {
         this.svga.file = Object.freeze(file);
         this.svga.fileInfo.name = file.name;
         this.svga.fileInfo.size = file.size;
-        this.svga.fileInfo.sizeText = this.formatBytes(file.size);
+        this.svga.fileInfo.sizeText = this.utils.formatBytes(file.size);
         this.originalVideoItem = videoItem;
 
         // 提取素材列表
@@ -1634,7 +1643,7 @@ function initApp() {
         this.lottie.frameRate = frameRate;
         this.lottie.fileInfo.name = file.name;
         this.lottie.fileInfo.size = file.size;
-        this.lottie.fileInfo.sizeText = this.formatBytes(file.size);
+        this.lottie.fileInfo.sizeText = this.utils.formatBytes(file.size);
         this.lottie.fileInfo.fps = frameRate + ' FPS';
         this.lottie.fileInfo.sizeWH = width + 'x' + height;
         this.lottie.fileInfo.width = width;
@@ -1696,7 +1705,7 @@ function initApp() {
         this.yyeva.file = Object.freeze(file);
         this.yyeva.fileInfo.name = file.name;
         this.yyeva.fileInfo.size = file.size;
-        this.yyeva.fileInfo.sizeText = this.formatBytes(file.size);
+        this.yyeva.fileInfo.sizeText = this.utils.formatBytes(file.size);
 
         // 启动过渡
         this.footerTransitioning = true;
@@ -1845,7 +1854,7 @@ function initApp() {
         this.mp4.file = Object.freeze(file);
         this.mp4.fileInfo.name = file.name;
         this.mp4.fileInfo.size = file.size;
-        this.mp4.fileInfo.sizeText = this.formatBytes(file.size);
+        this.mp4.fileInfo.sizeText = this.utils.formatBytes(file.size);
 
         // 创建objectUrl
         this.mp4ObjectUrl = URL.createObjectURL(file);
@@ -2022,7 +2031,7 @@ function initApp() {
         this.openRightPanel('showStandardMp4Panel');
 
         // 预加载FFmpeg库 (高优先级插队)
-        FFmpegService.init({ highPriority: true }).catch(function (e) {
+        Services.FFmpegService.init({ highPriority: true }).catch(function (e) {
           console.warn('FFmpeg预加载失败:', e);
         });
       },
@@ -2075,7 +2084,7 @@ function initApp() {
 
         // 初始化FFmpeg
         try {
-          await FFmpegService.init();
+          await Services.FFmpegService.init();
         } catch (e) {
           alert('FFmpeg加载失败：' + e.message);
           this.isConvertingStandardMp4 = false;
@@ -2221,7 +2230,7 @@ function initApp() {
 
           // 开始转换
           this.standardMp4Message = 'FFmpeg转换中...';
-          var mp4Blob = await FFmpegService.convertFramesToMp4({
+          var mp4Blob = await Services.FFmpegService.convertFramesToMp4({
             frames: frames,
             fps: exportFps,
             quality: config.quality,
@@ -2284,7 +2293,7 @@ function initApp() {
           var progressThumb = _this.$refs.progressThumb;
 
           if (progressBar && progressThumb) {
-            _this.playerController = new PlayerController({
+            _this.playerController = new Controllers.PlayerController({
               progressBar: progressBar,
               progressThumb: progressThumb,
               onProgressChange: function (progress, currentFrame) {
@@ -2340,7 +2349,7 @@ function initApp() {
           this.viewportController = null;
         }
 
-        this.viewportController = new ViewportController({
+        this.viewportController = new Controllers.ViewportController({
           getContentSize: function () {
             return _this.getContentOriginalSize();
           },
@@ -2536,12 +2545,6 @@ function initApp() {
 
       /* ==================== 序列帧加载与播放 ==================== */
 
-      // 排序序列帧文件（按文件名中的数字升序）
-      // 代理到 utils.sortFilesByName
-      sortFrameFiles: function (files) {
-        return this.utils.sortFilesByName(files);
-      },
-
       /**
        * 加载序列帧文件
        * @param {Array<File>} files - 图片文件数组
@@ -2626,7 +2629,7 @@ function initApp() {
         }
 
         // 排序文件
-        var sortedFiles = this.sortFrameFiles(files);
+        var sortedFiles = this.utils.sortFilesByName(files);
 
         // 加载第一帧获取尺寸信息
         var firstFile = sortedFiles[0];
@@ -2647,7 +2650,7 @@ function initApp() {
               fileInfo: {
                 name: firstFile.name + ' 等 ' + sortedFiles.length + ' 帧',
                 size: totalSize,
-                sizeText: _this.formatBytes(totalSize),
+                sizeText: _this.utils.formatBytes(totalSize),
                 fps: 25,
                 sizeWH: img.width + ' x ' + img.height,
                 duration: (sortedFiles.length / 25).toFixed(2) + 's'
@@ -2690,34 +2693,58 @@ function initApp() {
 
       /**
        * 预加载所有帧图片
+       * 使用并发限制池，防止一次性加载过多图片导致卡顿
        */
       preloadFrameImages: async function () {
         var _this = this;
         var files = this.frames.files;
-        this.framesImages = [];
+        // 初始化数组，按索引填充 null，确保顺序
+        this.framesImages = new Array(files.length).fill(null);
 
-        for (var i = 0; i < files.length; i++) {
-          var img = await this.loadImageFromFile(files[i]);
-          this.framesImages.push(img);
-        }
-
-        // 加载完成，初始化播放器
-        this.initFramesPlayer();
-      },
-
-      /**
-       * 从文件加载图片
-       * 注：已迁移至 utils.js 模块
-       * @param {File} file
-       * @returns {Promise<Image>}
-       */
-      loadImageFromFile: function (file) {
-        // 使用工具库的 loadImageFromFile 方法
         // 自动管理 Blob URL 并记录到 framesBlobUrls 数组
         if (!this.framesBlobUrls) {
           this.framesBlobUrls = [];
         }
-        return this.utils.loadImageFromFile(file, this.framesBlobUrls);
+
+        // 并发限制
+        var CONCURRENCY_LIMIT = 5;
+        var queue = [];
+
+        // 构建任务队列
+        for (var i = 0; i < files.length; i++) {
+          queue.push({ index: i, file: files[i] });
+        }
+
+        // 递归执行任务
+        var processNext = async function () {
+          if (queue.length === 0) return;
+
+          var task = queue.shift();
+          try {
+            var img = await _this.utils.loadImageFromFile(task.file, _this.framesBlobUrls);
+            _this.framesImages[task.index] = img;
+          } catch (e) {
+            console.error('Failed to load frame ' + task.index, e);
+          }
+
+          // 继续处理下一个
+          await processNext();
+        };
+
+        // 启动初始并发批次
+        var workers = [];
+        for (var j = 0; j < Math.min(CONCURRENCY_LIMIT, files.length); j++) {
+          workers.push(processNext());
+        }
+
+        // 等待所有 workers 完成
+        await Promise.all(workers);
+
+        // 过滤掉加载失败的帧（虽然上面预填充了null，但如果加载失败保持null可能导致渲染报错）
+        this.framesImages = this.framesImages.filter(function (img) { return img !== null; });
+
+        // 加载完成，初始化播放器
+        this.initFramesPlayer();
       },
 
       /**
@@ -3120,7 +3147,7 @@ function initApp() {
             this.svgaPlayer.stopAnimation();
             this.svgaPlayer.clear();
           } catch (e) {
-            // 静默失败
+            console.warn('Stop SVGA animation failed:', e);
           }
           this.svgaPlayer = null;
         }
@@ -3447,7 +3474,7 @@ function initApp() {
 
         try {
           // 1. 初始化FFmpeg服务
-          await FFmpegService.init({
+          await Services.FFmpegService.init({
             onProgress: function (info) {
               // 初始化进度 0-10%
               _this.videoConvertProgress = Math.round(info.progress * 10);
@@ -3460,7 +3487,7 @@ function initApp() {
           var file = this.mp4.file;
           if (!file) throw new Error('视频文件不存在');
 
-          var blob = await FFmpegService.convertVideoFormat({
+          var blob = await Services.FFmpegService.convertVideoFormat({
             inputFile: file,
             maxWidth: 1280,
             onProgress: function (progress) {
@@ -3487,7 +3514,7 @@ function initApp() {
           this.mp4.file = Object.freeze(convertedFile);
           this.mp4.fileInfo.name = convertedFile.name;
           this.mp4.fileInfo.size = convertedFile.size;
-          this.mp4.fileInfo.sizeText = this.formatBytes(convertedFile.size);
+          this.mp4.fileInfo.sizeText = this.utils.formatBytes(convertedFile.size);
 
           // 创建objectUrl
           this.mp4ObjectUrl = URL.createObjectURL(blob);
@@ -3797,6 +3824,8 @@ function initApp() {
         try {
           await this.loadLibrary(['protobuf', 'pako'], true)
         } catch (err) {
+          console.error('Failed to load libraries for audio parsing:', err);
+          alert('音频解析库加载失败');
           // 加载失败时静默跳过音频提取
           return;
         }
@@ -3972,7 +4001,7 @@ function initApp() {
             // 内存计算公式：实际宽度 × 实际高度 × 4字节（RGBA）
             var bytes = this.width * this.height * 4;
             materialItem.fileSize = bytes;
-            materialItem.fileSizeText = _this.formatBytes(bytes);
+            materialItem.fileSizeText = _this.utils.formatBytes(bytes);
             materialItem.sizeText = this.width + ' × ' + this.height;
             materialItem.originalWidth = this.width;
             materialItem.originalHeight = this.height;
@@ -3982,7 +4011,7 @@ function initApp() {
 
             // 所有图片处理完成后更新总内存
             if (processedCount === imageCount) {
-              _this.svga.fileInfo.memoryText = _this.formatBytes(totalBytes);
+              _this.svga.fileInfo.memoryText = _this.utils.formatBytes(totalBytes);
             }
           };
 
@@ -3994,7 +4023,7 @@ function initApp() {
 
             // 所有图片处理完成后更新总内存
             if (processedCount === imageCount) {
-              _this.svga.fileInfo.memoryText = totalBytes > 0 ? _this.formatBytes(totalBytes) : '-';
+              _this.svga.fileInfo.memoryText = totalBytes > 0 ? _this.utils.formatBytes(totalBytes) : '-';
             }
           };
 
@@ -4005,7 +4034,7 @@ function initApp() {
 
         // 如果所有图片都同步处理完成，立即更新显示
         if (processedCount === imageCount) {
-          this.svga.fileInfo.memoryText = totalBytes > 0 ? this.formatBytes(totalBytes) : '-';
+          this.svga.fileInfo.memoryText = totalBytes > 0 ? this.utils.formatBytes(totalBytes) : '-';
         }
       },
 
@@ -4118,7 +4147,7 @@ function initApp() {
               var finalHeight = material.originalHeight || uploadedImg.height;
               var bytes = finalWidth * finalHeight * 4;
               material.fileSize = bytes;
-              material.fileSizeText = _this.formatBytes(bytes);
+              material.fileSizeText = _this.utils.formatBytes(bytes);
               material.sizeText = finalWidth + 'px*' + finalHeight + 'px';
 
               // 延迟后应用到 SVGA
@@ -4164,7 +4193,7 @@ function initApp() {
         img.onload = function () {
           var bytes = this.width * this.height * 4;
           material.fileSize = bytes;
-          material.fileSizeText = _this.formatBytes(bytes);
+          material.fileSizeText = _this.utils.formatBytes(bytes);
           material.sizeText = this.width + 'px*' + this.height + 'px';
         };
         img.src = material.previewUrl;
@@ -4384,7 +4413,7 @@ function initApp() {
             // 内存占用显示为缩小后的尺寸
             var bytes = newWidth * newHeight * 4;
             material.fileSize = bytes;
-            material.fileSizeText = this.formatBytes(bytes) + ' (压缩后)';
+            material.fileSizeText = this.utils.formatBytes(bytes) + ' (压缩后)';
 
             // 更新 replacedImages（用于预览，放大后的图）
             var newReplacedImages = Object.assign({}, this.replacedImages);
@@ -4496,7 +4525,7 @@ function initApp() {
             totalBytes += this.materialList[i].fileSize;
           }
         }
-        this.svga.fileInfo.memoryText = this.formatBytes(totalBytes);
+        this.svga.fileInfo.memoryText = this.utils.formatBytes(totalBytes);
       },
 
       exportNewSVGA: async function () {
@@ -4529,7 +4558,7 @@ function initApp() {
               var uint8Array = new Uint8Array(arrayBuffer);
 
               // 使用 SVGABuilder 解码
-              SVGABuilder.decode(arrayBuffer, {
+              Services.SvgaBuilder.decode(arrayBuffer, {
                 protobuf: protobuf,
                 pako: pako
               }).then(function (movieData) {
@@ -4664,7 +4693,7 @@ function initApp() {
                   }
 
                   // 使用 SVGABuilder 编码
-                  SVGABuilder.encode(movieData, {
+                  Services.SvgaBuilder.encode(movieData, {
                     protobuf: protobuf,
                     pako: pako
                   }).then(function (blob) {
@@ -4743,7 +4772,8 @@ function initApp() {
         this.openRightPanel('showGifPanel');
 
         // 预加载GIF.js库
-        this.loadLibrary('gif', true).catch(function () {
+        this.loadLibrary('gif', true).catch(function (e) {
+          console.warn('Library preload failed:', e);
           // 静默失败，将在需要时重新加载
         });
       },
@@ -4965,7 +4995,7 @@ function initApp() {
 
         try {
           // 使用GIFExporter模块导出
-          var blob = await GIFExporter.export({
+          var blob = await Exporters.GifExporter.export({
             width: config.width,
             height: config.height,
             fps: fps,
@@ -5021,9 +5051,9 @@ function initApp() {
 
           // 下载文件
           var fileName = this.getGifFileName();
-          GIFExporter.download(blob, fileName);
+          Exporters.GifExporter.download(blob, fileName);
 
-          alert('GIF 导出成功！大小: ' + GIFExporter.formatBytes(blob.size));
+          alert('GIF 导出成功！大小: ' + Exporters.GifExporter.formatBytes(blob.size));
 
         } finally {
           // 恢复播放状态
@@ -5283,7 +5313,7 @@ function initApp() {
           setTimeout(function () {
             _this.isExportingLottie = false;
             _this.lottieExportProgress = 0;
-            alert('Lottie 导出成功！\n\n文件大小: ' + _this.formatBytes(blob.size) + '\n\n请将JSON文件导入After Effects进行编辑。');
+            alert('Lottie 导出成功！\n\n文件大小: ' + _this.utils.formatBytes(blob.size) + '\n\n请将JSON文件导入After Effects进行编辑。');
           }, 300);
 
           // 恢复播放状态
@@ -5384,14 +5414,6 @@ function initApp() {
       },
 
       /* 工具方法 */
-
-      /**
-       * 格式化字节大小
-       * 注：已迁移至 utils.js 模块
-       */
-      formatBytes: function (bytes) {
-        return this.utils.formatBytes(bytes);
-      },
 
       /* ==================== 绿幕抠图功能 ==================== */
 
@@ -6116,7 +6138,7 @@ function initApp() {
         this.openRightPanel('showMP4Panel');
 
         // 预加载FFmpeg库（高优先级插队）
-        FFmpegService.init({ highPriority: true }).catch(function (e) {
+        Services.FFmpegService.init({ highPriority: true }).catch(function (e) {
           console.warn('FFmpeg预加载失败:', e);
         });
       },
@@ -6170,7 +6192,7 @@ function initApp() {
         this.openRightPanel('showMp4ToDualChannelPanel');
 
         // 预加载FFmpeg (高优先级插队)
-        FFmpegService.init({ highPriority: true }).catch(function (e) {
+        Services.FFmpegService.init({ highPriority: true }).catch(function (e) {
           console.warn('FFmpeg预加载失败:', e);
         });
       },
@@ -6266,7 +6288,7 @@ function initApp() {
           if (this.configManager) {
             this.configManager.set('mp4_quality', config.quality);
           }
-        } catch (e) { }
+        } catch (e) { console.error('Config save failed:', e); }
 
         this.isConvertingMP4 = true;
         this.mp4ConvertProgress = 0;
@@ -6276,7 +6298,7 @@ function initApp() {
 
         try {
           // 1. 加载FFmpeg (使用统一服务)
-          await FFmpegService.init();
+          await Services.FFmpegService.init();
           if (this.mp4ConvertCancelled) throw new Error('用户取消转换');
 
           // 2. 提取序列帧
@@ -6343,7 +6365,7 @@ function initApp() {
             }
           }
 
-          var mp4Blob = await FFmpegService.convertFramesToMp4({
+          var mp4Blob = await Services.FFmpegService.convertFramesToMp4({
             frames: dualFrames,
             fps: config.fps,
             quality: config.quality,
@@ -6559,7 +6581,7 @@ function initApp() {
        */
       buildAudioTempoFilter: function (speedRatio) {
         // 直接调用FFmpegService的统一方法
-        return FFmpegService.buildAudioTempoFilter(speedRatio);
+        return Services.FFmpegService.buildAudioTempoFilter(speedRatio);
       },
 
 
@@ -6604,11 +6626,11 @@ function initApp() {
               this.lottieDualChannelConfig.quality = parseInt(savedQuality);
             }
           }
-        } catch (e) { }
+        } catch (e) { console.error('Config load failed:', e); }
 
         this.openRightPanel('showLottieToDualChannelPanel');
 
-        FFmpegService.init({ highPriority: true }).catch(function (e) {
+        Services.FFmpegService.init({ highPriority: true }).catch(function (e) {
           console.warn('FFmpeg预加载失败:', e);
         });
       },
@@ -6690,7 +6712,7 @@ function initApp() {
           if (this.configManager) {
             this.configManager.set('mp4_quality', config.quality);
           }
-        } catch (e) { }
+        } catch (e) { console.error('Config save failed:', e); }
 
         this.isConvertingMP4 = true;
         this.mp4ConvertProgress = 0;
@@ -6699,7 +6721,7 @@ function initApp() {
         this.mp4ConvertMessage = '正在加载转换器...';
 
         try {
-          await FFmpegService.init();
+          await Services.FFmpegService.init();
           if (this.mp4ConvertCancelled) throw new Error('用户取消转换');
 
           this.mp4ConvertStage = 'extracting';
@@ -6715,7 +6737,7 @@ function initApp() {
           this.mp4ConvertStage = 'encoding';
           this.mp4ConvertMessage = '正在编码为MP4...';
           // Lottie没有音频，传null
-          var mp4Blob = await FFmpegService.convertFramesToMp4({
+          var mp4Blob = await Services.FFmpegService.convertFramesToMp4({
             frames: dualFrames,
             fps: config.fps,
             quality: config.quality,
@@ -6860,12 +6882,13 @@ function initApp() {
         this.openRightPanel('showSVGAPanel');
 
         // 预加载protobuf和pako库
-        this.loadLibrary(['protobuf', 'pako'], true).catch(function () {
+        this.loadLibrary(['protobuf', 'pako'], true).catch(function (e) {
+          console.warn('Library preload failed:', e);
           // 静默失败，将在需要时重新加载
         });
 
         // 预加载FFmpeg (高优先级插队)
-        FFmpegService.init({ highPriority: true }).catch(function (e) {
+        Services.FFmpegService.init({ highPriority: true }).catch(function (e) {
           console.warn('FFmpeg预加载失败:', e);
         });
       },
@@ -6924,7 +6947,8 @@ function initApp() {
         this.openRightPanel('showMp4ToSvgaPanel');
 
         // 预加载protobuf和pako库
-        this.loadLibrary(['protobuf', 'pako'], true).catch(function () {
+        this.loadLibrary(['protobuf', 'pako'], true).catch(function (e) {
+          console.warn('Library preload failed:', e);
           // 静默失败，将在需要时重新加载
         });
       },
@@ -7051,7 +7075,7 @@ function initApp() {
           if (!this.mp4ToSvgaConfig.muted && this.mp4.file) {
             this.mp4ToSvgaMessage = '提取音频...';
             try {
-              await FFmpegService.init();
+              await Services.FFmpegService.init();
 
               // 音频处理需要使用原始视频的帧率和时长
               var originalFps = parseFloat(this.mp4.fileInfo.fps) || 30;
@@ -7062,7 +7086,7 @@ function initApp() {
               // 使用统一的FFmpegService提取音频
               // 如果启用了多段变速，需要构建关键帧数据
               if (this.speedRemapConfig.enabled && this.speedRemapConfig.keyframes && this.speedRemapConfig.keyframes.length >= 2) {
-                // 归一化关键帧逻辑已封装在 extractAudioFromMp4 (旧方法) 或 FFmpegService.extractAudioWithSpeedRemap
+                // 归一化关键帧逻辑已封装在 extractAudioFromMp4 (旧方法) 或 Services.FFmpegService.extractAudioWithSpeedRemap
                 // 这里我们直接复用 extractAudioFromMp4，但需要修改它内部不调用 loadFFmpeg
                 audios = await this.extractAudioFromMp4(
                   this.mp4.file,
@@ -7079,7 +7103,7 @@ function initApp() {
                   audioSpeedRatio = originalDuration / outputDuration;
                 }
 
-                audios = await FFmpegService.extractAudio({
+                audios = await Services.FFmpegService.extractAudio({
                   videoFile: this.mp4.file,
                   totalFrames: frames.length,
                   fps: targetFps,
@@ -7311,7 +7335,8 @@ function initApp() {
         this.openRightPanel('showLottieToSvgaPanel');
 
         // 预加载protobuf和pako库
-        this.loadLibrary(['protobuf', 'pako'], true).catch(function () {
+        this.loadLibrary(['protobuf', 'pako'], true).catch(function (e) {
+          console.warn('Library preload failed:', e);
           // 静默失败，将在需要时重新加载
         });
       },
@@ -7546,7 +7571,8 @@ function initApp() {
         this.openRightPanel('showFramesToSvgaPanel');
 
         // 预加载protobuf和pako库
-        this.loadLibrary(['protobuf', 'pako'], true).catch(function () {
+        this.loadLibrary(['protobuf', 'pako'], true).catch(function (e) {
+          console.warn('Library preload failed:', e);
           // 静默失败，将在需要时重新加载
         });
       },
@@ -7718,12 +7744,12 @@ function initApp() {
               this.framesToDualChannelConfig.quality = parseInt(savedQuality);
             }
           }
-        } catch (e) { }
+        } catch (e) { console.error('Config load failed:', e); }
 
         this.openRightPanel('showFramesToDualChannelPanel');
 
         // 预加载FFmpeg
-        FFmpegService.init({ highPriority: true }).catch(function (e) {
+        Services.FFmpegService.init({ highPriority: true }).catch(function (e) {
           console.warn('FFmpeg预加载失败:', e);
         });
       },
@@ -7806,7 +7832,7 @@ function initApp() {
           if (this.configManager) {
             this.configManager.set('mp4_quality', config.quality);
           }
-        } catch (e) { }
+        } catch (e) { console.error('Config save failed:', e); }
 
         this.isConvertingFramesToDualChannel = true;
         this.framesToDualChannelProgress = 0;
@@ -7816,7 +7842,7 @@ function initApp() {
 
         try {
           // 1. 加载FFmpeg (使用统一服务)
-          await FFmpegService.init();
+          await Services.FFmpegService.init();
           if (this.framesToDualChannelCancelled) throw new Error('用户取消转换');
 
           // 2. 提取序列帧
@@ -7835,7 +7861,7 @@ function initApp() {
           this.framesToDualChannelStage = 'encoding';
           this.framesToDualChannelMessage = '正在编码为MP4...';
           // 序列帧没有音频，传null
-          var mp4Blob = await FFmpegService.convertFramesToMp4({
+          var mp4Blob = await Services.FFmpegService.convertFramesToMp4({
             frames: dualFrames,
             fps: config.fps,
             quality: config.quality,
@@ -7932,7 +7958,7 @@ function initApp() {
       composeFramesDualChannel: async function (frames) {
         var _this = this;
 
-        return DualChannelComposer.composeToJPEG(frames, {
+        return Services.DualChannelComposer.composeToJPEG(frames, {
           mode: this.framesToDualChannelConfig.channelMode,
           onProgress: function (progress) {
             _this.framesToDualChannelProgress = 30 + Math.round(progress * 30);
@@ -8047,6 +8073,7 @@ function initApp() {
               await this.loadFFmpeg();
               audios = await this.extractAudioFromMp4(this.yyeva.file, frameData.frames.length, this.svgaConfig.fps);
             } catch (e) {
+              console.warn('Audio extraction failed, exporting silent SVGA:', e);
               // 静默失败，将导出无音频的SVGA
             }
             if (this.svgaConvertCancelled) throw new Error('用户取消转换');
@@ -8152,13 +8179,24 @@ function initApp() {
 
           // 等待视频寻址完成
           await new Promise(function (resolve) {
+            // 如果已经在目标时间，直接resolve（避免seeked不触发）
+            if (video.currentTime === time && video.readyState >= 2) {
+              resolve();
+              return;
+            }
+
             var onSeeked = function () {
               video.removeEventListener('seeked', onSeeked);
               resolve();
             };
             video.addEventListener('seeked', onSeeked);
-            // 超时处理
-            setTimeout(resolve, 500);
+
+            // 安全超时：即使seeked不触发，2秒后也强制继续，防止卡死
+            // 但不再依赖它作为主要逻辑
+            setTimeout(function () {
+              video.removeEventListener('seeked', onSeeked);
+              resolve();
+            }, 2000);
           });
 
           // 绘制视频帧到源画布
@@ -8334,7 +8372,7 @@ function initApp() {
             this.configManager.set('mp4_fps', this.mp4Config.fps);
           }
         } catch (e) {
-          // 静默失败
+          console.error('Failed to save MP4 config:', e);
         }
 
         this.isConvertingMP4 = true;
@@ -8345,7 +8383,7 @@ function initApp() {
 
         try {
           // 1. 加载 FFmpeg (使用统一服务)
-          await FFmpegService.init();
+          await Services.FFmpegService.init();
           if (this.mp4ConvertCancelled) throw new Error('用户取消转换');
 
           // 2. 提取序列帧
@@ -8375,7 +8413,7 @@ function initApp() {
           var videoItem = this.originalVideoItem;
           var inputFps = videoItem.FPS || videoItem.fps || 30;
 
-          var mp4Blob = await FFmpegService.convertFramesToMp4({
+          var mp4Blob = await Services.FFmpegService.convertFramesToMp4({
             frames: dualFrames,
             fps: this.mp4Config.fps,
             inputFps: inputFps,
@@ -8441,12 +8479,12 @@ function initApp() {
 
       loadFFmpeg: async function () {
         // 转发到FFmpegService的统一初始化
-        await FFmpegService.init();
+        await Services.FFmpegService.init();
 
         // 同步状态（保持兼容性）
-        this.ffmpegLoaded = FFmpegService.isLoaded;
-        this.ffmpegLoading = FFmpegService.isLoading;
-        this.ffmpeg = FFmpegService.ffmpeg;
+        this.ffmpegLoaded = Services.FFmpegService.isLoaded;
+        this.ffmpegLoading = Services.FFmpegService.isLoading;
+        this.ffmpeg = Services.FFmpegService.ffmpeg;
       },
 
       /**
@@ -8471,9 +8509,9 @@ function initApp() {
         }
 
         // 确保FFmpeg已初始化
-        if (!FFmpegService.isLoaded) {
+        if (!Services.FFmpegService.isLoaded) {
           try {
-            await FFmpegService.init();
+            await Services.FFmpegService.init();
           } catch (error) {
             console.error('FFmpeg初始化失败:', error);
             return null;
@@ -8532,7 +8570,7 @@ function initApp() {
                 keyframes[keyframes.length - 1].position = 1.0;
               }
 
-              return await FFmpegService.extractAudioWithSpeedRemap({
+              return await Services.FFmpegService.extractAudioWithSpeedRemap({
                 videoFile: videoFile,
                 keyframes: keyframes,
                 totalFrames: totalFrames,
@@ -8548,7 +8586,7 @@ function initApp() {
                 var audioSpeedRatio = originalDuration / outputDuration;
 
                 // console.log('检测到均匀变速，使用统一变速比例:', audioSpeedRatio);
-                return await FFmpegService.extractAudio({
+                return await Services.FFmpegService.extractAudio({
                   videoFile: videoFile,
                   totalFrames: totalFrames,
                   fps: fps,
@@ -8574,7 +8612,7 @@ function initApp() {
             // console.log('无变速且帧率未变，直接提取音频');
           }
 
-          return await FFmpegService.extractAudio({
+          return await Services.FFmpegService.extractAudio({
             videoFile: videoFile,
             totalFrames: totalFrames,
             fps: fps,
@@ -8685,7 +8723,7 @@ function initApp() {
       composeDualChannelFrames: async function (frames) {
         var _this = this;
 
-        return DualChannelComposer.composeToJPEG(frames, {
+        return Services.DualChannelComposer.composeToJPEG(frames, {
           mode: this.mp4Config.channelMode,
           onProgress: function (progress) {
             _this.mp4ConvertProgress = Math.round(progress * 100);
@@ -8751,9 +8789,9 @@ function initApp() {
         // 构建 SVGA
         var blob;
         if (buildParams.buildType === 'fromPNG') {
-          blob = await SVGABuilder.buildFromPNG(buildParams);
+          blob = await Services.SvgaBuilder.buildFromPNG(buildParams);
         } else {
-          blob = await SVGABuilder.build(buildParams);
+          blob = await Services.SvgaBuilder.build(buildParams);
         }
 
         // 检查是否取消
@@ -9312,16 +9350,16 @@ function initApp() {
     },
     created: function () {
       // 初始化非响应式属性（避免Vue深度代理导致的性能问题）
-      this.libraryLoader = window.libraryLoader;
+      this.libraryLoader = Core.libraryLoader;
       this.playerController = null;
 
       // 初始化文件验证器和工具库
-      this.fileValidator = new FileValidator(this.libraryLoader);
-      this.utils = window.SvgaUtils;
+      this.fileValidator = new Services.FileValidator(this.libraryLoader);
+      this.utils = Utils;
 
       // 初始化配置管理器
-      if (typeof ConfigManager !== 'undefined') {
-        this.configManager = new ConfigManager();
+      if (Core.ConfigManager) {
+        this.configManager = new Core.ConfigManager();
         this.loadUserConfig();
       }
 
@@ -9432,34 +9470,34 @@ function initApp() {
       // 点击外部关闭下拉菜单
       document.addEventListener('click', function (e) {
         if (_this.showChannelModeDropdown) {
-          var selectWrapper = document.querySelector('.mp4-select-wrapper');
+          var selectWrapper = _this.$refs.mp4SelectWrapper;
           if (selectWrapper && !selectWrapper.contains(e.target)) {
             _this.showChannelModeDropdown = false;
           }
         }
       });
 
-      // 全局监听拖拽事件，用于显示覆盖层
-      var dragCounter = 0;
-      document.body.addEventListener('dragenter', function (e) {
-        dragCounter++;
-        _this.dropHover = true;
-      });
-      document.body.addEventListener('dragleave', function (e) {
-        dragCounter--;
-        if (dragCounter === 0) {
-          _this.dropHover = false;
+      // 初始化输入控制器（处理文件拖拽）
+      this.inputController = new Controllers.InputController({
+        container: document.body,
+        onHoverChange: function (isHover) {
+          _this.dropHover = isHover;
+        },
+        onDrop: function (files) {
+          // 检查是否有正在进行的任务
+          if (!_this.confirmIfHasOngoingTasks('播放新文件', 'load')) {
+            return;
+          }
+          _this.handleFiles(files);
         }
       });
-      document.body.addEventListener('drop', function () {
-        dragCounter = 0;
-      });
+
       // 加载 help.md
       this.loadHelpContent();
 
       // 注册库加载进度回调（更新响应式数据）
-      if (window.libraryLoader) {
-        window.libraryLoader.onProgress(function (currentLib) {
+      if (Core.libraryLoader) {
+        Core.libraryLoader.onProgress(function (currentLib) {
           if (currentLib) {
             _this.loadingLibraryInfo = { name: currentLib.name, progress: currentLib.progress };
           } else {
@@ -9505,9 +9543,11 @@ function initApp() {
       this.preloadLibraries();
     },
     beforeDestroy: function () {
-      // 移除全局事件监听器
-      window.removeEventListener('dragover', this.onDragOver);
-      window.removeEventListener('drop', this.onDrop);
+      // 销毁输入控制器
+      if (this.inputController) {
+        this.inputController.destroy();
+        this.inputController = null;
+      }
     }
   });
 }
@@ -9531,7 +9571,7 @@ function initApp() {
   }
 
   // 标记应用加载完成（配合 index.html 中的超时检测脚本）
-  window.APP_LOADED = true;
+  window.SvgaPreview.APP_LOADED = true;
 
   // 检查库是否已加载
   function checkLibraries() {
@@ -9558,3 +9598,4 @@ function initApp() {
     }
   }, 100);
 })();
+

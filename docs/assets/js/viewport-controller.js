@@ -64,8 +64,12 @@
 (function (global) {
   'use strict';
 
+  // Ensure namespace
+  global.SvgaPreview = global.SvgaPreview || {};
+  global.SvgaPreview.Controllers = global.SvgaPreview.Controllers || {};
+
   /**
-   * 视图控制器构造函数
+   * 构造函数视图控制器构造函数
    * 
    * @param {Object} options - 配置选项
    * @param {Function} options.getContentSize - 获取当前内容尺寸的回调函数，返回 {width, height}
@@ -642,7 +646,7 @@
     this.onViewportChange = null;
   };
 
-  // 导出到全局
-  global.ViewportController = ViewportController;
+  // 导出到全局命名空间
+  global.SvgaPreview.Controllers.ViewportController = ViewportController;
 
 })(window);

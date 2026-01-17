@@ -11,6 +11,10 @@
 (function (global) {
   'use strict';
 
+  // Ensure namespace
+  window.SvgaPreview = window.SvgaPreview || {};
+  window.SvgaPreview.Core = window.SvgaPreview.Core || {};
+
   const STORAGE_KEY = 'svga_preview_user_config';
   let instance = null;
 
@@ -153,7 +157,7 @@
     }
   }
 
-  // 暴露给全局
-  global.ConfigManager = ConfigManager;
+  // 暴露到全局命名空间
+  global.SvgaPreview.Core.ConfigManager = ConfigManager;
 
 })(window);
