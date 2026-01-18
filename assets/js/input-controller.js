@@ -37,11 +37,24 @@
 
   InputController.prototype = {
     init: function () {
+      // 检查容器是否已经绑定了 InputController
+      if (this.container.dataset.hasInputController === 'true') {
+        console.warn('InputController: Container already has an input controller. Overwriting...');
+        // 我们无法直接获取之前的实例并销毁它，因为没有保留引用
+        // 但是我们可以通过全局变量 SvgaPreview_GlobalInputController 来销毁它
+        if (window.SvgaPreview_GlobalInputController && window.SvgaPreview_GlobalInputController.destroy) {
+          window.SvgaPreview_GlobalInputController.destroy();
+        }
+      }
+
       // 绑定事件
       this.container.addEventListener('dragenter', this._handleDragEnter);
       this.container.addEventListener('dragleave', this._handleDragLeave);
       this.container.addEventListener('dragover', this._handleDragOver);
       this.container.addEventListener('drop', this._handleDrop);
+
+      // 标记容器已绑定
+      this.container.dataset.hasInputController = 'true';
     },
 
     handleDragEnter: function (e) {
@@ -67,6 +80,8 @@
 
     handleDrop: function (e) {
       e.preventDefault();
+      e.stopPropagation(); // 阻止事件冒泡，防止被外层容器捕获
+
       // 重置状态
       this.dragCounter = 0;
       this.onHoverChange(false);
@@ -84,6 +99,10 @@
       this.container.removeEventListener('dragleave', this._handleDragLeave);
       this.container.removeEventListener('dragover', this._handleDragOver);
       this.container.removeEventListener('drop', this._handleDrop);
+
+      // 移除标记
+      this.container.removeAttribute('data-has-input-controller');
+      delete this.container.dataset.hasInputController;
     }
   };
 

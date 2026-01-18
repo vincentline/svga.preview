@@ -330,6 +330,9 @@
     add: function (howl) {
       if (!howl) return;
 
+      // 防御性初始化：确保 instances 存在
+      if (!this.instances) this.instances = [];
+
       if (this.instances.indexOf(howl) === -1) {
         this.instances.push(howl);
         // 监听卸载事件，自动移除
@@ -481,14 +484,12 @@
     if (!this.state.isPlaying) return;
 
     var audios = this.state.svgaAudios; // 从 state 中获取音频配置
+
+    // 如果没有音频配置，直接返回，不报错
     if (!audios || !audios.length) {
-      // 仅在首次检测到无音频时警告，避免刷屏
-      if (!this._hasWarnedNoAudio) {
-        console.warn('SyncAudio: No audios configuration found in state.');
-        this._hasWarnedNoAudio = true;
-      }
       return;
     }
+
     // 有音频配置，重置警告标志
     this._hasWarnedNoAudio = false;
 

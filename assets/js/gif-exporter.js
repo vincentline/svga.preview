@@ -28,6 +28,8 @@
     const GIFExporter = {
         // GIF编码器实例
         encoder: null,
+        // [修复] 显式指定 worker 脚本路径，防止 gif.js 加载错误的默认路径
+        workerScript: './assets/js/gif.worker.js',
 
     /**
      * 导出GIF
@@ -80,7 +82,7 @@
         width: width,
         height: height,
         repeat: 0,  // 0 = 无限循环
-        workerScript: this.workerScript
+        workerScript: this.workerScript // 传递正确的路径
       };
 
       if (transparent) {
