@@ -847,7 +847,7 @@ body.dark-mode .empty-state-title {
 
 /* 沉浸模式下调整footer-top-actions位置和居中 */
 .footer-main-wrapper-immersive .footer-top-actions {
-  bottom: 60px;
+  bottom: -54px;
 }
 
 /* 娌夋蹈妯″紡涓嬫ā寮忓悕绉板眳涓樉绀?*/
@@ -980,10 +980,10 @@ body.dark-mode .clear-canvas-btn:active .sprite-close {
   gap: 12px;
   position: relative;
   bottom: 0px;
-  /* 添加全面的过渡动画：宽度、高度、位置（300ms） */
-  transition: background-color 0.3s, border-color 0.3s, box-shadow 0.3s,
-    min-width 0.3s ease, max-width 0.3s ease,
-    height 0.3s ease, bottom 0.3s ease;
+  opacity: 1;
+  transform: translateY(0);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 10;
 }
 
 /* 空状态：宽度240px，居中*/
@@ -999,6 +999,7 @@ body.dark-mode .clear-canvas-btn:active .sprite-close {
   background-color: #333333;
   border-color: #333333;
   cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* 空白页状态下的文字颜色覆盖 */
@@ -1937,7 +1938,25 @@ body.dark-mode .reset-scale-btn.is-contain:hover {
 /* 沉浸模式下底部主控制区高度 */
 .footer-bar.footer-immersive {
   height: 88px;
-  transition: height 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 沉浸模式下footer-main的样式 */
+.footer-main-wrapper-immersive .footer-main {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+/* 底部控制区切换动画 */
+.footer-fade-enter-active,
+.footer-fade-leave-active {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.footer-fade-enter,
+.footer-fade-leave-to {
+  opacity: 0;
+  transform: translateY(20px);
 }
 
 /* wrapper娌夋蹈妯″紡 */
@@ -1980,8 +1999,9 @@ body.dark-mode .minimize-btn:hover {
 /* Mini浮层容器 */
 .footer-mini {
   display: flex;
+  position: absolute;
+  top: 114px;
   align-items: center;
-
   gap: 12px;
   height: 68px;
   padding: 0 20px;
@@ -1989,7 +2009,7 @@ body.dark-mode .minimize-btn:hover {
   border: 1px solid #e6e6e6;
   border-radius: 16px;
   box-shadow: 0px 10px 32px 0px rgba(51, 51, 51, 0.2);
-  transition: background-color 0.3s, border-color 0.3s, box-shadow 0.3s;
+  z-index: 10;
 }
 
 body.dark-mode .footer-mini {
@@ -1997,6 +2017,8 @@ body.dark-mode .footer-mini {
   border-color: #404040;
   box-shadow: 0px 10px 32px 0px rgba(0, 0, 0, 0.4);
 }
+
+
 
 /* Mini浮层播放按钮 */
 .mini-play-btn {

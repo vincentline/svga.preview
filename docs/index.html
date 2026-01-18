@@ -376,8 +376,10 @@
             </div>
           </div>
 
+          <!-- 使用transition组件实现平滑切换 -->
+          <transition name="footer-fade">
           <!-- 中间主控制区 -->
-          <div class="footer-main" :class="{'footer-main-empty': isEmpty}" v-show="!isImmersiveMode"
+          <div v-if="!isImmersiveMode" class="footer-main" :class="{'footer-main-empty': isEmpty}"
             @click="isEmpty && triggerFileUpload()">
             <!-- 空状态 -->
             <template v-if="isEmpty">
@@ -673,9 +675,12 @@
               </div>
             </template>
           </div>
+          </transition>
 
+          <!-- 使用transition组件实现平滑切换 -->
+          <transition name="footer-fade">
           <!-- Mini浮层（沉浸模式下显示） -->
-          <div class="footer-mini" v-show="isImmersiveMode && !isEmpty">
+          <div v-if="isImmersiveMode && !isEmpty" class="footer-mini">
             <!-- 播放/暂停按钮 -->
             <button class="mini-play-btn" :class="{'is-playing': isPlaying}" @click="togglePlay"
               :title="isPlaying ? '暂停' : '播放'"></button>
@@ -691,6 +696,7 @@
             <!-- 最大化按钮：退出沉浸模式 -->
             <button class="mini-maximize-btn" @click="toggleImmersiveMode" title="退出沉浸模式"></button>
           </div>
+          </transition>
         </div>
 
         <!-- 右侧广告位 -->
