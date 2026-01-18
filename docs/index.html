@@ -174,6 +174,10 @@
           :src="isDarkMode ? './assets/img/home_more_dark.png' : './assets/img/home_more.png'" alt="More"
           style="width: 24px; height: 24px;">
       </div>
+      <!-- 库加载进度条 -->
+      <div v-if="loadingLibraryInfo" class="library-loading-indicator">
+        <div class="loading-text">正在加载 {{ loadingLibraryInfo.name }}（{{ loadingLibraryInfo.progress }}%）</div>
+      </div>
 
       <div class="header-right-action">
         <button class="theme-toggle tooltip" @click="toggleTheme">
@@ -205,10 +209,7 @@
 
     <!-- Toast提示 (Moved to global utils) -->
 
-    <!-- 库加载进度条 -->
-    <div v-if="loadingLibraryInfo" class="library-loading-indicator">
-      <div class="loading-text">正在加载 {{ loadingLibraryInfo.name }}（{{ loadingLibraryInfo.progress }}%）</div>
-    </div>
+
 
     <!-- Help 按钮（沉浸模式隐藏） -->
     <div class="help-button" v-show="!isImmersiveMode">
@@ -232,6 +233,12 @@
           </div>
 
           <div ref="svgaContainer" class="viewer-canvas"></div>
+
+          <!-- 加载中提示 -->
+          <div class="loading-overlay" v-if="isLoading"
+            style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; background: rgba(0,0,0,0.6); padding: 8px 16px; border-radius: 4px; pointer-events: none; z-index: 100; font-size: 14px;">
+            正在加载中...
+          </div>
         </div>
 
         <!-- 空状态覆盖层 -->
@@ -471,10 +478,12 @@
                   <!-- SVGA 模式 -->
                   <template v-if="currentModule === 'svga'">
                     <div class="footer-actions">
-                      <button class="btn-large-primary btn-open-file" @click="triggerChangePreviewFile" v-if="svga.hasFile" title="打开文件...">
+                      <button class="btn-large-primary btn-open-file" @click="triggerChangePreviewFile"
+                        v-if="svga.hasFile" title="打开文件...">
                       </button>
-                      <button class="btn-large-primary" @click="openMaterialPanel" v-if="svga.hasFile">
-                        素材图管理
+                      <button class="btn-large-primary btn-material-manager" @click="openMaterialPanel"
+                        v-if="svga.hasFile" title="素材图管理">
+
                       </button>
                       <button class="btn-large-primary tooltip" v-else>
                         <span class="tooltip-text">请先拖入 SVGA 文件</span>
@@ -501,7 +510,7 @@
                         转MP4
                       </button>
                       <button class="btn-large-secondary" :class="{'tooltip': !svga.hasFile}" :disabled="!svga.hasFile"
-                        @click="openMP4Panel">
+                        @click="openSvgaToDualChannelPanel">
                         <span v-if="!svga.hasFile" class="tooltip-text">请先拖入 SVGA 文件</span>
                         转双通道MP4
                       </button>
@@ -534,7 +543,7 @@
                         转MP4
                       </button>
                       <button class="btn-large-secondary" :class="{'tooltip': !yyeva.hasFile}"
-                        :disabled="!yyeva.hasFile || isConvertingSVGA" @click="openSVGAPanel">
+                        :disabled="!yyeva.hasFile || isConvertingSVGA" @click="openYyevaToSvgaPanel">
                         <span v-if="!yyeva.hasFile" class="tooltip-text">请先拖入 MP4 文件</span>
                         转SVGA
                       </button>
@@ -696,618 +705,47 @@
     </div>
 
     <!-- 素材弹窗（SVGA模式右侧弹窗） -->
-    <div class="material-overlay" :class="{'show': showMaterialPanel && currentModule === 'svga'}"
-      @click="closeMaterialPanel"></div>
-    <div class="material-panel" :class="{'show': showMaterialPanel && currentModule === 'svga'}">
-      <div class="material-panel-container">
-        <!-- 顶部统计信息 -->
-        <div class="material-panel-stats">
-          <div class="stats-header">素材图管理</div>
-          <div class="stats-divider"></div>
-          <div class="stats-content">
-            <div class="stats-title">图像资源：{{ materialList.length }} 个 内存占用：{{ svga.fileInfo.memoryText }}</div>
-            <div class="stats-help">你可以替换、下载素材图片，然后导出新的SVGA。<br>替换后的图片将自动缩放填充至原图尺寸，保持比例居中显示。</div>
-          </div>
-        </div>
+    <div class="material-overlay" :class="{'show': activeRightPanel === 'material' && currentModule === 'svga'}"
+      @click="activeRightPanel = null"></div>
 
-        <!-- 搜索框 -->
-        <div class="material-search">
-          <input type="text" class="material-search-input" placeholder="搜索素材名称..." v-model="materialSearchQuery" />
-        </div>
+    <material-panel :visible="activeRightPanel === 'material' && currentModule === 'svga'" :list="materialList"
+      :replaced-images="replacedImages" :thumb-bg-color="materialThumbBgColor" :svga-file-info="svga.fileInfo"
+      :is-compressing="isCompressingMaterials" :compress-progress="compressProgress"
+      :has-compressed="hasCompressedMaterials" :material-edit-states="materialEditStates"
+      @close="activeRightPanel = null" @replace="replaceMaterial" @restore="restoreMaterial"
+      @download="downloadMaterial" @edit="openMaterialEditor" @compress="openCompressAndExportModal"></material-panel>
 
-        <!-- 素材列表 -->
-        <div class="material-panel-scroll">
-          <div v-if="filteredMaterialList.length === 0" class="material-empty">
-            {{ materialSearchQuery ? '未找到匹配的素材' : '未检测到素材图片' }}
-          </div>
-          <div v-else class="material-list">
-            <div v-for="(item, index) in filteredMaterialList" :key="item.imageKey" class="material-item">
-              <div class="material-thumb" :style="{ backgroundColor: materialThumbBgColor }">
-                <img :src="replacedImages[item.imageKey] || item.previewUrl" v-if="item.previewUrl" />
-              </div>
-              <div class="material-info">
-                <div class="material-name-row">
-                  <div class="material-name" :title="item.imageKey">{{ item.imageKey }}</div>
-                  <button class="material-btn-copy" @click="copyMaterialName(item.imageKey)" title="复制名称">
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <rect x="4" y="4" width="8" height="8" rx="1" stroke="#666666" stroke-width="1.2" fill="none" />
-                      <rect x="2" y="2" width="8" height="8" rx="1" stroke="#666666" stroke-width="1.2"
-                        fill="#ffffff" />
-                    </svg>
-                  </button>
-                </div>
-                <div class="material-meta">内存占用：{{ item.fileSizeText }}</div>
-                <div class="material-meta">尺寸：{{ item.sizeText }}</div>
-              </div>
-              <div class="material-actions">
-                <button class="material-btn-replace" @click="replaceMaterial(index)">
-                  <span>替换此图</span>
-                </button>
-                <button class="material-btn-edit" @click="openMaterialEditor(item)" title="编辑素材图">
-                  <div v-if="materialEditStates[item.imageKey]" class="edit-dot"></div>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path
-                      d="M11 4H4C3.44772 4 3 4.44772 3 5V20C3 20.5523 3.44772 21 4 21H19C19.5523 21 20 20.5523 20 20V13"
-                      stroke="#333333" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-                    <path
-                      d="M18.5 2.50001C18.8978 2.10219 19.4374 1.87869 20 1.87869C20.5626 1.87869 21.1022 2.10219 21.5 2.50001C21.8978 2.89784 22.1213 3.4374 22.1213 4.00001C22.1213 4.56262 21.8978 5.10219 21.5 5.50001L12 15L8 16L9 12L18.5 2.50001Z"
-                      stroke="#333333" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-                  </svg>
-                </button>
-                <button v-if="item.isReplaced" class="material-btn-close" @click="restoreMaterial(index)" title="恢复原图">
-
-                </button>
-                <button class="material-btn-new" @click="downloadMaterial(index)" title="下载此图片">
-                  <svg width="20" height="20" viewBox="0 0 25 25" fill="none">
-                    <path d="M12 3V15M12 15L8 11M12 15L16 11" stroke="#333333" stroke-width="1.5" stroke-linecap="round"
-                      stroke-linejoin="round" />
-                    <path d="M4 17V19C4 20.1046 4.89543 21 6 21H18C19.1046 21 20 20.1046 20 19V17" stroke="#333333"
-                      stroke-width="1.5" stroke-linecap="round" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 底部操作按钮 -->
-        <div class="material-panel-footer">
-          <button class="material-btn-back" @click="closeMaterialPanel" title="关闭">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M12 16L6 10L12 4" stroke="#333333" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round" />
-            </svg>
-            <span>取消</span>
-          </button>
-          <!-- 压缩并导出SVGA按钮 -->
-          <button class="btn-large-secondary" @click="openCompressAndExportModal"
-            :disabled="isCompressingMaterials || materialList.length === 0">
-            <template v-if="isCompressingMaterials">压缩中 {{ compressProgress }}%</template>
-            <template v-else>
-              压缩并导出新SVGA
-              <span v-if="hasCompressedMaterials" style="color: #4CAF50; margin-left: 4px;">✓</span>
-            </template>
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- MP4转换弹窗（SVGA模式右侧弹窗） -->
-    <div class="mp4-panel" :class="{'show': showMP4Panel && currentModule === 'svga'}">
-      <div class="mp4-panel-container">
-        <!-- 标题区 -->
-        <div class="mp4-panel-header">
-          <h3 class="mp4-panel-title">转换为双通道MP4格式</h3>
-          <div class="mp4-panel-divider"></div>
-        </div>
-
-        <!-- SVGA信息 -->
-        <div class="mp4-info-section">
-          <div class="mp4-info-row">SVGA尺寸：{{ svga.fileInfo.sizeWH }} 时长：{{ svga.fileInfo.duration }}</div>
-          <div class="mp4-compress-hint">注意：第一次转换需要加载FFmpeg（25M），请耐心等待<br>压缩质量调越低，文件就越小，画面越糊。</div>
-        </div>
-
-        <!-- 配置区域 -->
-        <div class="mp4-config-section" :class="{disabled: isConvertingMP4}">
-          <!-- 遮罩位置 -->
-          <div class="mp4-config-item">
-            <div class="mp4-config-label">遮罩位置：</div>
-            <div class="mp4-select-wrapper" :class="{open: showChannelModeDropdown, disabled: isConvertingMP4}"
-              @click="!isConvertingMP4 && toggleChannelModeDropdown()">
-              <div class="mp4-select-text">
-                {{ mp4Config.channelMode === 'color-left-alpha-right' ? '左彩右灰' : '左灰右彩' }}
-              </div>
-              <div class="mp4-select-icon">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
-                    stroke-linejoin="round" />
-                </svg>
-              </div>
-              <!-- 下拉菜单 -->
-              <div class="mp4-select-dropdown">
-                <div class="mp4-select-option" :class="{selected: mp4Config.channelMode === 'color-left-alpha-right'}"
-                  @click.stop="selectChannelMode('color-left-alpha-right')">
-                  左彩右灰（左侧彩色通道，右侧Alpha通道）
-                </div>
-                <div class="mp4-select-option" :class="{selected: mp4Config.channelMode === 'alpha-left-color-right'}"
-                  @click.stop="selectChannelMode('alpha-left-color-right')">
-                  左灰右彩（左侧Alpha通道，右侧彩色通道）
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 尺寸 -->
-          <div class="mp4-config-item">
-            <div class="mp4-config-label">尺寸：</div>
-            <div class="mp4-size-container">
-              <div class="input-wrapper input-wrapper--lg mp4-size-input-wrapper">
-                <input type="number" class="base-input" v-model.number="mp4Config.width" @input="onMP4WidthChange"
-                  :disabled="isConvertingMP4" min="0" max="3000" />
-              </div>
-              <div class="mp4-size-lock">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path
-                    d="M4.66667 7.33333V5.33333C4.66667 3.86057 5.86057 2.66667 7.33333 2.66667H8.66667C10.1394 2.66667 11.3333 3.86057 11.3333 5.33333V7.33333M5.33333 7.33333H10.6667C11.403 7.33333 12 7.93029 12 8.66667V12C12 12.7364 11.403 13.3333 10.6667 13.3333H5.33333C4.59695 13.3333 4 12.7364 4 12V8.66667C4 7.93029 4.59695 7.33333 5.33333 7.33333Z"
-                    stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-              </div>
-              <div class="input-wrapper input-wrapper--lg mp4-size-input-wrapper">
-                <input type="number" class="base-input" v-model.number="mp4Config.height" @input="onMP4HeightChange"
-                  :disabled="isConvertingMP4" min="0" max="3000" />
-              </div>
-            </div>
-          </div>
-
-          <!-- 压缩到质量 -->
-          <div class="mp4-config-item">
-            <div class="mp4-config-label">压缩到质量：</div>
-            <div class="mp4-value-container">
-              <div class="input-wrapper input-wrapper--lg mp4-value-input-wrapper">
-                <input type="number" class="base-input" v-model.number="mp4Config.quality" :disabled="isConvertingMP4"
-                  min="1" max="100" />
-              </div>
-              <div class="input-unit">%</div>
-            </div>
-          </div>
-
-          <!-- 帧率修改 -->
-          <div class="mp4-config-item">
-            <div class="mp4-config-label">帧率修改：</div>
-            <div class="mp4-value-container">
-              <div class="input-wrapper input-wrapper--lg mp4-value-input-wrapper">
-                <input type="number" class="base-input" v-model.number="mp4Config.fps" :disabled="isConvertingMP4"
-                  min="1" max="120" />
-              </div>
-              <div class="input-unit">FPS</div>
-            </div>
-          </div>
-
-          <!-- 静音 -->
-          <div class="mp4-config-item">
-            <div class="mp4-config-label">静音</div>
-            <div class="mp4-mute-toggle" :class="{active: mp4Config.muted, disabled: isConvertingMP4}"
-              @click="!isConvertingMP4 && (mp4Config.muted = !mp4Config.muted)">
-              <div class="mp4-mute-toggle-handle"></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 底部按钮 -->
-        <div class="mp4-panel-footer">
-          <!-- 返回按钮（转换中变为取消按钮） -->
-          <button v-if="!isConvertingMP4" class="material-btn-back" @click="closeMP4Panel" title="返回">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M12 16L6 10L12 4" stroke="#333333" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round" />
-            </svg>
-            <span>取消</span>
-          </button>
-          <button v-else class="material-btn-back mp4-btn-cancel" @click="cancelMP4Conversion" title="取消转换">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M5 5L15 15M15 5L5 15" stroke="#ff4444" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round" />
-            </svg>
-            <span>取消</span>
-          </button>
-
-          <!-- 转换按钮 -->
-          <button class="btn-large-secondary" :class="{'mp4-btn-converting': isConvertingMP4}"
-            :data-progress="mp4ConvertProgress" :disabled="isGlobalTaskRunning" @click="startMP4Conversion">
-            <template v-if="isConvertingMP4">
-              <span class="mp4-progress-text">{{ mp4ConvertProgress }}%</span>
-              <span class="mp4-stage-text">{{ mp4ConvertMessage }}</span>
-            </template>
-            <template v-else>
-              开始转换双通道MP4
-            </template>
-          </button>
-        </div>
-      </div>
-    </div>
+    <!-- SVGA转双通道MP4弹窗（SVGA模式右侧弹窗） -->
+    <dual-channel-panel :visible="showSvgaToDualChannelPanel && currentModule === 'svga'"
+      :source-info="svgaToDualChannelSourceInfo" :initial-config="svgaToDualChannelConfig"
+      :is-converting="isConvertingMP4" :progress="mp4ConvertProgress" :message="mp4ConvertMessage"
+      :disabled="isGlobalTaskRunning" current-module="svga" @close="closeSvgaToDualChannelPanel"
+      @cancel="cancelSvgaToDualChannelConversion" @convert="startMP4Conversion">
+    </dual-channel-panel>
 
     <!-- 普通MP4转双通道MP4弹窗（普通MP4模式右侧弹窗） -->
-    <div class="mp4-panel" :class="{'show': showMp4ToDualChannelPanel && currentModule === 'mp4'}">
-      <div class="mp4-panel-container">
-        <!-- 标题区 -->
-        <div class="mp4-panel-header">
-          <h3 class="mp4-panel-title">转换为双通道MP4格式</h3>
-          <div class="mp4-panel-divider"></div>
-        </div>
-
-        <!-- MP4信息 -->
-        <div class="mp4-info-section">
-          <div class="mp4-info-row">MP4尺寸：{{ mp4.originalWidth }}×{{ mp4.originalHeight }} 时长：{{ mp4.fileInfo.duration
-            }}</div>
-          <div class="mp4-compress-hint">注意：第一次转换需要加载FFmpeg（25M），请耐心等待<br>压缩质量调越低，文件就越小，画面越糊。<br>当前已启用绿幕抠图，将使用抠图后的透明通道。
-          </div>
-        </div>
-
-        <!-- 配置区域 -->
-        <div class="mp4-config-section" :class="{disabled: isConvertingMP4}">
-          <!-- 遮罩位置 -->
-          <div class="mp4-config-item">
-            <div class="mp4-config-label">遮罩位置：</div>
-            <div class="mp4-select-wrapper" :class="{open: showMp4DualChannelModeDropdown, disabled: isConvertingMP4}"
-              @click="!isConvertingMP4 && toggleMp4DualChannelModeDropdown()">
-              <div class="mp4-select-text">
-                {{ mp4DualChannelConfig.channelMode === 'color-left-alpha-right' ? '左彩右灰' : '左灰右彩' }}
-              </div>
-              <div class="mp4-select-icon">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
-                    stroke-linejoin="round" />
-                </svg>
-              </div>
-              <div class="mp4-select-dropdown">
-                <div class="mp4-select-option"
-                  :class="{selected: mp4DualChannelConfig.channelMode === 'color-left-alpha-right'}"
-                  @click.stop="selectMp4DualChannelMode('color-left-alpha-right')">
-                  左彩右灰（左侧彩色通道，右侧Alpha通道）
-                </div>
-                <div class="mp4-select-option"
-                  :class="{selected: mp4DualChannelConfig.channelMode === 'alpha-left-color-right'}"
-                  @click.stop="selectMp4DualChannelMode('alpha-left-color-right')">
-                  左灰右彩（左侧Alpha通道，右侧彩色通道）
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 尺寸 -->
-          <div class="mp4-config-item">
-            <div class="mp4-config-label">尺寸：</div>
-            <div class="mp4-size-container">
-              <div class="input-wrapper input-wrapper--lg mp4-size-input-wrapper">
-                <input type="number" class="base-input" v-model.number="mp4DualChannelConfig.width"
-                  @input="onMp4DualChannelWidthChange" :disabled="isConvertingMP4" min="0" max="3000" />
-              </div>
-              <div class="mp4-size-lock">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path
-                    d="M4.66667 7.33333V5.33333C4.66667 3.86057 5.86057 2.66667 7.33333 2.66667H8.66667C10.1394 2.66667 11.3333 3.86057 11.3333 5.33333V7.33333M5.33333 7.33333H10.6667C11.403 7.33333 12 7.93029 12 8.66667V12C12 12.7364 11.403 13.3333 10.6667 13.3333H5.33333C4.59695 13.3333 4 12.7364 4 12V8.66667C4 7.93029 4.59695 7.33333 5.33333 7.33333Z"
-                    stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-              </div>
-              <div class="input-wrapper input-wrapper--lg mp4-size-input-wrapper">
-                <input type="number" class="base-input" v-model.number="mp4DualChannelConfig.height"
-                  @input="onMp4DualChannelHeightChange" :disabled="isConvertingMP4" min="0" max="3000" />
-              </div>
-            </div>
-          </div>
-
-          <!-- 压缩到质量 -->
-          <div class="mp4-config-item">
-            <div class="mp4-config-label">压缩到质量：</div>
-            <div class="mp4-value-container">
-              <div class="input-wrapper input-wrapper--lg mp4-value-input-wrapper">
-                <input type="number" class="base-input" v-model.number="mp4DualChannelConfig.quality"
-                  :disabled="isConvertingMP4" min="1" max="100" />
-              </div>
-              <div class="input-unit">%</div>
-            </div>
-          </div>
-
-          <!-- 帧率修改 -->
-          <div class="mp4-config-item">
-            <div class="mp4-config-label">帧率修改：</div>
-            <div class="mp4-value-container">
-              <div class="input-wrapper input-wrapper--lg mp4-value-input-wrapper">
-                <input type="number" class="base-input" v-model.number="mp4DualChannelConfig.fps"
-                  :disabled="isConvertingMP4" min="1" max="120" />
-              </div>
-              <div class="input-unit">FPS</div>
-            </div>
-          </div>
-
-          <!-- 静音 -->
-          <div class="mp4-config-item">
-            <div class="mp4-config-label">静音</div>
-            <div class="mp4-mute-toggle" :class="{active: mp4DualChannelConfig.muted, disabled: isConvertingMP4}"
-              @click="!isConvertingMP4 && (mp4DualChannelConfig.muted = !mp4DualChannelConfig.muted)">
-              <div class="mp4-mute-toggle-handle"></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 底部按钮 -->
-        <div class="mp4-panel-footer">
-          <button v-if="!isConvertingMP4" class="material-btn-back" @click="closeMp4ToDualChannelPanel" title="返回">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M12 16L6 10L12 4" stroke="#333333" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round" />
-            </svg>
-            <span>取消</span>
-          </button>
-          <button v-else class="material-btn-back mp4-btn-cancel" @click="cancelMp4ToDualChannelConversion"
-            title="取消转换">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M5 5L15 15M15 5L5 15" stroke="#ff4444" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round" />
-            </svg>
-            <span>取消</span>
-          </button>
-
-          <button class="btn-large-secondary" :class="{'mp4-btn-converting': isConvertingMP4}"
-            :data-progress="mp4ConvertProgress" :disabled="isGlobalTaskRunning"
-            @click="startMp4ToDualChannelConversion">
-            <template v-if="isConvertingMP4">
-              <span class="mp4-progress-text">{{ mp4ConvertProgress }}%</span>
-              <span class="mp4-stage-text">{{ mp4ConvertMessage }}</span>
-            </template>
-            <template v-else>
-              开始转换双通道MP4
-            </template>
-          </button>
-        </div>
-      </div>
-    </div>
+    <dual-channel-panel :visible="showMp4ToDualChannelPanel && currentModule === 'mp4'"
+      :source-info="mp4ToDualChannelSourceInfo" :initial-config="mp4ToDualChannelConfig"
+      :is-converting="isConvertingMP4" :progress="mp4ConvertProgress" :message="mp4ConvertMessage"
+      :disabled="isGlobalTaskRunning" current-module="mp4" @close="closeMp4ToDualChannelPanel"
+      @cancel="cancelMp4ToDualChannelConversion" @convert="startMp4ToDualChannelConversion">
+    </dual-channel-panel>
 
     <!-- Lottie转双通道MP4弹窗（Lottie模式右侧弹窗） -->
-    <div class="mp4-panel" :class="{'show': showLottieToDualChannelPanel && currentModule === 'lottie'}">
-      <div class="mp4-panel-container">
-        <!-- 标题区 -->
-        <div class="mp4-panel-header">
-          <h3 class="mp4-panel-title">转换为双通道MP4格式</h3>
-          <div class="mp4-panel-divider"></div>
-        </div>
-
-        <!-- Lottie信息 -->
-        <div class="mp4-info-section">
-          <div class="mp4-info-row">Lottie尺寸：{{ lottie.fileInfo.sizeWH }} 时长：{{ lottie.fileInfo.duration }}</div>
-          <div class="mp4-compress-hint">注意：第一次转换需要加载FFmpeg（25M），请耐心等待<br>压缩质量调越低，文件就越小，画面越糊。</div>
-        </div>
-
-        <!-- 配置区域 -->
-        <div class="mp4-config-section" :class="{disabled: isConvertingMP4}">
-          <!-- 遮罩位置 -->
-          <div class="mp4-config-item">
-            <div class="mp4-config-label">遮罩位置：</div>
-            <div class="mp4-select-wrapper"
-              :class="{open: showLottieDualChannelModeDropdown, disabled: isConvertingMP4}"
-              @click="!isConvertingMP4 && toggleLottieDualChannelModeDropdown()">
-              <div class="mp4-select-text">
-                {{ lottieDualChannelConfig.channelMode === 'color-left-alpha-right' ? '左彩右灰' : '左灰右彩' }}
-              </div>
-              <div class="mp4-select-icon">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
-                    stroke-linejoin="round" />
-                </svg>
-              </div>
-              <div class="mp4-select-dropdown">
-                <div class="mp4-select-option"
-                  :class="{selected: lottieDualChannelConfig.channelMode === 'color-left-alpha-right'}"
-                  @click.stop="selectLottieDualChannelMode('color-left-alpha-right')">
-                  左彩右灰（左侧彩色通道，右侧Alpha通道）
-                </div>
-                <div class="mp4-select-option"
-                  :class="{selected: lottieDualChannelConfig.channelMode === 'alpha-left-color-right'}"
-                  @click.stop="selectLottieDualChannelMode('alpha-left-color-right')">
-                  左灰右彩（左侧Alpha通道，右侧彩色通道）
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 尺寸 -->
-          <div class="mp4-config-item">
-            <div class="mp4-config-label">尺寸：</div>
-            <div class="mp4-size-container">
-              <div class="input-wrapper input-wrapper--lg mp4-size-input-wrapper">
-                <input type="number" class="base-input" v-model.number="lottieDualChannelConfig.width"
-                  @input="onLottieDualChannelWidthChange" :disabled="isConvertingMP4" min="0" max="3000" />
-              </div>
-              <div class="mp4-size-lock">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path
-                    d="M4.66667 7.33333V5.33333C4.66667 3.86057 5.86057 2.66667 7.33333 2.66667H8.66667C10.1394 2.66667 11.3333 3.86057 11.3333 5.33333V7.33333M5.33333 7.33333H10.6667C11.403 7.33333 12 7.93029 12 8.66667V12C12 12.7364 11.403 13.3333 10.6667 13.3333H5.33333C4.59695 13.3333 4 12.7364 4 12V8.66667C4 7.93029 4.59695 7.33333 5.33333 7.33333Z"
-                    stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-              </div>
-              <div class="input-wrapper input-wrapper--lg mp4-size-input-wrapper">
-                <input type="number" class="base-input" v-model.number="lottieDualChannelConfig.height"
-                  @input="onLottieDualChannelHeightChange" :disabled="isConvertingMP4" min="0" max="3000" />
-              </div>
-            </div>
-          </div>
-
-          <!-- 压缩到质量 -->
-          <div class="mp4-config-item">
-            <div class="mp4-config-label">压缩到质量：</div>
-            <div class="mp4-value-container">
-              <div class="input-wrapper input-wrapper--lg mp4-value-input-wrapper">
-                <input type="number" class="base-input" v-model.number="lottieDualChannelConfig.quality"
-                  :disabled="isConvertingMP4" min="1" max="100" />
-              </div>
-              <div class="input-unit">%</div>
-            </div>
-          </div>
-
-          <!-- 帧率修改 -->
-          <div class="mp4-config-item">
-            <div class="mp4-config-label">帧率修改：</div>
-            <div class="mp4-value-container">
-              <div class="input-wrapper input-wrapper--lg mp4-value-input-wrapper">
-                <input type="number" class="base-input" v-model.number="lottieDualChannelConfig.fps"
-                  :disabled="isConvertingMP4" min="1" max="120" />
-              </div>
-              <div class="input-unit">FPS</div>
-            </div>
-          </div>
-
-
-        </div>
-
-        <!-- 底部按钮 -->
-        <div class="mp4-panel-footer">
-          <button v-if="!isConvertingMP4" class="material-btn-back" @click="closeLottieToDualChannelPanel" title="返回">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M12 16L6 10L12 4" stroke="#333333" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round" />
-            </svg>
-            <span>取消</span>
-          </button>
-          <button v-else class="material-btn-back mp4-btn-cancel" @click="cancelLottieToDualChannelConversion"
-            title="取消转换">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M5 5L15 15M15 5L5 15" stroke="#ff4444" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round" />
-            </svg>
-            <span>取消</span>
-          </button>
-
-          <button class="btn-large-secondary" :class="{'mp4-btn-converting': isConvertingMP4}"
-            :data-progress="mp4ConvertProgress" :disabled="isGlobalTaskRunning"
-            @click="startLottieToDualChannelConversion">
-            <template v-if="isConvertingMP4">
-              <span class="mp4-progress-text">{{ mp4ConvertProgress }}%</span>
-              <span class="mp4-stage-text">{{ mp4ConvertMessage }}</span>
-            </template>
-            <template v-else>
-              开始转换双通道MP4
-            </template>
-          </button>
-        </div>
-      </div>
-    </div>
+    <dual-channel-panel :visible="showLottieToDualChannelPanel && currentModule === 'lottie'"
+      :source-info="lottieToDualChannelSourceInfo" :initial-config="lottieToDualChannelConfig"
+      :is-converting="isConvertingMP4" :progress="mp4ConvertProgress" :message="mp4ConvertMessage"
+      :disabled="isGlobalTaskRunning" current-module="lottie" @close="closeLottieToDualChannelPanel"
+      @cancel="cancelLottieToDualChannelConversion" @convert="startLottieToDualChannelConversion">
+    </dual-channel-panel>
 
     <!-- SVGA转换弹窗（双通道MP4转SVGA，双通道MP4模式右侧弹窗） -->
-    <div class="svga-panel" :class="{'show': showSVGAPanel && currentModule === 'yyeva'}">
-      <div class="svga-panel-container">
-        <!-- 标题区 -->
-        <div class="svga-panel-header">
-          <h3 class="svga-panel-title">转换为SVGA动画格式</h3>
-          <div class="svga-panel-divider"></div>
-        </div>
-
-        <!-- MP4信息 -->
-        <div class="svga-info-section">
-          <div class="svga-info-row">当前MP4尺寸：{{ yyeva.fileInfo.sizeWH }} 帧率：{{ yyeva.fileInfo.fps }} 时长：{{
-            yyeva.fileInfo.duration }}</div>
-          <div class="svga-compress-hint">注意：帧率过高文件将巨大， 内存占用将巨大。双通道MP4转换位SVGA，是序列帧形式，内存占用会比普通SVGA高很多。</div>
-        </div>
-
-        <!-- 配置区域 -->
-        <div class="svga-config-section" :class="{disabled: isConvertingSVGA}">
-          <!-- 尺寸 -->
-          <div class="svga-config-item">
-            <div class="svga-config-label">尺寸：</div>
-            <div class="svga-size-container">
-              <div class="input-wrapper input-wrapper--lg svga-size-input-wrapper">
-                <input type="number" class="base-input" v-model.number="svgaConfig.width" @input="onSVGAWidthChange"
-                  :disabled="isConvertingSVGA" min="1" max="3000" />
-              </div>
-              <div class="svga-size-lock">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path
-                    d="M4.66667 7.33333V5.33333C4.66667 3.86057 5.86057 2.66667 7.33333 2.66667H8.66667C10.1394 2.66667 11.3333 3.86057 11.3333 5.33333V7.33333M5.33333 7.33333H10.6667C11.403 7.33333 12 7.93029 12 8.66667V12C12 12.7364 11.403 13.3333 10.6667 13.3333H5.33333C4.59695 13.3333 4 12.7364 4 12V8.66667C4 7.93029 4.59695 7.33333 5.33333 7.33333Z"
-                    stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-              </div>
-              <div class="input-wrapper input-wrapper--lg svga-size-input-wrapper">
-                <input type="number" class="base-input" v-model.number="svgaConfig.height" @input="onSVGAHeightChange"
-                  :disabled="isConvertingSVGA" min="1" max="3000" />
-              </div>
-            </div>
-          </div>
-
-          <!-- 压缩到质量 -->
-          <div class="svga-config-item">
-            <div class="svga-config-label">压缩到质量：</div>
-            <div class="svga-value-container">
-              <div class="input-wrapper input-wrapper--lg svga-value-input-wrapper">
-                <input type="number" class="base-input" v-model.number="svgaConfig.quality" :disabled="isConvertingSVGA"
-                  min="10" max="100" />
-              </div>
-              <div class="input-unit">%</div>
-            </div>
-          </div>
-
-          <!-- 帧率修改 -->
-          <div class="svga-config-item">
-            <div class="svga-config-label">帧率修改：</div>
-            <div class="svga-value-container">
-              <div class="input-wrapper input-wrapper--lg svga-value-input-wrapper">
-                <input type="number" class="base-input" v-model.number="svgaConfig.fps" :disabled="isConvertingSVGA"
-                  min="1" max="60" />
-              </div>
-              <div class="input-unit">FPS</div>
-            </div>
-          </div>
-
-          <!-- 静音 -->
-          <div class="svga-config-item">
-            <div class="svga-config-label">静音</div>
-            <div class="svga-mute-toggle" :class="{active: svgaConfig.muted, disabled: isConvertingSVGA}"
-              @click="!isConvertingSVGA && (svgaConfig.muted = !svgaConfig.muted)">
-              <div class="svga-mute-toggle-handle"></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 预估对比区域 -->
-        <div class="svga-estimate-section">
-          <div class="svga-estimate-box">
-            <div class="svga-estimate-title">预估转换后：</div>
-            <div class="svga-estimate-row">内存占用： {{ svgaEstimate.afterMemory }}</div>
-            <div class="svga-estimate-row">文件大小：{{ svgaEstimate.beforeFileSize }} → {{ svgaEstimate.afterFileSize }}
-            </div>
-          </div>
-        </div>
-
-        <!-- 底部按钮 -->
-        <div class="svga-panel-footer">
-          <!-- 返回按钮（转换中变为取消按钮） -->
-          <button v-if="!isConvertingSVGA" class="material-btn-back" @click="closeSVGAPanel" title="返回">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M12 16L6 10L12 4" stroke="#333333" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round" />
-            </svg>
-            <span>取消</span>
-          </button>
-          <button v-else class="material-btn-back svga-btn-cancel" @click="cancelSVGAConversion" title="取消转换">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M5 5L15 15M15 5L5 15" stroke="#ff4444" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round" />
-            </svg>
-            <span>取消</span>
-          </button>
-
-          <!-- 转换按钮 -->
-          <button class="btn-large-secondary" :class="{'svga-btn-converting': isConvertingSVGA}"
-            :data-progress="svgaConvertProgress" :disabled="isGlobalTaskRunning" @click="startSVGAConversion">
-            <template v-if="isConvertingSVGA">
-              <span class="svga-progress-text">{{ svgaConvertProgress }}%</span>
-              <span class="svga-stage-text">{{ svgaConvertMessage }}</span>
-            </template>
-            <template v-else>
-              开始转换SVGA
-            </template>
-          </button>
-        </div>
-      </div>
-    </div>
+    <to-svga-panel :visible="showYyevaToSvgaPanel && currentModule === 'yyeva'" :source-info="yyevaToSvgaSourceInfo"
+      :initial-config="yyevaToSvgaConfig" :is-converting="isConvertingSVGA" :progress="svgaConvertProgress"
+      :message="svgaConvertMessage" :disabled="isGlobalTaskRunning" current-module="yyeva"
+      :estimate-info="yyevaToSvgaEstimate" @close="closeYyevaToSvgaPanel" @cancel="cancelYyevaToSvgaConversion"
+      @convert="startSVGAConversion">
+    </to-svga-panel>
 
     <!-- 素材压缩弹窗（使用通用居中弹窗样式） -->
     <div class="center-modal-overlay" :class="{'show': showCompressModal && currentModule === 'svga'}">
@@ -1427,660 +865,51 @@
     </div>
 
     <!-- 普通MP4转SVGA弹窗（普通MP4模式右侧弹窗） -->
-    <div class="svga-panel" :class="{'show': showMp4ToSvgaPanel && currentModule === 'mp4'}">
-      <div class="svga-panel-container">
-        <!-- 标题区 -->
-        <div class="svga-panel-header">
-          <h3 class="svga-panel-title">转换为SVGA动画格式</h3>
-          <div class="svga-panel-divider"></div>
-        </div>
-
-        <!-- MP4信息 -->
-        <div class="svga-info-section">
-          <div class="svga-info-row">当前MP4尺寸：{{ mp4.fileInfo.sizeWH }} 帧率：{{ mp4.fileInfo.fps }} 时长：{{
-            mp4.fileInfo.duration }}</div>
-          <div class="svga-compress-hint">注意：帧率过高文件将巨大，内存占用将巨大。MP4转SVGA，是序列帧形式，内存占用会比普通SVGA高很多。</div>
-        </div>
-
-        <!-- 配置区域 -->
-        <div class="svga-config-section" :class="{disabled: isConvertingMp4ToSvga}">
-          <!-- 尺寸 -->
-          <div class="svga-config-item">
-            <div class="svga-config-label">尺寸：</div>
-            <div class="svga-size-container">
-              <div class="input-wrapper input-wrapper--lg svga-size-input-wrapper">
-                <input type="number" class="base-input" v-model.number="mp4ToSvgaConfig.width"
-                  @input="onMp4ToSvgaWidthChange" :disabled="isConvertingMp4ToSvga" min="1" max="3000" />
-              </div>
-              <div class="svga-size-lock">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path
-                    d="M4.66667 7.33333V5.33333C4.66667 3.86057 5.86057 2.66667 7.33333 2.66667H8.66667C10.1394 2.66667 11.3333 3.86057 11.3333 5.33333V7.33333M5.33333 7.33333H10.6667C11.403 7.33333 12 7.93029 12 8.66667V12C12 12.7364 11.403 13.3333 10.6667 13.3333H5.33333C4.59695 13.3333 4 12.7364 4 12V8.66667C4 7.93029 4.59695 7.33333 5.33333 7.33333Z"
-                    stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-              </div>
-              <div class="input-wrapper input-wrapper--lg svga-size-input-wrapper">
-                <input type="number" class="base-input" v-model.number="mp4ToSvgaConfig.height"
-                  @input="onMp4ToSvgaHeightChange" :disabled="isConvertingMp4ToSvga" min="1" max="3000" />
-              </div>
-            </div>
-          </div>
-
-          <!-- 压缩到质量 -->
-          <div class="svga-config-item">
-            <div class="svga-config-label">压缩到质量：</div>
-            <div class="svga-value-container">
-              <div class="input-wrapper input-wrapper--lg svga-value-input-wrapper">
-                <input type="number" class="base-input" v-model.number="mp4ToSvgaConfig.quality"
-                  :disabled="isConvertingMp4ToSvga" min="10" max="100" />
-              </div>
-              <div class="input-unit">%</div>
-            </div>
-          </div>
-
-          <!-- 帧率修改 -->
-          <div class="svga-config-item">
-            <div class="svga-config-label">帧率修改：</div>
-            <div class="svga-value-container">
-              <div class="input-wrapper input-wrapper--lg svga-value-input-wrapper">
-                <input type="number" class="base-input" v-model.number="mp4ToSvgaConfig.fps"
-                  :disabled="isConvertingMp4ToSvga" min="1" max="60" />
-              </div>
-              <div class="input-unit">FPS</div>
-            </div>
-          </div>
-
-          <!-- 静音 -->
-          <div class="svga-config-item">
-            <div class="svga-config-label">静音</div>
-            <div class="svga-mute-toggle" :class="{active: mp4ToSvgaConfig.muted, disabled: isConvertingMp4ToSvga}"
-              @click="!isConvertingMp4ToSvga && (mp4ToSvgaConfig.muted = !mp4ToSvgaConfig.muted)">
-              <div class="svga-mute-toggle-handle"></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 预估对比区域 -->
-        <div class="svga-estimate-section">
-          <div class="svga-estimate-box">
-            <div class="svga-estimate-title">预估转换前后：</div>
-            <div class="svga-estimate-row">内存占用： {{ mp4ToSvgaEstimate.afterMemory }}</div>
-            <div class="svga-estimate-row">文件大小：{{ mp4ToSvgaEstimate.beforeFileSize }} → {{
-              mp4ToSvgaEstimate.afterFileSize }}</div>
-          </div>
-        </div>
-
-        <!-- 底部按钮 -->
-        <div class="svga-panel-footer">
-          <!-- 返回按钮（转换中变为取消按钮） -->
-          <button v-if="!isConvertingMp4ToSvga" class="material-btn-back" @click="closeMp4ToSvgaPanel" title="返回">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M12 16L6 10L12 4" stroke="#333333" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round" />
-            </svg>
-            <span>取消</span>
-          </button>
-          <button v-else class="material-btn-back svga-btn-cancel" @click="cancelMp4ToSvgaConversion" title="取消转换">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M5 5L15 15M15 5L5 15" stroke="#ff4444" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round" />
-            </svg>
-            <span>取消</span>
-          </button>
-
-          <!-- 转换按钮 -->
-          <button class="btn-large-secondary" :class="{'svga-btn-converting': isConvertingMp4ToSvga}"
-            :data-progress="mp4ToSvgaProgress" :disabled="isGlobalTaskRunning" @click="startMp4ToSvgaConversion">
-            <template v-if="isConvertingMp4ToSvga">
-              <span class="svga-progress-text">{{ mp4ToSvgaProgress }}%</span>
-              <span class="svga-stage-text">{{ mp4ToSvgaMessage }}</span>
-            </template>
-            <template v-else>
-              开始转换SVGA
-            </template>
-          </button>
-        </div>
-      </div>
-    </div>
+    <to-svga-panel :visible="showMp4ToSvgaPanel && currentModule === 'mp4'" :source-info="mp4ToSvgaSourceInfo"
+      :initial-config="mp4ToSvgaConfig" :is-converting="isConvertingMp4ToSvga" :progress="mp4ToSvgaProgress"
+      :message="mp4ToSvgaMessage" :disabled="isGlobalTaskRunning" current-module="mp4"
+      :estimate-info="mp4ToSvgaEstimate" @close="closeMp4ToSvgaPanel" @cancel="cancelMp4ToSvgaConversion"
+      @convert="startMp4ToSvgaConversion">
+    </to-svga-panel>
 
     <!-- Lottie转SVGA弹窗（Lottie模式右侧弹窗） -->
-    <div class="svga-panel" :class="{'show': showLottieToSvgaPanel && currentModule === 'lottie'}">
-      <div class="svga-panel-container">
-        <!-- 标题区 -->
-        <div class="svga-panel-header">
-          <h3 class="svga-panel-title">转换为SVGA动画格式</h3>
-          <div class="svga-panel-divider"></div>
-        </div>
-
-        <!-- Lottie信息 -->
-        <div class="svga-info-section">
-          <div class="svga-info-row">当前尺寸：{{ lottie.originalWidth }}x{{ lottie.originalHeight }} 帧率：{{
-            lottie.fileInfo.fps }}FPS</div>
-          <div class="svga-compress-hint">注意：Lottie转SVGA为序列帧形式，帧率过高文件将巨大，内存占用会比普通SVGA高很多。</div>
-        </div>
-
-        <!-- 配置区域 -->
-        <div class="svga-config-section" :class="{disabled: isConvertingLottieToSvga}">
-          <!-- 尺寸 -->
-          <div class="svga-config-item">
-            <div class="svga-config-label">尺寸：</div>
-            <div class="svga-size-container">
-              <div class="input-wrapper input-wrapper--lg svga-size-input-wrapper">
-                <input type="number" class="base-input" v-model.number="lottieToSvgaConfig.width"
-                  @input="onLottieToSvgaWidthChange" :disabled="isConvertingLottieToSvga" min="1" max="3000" />
-              </div>
-              <div class="svga-size-lock">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path
-                    d="M4.66667 7.33333V5.33333C4.66667 3.86057 5.86057 2.66667 7.33333 2.66667H8.66667C10.1394 2.66667 11.3333 3.86057 11.3333 5.33333V7.33333M5.33333 7.33333H10.6667C11.403 7.33333 12 7.93029 12 8.66667V12C12 12.7364 11.403 13.3333 10.6667 13.3333H5.33333C4.59695 13.3333 4 12.7364 4 12V8.66667C4 7.93029 4.59695 7.33333 5.33333 7.33333Z"
-                    stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-              </div>
-              <div class="input-wrapper input-wrapper--lg svga-size-input-wrapper">
-                <input type="number" class="base-input" v-model.number="lottieToSvgaConfig.height"
-                  @input="onLottieToSvgaHeightChange" :disabled="isConvertingLottieToSvga" min="1" max="3000" />
-              </div>
-            </div>
-          </div>
-
-          <!-- 压缩到质量 -->
-          <div class="svga-config-item">
-            <div class="svga-config-label">压缩到质量：</div>
-            <div class="svga-value-container">
-              <div class="input-wrapper input-wrapper--lg svga-value-input-wrapper">
-                <input type="number" class="base-input" v-model.number="lottieToSvgaConfig.quality"
-                  :disabled="isConvertingLottieToSvga" min="10" max="100" />
-              </div>
-              <div class="input-unit">%</div>
-            </div>
-          </div>
-
-          <!-- 帧率修改 -->
-          <div class="svga-config-item">
-            <div class="svga-config-label">帧率修改：</div>
-            <div class="svga-value-container">
-              <div class="input-wrapper input-wrapper--lg svga-value-input-wrapper">
-                <input type="number" class="base-input" v-model.number="lottieToSvgaConfig.fps"
-                  :disabled="isConvertingLottieToSvga" min="1" max="60" />
-              </div>
-              <div class="input-unit">FPS</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 预估对比区域 -->
-        <div class="svga-estimate-section">
-          <div class="svga-estimate-box">
-            <div class="svga-estimate-title">预估转换后：</div>
-            <div class="svga-estimate-row">内存占用： {{ lottieToSvgaEstimate.afterMemory }}</div>
-            <div class="svga-estimate-row">文件大小：{{ lottieToSvgaEstimate.afterFileSize }}</div>
-          </div>
-        </div>
-
-        <!-- 底部按钮 -->
-        <div class="svga-panel-footer">
-          <!-- 返回按钮（转换中变为取消按钮） -->
-          <button v-if="!isConvertingLottieToSvga" class="material-btn-back" @click="closeLottieToSvgaPanel" title="返回">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M12 16L6 10L12 4" stroke="#333333" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round" />
-            </svg>
-            <span>取消</span>
-          </button>
-          <button v-else class="material-btn-back svga-btn-cancel"
-            @click="lottieToSvgaCancelled = true; isConvertingLottieToSvga = false" title="取消转换">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M5 5L15 15M15 5L5 15" stroke="#ff4444" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round" />
-            </svg>
-            <span>取消</span>
-          </button>
-
-          <!-- 转换按钮 -->
-          <button class="btn-large-secondary" :class="{'svga-btn-converting': isConvertingLottieToSvga}"
-            :data-progress="lottieToSvgaProgress" :disabled="isGlobalTaskRunning" @click="startLottieToSvgaConversion">
-            <template v-if="isConvertingLottieToSvga">
-              <span class="svga-progress-text">{{ lottieToSvgaProgress }}%</span>
-              <span class="svga-stage-text">{{ lottieToSvgaMessage }}</span>
-            </template>
-            <template v-else>
-              开始转换SVGA
-            </template>
-          </button>
-        </div>
-      </div>
-    </div>
+    <to-svga-panel :visible="showLottieToSvgaPanel && currentModule === 'lottie'" :source-info="lottieToSvgaSourceInfo"
+      :initial-config="lottieToSvgaConfig" :is-converting="isConvertingLottieToSvga" :progress="lottieToSvgaProgress"
+      :message="lottieToSvgaMessage" :disabled="isGlobalTaskRunning" current-module="lottie"
+      :estimate="lottieToSvgaEstimate" @close="closeLottieToSvgaPanel"
+      @cancel="lottieToSvgaCancelled = true; isConvertingLottieToSvga = false" @convert="startLottieToSvgaConversion">
+    </to-svga-panel>
 
     <!-- 序列帧转SVGA弹窗（序列帧模式右侧弹窗） -->
-    <div class="svga-panel" :class="{'show': showFramesToSvgaPanel && currentModule === 'frames'}">
-      <div class="svga-panel-container">
-        <!-- 标题区 -->
-        <div class="svga-panel-header">
-          <h3 class="svga-panel-title">转换为SVGA动画格式</h3>
-          <div class="svga-panel-divider"></div>
-        </div>
-
-        <!-- 序列帧信息 -->
-        <div class="svga-info-section">
-          <div class="svga-info-row">当前尺寸：{{ frames.originalWidth }}x{{ frames.originalHeight }} 帧数：{{
-            frames.files.length }}</div>
-          <div class="svga-compress-hint">注意：序列帧转SVGA为序列帧形式，保留原始透明度，内存占用会比普通SVGA高很多。</div>
-        </div>
-
-        <!-- 配置区域 -->
-        <div class="svga-config-section" :class="{disabled: isConvertingFramesToSvga}">
-          <!-- 尺寸 -->
-          <div class="svga-config-item">
-            <div class="svga-config-label">尺寸：</div>
-            <div class="svga-size-container">
-              <div class="input-wrapper input-wrapper--lg svga-size-input-wrapper">
-                <input type="number" class="base-input" v-model.number="framesToSvgaConfig.width"
-                  @input="onFramesToSvgaWidthChange" :disabled="isConvertingFramesToSvga" min="1" max="3000" />
-              </div>
-              <div class="svga-size-lock">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path
-                    d="M4.66667 7.33333V5.33333C4.66667 3.86057 5.86057 2.66667 7.33333 2.66667H8.66667C10.1394 2.66667 11.3333 3.86057 11.3333 5.33333V7.33333M5.33333 7.33333H10.6667C11.403 7.33333 12 7.93029 12 8.66667V12C12 12.7364 11.403 13.3333 10.6667 13.3333H5.33333C4.59695 13.3333 4 12.7364 4 12V8.66667C4 7.93029 4.59695 7.33333 5.33333 7.33333Z"
-                    stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-              </div>
-              <div class="input-wrapper input-wrapper--lg svga-size-input-wrapper">
-                <input type="number" class="base-input" v-model.number="framesToSvgaConfig.height"
-                  @input="onFramesToSvgaHeightChange" :disabled="isConvertingFramesToSvga" min="1" max="3000" />
-              </div>
-            </div>
-          </div>
-
-          <!-- 压缩到质量 -->
-          <div class="svga-config-item">
-            <div class="svga-config-label">压缩到质量：</div>
-            <div class="svga-value-container">
-              <div class="input-wrapper input-wrapper--lg svga-value-input-wrapper">
-                <input type="number" class="base-input" v-model.number="framesToSvgaConfig.quality"
-                  :disabled="isConvertingFramesToSvga" min="10" max="100" />
-              </div>
-              <div class="input-unit">%</div>
-            </div>
-          </div>
-
-          <!-- 帧率修改 -->
-          <div class="svga-config-item">
-            <div class="svga-config-label">帧率修改：</div>
-            <div class="svga-value-container">
-              <div class="input-wrapper input-wrapper--lg svga-value-input-wrapper">
-                <input type="number" class="base-input" v-model.number="framesToSvgaConfig.fps"
-                  :disabled="isConvertingFramesToSvga" min="1" max="60" />
-              </div>
-              <div class="input-unit">FPS</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 预估对比区域 -->
-        <div class="svga-estimate-section">
-          <div class="svga-estimate-box">
-            <div class="svga-estimate-title">预估转换后：</div>
-            <div class="svga-estimate-row">内存占用： {{ framesToSvgaEstimate.afterMemory }}</div>
-            <div class="svga-estimate-row">文件大小：{{ framesToSvgaEstimate.afterFileSize }}</div>
-          </div>
-        </div>
-
-        <!-- 底部按钮 -->
-        <div class="svga-panel-footer">
-          <!-- 返回按钮（转换中变为取消按钮） -->
-          <button v-if="!isConvertingFramesToSvga" class="material-btn-back" @click="closeFramesToSvgaPanel" title="返回">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M12 16L6 10L12 4" stroke="#333333" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round" />
-            </svg>
-            <span>取消</span>
-          </button>
-          <button v-else class="material-btn-back svga-btn-cancel"
-            @click="framesToSvgaCancelled = true; isConvertingFramesToSvga = false" title="取消转换">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M5 5L15 15M15 5L5 15" stroke="#ff4444" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round" />
-            </svg>
-            <span>取消</span>
-          </button>
-
-          <!-- 转换按钮 -->
-          <button class="btn-large-secondary" :class="{'svga-btn-converting': isConvertingFramesToSvga}"
-            :data-progress="framesToSvgaProgress" :disabled="isGlobalTaskRunning" @click="startFramesToSvgaConversion">
-            <template v-if="isConvertingFramesToSvga">
-              <span class="svga-progress-text">{{ framesToSvgaProgress }}%</span>
-              <span class="svga-stage-text">{{ framesToSvgaMessage }}</span>
-            </template>
-            <template v-else>
-              开始转换SVGA
-            </template>
-          </button>
-        </div>
-      </div>
-    </div>
+    <to-svga-panel :visible="showImagesToSvgaPanel && currentModule === 'frames'" :source-info="imagesToSvgaSourceInfo"
+      :initial-config="imagesToSvgaConfig" :is-converting="isConvertingFramesToSvga" :progress="framesToSvgaProgress"
+      :message="framesToSvgaMessage" :disabled="isGlobalTaskRunning" current-module="frames"
+      :estimate-info="imagesToSvgaEstimate" @close="closeImagesToSvgaPanel" @cancel="cancelFramesToSvgaConversion"
+      @convert="startFramesToSvgaConversion">
+    </to-svga-panel>
 
     <!-- 序列帧转双通道MP4弹窗（序列帧模式右侧弹窗） -->
-    <div class="mp4-panel" :class="{'show': showFramesToDualChannelPanel && currentModule === 'frames'}">
-      <div class="mp4-panel-container">
-        <!-- 标题区 -->
-        <div class="mp4-panel-header">
-          <h3 class="mp4-panel-title">转换为双通道MP4格式</h3>
-          <div class="mp4-panel-divider"></div>
-        </div>
-
-        <!-- 序列帧信息 -->
-        <div class="mp4-info-section">
-          <div class="mp4-info-row">当前尺寸：{{ frames.originalWidth }}x{{ frames.originalHeight }} 帧数：{{
-            frames.files.length }}</div>
-          <div class="mp4-compress-hint">注意：第一次转换需要加载FFmpeg（25M），请耐心等待<br>压缩质量调越低，文件就越小，画面越糊。</div>
-        </div>
-
-        <!-- 配置区域 -->
-        <div class="mp4-config-section" :class="{disabled: isConvertingFramesToDualChannel}">
-          <!-- 遮罩位置 -->
-          <div class="mp4-config-item">
-            <div class="mp4-config-label">遮罩位置：</div>
-            <div class="mp4-select-wrapper" ref="mp4SelectWrapper"
-              :class="{open: showFramesDualChannelModeDropdown, disabled: isConvertingFramesToDualChannel}"
-              @click="!isConvertingFramesToDualChannel && (showFramesDualChannelModeDropdown = !showFramesDualChannelModeDropdown)">
-              <div class="mp4-select-text">
-                {{ framesToDualChannelConfig.channelMode === 'color-left-alpha-right' ? '左彩右灰' : '左灰右彩' }}
-              </div>
-              <div class="mp4-select-icon">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
-                    stroke-linejoin="round" />
-                </svg>
-              </div>
-              <!-- 下拉菜单 -->
-              <div class="mp4-select-dropdown">
-                <div class="mp4-select-option"
-                  :class="{selected: framesToDualChannelConfig.channelMode === 'color-left-alpha-right'}"
-                  @click.stop="framesToDualChannelConfig.channelMode = 'color-left-alpha-right'; showFramesDualChannelModeDropdown = false">
-                  左彩右灰（左侧彩色通道，右侧Alpha通道）
-                </div>
-                <div class="mp4-select-option"
-                  :class="{selected: framesToDualChannelConfig.channelMode === 'alpha-left-color-right'}"
-                  @click.stop="framesToDualChannelConfig.channelMode = 'alpha-left-color-right'; showFramesDualChannelModeDropdown = false">
-                  左灰右彩（左侧Alpha通道，右侧彩色通道）
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 尺寸 -->
-          <div class="mp4-config-item">
-            <div class="mp4-config-label">尺寸：</div>
-            <div class="mp4-size-container">
-              <div class="input-wrapper input-wrapper--lg mp4-size-input-wrapper">
-                <input type="number" class="base-input" v-model.number="framesToDualChannelConfig.width"
-                  @input="onFramesToDualChannelWidthChange" :disabled="isConvertingFramesToDualChannel" min="1"
-                  max="3000" />
-              </div>
-              <div class="mp4-size-lock">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path
-                    d="M4.66667 7.33333V5.33333C4.66667 3.86057 5.86057 2.66667 7.33333 2.66667H8.66667C10.1394 2.66667 11.3333 3.86057 11.3333 5.33333V7.33333M5.33333 7.33333H10.6667C11.403 7.33333 12 7.93029 12 8.66667V12C12 12.7364 11.403 13.3333 10.6667 13.3333H5.33333C4.59695 13.3333 4 12.7364 4 12V8.66667C4 7.93029 4.59695 7.33333 5.33333 7.33333Z"
-                    stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-              </div>
-              <div class="input-wrapper input-wrapper--lg mp4-size-input-wrapper">
-                <input type="number" class="base-input" v-model.number="framesToDualChannelConfig.height"
-                  @input="onFramesToDualChannelHeightChange" :disabled="isConvertingFramesToDualChannel" min="1"
-                  max="3000" />
-              </div>
-            </div>
-          </div>
-
-          <!-- 压缩质量 -->
-          <div class="mp4-config-item">
-            <div class="mp4-config-label">压缩质量：</div>
-            <div class="mp4-value-container">
-              <div class="input-wrapper input-wrapper--lg mp4-value-input-wrapper">
-                <input type="number" class="base-input" v-model.number="framesToDualChannelConfig.quality"
-                  :disabled="isConvertingFramesToDualChannel" min="1" max="100" />
-              </div>
-              <div class="input-unit">%</div>
-            </div>
-          </div>
-
-          <!-- 帧率 -->
-          <div class="mp4-config-item">
-            <div class="mp4-config-label">帧率：</div>
-            <div class="mp4-value-container">
-              <div class="input-wrapper input-wrapper--lg mp4-value-input-wrapper">
-                <input type="number" class="base-input" v-model.number="framesToDualChannelConfig.fps"
-                  :disabled="isConvertingFramesToDualChannel" min="1" max="120" />
-              </div>
-              <div class="input-unit">FPS</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 底部按钮 -->
-        <div class="mp4-panel-footer">
-          <!-- 返回按钮（转换中变为取消按钮） -->
-          <button v-if="!isConvertingFramesToDualChannel" class="material-btn-back"
-            @click="closeFramesToDualChannelPanel" title="返回">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M12 16L6 10L12 4" stroke="#333333" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round" />
-            </svg>
-            <span>取消</span>
-          </button>
-          <button v-else class="material-btn-back mp4-btn-cancel"
-            @click="framesToDualChannelCancelled = true; isConvertingFramesToDualChannel = false" title="取消转换">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M5 5L15 15M15 5L5 15" stroke="#ff4444" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round" />
-            </svg>
-            <span>取消</span>
-          </button>
-
-          <!-- 转换按钮 -->
-          <button class="btn-large-secondary" :class="{'mp4-btn-converting': isConvertingFramesToDualChannel}"
-            :data-progress="framesToDualChannelProgress" :disabled="isGlobalTaskRunning"
-            @click="startFramesToDualChannelConversion">
-            <template v-if="isConvertingFramesToDualChannel">
-              <span class="mp4-progress-text">{{ framesToDualChannelProgress }}%</span>
-              <span class="mp4-stage-text">{{ framesToDualChannelMessage }}</span>
-            </template>
-            <template v-else>
-              开始转换双通道MP4
-            </template>
-          </button>
-        </div>
-      </div>
-    </div>
+    <dual-channel-panel :visible="showImagesToDualChannelPanel && currentModule === 'frames'"
+      :source-info="imagesToDualChannelSourceInfo" :initial-config="imagesToDualChannelConfig"
+      :is-converting="isConvertingFramesToDualChannel" :progress="framesToDualChannelProgress"
+      :message="framesToDualChannelMessage" :disabled="isGlobalTaskRunning" current-module="frames"
+      @close="closeImagesToDualChannelPanel" @cancel="cancelFramesToDualChannelConversion"
+      @convert="startFramesToDualChannelConversion">
+    </dual-channel-panel>
 
     <!-- GIF导出弹窗（所有模式通用右侧弹窗） -->
-    <div class="svga-panel gif-panel" :class="{'show': showGifPanel}">
-      <div class="svga-panel-container">
-        <!-- 标题区 -->
-        <div class="svga-panel-header">
-          <h3 class="svga-panel-title">转成GIF动图</h3>
-          <div class="svga-panel-divider"></div>
-        </div>
-
-        <!-- 当前文件信息 -->
-        <div class="svga-info-section">
-          <div class="svga-info-row">当前尺寸：{{ gifSourceInfo.sizeWH }} 帧率：{{ gifSourceInfo.fps }}FPS 时长：{{
-            gifSourceInfo.duration }}s</div>
-          <div class="svga-compress-hint">注意：GIF文件体积较大，建议控制尺寸和帧率。超过10M的GIF可能加载较慢。</div>
-        </div>
-
-        <!-- 配置区域 -->
-        <div class="svga-config-section" :class="{disabled: isExportingGIF}">
-          <!-- 尺寸 -->
-          <div class="svga-config-item">
-            <div class="svga-config-label">尺寸：</div>
-            <div class="svga-size-container">
-              <div class="input-wrapper input-wrapper--lg svga-size-input-wrapper">
-                <input type="number" class="base-input" v-model.number="gifConfig.width" @input="onGifWidthChange"
-                  :disabled="isExportingGIF" min="1" max="1920" />
-              </div>
-              <div class="svga-size-lock">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path
-                    d="M4.66667 7.33333V5.33333C4.66667 3.86057 5.86057 2.66667 7.33333 2.66667H8.66667C10.1394 2.66667 11.3333 3.86057 11.3333 5.33333V7.33333M5.33333 7.33333H10.6667C11.403 7.33333 12 7.93029 12 8.66667V12C12 12.7364 11.403 13.3333 10.6667 13.3333H5.33333C4.59695 13.3333 4 12.7364 4 12V8.66667C4 7.93029 4.59695 7.33333 5.33333 7.33333Z"
-                    stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-              </div>
-              <div class="input-wrapper input-wrapper--lg svga-size-input-wrapper">
-                <input type="number" class="base-input" v-model.number="gifConfig.height" @input="onGifHeightChange"
-                  :disabled="isExportingGIF" min="1" max="1920" />
-              </div>
-            </div>
-          </div>
-
-          <!-- 帧率 -->
-          <div class="svga-config-item">
-            <div class="svga-config-label">帧率：</div>
-            <div class="svga-value-container">
-              <div class="input-wrapper input-wrapper--lg svga-value-input-wrapper">
-                <input type="number" class="base-input" v-model.number="gifConfig.fps" :disabled="isExportingGIF"
-                  min="1" max="60" />
-              </div>
-              <div class="input-unit">FPS</div>
-            </div>
-          </div>
-
-          <!-- 质量 -->
-          <div class="svga-config-item">
-            <div class="svga-config-label">质量：</div>
-            <div class="svga-value-container">
-              <div class="input-wrapper input-wrapper--lg svga-value-input-wrapper">
-                <input type="number" class="base-input" v-model.number="gifConfig.quality" :disabled="isExportingGIF"
-                  min="1" max="30" />
-              </div>
-              <div class="input-unit input-unit--hint">越小越好</div>
-            </div>
-          </div>
-
-          <!-- 透明底开关 -->
-          <div class="svga-config-item">
-            <div class="svga-config-label">透明底</div>
-            <div class="svga-mute-toggle" :class="{active: gifConfig.transparent, disabled: isExportingGIF}"
-              @click="!isExportingGIF && (gifConfig.transparent = !gifConfig.transparent)">
-              <div class="svga-mute-toggle-handle"></div>
-            </div>
-          </div>
-
-          <!-- 杂色边开关（仅在透明底打开时显示） -->
-          <div class="svga-config-item" v-if="gifConfig.transparent">
-            <div class="svga-config-label">杂色边</div>
-            <div class="svga-mute-toggle" :class="{active: gifConfig.dither, disabled: isExportingGIF}"
-              @click="!isExportingGIF && (gifConfig.dither = !gifConfig.dither)">
-              <div class="svga-mute-toggle-handle"></div>
-            </div>
-          </div>
-
-          <!-- 杂色边颜色选择器（仅在杂色边打开时显示） -->
-          <div class="svga-config-item" v-if="gifConfig.transparent && gifConfig.dither">
-            <div class="svga-config-label">杂色颜色：</div>
-            <div class="gif-color-picker">
-              <input type="color" v-model="gifConfig.ditherColor" :disabled="isExportingGIF" class="gif-color-input" />
-              <span class="gif-color-value">{{ gifConfig.ditherColor }}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 预估区域 -->
-        <div class="svga-estimate-section">
-          <div class="svga-estimate-box">
-            <div class="svga-estimate-title">预估导出后：</div>
-            <div class="svga-estimate-row">文件大小：{{ gifEstimate.fileSize }}</div>
-          </div>
-        </div>
-
-        <!-- 底部按钮 -->
-        <div class="svga-panel-footer">
-          <!-- 返回按钮（导出中变为取消按钮） -->
-          <button v-if="!isExportingGIF" class="material-btn-back" @click="closeGifPanel" title="返回">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M12 16L6 10L12 4" stroke="#333333" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round" />
-            </svg>
-            <span>取消</span>
-          </button>
-          <button v-else class="material-btn-back svga-btn-cancel" @click="cancelGifExport" title="取消导出">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M5 5L15 15M15 5L5 15" stroke="#ff4444" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round" />
-            </svg>
-            <span>取消</span>
-          </button>
-
-          <!-- 导出按钮 -->
-          <button class="btn-large-secondary" :class="{'svga-btn-converting': isExportingGIF}"
-            :data-progress="gifExportProgress" :disabled="isGlobalTaskRunning" @click="startGifExport">
-            <template v-if="isExportingGIF">
-              <span class="svga-progress-text">{{ gifExportProgress }}%</span>
-              <span class="svga-stage-text">{{ gifExportMessage }}</span>
-            </template>
-            <template v-else>
-              开始转GIF
-            </template>
-          </button>
-        </div>
-      </div>
-    </div>
+    <gif-panel :visible="activeRightPanel === 'gif'" :source-info="getGifSourceInfo()" :initial-config="gifConfig"
+      :bg-color-key="bgColorKey" :current-bg-color="currentBgColor" :is-exporting="isExportingGIF"
+      :export-progress="gifExportProgress" :export-stage="gifExportStage" :export-message="gifExportMessage"
+      @close="closeGifPanel" @cancel="cancelGifExport" @export="handleGifExport"
+      @config-change="handleGifConfigChange"></gif-panel>
 
     <!-- 绿幕抠图弹窗（普通MP4模式左侧弹窗） -->
-    <div class="chromakey-panel" :class="{'show': showChromaKeyPanel && currentModule === 'mp4'}">
-      <div class="chromakey-panel-container">
-        <!-- 标题区 -->
-        <div class="chromakey-panel-header">
-          <h3 class="chromakey-panel-title">扣掉画面绿幕成透明</h3>
-          <div class="chromakey-panel-divider"></div>
-        </div>
-
-        <!-- MP4信息 -->
-        <div class="chromakey-info-section">
-          <div class="chromakey-info-row">MP4尺寸：{{ mp4.fileInfo.sizeWH }} 时长：{{ mp4.fileInfo.duration }}</div>
-          <div class="chromakey-performance-hint">打开绿幕抠图，播放会比较卡，因为是实时渲染抠图效果</div>
-        </div>
-
-        <!-- 设置区域 -->
-        <div class="chromakey-config-section">
-          <!-- 打开扮绿幕开关 -->
-          <div class="chromakey-config-item">
-            <div class="chromakey-config-label">打开扮绿幕：</div>
-            <div class="chromakey-switch-wrapper" @click="toggleChromaKey">
-              <div class="chromakey-switch" :class="{active: chromaKeyEnabled}">
-                <div class="chromakey-switch-handle"></div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 相似度滑块 -->
-          <div class="chromakey-config-item" v-if="chromaKeyEnabled">
-            <div class="chromakey-config-label">相似度：{{ chromaKeySimilarity }}</div>
-            <div class="chromakey-slider-wrapper">
-              <input type="range" class="chromakey-slider" v-model.number="chromaKeySimilarity" min="0" max="100"
-                step="1" @input="updateChromaKeyEffect" />
-            </div>
-          </div>
-
-          <!-- 平滑度滑块 -->
-          <div class="chromakey-config-item" v-if="chromaKeyEnabled">
-            <div class="chromakey-config-label">平滑度：{{ chromaKeySmoothness }}</div>
-            <div class="chromakey-slider-wrapper">
-              <input type="range" class="chromakey-slider" v-model.number="chromaKeySmoothness" min="0" max="100"
-                step="1" @input="updateChromaKeyEffect" />
-            </div>
-          </div>
-        </div>
-
-        <!-- 底部按钮 -->
-        <div class="chromakey-panel-footer">
-          <!-- 确定按钮 -->
-          <button class="btn-large-secondary" @click="applyChromaKey">
-            确定
-          </button>
-        </div>
-      </div>
-    </div>
+    <chromakey-panel :visible="showChromaKeyPanel && currentModule === 'mp4'" :source-info="mp4.fileInfo"
+      :enabled="chromaKeyEnabled" :similarity.sync="chromaKeySimilarity" :smoothness.sync="chromaKeySmoothness"
+      @toggle="chromaKeyEnabled = !chromaKeyEnabled; updateChromaKeyEffect()" @update-effect="updateChromaKeyEffect"
+      @close="showChromaKeyPanel = false" @apply="showChromaKeyPanel = false">
+    </chromakey-panel>
 
     <!-- 隐藏的文件输入框，用于重传SVGA -->
     <input type="file" ref="reuploadSvgaInput" accept=".svga" style="display: none;" @change="handleReuploadSVGA" />
@@ -2090,96 +919,11 @@
       style="display: none;" @change="handleChangePreviewFile" />
 
     <!-- 普通MP4转换弹窗 -->
-    <div class="mp4-panel" :class="{'show': showStandardMp4Panel}">
-      <div class="mp4-panel-container">
-        <div class="mp4-panel-header">
-          <h3 class="mp4-panel-title">转换为普通MP4格式</h3>
-          <div class="mp4-panel-divider"></div>
-        </div>
-        <div class="mp4-info-section">
-          <div class="mp4-info-row">
-            <template v-if="currentModule === 'svga'">SVGA尺寸：{{ svga.fileInfo.sizeWH }} 时长：{{ svga.fileInfo.duration
-              }}</template>
-            <template v-else-if="currentModule === 'yyeva'">MP4尺寸：{{ yyeva.fileInfo.sizeWH }} 时长：{{
-              yyeva.fileInfo.duration }}</template>
-          </div>
-          <div class="mp4-compress-hint">注意：第一次转换需要加载FFmpeg（25M），请耐心等待<br>压缩质量调越低，文件就越小，画面越糊。</div>
-        </div>
-        <div class="mp4-config-section" :class="{disabled: isConvertingStandardMp4}">
-          <div class="mp4-config-item">
-            <div class="mp4-config-label">尺寸：</div>
-            <div class="mp4-size-container">
-              <div class="input-wrapper input-wrapper--lg mp4-size-input-wrapper">
-                <input type="number" class="base-input" v-model.number="standardMp4Config.width"
-                  @input="onStandardMp4WidthChange" :disabled="isConvertingStandardMp4" min="1" max="3000" />
-              </div>
-              <div class="mp4-size-lock">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <path
-                    d="M4.66667 7.33333V5.33333C4.66667 3.86057 5.86057 2.66667 7.33333 2.66667H8.66667C10.1394 2.66667 11.3333 3.86057 11.3333 5.33333V7.33333M5.33333 7.33333H10.6667C11.403 7.33333 12 7.93029 12 8.66667V12C12 12.7364 11.403 13.3333 10.6667 13.3333H5.33333C4.59695 13.3333 4 12.7364 4 12V8.66667C4 7.93029 4.59695 7.33333 5.33333 7.33333Z"
-                    stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-              </div>
-              <div class="input-wrapper input-wrapper--lg mp4-size-input-wrapper">
-                <input type="number" class="base-input" v-model.number="standardMp4Config.height"
-                  @input="onStandardMp4HeightChange" :disabled="isConvertingStandardMp4" min="1" max="3000" />
-              </div>
-            </div>
-          </div>
-          <div class="mp4-config-item">
-            <div class="mp4-config-label">压缩到质量：</div>
-            <div class="mp4-value-container">
-              <div class="input-wrapper input-wrapper--lg mp4-value-input-wrapper">
-                <input type="number" class="base-input" v-model.number="standardMp4Config.quality"
-                  :disabled="isConvertingStandardMp4" min="1" max="100" />
-              </div>
-              <div class="input-unit">%</div>
-            </div>
-          </div>
-          <div class="mp4-config-item">
-            <div class="mp4-config-label">帧率修改：</div>
-            <div class="mp4-value-container">
-              <div class="input-wrapper input-wrapper--lg mp4-value-input-wrapper">
-                <input type="number" class="base-input" v-model.number="standardMp4Config.fps"
-                  :disabled="isConvertingStandardMp4" min="1" max="120" />
-              </div>
-              <div class="input-unit">FPS</div>
-            </div>
-          </div>
-          <div class="mp4-config-item" v-if="currentModule !== 'lottie'">
-            <div class="mp4-config-label">静音</div>
-            <div class="mp4-mute-toggle" :class="{active: standardMp4Config.muted, disabled: isConvertingStandardMp4}"
-              @click="!isConvertingStandardMp4 && (standardMp4Config.muted = !standardMp4Config.muted)">
-              <div class="mp4-mute-toggle-handle"></div>
-            </div>
-          </div>
-        </div>
-        <div class="mp4-panel-footer">
-          <button v-if="!isConvertingStandardMp4" class="material-btn-back" @click="closeStandardMp4Panel" title="返回">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M12 16L6 10L12 4" stroke="#333333" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round" />
-            </svg>
-            <span>取消</span>
-          </button>
-          <button v-else class="material-btn-back mp4-btn-cancel" @click="cancelStandardMp4Conversion" title="取消转换">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M5 5L15 15M15 5L5 15" stroke="#ff4444" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round" />
-            </svg>
-            <span>取消</span>
-          </button>
-          <button class="btn-large-secondary" :class="{'mp4-btn-converting': isConvertingStandardMp4}"
-            :data-progress="standardMp4Progress" :disabled="isGlobalTaskRunning" @click="startStandardMp4Conversion">
-            <template v-if="isConvertingStandardMp4">
-              <span class="mp4-progress-text">{{ standardMp4Progress }}%</span>
-              <span class="mp4-stage-text">{{ standardMp4Message }}</span>
-            </template>
-            <template v-else>开始转换MP4</template>
-          </button>
-        </div>
-      </div>
-    </div>
+    <standard-mp4-panel :visible="showStandardMp4Panel" :source-info="standardMp4SourceInfo"
+      :initial-config="standardMp4Config" :is-converting="isConvertingStandardMp4" :progress="standardMp4Progress"
+      :message="standardMp4Message" :disabled="isGlobalTaskRunning" :current-module="currentModule"
+      @close="closeStandardMp4Panel" @cancel="cancelStandardMp4Conversion" @convert="startStandardMp4Conversion">
+    </standard-mp4-panel>
 
     <!-- 序列帧帧率设置弹窗（复用通用居中弹窗样式） -->
     <div class="center-modal-overlay" :class="{'show': showFramesFpsDialog}">
@@ -2391,6 +1135,15 @@
   <script src="assets/js/file-validator.js"></script>
   <script src="assets/js/input-controller.js"></script>
 
+  <!-- 组件库 -->
+  <script src="assets/js/components/index.js"></script>
+  <script src="assets/js/components/material-panel.js"></script>
+  <script src="assets/js/components/gif-panel.js"></script>
+  <script src="assets/js/components/standard-mp4-panel.js"></script>
+  <script src="assets/js/components/dual-channel-panel.js"></script>
+  <script src="assets/js/components/to-svga-panel.js"></script>
+  <script src="assets/js/components/chromakey-panel.js"></script>
+
   <!-- 播放控制器模块 -->
   <script src="assets/js/player-controller.js?v=13"></script>
 
@@ -2400,6 +1153,239 @@
   <!-- 素材编辑器模块 -->
   <script src="assets/js/material-editor.js"></script>
 
+  <!-- 定义组件模板 -->
+  <script type="text/x-template" id="tpl-gif-panel">
+    <div class="svga-panel gif-panel" :class="{'show': visible}">
+      <div class="svga-panel-container">
+        <!-- 标题区 -->
+        <div class="svga-panel-header">
+          <h3 class="svga-panel-title">转成GIF动图</h3>
+          <div class="svga-panel-divider"></div>
+        </div>
+
+        <!-- 当前文件信息 -->
+        <div class="svga-info-section">
+          <div class="svga-info-row">当前尺寸：{{ sourceInfo.sizeWH }} 帧率：{{ sourceInfo.fps }}FPS 时长：{{
+            (sourceInfo.duration || 0).toFixed(2) }}s</div>
+          <div class="svga-compress-hint">注意：GIF文件体积较大，建议控制尺寸和帧率。超过10M的GIF可能加载较慢。</div>
+        </div>
+
+        <!-- 配置区域 -->
+        <div class="svga-config-section" :class="{disabled: isExporting}">
+          <!-- 尺寸 -->
+          <div class="svga-config-item">
+            <div class="svga-config-label">尺寸：</div>
+            <div class="svga-size-container">
+              <div class="input-wrapper input-wrapper--lg svga-size-input-wrapper">
+                <input type="number" class="base-input" v-model.number="config.width" @input="onWidthChange"
+                  :disabled="isExporting" min="1" max="1920" />
+              </div>
+              <div class="svga-size-lock">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    d="M4.66667 7.33333V5.33333C4.66667 3.86057 5.86057 2.66667 7.33333 2.66667H8.66667C10.1394 2.66667 11.3333 3.86057 11.3333 5.33333V7.33333M5.33333 7.33333H10.6667C11.403 7.33333 12 7.93029 12 8.66667V12C12 12.7364 11.403 13.3333 10.6667 13.3333H5.33333C4.59695 13.3333 4 12.7364 4 12V8.66667C4 7.93029 4.59695 7.33333 5.33333 7.33333Z"
+                    stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </div>
+              <div class="input-wrapper input-wrapper--lg svga-size-input-wrapper">
+                <input type="number" class="base-input" v-model.number="config.height" @input="onHeightChange"
+                  :disabled="isExporting" min="1" max="1920" />
+              </div>
+            </div>
+          </div>
+
+          <!-- 帧率 -->
+          <div class="svga-config-item">
+            <div class="svga-config-label">帧率：</div>
+            <div class="svga-value-container">
+              <div class="input-wrapper input-wrapper--lg svga-value-input-wrapper">
+                <input type="number" class="base-input" v-model.number="config.fps" :disabled="isExporting"
+                  min="1" max="60" />
+              </div>
+              <div class="input-unit">FPS</div>
+            </div>
+          </div>
+
+          <!-- 质量 -->
+          <div class="svga-config-item">
+            <div class="svga-config-label">质量：</div>
+            <div class="svga-value-container">
+              <div class="input-wrapper input-wrapper--lg svga-value-input-wrapper">
+                <input type="number" class="base-input" v-model.number="config.quality" :disabled="isExporting"
+                  min="1" max="30" />
+              </div>
+              <div class="input-unit input-unit--hint">越小越好</div>
+            </div>
+          </div>
+
+          <!-- 透明底开关 -->
+          <div class="svga-config-item">
+            <div class="svga-config-label">透明底</div>
+            <div class="svga-mute-toggle" :class="{active: config.transparent, disabled: isExporting}"
+              @click="!isExporting && (config.transparent = !config.transparent)">
+              <div class="svga-mute-toggle-handle"></div>
+            </div>
+          </div>
+
+          <!-- 杂色边开关（仅在透明底打开时显示） -->
+          <div class="svga-config-item" v-if="config.transparent">
+            <div class="svga-config-label">杂色边</div>
+            <div class="svga-mute-toggle" :class="{active: config.dither, disabled: isExporting}"
+              @click="!isExporting && (config.dither = !config.dither)">
+              <div class="svga-mute-toggle-handle"></div>
+            </div>
+          </div>
+
+          <!-- 杂色边颜色选择器（仅在杂色边打开时显示） -->
+          <div class="svga-config-item" v-if="config.transparent && config.dither">
+            <div class="svga-config-label">杂色颜色：</div>
+            <div class="gif-color-picker">
+              <input type="color" v-model="config.ditherColor" :disabled="isExporting" class="gif-color-input" />
+              <span class="gif-color-value">{{ config.ditherColor }}</span>
+            </div>
+          </div>
+        
+
+        <!-- 导出进度 -->
+        <div class="export-progress" v-if="isExporting">
+          <div class="progress-info">
+            <span class="progress-status">
+              <span class="spinner" v-if="exportStage !== 'done'"></span>
+              {{ exportMessage }}
+            </span>
+            <span class="progress-percent">{{ Math.round(exportProgress * 100) }}%</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" :style="{ width: (exportProgress * 100) + '%' }"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="svga-panel-footer">
+        <button v-if="!isExporting" class="material-btn-back" @click="close" title="返回">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M12 16L6 10L12 4" stroke="#333333" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+          <span>取消</span>
+        </button>
+        <button v-else class="material-btn-back svga-btn-cancel" @click="$emit('cancel')" title="取消导出">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M5 5L15 15M15 5L5 15" stroke="#ff4444" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+          <span>取消</span>
+        </button>
+
+        <button class="btn-large-secondary" :class="{'svga-btn-converting': isExporting}"
+          :disabled="isExporting" @click="startExport">
+          <template v-if="isExporting">
+            <span class="svga-progress-text">{{ exportProgress }}%</span>
+            <span class="svga-stage-text">{{ exportMessage }}</span>
+          </template>
+          <template v-else>
+            开始转GIF
+          </template>
+        </button>
+      </div>
+      </div>
+    </div>
+  </script>
+  <script type="text/x-template" id="tpl-material-panel">
+    <div class="material-panel" :class="{'show': visible}">
+      <div class="material-panel-container">
+        <!-- 顶部统计信息 -->
+        <div class="material-panel-stats">
+          <div class="stats-header">素材图管理</div>
+          <div class="stats-divider"></div>
+          <div class="stats-content">
+            <div class="stats-title">图像资源：{{ list.length }} 个 内存占用：{{ svgaFileInfo.memoryText }}</div>
+            <div class="stats-help">你可以替换、下载素材图片，然后导出新的SVGA。<br>替换后的图片将自动缩放填充至原图尺寸，保持比例居中显示。</div>
+          </div>
+        </div>
+
+        <!-- 搜索框 -->
+        <div class="material-search">
+          <input type="text" class="material-search-input" placeholder="搜索素材名称..." v-model="searchQuery" />
+        </div>
+
+        <!-- 素材列表 -->
+        <div class="material-panel-scroll">
+          <div v-if="filteredList.length === 0" class="material-empty">
+            {{ searchQuery ? '未找到匹配的素材' : '未检测到素材图片' }}
+          </div>
+          <div v-else class="material-list">
+            <div v-for="(item, index) in filteredList" :key="item.imageKey" class="material-item">
+              <div class="material-thumb" :style="{ backgroundColor: thumbBgColor }">
+                <img :src="replacedImages[item.imageKey] || item.previewUrl" v-if="item.previewUrl" />
+              </div>
+              <div class="material-info">
+                <div class="material-name-row">
+                  <div class="material-name" :title="item.imageKey">{{ item.imageKey }}</div>
+                  <button class="material-btn-copy" @click="copyName(item.imageKey)" title="复制名称">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <rect x="4" y="4" width="8" height="8" rx="1" stroke="#666666" stroke-width="1.2" fill="none" />
+                      <rect x="2" y="2" width="8" height="8" rx="1" stroke="#666666" stroke-width="1.2"
+                        fill="#ffffff" />
+                    </svg>
+                  </button>
+                </div>
+                <div class="material-meta">内存占用：{{ item.fileSizeText }}</div>
+                <div class="material-meta">尺寸：{{ item.sizeText }}</div>
+              </div>
+              <div class="material-actions">
+                <button class="material-btn-replace" @click="triggerReplace(item)">
+                  <span>替换此图</span>
+                </button>
+                <button class="material-btn-edit" @click="triggerEdit(item)" title="编辑素材图">
+                  <div v-if="materialEditStates[item.imageKey]" class="edit-dot"></div>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                      d="M11 4H4C3.44772 4 3 4.44772 3 5V20C3 20.5523 3.44772 21 4 21H19C19.5523 21 20 20.5523 20 20V13"
+                      stroke="#333333" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                    <path
+                      d="M18.5 2.50001C18.8978 2.10219 19.4374 1.87869 20 1.87869C20.5626 1.87869 21.1022 2.10219 21.5 2.50001C21.8978 2.89784 22.1213 3.4374 22.1213 4.00001C22.1213 4.56262 21.8978 5.10219 21.5 5.50001L12 15L8 16L9 12L18.5 2.50001Z"
+                      stroke="#333333" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                </button>
+                <button v-if="item.isReplaced" class="material-btn-close" @click="triggerRestore(item)" title="恢复原图">
+                </button>
+                <button class="material-btn-new" @click="triggerDownload(item)" title="下载此图片">
+                  <svg width="20" height="20" viewBox="0 0 25 25" fill="none">
+                    <path d="M12 3V15M12 15L8 11M12 15L16 11" stroke="#333333" stroke-width="1.5" stroke-linecap="round"
+                      stroke-linejoin="round" />
+                    <path d="M4 17V19C4 20.1046 4.89543 21 6 21H18C19.1046 21 20 20.1046 20 19V17" stroke="#333333"
+                      stroke-width="1.5" stroke-linecap="round" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 底部操作按钮 -->
+        <div class="material-panel-footer">
+          <button class="material-btn-back" @click="close" title="关闭">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M12 16L6 10L12 4" stroke="#333333" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" />
+            </svg>
+            <span>取消</span>
+          </button>
+          <!-- 压缩并导出SVGA按钮 -->
+          <button class="btn-large-secondary" @click="triggerCompress"
+            :disabled="isCompressing || list.length === 0">
+            <template v-if="isCompressing">压缩中 {{ compressProgress }}%</template>
+            <template v-else>
+              压缩并导出新SVGA
+              <span v-if="hasCompressed" style="color: #4CAF50; margin-left: 4px;">✓</span>
+            </template>
+          </button>
+        </div>
+      </div>
+    </div>
+  </script>
+
   <!-- 用户配置管理器模块 -->
   <script src="assets/js/config-manager.js"></script>
 
@@ -2408,7 +1394,7 @@
 
   -->
   <!-- 应用主逻辑 -->
-  <script src="assets/js/app.js?v=1.14"></script>
+  <script src="assets/js/app.js?v=1.15"></script>
 </body>
 
 </html>

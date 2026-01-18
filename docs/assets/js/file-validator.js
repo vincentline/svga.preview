@@ -315,17 +315,30 @@
     FileValidator.prototype._validateYyeva = function (file, resolve, reject) {
         var _this = this;
 
-        // 使用 detectMp4Type 进行严格检测
-        this.detectMp4Type(file, function (isDualChannel, alphaPosition) {
-            if (isDualChannel) {
-                resolve({
-                    file: file,
-                    isDualChannel: true,
-                    alphaDirection: alphaPosition
+        // 并行执行：内容检测 和 FPS解析
+        Promise.all([
+            new Promise(function (res, rej) {
+                _this.detectMp4Type(file, function (isDualChannel, alphaPosition) {
+                    if (isDualChannel) {
+                        res({ isDualChannel: true, alphaDirection: alphaPosition });
+                    } else {
+                        rej('检测未发现透明通道特征，请确认是双通道MP4文件');
+                    }
                 });
-            } else {
-                reject('检测未发现透明通道特征，请确认是双通道MP4文件');
-            }
+            }),
+            _this.detectMp4Fps(file)
+        ]).then(function (results) {
+            var typeResult = results[0];
+            var fps = results[1];
+
+            resolve({
+                file: file,
+                isDualChannel: typeResult.isDualChannel,
+                alphaDirection: typeResult.alphaDirection,
+                detectedFps: fps
+            });
+        }).catch(function (err) {
+            reject(err);
         });
     };
 
@@ -334,6 +347,7 @@
      * @private
      */
     FileValidator.prototype._validateMp4 = function (file, resolve, reject) {
+        var _this = this;
         var objectUrl = URL.createObjectURL(file);
         var video = document.createElement('video');
         video.src = objectUrl;
@@ -341,13 +355,228 @@
 
         video.onloadedmetadata = function () {
             URL.revokeObjectURL(objectUrl);
-            resolve({ file: file });
+
+            // 尝试获取FPS
+            _this.detectMp4Fps(file).then(function (fps) {
+                resolve({ file: file, detectedFps: fps });
+            });
         };
         video.onerror = function () {
             URL.revokeObjectURL(objectUrl);
             reject('视频文件加载失败');
         };
     };
+
+    /**
+     * 解析MP4文件获取帧率
+     * @param {File} file 
+     * @returns {Promise<number|null>} 返回FPS或null
+     */
+    FileValidator.prototype.detectMp4Fps = function (file) {
+        return new Promise(function (resolve) {
+            // 读取前 500KB，通常包含 moov atom
+            // 如果文件很大且 moov 在末尾，这里会失败，返回 null，这是一个折衷方案
+            var chunkSize = 500 * 1024;
+            var size = Math.min(file.size, chunkSize);
+            var reader = new FileReader();
+
+            reader.onload = function (e) {
+                try {
+                    var buffer = e.target.result;
+                    var data = new DataView(buffer);
+                    var fps = parseMp4ForFps(data);
+                    resolve(fps);
+                } catch (err) {
+                    console.warn('MP4 FPS parsing failed:', err);
+                    resolve(null);
+                }
+            };
+
+            reader.onerror = function () {
+                resolve(null);
+            };
+
+            reader.readAsArrayBuffer(file.slice(0, size));
+        });
+    };
+
+    /**
+     * 内部帮助函数：解析二进制数据查找 FPS
+     * 简化版 parser，查找 moov -> trak -> mdia -> mdhd (timescale) 和 stts (duration)
+     */
+    function parseMp4ForFps(data) {
+        var offset = 0;
+        var len = data.byteLength;
+
+        function readUint32() {
+            var v = data.getUint32(offset);
+            offset += 4;
+            return v;
+        }
+
+        function readString(length) {
+            var str = '';
+            for (var i = 0; i < length; i++) {
+                str += String.fromCharCode(data.getUint8(offset + i));
+            }
+            offset += length; // Update offset!
+            return str;
+        }
+
+        function findAtom(targetType, end) {
+            while (offset < end) {
+                if (offset + 8 > end) return null;
+                var atomStart = offset;
+                var size = data.getUint32(offset);
+                var type = String.fromCharCode(
+                    data.getUint8(offset + 4),
+                    data.getUint8(offset + 5),
+                    data.getUint8(offset + 6),
+                    data.getUint8(offset + 7)
+                );
+
+                if (size === 1) { // 64-bit size, skip for simplicity or handle
+                    // minimal parser usually encounters 32-bit atoms for headers
+                    offset += 8; // skip header
+                    // size is next 8 bytes
+                    // safe skip
+                    offset = atomStart + 8 + 8; // not supporting 64-bit size fully in this mini parser
+                    continue;
+                }
+
+                if (size === 0) return null; // last atom
+
+                if (type === targetType) {
+                    offset = atomStart + 8; // Point to data
+                    return { size: size, start: atomStart, end: atomStart + size };
+                }
+
+                offset = atomStart + size;
+            }
+            return null;
+        }
+
+        // 1. Find moov
+        var moov = findAtom('moov', len);
+        if (!moov) return null;
+
+        // 2. Search for tracks inside moov
+        // reset offset to moov data
+        offset = moov.start + 8;
+        var moovEnd = moov.end;
+
+        while (offset < moovEnd) {
+            // Find trak
+            var trak = findAtom('trak', moovEnd);
+            if (!trak) break;
+
+            // Check if this trak is video
+            // trak -> mdia -> hdlr
+            var trakEnd = trak.end;
+            var mdiaStart = -1;
+
+            // Look for mdia inside trak
+            offset = trak.start + 8;
+            var mdia = findAtom('mdia', trakEnd);
+            if (mdia) {
+                // Look for hdlr inside mdia
+                offset = mdia.start + 8;
+                var mdiaEnd = mdia.end;
+
+                // We need to find hdlr to confirm it's video, 
+                // AND mdhd for timescale, 
+                // AND minf->stbl->stts for duration/samples
+
+                var hdlr = null;
+                var mdhd = null;
+                var minf = null;
+
+                // Scan children of mdia
+                var tempOffset = offset;
+                while (tempOffset < mdiaEnd) {
+                    offset = tempOffset;
+                    var atomSize = data.getUint32(offset);
+                    var atomType = String.fromCharCode(
+                        data.getUint8(offset + 4),
+                        data.getUint8(offset + 5),
+                        data.getUint8(offset + 6),
+                        data.getUint8(offset + 7)
+                    );
+
+                    if (atomType === 'hdlr') {
+                        hdlr = { start: offset, size: atomSize };
+                    } else if (atomType === 'mdhd') {
+                        mdhd = { start: offset, size: atomSize };
+                    } else if (atomType === 'minf') {
+                        minf = { start: offset, size: atomSize, end: offset + atomSize };
+                    }
+
+                    tempOffset += atomSize;
+                }
+
+                // Check handler type
+                if (hdlr) {
+                    offset = hdlr.start + 8 + 4; // size + type + version/flags
+                    offset += 4; // pre_defined
+                    var handlerType = String.fromCharCode(
+                        data.getUint8(offset),
+                        data.getUint8(offset + 1),
+                        data.getUint8(offset + 2),
+                        data.getUint8(offset + 3)
+                    );
+
+                    if (handlerType === 'vide' && mdhd && minf) {
+                        // Found video track!
+
+                        // 1. Get timescale from mdhd
+                        offset = mdhd.start + 8;
+                        var version = data.getUint8(offset);
+                        offset += 4; // version + flags
+
+                        var timescale = 0;
+                        if (version === 1) {
+                            offset += 16; // creation_time(8) + modification_time(8)
+                            timescale = data.getUint32(offset);
+                        } else {
+                            offset += 8; // creation_time(4) + modification_time(4)
+                            timescale = data.getUint32(offset);
+                        }
+
+                        // 2. Get stts from minf -> stbl -> stts
+                        // Need to go deep: minf -> stbl -> stts
+                        offset = minf.start + 8;
+                        var stbl = findAtom('stbl', minf.end);
+                        if (stbl) {
+                            offset = stbl.start + 8;
+                            var stts = findAtom('stts', stbl.end);
+                            if (stts) {
+                                offset = stts.start + 8;
+                                offset += 4; // version + flags
+                                var entryCount = data.getUint32(offset);
+                                offset += 4;
+
+                                // Read first entry
+                                if (entryCount > 0) {
+                                    var sampleCount = data.getUint32(offset);
+                                    var sampleDelta = data.getUint32(offset + 4);
+
+                                    if (sampleDelta > 0 && timescale > 0) {
+                                        return Math.round(timescale / sampleDelta);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Move to next trak
+            offset = trakEnd;
+        }
+
+        return null;
+    }
+
 
     /**
      * 检测MP4是双通道还是普通视频
@@ -378,13 +607,18 @@
                 video.onloadedmetadata = null;
                 video.onseeked = null;
                 video.onerror = null;
+
+                // [Optimize] 停止加载，但避免触发 net::ERR_ABORTED
+                // 直接移除src属性即可，不需要调用load()，让垃圾回收处理
+                // 调用load()会强制中断当前的HTTP请求（即使是blob），在控制台产生红色报错
                 video.removeAttribute('src');
-                try {
-                    video.load(); // 强制停止加载
-                } catch (e) { /* 忽略清理时的错误 */ }
+                video.src = '';
             }
             if (objectUrl) {
-                URL.revokeObjectURL(objectUrl);
+                // 延迟撤销URL，给予浏览器一点缓冲时间，减少报错概率
+                setTimeout(function () {
+                    URL.revokeObjectURL(objectUrl);
+                }, 100);
                 objectUrl = null;
             }
         }

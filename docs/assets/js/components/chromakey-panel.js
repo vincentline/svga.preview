@@ -1,0 +1,108 @@
+(function () {
+  var template = `
+    <div class="chromakey-panel" :class="{'show': visible}">
+      <div class="chromakey-panel-container">
+        <!-- 标题区 -->
+        <div class="chromakey-panel-header">
+          <h3 class="chromakey-panel-title">扣掉画面绿幕成透明</h3>
+          <div class="chromakey-panel-divider"></div>
+        </div>
+
+        <!-- 信息区 -->
+        <div class="chromakey-info-section">
+          <div class="chromakey-info-row">MP4尺寸：{{ sourceInfo.sizeWH }} 时长：{{ sourceInfo.duration }}</div>
+          <div class="chromakey-performance-hint">打开绿幕抠图，播放会比较卡，因为是实时渲染抠图效果</div>
+        </div>
+
+        <!-- 设置区域 -->
+        <div class="chromakey-config-section">
+          <!-- 打开扮绿幕开关 -->
+          <div class="chromakey-config-item">
+            <div class="chromakey-config-label">打开扮绿幕：</div>
+            <div class="chromakey-switch-wrapper" @click="toggleEnabled">
+              <div class="chromakey-switch" :class="{active: enabled}">
+                <div class="chromakey-switch-handle"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 相似度滑块 -->
+          <div class="chromakey-config-item" v-if="enabled">
+            <div class="chromakey-config-label">相似度：{{ similarity }}</div>
+            <div class="chromakey-slider-wrapper">
+              <input type="range" class="chromakey-slider" :value="similarity" min="0" max="100"
+                step="1" @input="updateSimilarity" />
+            </div>
+          </div>
+
+          <!-- 平滑度滑块 -->
+          <div class="chromakey-config-item" v-if="enabled">
+            <div class="chromakey-config-label">平滑度：{{ smoothness }}</div>
+            <div class="chromakey-slider-wrapper">
+              <input type="range" class="chromakey-slider" :value="smoothness" min="0" max="100"
+                step="1" @input="updateSmoothness" />
+            </div>
+          </div>
+        </div>
+
+        <!-- 底部按钮 -->
+        <div class="chromakey-panel-footer">
+          <!-- 确定按钮 -->
+          <button class="btn-large-secondary" @click="apply">
+            确定
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  window.SvgaPreview = window.SvgaPreview || {};
+  window.SvgaPreview.Components = window.SvgaPreview.Components || {};
+
+  /**
+   * 绿幕抠图面板组件
+   */
+  window.SvgaPreview.Components.ChromaKeyPanel = {
+    template: template,
+    props: {
+      visible: {
+        type: Boolean,
+        default: false
+      },
+      sourceInfo: {
+        type: Object,
+        default: function () {
+          return { sizeWH: '', duration: '' };
+        }
+      },
+      enabled: {
+        type: Boolean,
+        default: false
+      },
+      similarity: {
+        type: Number,
+        default: 40
+      },
+      smoothness: {
+        type: Number,
+        default: 10
+      }
+    },
+    methods: {
+      toggleEnabled: function () {
+        this.$emit('toggle');
+      },
+      updateSimilarity: function (e) {
+        this.$emit('update:similarity', parseInt(e.target.value));
+        this.$emit('update-effect');
+      },
+      updateSmoothness: function (e) {
+        this.$emit('update:smoothness', parseInt(e.target.value));
+        this.$emit('update-effect');
+      },
+      apply: function () {
+        this.$emit('apply');
+      }
+    }
+  };
+})();

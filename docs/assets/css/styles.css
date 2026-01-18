@@ -1,4 +1,4 @@
-/* ==================== 全局重置 & 基础布局 ==================== */
+﻿/* ==================== 全局重置 & 基础布局 ==================== */
 
 * {
   margin: 0;
@@ -1658,6 +1658,22 @@ body.dark-mode .btn-large-primary:disabled {
 
 body.dark-mode .btn-open-file {
   background-image: url('../img/open_file_dark.png');
+}
+
+/* 素材管理按钮特殊样式 */
+.btn-material-manager {
+  width: 44px !important;
+  min-width: 44px !important;
+  padding: 0 !important;
+  flex: none !important;
+  background-image: url('../img/material.png');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 24px 24px;
+}
+
+body.dark-mode .btn-material-manager {
+  background-image: url('../img/material_dark.png');
 }
 
 /* AI生图按钮图标样式（24px显示） */
@@ -5957,4 +5973,27 @@ body.dark-mode .material-btn-edit:hover {
   border-radius: 50%;
   border: 1px solid #fff;
   z-index: 2;
+}
+
+/* ==================== 
+   GIF导出弹窗遮罩��?   ==================== */
+/* 1. 遮罩��?*/
+.svga-panel-overlay {
+  display: none !important;
+}
+
+/* 2. GIF弹窗位置修正 - 移除特殊样式，回归默��?*/
+.svga-panel.gif-panel {
+  /* 重置为默认右侧面板样��?*/
+  height: 85%;
+  max-height: 85%;
+  top: 0;
+  bottom: 0;
+  border-radius: 0;
+}
+
+.svga-panel.gif-panel .svga-panel-container {
+  height: 100%;
+  max-height: 100%;
+  border-radius: 16px;
 }
