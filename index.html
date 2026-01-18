@@ -42,7 +42,8 @@
   <script>
     // 立即加载核心库（Vue 和 SVGA Player）
     (function () {
-      var libraryLoader = window.SvgaPreview && window.SvgaPreview.Core && window.SvgaPreview.Core.libraryLoader;
+      // 按照项目规范，使用 MeeWoo 作为项目级命名空间
+      var libraryLoader = window.MeeWoo && window.MeeWoo.Core && window.MeeWoo.Core.libraryLoader;
       if (libraryLoader) {
         // 高优先级加载核心库
         libraryLoader.load(['vue', 'svgaplayer'], true).catch(function (err) {
@@ -221,7 +222,7 @@
       <!-- 播放区域 -->
       <div class="viewer-area" @wheel="onWheel" @mousedown="onMouseDown" @mousemove="onMouseMove" @mouseup="onMouseUp"
         @mouseleave="onMouseUp">
-        <div class="viewer-container" :style="viewerContainerStyle">
+        <div class="viewer-container" :style="viewerContainerStyle" v-if="!isEmpty">
           <!-- 文件名显示（在播放器上方） -->
           <div class="viewer-filename" v-if="!isEmpty && currentFileInfo.name" :style="viewerFilenameStyle">
             {{ currentFileInfo.name }} /
@@ -543,7 +544,7 @@
                         转MP4
                       </button>
                       <button class="btn-large-secondary" :class="{'tooltip': !yyeva.hasFile}"
-                        :disabled="!yyeva.hasFile || isConvertingSVGA" @click="openYyevaToSvgaPanel">
+                        :disabled="!yyeva.hasFile || isGlobalTaskRunning" @click="openYyevaToSvgaPanel">
                         <span v-if="!yyeva.hasFile" class="tooltip-text">请先拖入 MP4 文件</span>
                         转SVGA
                       </button>
@@ -715,37 +716,19 @@
       @close="activeRightPanel = null" @replace="replaceMaterial" @restore="restoreMaterial"
       @download="downloadMaterial" @edit="openMaterialEditor" @compress="openCompressAndExportModal"></material-panel>
 
-    <!-- SVGA转双通道MP4弹窗（SVGA模式右侧弹窗） -->
-    <dual-channel-panel :visible="showSvgaToDualChannelPanel && currentModule === 'svga'"
-      :source-info="svgaToDualChannelSourceInfo" :initial-config="svgaToDualChannelConfig"
-      :is-converting="isConvertingMP4" :progress="mp4ConvertProgress" :message="mp4ConvertMessage"
-      :disabled="isGlobalTaskRunning" current-module="svga" @close="closeSvgaToDualChannelPanel"
-      @cancel="cancelSvgaToDualChannelConversion" @convert="startMP4Conversion">
+    <!-- 统一 转双通道MP4 弹窗 (SVGA/MP4/Lottie/Frames -> Dual Channel MP4) -->
+    <dual-channel-panel :visible="activeRightPanel === 'dual-channel'" :source-info="dualChannelSourceInfo"
+      :initial-config="dualChannelConfig" :is-converting="isConvertingToDualChannel" :progress="dualChannelProgress"
+      :message="dualChannelMessage" :disabled="isGlobalTaskRunning" @close="closeRightPanel"
+      @cancel="cancelDualChannelConversion" @convert="handleDualChannelConvert">
     </dual-channel-panel>
 
-    <!-- 普通MP4转双通道MP4弹窗（普通MP4模式右侧弹窗） -->
-    <dual-channel-panel :visible="showMp4ToDualChannelPanel && currentModule === 'mp4'"
-      :source-info="mp4ToDualChannelSourceInfo" :initial-config="mp4ToDualChannelConfig"
-      :is-converting="isConvertingMP4" :progress="mp4ConvertProgress" :message="mp4ConvertMessage"
-      :disabled="isGlobalTaskRunning" current-module="mp4" @close="closeMp4ToDualChannelPanel"
-      @cancel="cancelMp4ToDualChannelConversion" @convert="startMp4ToDualChannelConversion">
-    </dual-channel-panel>
-
-    <!-- Lottie转双通道MP4弹窗（Lottie模式右侧弹窗） -->
-    <dual-channel-panel :visible="showLottieToDualChannelPanel && currentModule === 'lottie'"
-      :source-info="lottieToDualChannelSourceInfo" :initial-config="lottieToDualChannelConfig"
-      :is-converting="isConvertingMP4" :progress="mp4ConvertProgress" :message="mp4ConvertMessage"
-      :disabled="isGlobalTaskRunning" current-module="lottie" @close="closeLottieToDualChannelPanel"
-      @cancel="cancelLottieToDualChannelConversion" @convert="startLottieToDualChannelConversion">
-    </dual-channel-panel>
-
-    <!-- SVGA转换弹窗（双通道MP4转SVGA，双通道MP4模式右侧弹窗） -->
-    <to-svga-panel :visible="showYyevaToSvgaPanel && currentModule === 'yyeva'" :source-info="yyevaToSvgaSourceInfo"
-      :initial-config="yyevaToSvgaConfig" :is-converting="isConvertingSVGA" :progress="svgaConvertProgress"
-      :message="svgaConvertMessage" :disabled="isGlobalTaskRunning" current-module="yyeva"
-      :estimate-info="yyevaToSvgaEstimate" @close="closeYyevaToSvgaPanel" @cancel="cancelYyevaToSvgaConversion"
-      @convert="startSVGAConversion">
-    </to-svga-panel>
+    <!-- GIF导出弹窗（所有模式通用右侧弹窗） -->
+    <gif-panel :visible="activeRightPanel === 'gif'" :source-info="getGifSourceInfo()" :initial-config="gifConfig"
+      :bg-color-key="bgColorKey" :current-bg-color="currentBgColor" :is-exporting="isExportingGIF"
+      :export-progress="gifExportProgress" :export-stage="gifExportStage" :export-message="gifExportMessage"
+      :disabled="isGlobalTaskRunning" @close="closeGifPanel" @cancel="cancelGifExport" @export="handleGifExport"
+      @config-change="handleGifConfigChange"></gif-panel>
 
     <!-- 素材压缩弹窗（使用通用居中弹窗样式） -->
     <div class="center-modal-overlay" :class="{'show': showCompressModal && currentModule === 'svga'}">
@@ -864,45 +847,9 @@
       </div>
     </div>
 
-    <!-- 普通MP4转SVGA弹窗（普通MP4模式右侧弹窗） -->
-    <to-svga-panel :visible="showMp4ToSvgaPanel && currentModule === 'mp4'" :source-info="mp4ToSvgaSourceInfo"
-      :initial-config="mp4ToSvgaConfig" :is-converting="isConvertingMp4ToSvga" :progress="mp4ToSvgaProgress"
-      :message="mp4ToSvgaMessage" :disabled="isGlobalTaskRunning" current-module="mp4"
-      :estimate-info="mp4ToSvgaEstimate" @close="closeMp4ToSvgaPanel" @cancel="cancelMp4ToSvgaConversion"
-      @convert="startMp4ToSvgaConversion">
-    </to-svga-panel>
+    <!-- 统一 转SVGA 弹窗 (MP4/Lottie/Frames -> SVGA) 已移动到底部 -->
 
-    <!-- Lottie转SVGA弹窗（Lottie模式右侧弹窗） -->
-    <to-svga-panel :visible="showLottieToSvgaPanel && currentModule === 'lottie'" :source-info="lottieToSvgaSourceInfo"
-      :initial-config="lottieToSvgaConfig" :is-converting="isConvertingLottieToSvga" :progress="lottieToSvgaProgress"
-      :message="lottieToSvgaMessage" :disabled="isGlobalTaskRunning" current-module="lottie"
-      :estimate="lottieToSvgaEstimate" @close="closeLottieToSvgaPanel"
-      @cancel="lottieToSvgaCancelled = true; isConvertingLottieToSvga = false" @convert="startLottieToSvgaConversion">
-    </to-svga-panel>
-
-    <!-- 序列帧转SVGA弹窗（序列帧模式右侧弹窗） -->
-    <to-svga-panel :visible="showImagesToSvgaPanel && currentModule === 'frames'" :source-info="imagesToSvgaSourceInfo"
-      :initial-config="imagesToSvgaConfig" :is-converting="isConvertingFramesToSvga" :progress="framesToSvgaProgress"
-      :message="framesToSvgaMessage" :disabled="isGlobalTaskRunning" current-module="frames"
-      :estimate-info="imagesToSvgaEstimate" @close="closeImagesToSvgaPanel" @cancel="cancelFramesToSvgaConversion"
-      @convert="startFramesToSvgaConversion">
-    </to-svga-panel>
-
-    <!-- 序列帧转双通道MP4弹窗（序列帧模式右侧弹窗） -->
-    <dual-channel-panel :visible="showImagesToDualChannelPanel && currentModule === 'frames'"
-      :source-info="imagesToDualChannelSourceInfo" :initial-config="imagesToDualChannelConfig"
-      :is-converting="isConvertingFramesToDualChannel" :progress="framesToDualChannelProgress"
-      :message="framesToDualChannelMessage" :disabled="isGlobalTaskRunning" current-module="frames"
-      @close="closeImagesToDualChannelPanel" @cancel="cancelFramesToDualChannelConversion"
-      @convert="startFramesToDualChannelConversion">
-    </dual-channel-panel>
-
-    <!-- GIF导出弹窗（所有模式通用右侧弹窗） -->
-    <gif-panel :visible="activeRightPanel === 'gif'" :source-info="getGifSourceInfo()" :initial-config="gifConfig"
-      :bg-color-key="bgColorKey" :current-bg-color="currentBgColor" :is-exporting="isExportingGIF"
-      :export-progress="gifExportProgress" :export-stage="gifExportStage" :export-message="gifExportMessage"
-      @close="closeGifPanel" @cancel="cancelGifExport" @export="handleGifExport"
-      @config-change="handleGifConfigChange"></gif-panel>
+    <!-- 统一 转双通道MP4 弹窗 (SVGA/MP4/Lottie/Frames -> Dual Channel MP4) 已移动到底部 -->
 
     <!-- 绿幕抠图弹窗（普通MP4模式左侧弹窗） -->
     <chromakey-panel :visible="showChromaKeyPanel && currentModule === 'mp4'" :source-info="mp4.fileInfo"
@@ -946,6 +893,20 @@
         </div>
       </div>
     </div>
+
+    <!-- 统一 转SVGA 弹窗 (MP4/Lottie/Frames -> SVGA) -->
+    <to-svga-panel :visible="activeRightPanel === 'to-svga'" :source-info="toSvgaSourceInfo"
+      :initial-config="toSvgaConfig" :is-converting="isConvertingToSvga" :progress="toSvgaProgress"
+      :message="toSvgaMessage" :disabled="isGlobalTaskRunning" @close="closeRightPanel" @cancel="cancelToSvgaConversion"
+      @convert="handleToSvgaConvert">
+    </to-svga-panel>
+
+    <!-- 统一 转双通道MP4 弹窗 (SVGA/MP4/Lottie/Frames -> Dual Channel MP4) -->
+    <dual-channel-panel :visible="activeRightPanel === 'dual-channel'" :source-info="dualChannelSourceInfo"
+      :initial-config="dualChannelConfig" :is-converting="isConvertingToDualChannel" :progress="dualChannelProgress"
+      :message="dualChannelMessage" :disabled="isGlobalTaskRunning" @close="closeRightPanel"
+      @cancel="cancelDualChannelConversion" @convert="handleDualChannelConvert">
+    </dual-channel-panel>
 
     <!-- 素材编辑器弹窗 -->
     <div class="center-modal-overlay" :class="{'show': editor.show}">
@@ -1100,7 +1061,7 @@
 
       </div>
       <div class="drawer-links">
-        <a href="javascript:void(0)" class="drawer-link-item">动画相关链接1</a>
+        <a href="https://saysth.design/2019/06/04/svga01-0/" class="drawer-link-item">SVGA动画文件是什么？</a>
         <a href="javascript:void(0)" class="drawer-link-item">动画相关链接2</a>
       </div>
       <div class="drawer-footer">
@@ -1149,6 +1110,9 @@
 
   <!-- 视图控制器模块 -->
   <script src="assets/js/viewport-controller.js"></script>
+
+  <!-- 面板管理 Mixin -->
+  <script src="assets/js/mixins/panel-mixin.js"></script>
 
   <!-- 素材编辑器模块 -->
   <script src="assets/js/material-editor.js"></script>
@@ -1278,7 +1242,7 @@
         </button>
 
         <button class="btn-large-secondary" :class="{'svga-btn-converting': isExporting}"
-          :disabled="isExporting" @click="startExport">
+          :disabled="isExporting || disabled" @click="startExport">
           <template v-if="isExporting">
             <span class="svga-progress-text">{{ exportProgress }}%</span>
             <span class="svga-stage-text">{{ exportMessage }}</span>

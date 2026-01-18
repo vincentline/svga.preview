@@ -23,8 +23,8 @@
     'use strict';
 
     // Ensure namespace
-    window.SvgaPreview = window.SvgaPreview || {};
-    window.SvgaPreview.Services = window.SvgaPreview.Services || {};
+    window.MeeWoo = window.MeeWoo || {};
+    window.MeeWoo.Services = window.MeeWoo.Services || {};
 
     const SVGABuilder = {
         
@@ -643,7 +643,7 @@
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = SVGABuilder;
   } else {
-    global.SvgaPreview.Services.SvgaBuilder = SVGABuilder;
+    global.MeeWoo.Services.SvgaBuilder = SVGABuilder;
   }
 
 })(typeof window !== 'undefined' ? window : this);

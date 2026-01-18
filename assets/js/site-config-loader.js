@@ -29,9 +29,10 @@
 (function(window) {
     'use strict';
 
-    // Ensure namespace
-    window.SvgaPreview = window.SvgaPreview || {};
-    window.SvgaPreview.Core = window.SvgaPreview.Core || {};
+    // Ensure namespace exists
+  // 按照项目规范，使用 MeeWoo 作为项目级命名空间
+  window.MeeWoo = window.MeeWoo || {};
+  window.MeeWoo.Core = window.MeeWoo.Core || {};
 
     // 默认配置（加载失败时使用）
     // 注意：这里只是兜底用，真正生效的配置建议统一放在远程 JSON 中维护
@@ -216,20 +217,20 @@
         }
     }
 
-    // 创建全局实例：window.SvgaPreview.Core.SiteConfig
-    window.SvgaPreview.Core.SiteConfig = new SiteConfigLoader();
+    // 创建全局实例：window.MeeWoo.Core.SiteConfig
+    window.MeeWoo.Core.SiteConfig = new SiteConfigLoader();
 
     // 页面加载完成后自动加载配置
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
-            window.SvgaPreview.Core.SiteConfig.load().then(() => {
-                window.SvgaPreview.Core.SiteConfig.notifyCallbacks();
+            window.MeeWoo.Core.SiteConfig.load().then(() => {
+                window.MeeWoo.Core.SiteConfig.notifyCallbacks();
             });
         });
     } else {
         // DOM已加载完成，立即加载配置
-        window.SvgaPreview.Core.SiteConfig.load().then(() => {
-            window.SvgaPreview.Core.SiteConfig.notifyCallbacks();
+        window.MeeWoo.Core.SiteConfig.load().then(() => {
+            window.MeeWoo.Core.SiteConfig.notifyCallbacks();
         });
     }
 

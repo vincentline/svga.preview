@@ -1,5 +1,39 @@
+/**
+ * @file chromakey-panel.js
+ * @description 绿幕抠图面板组件
+ * @author MeeWoo Team
+ * @date 2026-01-18
+ * 
+ * 功能说明：
+ * 1. 提供绿幕抠图开关和相似度调节
+ * 2. 支持平滑度调节
+ * 3. 显示MP4文件信息和性能提示
+ * 4. 实时更新抠图效果
+ * 
+ * 使用方式：
+ * ```html
+ * <chromakey-panel 
+ *   :visible="showChromaKeyPanel" 
+ *   :source-info="chromakeySourceInfo"
+ *   :enabled="chromakeyEnabled"
+ *   :similarity="chromakeySimilarity"
+ *   :smoothness="chromakeySmoothness"
+ *   @toggle="toggleChromaKey"
+ *   @update:similarity="updateChromaKeySimilarity"
+ *   @update:smoothness="updateChromaKeySmoothness"
+ *   @update-effect="updateChromaKeyEffect"
+ *   @apply="applyChromaKey">
+ * </chromakey-panel>
+ * ```
+ * 
+ * 与 panel-mixin.js 的关系：
+ * - 接收主应用管理的状态来控制显示/隐藏
+ * - 通过事件向父组件传递用户操作，由主应用处理后续逻辑
+ */
+
 (function () {
   var template = `
+
     <div class="chromakey-panel" :class="{'show': visible}">
       <div class="chromakey-panel-container">
         <!-- 标题区 -->
@@ -56,13 +90,14 @@
     </div>
   `;
 
-  window.SvgaPreview = window.SvgaPreview || {};
-  window.SvgaPreview.Components = window.SvgaPreview.Components || {};
+  // 按照项目规范，使用 MeeWoo 作为项目级命名空间
+  window.MeeWoo = window.MeeWoo || {};
+  window.MeeWoo.Components = window.MeeWoo.Components || {};
 
   /**
    * 绿幕抠图面板组件
    */
-  window.SvgaPreview.Components.ChromaKeyPanel = {
+  window.MeeWoo.Components.ChromaKeyPanel = {
     template: template,
     props: {
       visible: {

@@ -1,25 +1,52 @@
 /**
  * @file material-panel.js
  * @description 素材替换管理面板组件
- * @author SvgaPreview Team
+ * @author MeeWoo Team
  * @date 2026-01-18
+ * 
+ * 功能说明：
+ * 1. 展示当前SVGA文件包含的所有位图素材
+ * 2. 提供素材替换、下载、编辑功能
+ * 3. 支持素材名称搜索过滤
+ * 4. 实时显示素材替换状态（原图/替换图）
+ * 
+ * 使用方式：
+ * ```html
+ * <material-panel 
+ *   :visible="activeRightPanel === 'material' && currentModule === 'svga'" 
+ *   :list="materialList"
+ *   :replaced-images="replacedImages"
+ *   :thumb-bg-color="materialThumbBgColor"
+ *   :svga-file-info="svga.fileInfo"
+ *   :is-compressing="isCompressingMaterials"
+ *   :compress-progress="compressProgress"
+ *   :has-compressed="hasCompressedMaterials"
+ *   :material-edit-states="materialEditStates"
+ *   @close="activeRightPanel = null"
+ *   @replace="replaceMaterial"
+ *   @restore="restoreMaterial"
+ *   @download="downloadMaterial"
+ *   @edit="openMaterialEditor"
+ *   @compress="openCompressAndExportModal">
+ * </material-panel>
+ * ```
+ * 
+ * 与 panel-mixin.js 的关系：
+ * - 接收 panel-mixin.js 管理的 activeRightPanel 状态来控制显示/隐藏
+ * - 通过事件向父组件传递用户操作，由 panel-mixin.js 处理后续逻辑
  */
 
 (function (global) {
   'use strict';
 
-  global.SvgaPreview = global.SvgaPreview || {};
-  global.SvgaPreview.Components = global.SvgaPreview.Components || {};
+  // 按照项目规范，使用 MeeWoo 作为项目级命名空间
+  global.MeeWoo = global.MeeWoo || {};
+  global.MeeWoo.Components = global.MeeWoo.Components || {};
 
   /**
    * 素材列表管理组件
-   * 功能：
-   * 1. 展示当前SVGA文件包含的所有位图素材
-   * 2. 提供素材替换、下载、编辑功能
-   * 3. 支持素材名称搜索过滤
-   * 4. 实时显示素材替换状态（原图/替换图）
    */
-  global.SvgaPreview.Components.MaterialPanel = {
+  global.MeeWoo.Components.MaterialPanel = {
     template: '#tpl-material-panel',
     props: {
       // 面板可见性
@@ -73,7 +100,8 @@
        * @param {string} name - 素材名称
        */
       copyName: function (name) {
-        var Utils = global.SvgaPreview.Utils;
+        // 按照项目规范，使用 MeeWoo 作为项目级命名空间
+        var Utils = global.MeeWoo.Utils;
         if (Utils && Utils.copyToClipboard) {
           Utils.copyToClipboard(name).then(function () {
             if (Utils.showToast) Utils.showToast('已复制到剪贴板');

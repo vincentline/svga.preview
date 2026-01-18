@@ -239,7 +239,7 @@ body.dark-mode .header-logo:hover {
   height: 56px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   padding: 0 16px;
   position: absolute;
   z-index: 100;
@@ -309,6 +309,31 @@ body.dark-mode .header-navbar-title {
   color: #e0e0e0;
 }
 
+/* ==================== 左侧操作按钮 ==================== */
+.header-left-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  position: absolute;
+  left: 16px;
+  top: 16px;
+}
+
+/* ==================== 右侧操作按钮 ==================== */
+.header-right-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  position: absolute;
+  right: 16px;
+  top: 16px;
+}
+
+/* ==================== 主题切换按钮 ==================== */
 .theme-toggle {
   width: 24px;
   height: 24px;
@@ -408,18 +433,18 @@ body.dark-mode .theme-toggle .tooltip-text::after {
 /* ===== 库加载进度条 ===== */
 .library-loading-indicator {
   position: fixed;
-  top: 36px;
-  /* 在header-navbar下方 */
-  left: 16px;
-  z-index: 999;
-  animation: slideDown 0.3s ease;
+  top: 16px;
+  width: 400px;
+  max-width: 50%;
+
 }
 
 .library-loading-indicator .loading-text {
-  font-size: 14px;
+  font-size: 12px;
   line-height: 19px;
   color: #818181;
   font-weight: 400;
+  text-align: center;
 }
 
 @keyframes slideDown {
@@ -761,13 +786,14 @@ body.dark-mode .empty-state-title {
   color: #CCCCCC;
 }
 
-/* ==================== 搴曢儴娴眰 ==================== */
+/* ==================== 底部主控制区 ==================== */
 
 .footer-bar {
   position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  top: calc(100vh - 190px);
+  left: calc((100vw - 1020px) / 2);
+  right: calc((100vw - 1020px) / 2);
+  width: 1020px;
   height: 190px;
   display: flex;
   flex-direction: row;
@@ -775,10 +801,19 @@ body.dark-mode .empty-state-title {
   justify-content: center;
   padding: 10px;
   gap: 10px;
-  transition: background-color 0.3s, height 0.3s ease;
+  transition: background-color 0.3s, height 0.3s ease, top 0.3s ease, left 0.3s ease, right 0.3s ease, width 0.3s ease;
+  z-index: 130;
 }
 
-/* 骞垮憡浣?*/
+.footer-bar.is-empty {
+  top: 540px;
+  width: 300px;
+  height: 120px;
+  left: calc((100vw - 300px) / 2);
+  right: calc((100vw - 300px) / 2);
+}
+
+/* ==================== 广告位 ==================== */
 .ad-slot {
   display: none;
   width: 240px;
@@ -951,7 +986,7 @@ body.dark-mode .clear-canvas-btn:active .sprite-close {
     height 0.3s ease, bottom 0.3s ease;
 }
 
-/* 空状态：宽度300px，居中*/
+/* 空状态：宽度240px，居中*/
 .footer-main.footer-main-empty {
   min-width: 240px;
   max-width: 600px;
@@ -959,7 +994,7 @@ body.dark-mode .clear-canvas-btn:active .sprite-close {
   align-items: center;
   height: 100px;
   position: relative;
-  bottom: 160px;
+  /* top: calc((100vh-240px-223px)/2+247px); */
   /* 空白页特殊样式：深色背景和描边 */
   background-color: #333333;
   border-color: #333333;
@@ -1889,9 +1924,9 @@ body.dark-mode .reset-scale-btn.is-contain:hover {
   /* contain_hover_dark.png */
 }
 
-/* ==================== 娌夋蹈妯″紡鏍峰紡 ==================== */
+/* ==================== 导航栏隐藏时的动画 ==================== */
 
-/* 鏍囬鏍忛殣钘忓姩鐢?*/
+/* 导航栏隐藏时的动画 */
 .header-navbar.header-hidden {
   transform: translateY(-100%);
   opacity: 0;
@@ -1899,7 +1934,7 @@ body.dark-mode .reset-scale-btn.is-contain:hover {
   transition: transform 0.3s ease, opacity 0.3s ease;
 }
 
-/* 搴曢儴娴眰娌夋蹈妯″紡 */
+/* 沉浸模式下底部主控制区高度 */
 .footer-bar.footer-immersive {
   height: 88px;
   transition: height 0.3s ease;
@@ -3566,13 +3601,7 @@ body.dark-mode .mp4-btn-convert:disabled {
   background: rgba(224, 224, 224, 0.3);
 }
 
-/* ===== 库加载进度条 ===== */
-.library-loading-indicator {
-  width: 400px;
-  max-width: 50%;
-  z-index: 999;
-  animation: slideDown 0.3s ease;
-}
+
 
 @keyframes slideDown {
   from {
@@ -3593,12 +3622,7 @@ body.dark-mode .mp4-btn-convert:disabled {
   margin-bottom: 8px;
 }
 
-.library-loading-indicator .loading-text {
-  font-size: 13px;
-  color: #818181;
-  /* 辅助颜色 */
-  font-weight: 400;
-}
+
 
 .library-loading-indicator .loading-percentage {
   font-size: 12px;
@@ -3629,9 +3653,7 @@ body.dark-mode .library-loading-indicator {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
 }
 
-body.dark-mode .library-loading-indicator .loading-text {
-  color: #a0a0a0;
-}
+
 
 body.dark-mode .library-loading-indicator .loading-percentage {
   color: #808080;

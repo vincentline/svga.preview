@@ -11,8 +11,9 @@
   'use strict';
 
   // Ensure namespace
-  window.SvgaPreview = window.SvgaPreview || {};
-  window.SvgaPreview.Core = window.SvgaPreview.Core || {};
+  // 按照项目规范，使用 MeeWoo 作为项目级命名空间
+  window.MeeWoo = window.MeeWoo || {};
+  window.MeeWoo.Core = window.MeeWoo.Core || {};
 
   function ResourceManager() {
     // 存储所有 URL，结构：{ groupName: Set<url> }
@@ -92,14 +93,14 @@
     }
 
     // 清理音频资源
-    if (window.SvgaPreview.Controllers && window.SvgaPreview.Controllers.GlobalAudioManager) {
-      window.SvgaPreview.Controllers.GlobalAudioManager.unloadAll();
+    if (window.MeeWoo.Controllers && window.MeeWoo.Controllers.GlobalAudioManager) {
+      window.MeeWoo.Controllers.GlobalAudioManager.unloadAll();
     }
   };
 
   // 暴露到全局命名空间
-  window.SvgaPreview.Core.ResourceManager = ResourceManager;
+  window.MeeWoo.Core.ResourceManager = ResourceManager;
   // 创建全局单例
-  window.SvgaPreview.Core.resourceManager = new ResourceManager();
+  window.MeeWoo.Core.resourceManager = new ResourceManager();
 
 })(window);

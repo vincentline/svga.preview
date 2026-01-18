@@ -12,8 +12,9 @@
   'use strict';
 
   // Ensure namespace
-  window.SvgaPreview = window.SvgaPreview || {};
-  window.SvgaPreview.Core = window.SvgaPreview.Core || {};
+  // 按照项目规范，使用 MeeWoo 作为项目级命名空间
+  window.MeeWoo = window.MeeWoo || {};
+  window.MeeWoo.Core = window.MeeWoo.Core || {};
 
   const STORAGE_KEY = 'svga_preview_user_config';
   let instance = null;
@@ -158,6 +159,6 @@
   }
 
   // 暴露到全局命名空间
-  global.SvgaPreview.Core.ConfigManager = ConfigManager;
+  global.MeeWoo.Core.ConfigManager = ConfigManager;
 
 })(window);

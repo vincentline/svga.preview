@@ -50,8 +50,8 @@
     'use strict';
 
     // Ensure namespace
-    window.SvgaPreview = window.SvgaPreview || {};
-    window.SvgaPreview.Services = window.SvgaPreview.Services || {};
+    window.MeeWoo = window.MeeWoo || {};
+    window.MeeWoo.Services = window.MeeWoo.Services || {};
 
     var FFmpegService = {
         // ==================== 状态管理 ====================
@@ -134,9 +134,9 @@
                 if (typeof FFmpeg === 'undefined' || typeof FFmpeg.createFFmpeg === 'undefined') {
                     onProgress({ stage: 'loading-library', progress: 0.1, message: '正在加载FFmpeg库...' });
 
-                    if (window.SvgaPreview.Core.libraryLoader) {
+                    if (window.MeeWoo.Core.libraryLoader) {
                         // 使用 library-loader 加载，支持优先级
-                        await window.SvgaPreview.Core.libraryLoader.load(['ffmpeg'], highPriority);
+                        await window.MeeWoo.Core.libraryLoader.load(['ffmpeg'], highPriority);
                     } else {
                         // 降级：手动加载
                         await this._loadFFmpegLibrary();
@@ -1053,6 +1053,6 @@
     };
 
     // 导出到全局命名空间
-    window.SvgaPreview.Services.FFmpegService = FFmpegService;
+    window.MeeWoo.Services.FFmpegService = FFmpegService;
 
 })(window);

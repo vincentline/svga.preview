@@ -115,14 +115,35 @@
     </div>
   `;
 
-  window.SvgaPreview = window.SvgaPreview || {};
-  window.SvgaPreview.Components = window.SvgaPreview.Components || {};
+  // 按照项目规范，使用 MeeWoo 作为项目级命名空间
+  window.MeeWoo = window.MeeWoo || {};
+  window.MeeWoo.Components = window.MeeWoo.Components || {};
 
   /**
    * 通用转 SVGA 面板组件
-   * 适用于: MP4, Yyeva, Lottie, Frames 转 SVGA
+   * 适用于: MP4, Lottie, Frames, 双通道MP4 转 SVGA
+   * 
+   * 使用方式：
+   * ```html
+   * <to-svga-panel 
+   *   :visible="activeRightPanel === 'to-svga'" 
+   *   :source-info="toSvgaSourceInfo"
+   *   :initial-config="toSvgaConfig"
+   *   :is-converting="isConvertingToSvga"
+   *   :progress="toSvgaProgress"
+   *   :message="toSvgaMessage"
+   *   :disabled="isGlobalTaskRunning"
+   *   @close="closeRightPanel"
+   *   @cancel="cancelToSvgaConversion"
+   *   @convert="handleToSvgaConvert">
+   * </to-svga-panel>
+   * ```
+   * 
+   * 与 panel-mixin.js 的关系：
+   * - 接收 panel-mixin.js 管理的 activeRightPanel 状态来控制显示/隐藏
+   * - 通过事件向父组件传递用户操作，由 panel-mixin.js 处理后续逻辑
    */
-  window.SvgaPreview.Components.ToSvgaPanel = {
+  window.MeeWoo.Components.ToSvgaPanel = {
     template: template,
     props: {
       visible: {

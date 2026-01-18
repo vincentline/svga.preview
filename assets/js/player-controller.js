@@ -57,8 +57,8 @@
   'use strict';
 
   // Ensure namespace
-  global.SvgaPreview = global.SvgaPreview || {};
-  global.SvgaPreview.Controllers = global.SvgaPreview.Controllers || {};
+  global.MeeWoo = global.MeeWoo || {};
+  global.MeeWoo.Controllers = global.MeeWoo.Controllers || {};
 
   // ==================== 播放器适配器基类 ====================
 
@@ -1038,9 +1038,9 @@
   };
 
   // 导出到全局命名空间
-  global.SvgaPreview.Controllers.PlayerController = PlayerController;
+  global.MeeWoo.Controllers.PlayerController = PlayerController;
 
   // 将 GlobalAudioManager 暴露给外部 (例如 ResourceManager) 使用
-  global.SvgaPreview.Controllers.GlobalAudioManager = GlobalAudioManager;
+  global.MeeWoo.Controllers.GlobalAudioManager = GlobalAudioManager;
 
 })(typeof window !== 'undefined' ? window : this);

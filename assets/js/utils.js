@@ -59,7 +59,7 @@
     'use strict';
 
     // Define root namespace
-    window.SvgaPreview = window.SvgaPreview || {};
+    window.MeeWoo = window.MeeWoo || {};
 
     var SvgaUtils = {};
 
@@ -576,6 +576,6 @@
     };
 
     // 导出到全局命名空间
-    window.SvgaPreview.Utils = SvgaUtils;
+    window.MeeWoo.Utils = SvgaUtils;
 
 })(window);

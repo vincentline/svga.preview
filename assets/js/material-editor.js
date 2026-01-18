@@ -22,8 +22,8 @@
     'use strict';
 
     // Ensure namespace
-    window.SvgaPreview = window.SvgaPreview || {};
-    window.SvgaPreview.Mixins = window.SvgaPreview.Mixins || {};
+    window.MeeWoo = window.MeeWoo || {};
+    window.MeeWoo.Mixins = window.MeeWoo.Mixins || {};
 
     var MaterialEditor = {
         data: function () {
@@ -183,18 +183,18 @@
 
         watch: {
             // 监听所有可能改变编辑状态的属性
-            'editor.baseImage': function() { this.updateRestoreBtnState(); },
-            'editor.showImage': function() { this.updateRestoreBtnState(); },
-            'editor.showText': function() { 
+            'editor.baseImage': function () { this.updateRestoreBtnState(); },
+            'editor.showImage': function () { this.updateRestoreBtnState(); },
+            'editor.showText': function () {
                 var _this = this;
                 this.updateRestoreBtnState();
                 this.$nextTick(function () {
                     _this.renderEditorPreview();
                 });
             },
-            'editor.imageOffsetX': function() { this.updateRestoreBtnState(); },
-            'editor.imageOffsetY': function() { this.updateRestoreBtnState(); },
-            'editor.imageScale': function() { this.updateRestoreBtnState(); },
+            'editor.imageOffsetX': function () { this.updateRestoreBtnState(); },
+            'editor.imageOffsetY': function () { this.updateRestoreBtnState(); },
+            'editor.imageScale': function () { this.updateRestoreBtnState(); },
 
             // 监听文字内容变化，实时更新 Canvas 预览
             'editor.textContent': function () {
@@ -234,7 +234,7 @@
              */
             updateRestoreBtnState: function () {
                 var show = false;
-                
+
                 // 1. 检查底图是否变更
                 var defaultImg = this.editor.defaultBaseImage;
                 if (defaultImg && this.editor.baseImage !== defaultImg) show = true;
@@ -333,7 +333,7 @@
                     if (material.originalUrl) {
                         material.previewUrl = material.originalUrl;
                     }
-                    
+
                     // 3. 重置编辑器内部状态为默认值
                     this.editor.showImage = true;
                     this.editor.showText = false; // 关闭显示文案按钮
@@ -346,13 +346,13 @@
                     this.editor.imageOffsetY = 0;
                     this.editor.imageScale = 1.0;
                     this.editor.showRestoreBtn = false; // 显式重置按钮状态
-                    
+
                     // 4. 恢复底图为原始图
                     this.editor.baseImage = material.originalUrl || material.previewUrl;
-                    
+
                     // 重新渲染预览
                     this.renderEditorPreview();
-                    
+
                     // 提示用户
                     if (this.showToast) {
                         this.showToast('已恢复原图');
@@ -434,7 +434,7 @@
                 // 获取当前显示的图片
                 // 首先尝试使用原始图（originalUrl），如果不存在则使用previewUrl
                 var imgUrl = material.originalUrl || material.previewUrl;
-                
+
                 // 设置默认底图，用于 hasEditInfo 比较
                 this.editor.defaultBaseImage = imgUrl;
                 // 初始化按钮状态
@@ -1391,7 +1391,7 @@
                     var stroke = this.parseStroke(strokeStr);
                     if (stroke) {
                         ctx.lineWidth = stroke.width;
-                        
+
                         // 特殊处理：如果描边颜色是 transparent 且有渐变填充，则使用渐变作为描边色
                         // 这样可以实现文字描边渐变的效果（需配合 background-clip: text 和 transparent 描边色）
                         ctx.strokeStyle = (stroke.color === 'transparent' && fillStyle instanceof CanvasGradient)
@@ -1425,7 +1425,10 @@
         }
     };
 
-    // 导出到全局命名空间
-    window.SvgaPreview.Mixins.MaterialEditor = MaterialEditor;
+    // 暴露到全局命名空间
+    // 按照项目规范，使用 MeeWoo 作为项目级命名空间
+    window.MeeWoo = window.MeeWoo || {};
+    window.MeeWoo.Mixins = window.MeeWoo.Mixins || {};
+    window.MeeWoo.Mixins.MaterialEditor = MaterialEditor;
 
 })(window);
