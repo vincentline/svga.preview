@@ -1,25 +1,50 @@
 /**
  * @file gif-panel.js
  * @description GIF 导出配置面板组件
- * @author SvgaPreview Team
+ * @author MeeWoo Team
  * @date 2026-01-18
+ * 
+ * 功能说明：
+ * 1. 配置 GIF 导出的宽度、高度、帧率、质量
+ * 2. 支持透明背景和抖动算法配置
+ * 3. 实时显示导出进度和状态
+ * 4. 自动保持宽高比例
+ * 
+ * 使用方式：
+ * ```html
+ * <gif-panel 
+ *   :visible="activeRightPanel === 'gif'" 
+ *   :source-info="getGifSourceInfo()"
+ *   :initial-config="gifConfig"
+ *   :bg-color-key="bgColorKey"
+ *   :current-bg-color="currentBgColor"
+ *   :is-exporting="isExportingGIF"
+ *   :export-progress="gifExportProgress"
+ *   :export-stage="gifExportStage"
+ *   :export-message="gifExportMessage"
+ *   @close="closeGifPanel"
+ *   @cancel="cancelGifExport"
+ *   @export="handleGifExport"
+ *   @config-change="handleGifConfigChange">
+ * </gif-panel>
+ * ```
+ * 
+ * 与 panel-mixin.js 的关系：
+ * - 接收 panel-mixin.js 管理的 activeRightPanel 状态来控制显示/隐藏
+ * - 通过事件向父组件传递用户操作，由 panel-mixin.js 处理后续逻辑
  */
 
 (function (global) {
   'use strict';
 
-  global.SvgaPreview = global.SvgaPreview || {};
-  global.SvgaPreview.Components = global.SvgaPreview.Components || {};
+  // 按照项目规范，使用 MeeWoo 作为项目级命名空间
+  global.MeeWoo = global.MeeWoo || {};
+  global.MeeWoo.Components = global.MeeWoo.Components || {};
 
   /**
    * GIF 导出配置面板组件
-   * 功能：
-   * 1. 配置 GIF 导出的宽度、高度、帧率、质量
-   * 2. 支持透明背景和抖动算法配置
-   * 3. 实时显示导出进度和状态
-   * 4. 自动保持宽高比例
    */
-  global.SvgaPreview.Components.GifPanel = {
+  global.MeeWoo.Components.GifPanel = {
     name: 'GifPanel',
     template: '#tpl-gif-panel',
     props: {
@@ -40,7 +65,9 @@
       // 导出阶段描述
       exportStage: { type: String, default: '' },
       // 导出状态消息
-      exportMessage: { type: String, default: '' }
+      exportMessage: { type: String, default: '' },
+      // 是否全局任务运行中（用于禁用按钮）
+      disabled: { type: Boolean, default: false }
     },
     data: function () {
       return {

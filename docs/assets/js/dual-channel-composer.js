@@ -14,8 +14,8 @@
   'use strict';
 
   // Ensure namespace
-  window.SvgaPreview = window.SvgaPreview || {};
-  window.SvgaPreview.Services = window.SvgaPreview.Services || {};
+  window.MeeWoo = window.MeeWoo || {};
+  window.MeeWoo.Services = window.MeeWoo.Services || {};
 
   var DualChannelComposer = {
     
@@ -194,7 +194,7 @@
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = DualChannelComposer;
   } else {
-    global.SvgaPreview.Services.DualChannelComposer = DualChannelComposer;
+    global.MeeWoo.Services.DualChannelComposer = DualChannelComposer;
   }
 
 })(typeof window !== 'undefined' ? window : this);

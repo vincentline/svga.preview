@@ -182,7 +182,7 @@ body.dark-mode .drawer-btn.disabled {
 
 .drawer-link-item:hover {
   color: #333333;
-  text-decoration: none;
+  text-decoration: underline;
 }
 
 body.dark-mode .drawer-link-item {
@@ -191,6 +191,7 @@ body.dark-mode .drawer-link-item {
 
 body.dark-mode .drawer-link-item:hover {
   color: #e0e0e0;
+  text-decoration: underline;
 }
 
 .drawer-avatar {

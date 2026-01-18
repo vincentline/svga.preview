@@ -27,8 +27,8 @@
     'use strict';
 
     // Ensure namespace
-    window.SvgaPreview = window.SvgaPreview || {};
-    window.SvgaPreview.Controllers = window.SvgaPreview.Controllers || {};
+    window.MeeWoo = window.MeeWoo || {};
+    window.MeeWoo.Controllers = window.MeeWoo.Controllers || {};
 
     /**
      * 广告位管理器
@@ -52,8 +52,8 @@
             }
 
             // 等待站点配置加载完成（SiteConfigLoader 会自动去拉远程 JSON）
-            if (window.SvgaPreview && window.SvgaPreview.Core && window.SvgaPreview.Core.SiteConfig) {
-                await window.SvgaPreview.Core.SiteConfig.ready();
+            if (window.MeeWoo && window.MeeWoo.Core && window.MeeWoo.Core.SiteConfig) {
+                await window.MeeWoo.Core.SiteConfig.ready();
             }
 
             // 查找所有广告位容器
@@ -219,17 +219,17 @@
         }
     }
 
-    // 创建全局实例：window.SvgaPreview.Controllers.AdController
-    window.SvgaPreview.Controllers.AdController = new AdController();
+    // 创建全局实例：window.MeeWoo.Controllers.AdController
+    window.MeeWoo.Controllers.AdController = new AdController();
 
     // 页面加载完成后自动初始化广告控制
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
-            window.SvgaPreview.Controllers.AdController.init();
+            window.MeeWoo.Controllers.AdController.init();
         });
     } else {
         // DOM已加载完成，立即初始化
-        window.SvgaPreview.Controllers.AdController.init();
+        window.MeeWoo.Controllers.AdController.init();
     }
 
 })(window);

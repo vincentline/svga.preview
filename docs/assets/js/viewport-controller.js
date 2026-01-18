@@ -65,8 +65,8 @@
   'use strict';
 
   // Ensure namespace
-  global.SvgaPreview = global.SvgaPreview || {};
-  global.SvgaPreview.Controllers = global.SvgaPreview.Controllers || {};
+  global.MeeWoo = global.MeeWoo || {};
+  global.MeeWoo.Controllers = global.MeeWoo.Controllers || {};
 
   /**
    * 构造函数视图控制器构造函数
@@ -646,7 +646,10 @@
     this.onViewportChange = null;
   };
 
-  // 导出到全局命名空间
-  global.SvgaPreview.Controllers.ViewportController = ViewportController;
+  // 暴露到全局命名空间
+  // 按照项目规范，使用 MeeWoo 作为项目级命名空间
+  global.MeeWoo = global.MeeWoo || {};
+  global.MeeWoo.Controllers = global.MeeWoo.Controllers || {};
+  global.MeeWoo.Controllers.ViewportController = ViewportController;
 
 })(window);

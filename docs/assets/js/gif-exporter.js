@@ -21,9 +21,9 @@
 (function(global) {
     'use strict';
 
-    // Ensure namespace
-    window.SvgaPreview = window.SvgaPreview || {};
-    window.SvgaPreview.Exporters = window.SvgaPreview.Exporters || {};
+    // Ensure namespace// 初始化命名空间
+    window.MeeWoo = window.MeeWoo || {};
+    window.MeeWoo.Exporters = window.MeeWoo.Exporters || {};
 
     const GIFExporter = {
         // GIF编码器实例
@@ -299,6 +299,6 @@
   };
 
   // 导出到全局命名空间
-  global.SvgaPreview.Exporters.GifExporter = GIFExporter;
+  global.MeeWoo.Exporters.GifExporter = GIFExporter;
 
 })(typeof window !== 'undefined' ? window : this);

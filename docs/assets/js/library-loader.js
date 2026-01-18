@@ -49,8 +49,9 @@
   'use strict';
 
   // Ensure namespace
-  window.SvgaPreview = window.SvgaPreview || {};
-  window.SvgaPreview.Core = window.SvgaPreview.Core || {};
+  // 按照项目规范，使用 MeeWoo 作为项目级命名空间
+  window.MeeWoo = window.MeeWoo || {};
+  window.MeeWoo.Core = window.MeeWoo.Core || {};
 
   /**
    * 库配置表
@@ -281,7 +282,7 @@
           import(currentUrl)
             .then(function (module) {
               // 将模块存储到 SvgaPreview 命名空间
-              window.SvgaPreview.Core.oxipngModule = module;
+              window.MeeWoo.Core.oxipngModule = module;
 
               _this.currentLib.progress = 50;
               _this.notifyProgress();
@@ -529,10 +530,11 @@
     return libKey ? LIBRARY_CONFIG[libKey] : LIBRARY_CONFIG;
   };
 
+  // 按照项目规范，使用 MeeWoo 作为项目级命名空间
   // 暴露到全局命名空间
-  window.SvgaPreview.Core.LibraryLoader = LibraryLoader;
+  window.MeeWoo.Core.LibraryLoader = LibraryLoader;
 
   // 创建全局单例
-  window.SvgaPreview.Core.libraryLoader = new LibraryLoader();
+  window.MeeWoo.Core.libraryLoader = new LibraryLoader();
 
 })(window);

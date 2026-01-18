@@ -36,8 +36,8 @@
     'use strict';
 
     // Ensure namespace
-    window.SvgaPreview = window.SvgaPreview || {};
-    window.SvgaPreview.Services = window.SvgaPreview.Services || {};
+    window.MeeWoo = window.MeeWoo || {};
+    window.MeeWoo.Services = window.MeeWoo.Services || {};
 
     /**
      * 文件验证器构造函数
@@ -842,7 +842,10 @@
         return (maxSeq - minSeq + 1) <= imageFiles.length * 1.5; // 允许50%的缺失容忍度
     };
 
-    // 导出到全局命名空间
-    window.SvgaPreview.Services.FileValidator = FileValidator;
+    // 暴露到全局命名空间
+    // 按照项目规范，使用 MeeWoo 作为项目级命名空间
+    window.MeeWoo = window.MeeWoo || {};
+    window.MeeWoo.Services = window.MeeWoo.Services || {};
+    window.MeeWoo.Services.FileValidator = FileValidator;
 
 })(window);

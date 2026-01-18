@@ -10,9 +10,10 @@
 (function (window) {
   'use strict';
 
-  // Ensure namespace
-  window.SvgaPreview = window.SvgaPreview || {};
-  window.SvgaPreview.Core = window.SvgaPreview.Core || {};
+  // Ensure namespace exists
+  // 按照项目规范，使用 MeeWoo 作为项目级命名空间
+  window.MeeWoo = window.MeeWoo || {};
+  window.MeeWoo.Core = window.MeeWoo.Core || {};
 
   function TaskManager() {
     // 存储任务 Map<id, { name: string, cancel: Function }>
@@ -92,8 +93,9 @@
   };
 
   // 暴露到全局命名空间
-  window.SvgaPreview.Core.TaskManager = TaskManager;
-  // 创建全局单例
-  window.SvgaPreview.Core.taskManager = new TaskManager();
+  window.MeeWoo.Core.TaskManager = TaskManager;
+  
+  // 创建单例实例
+  window.MeeWoo.Core.taskManager = new TaskManager();
 
 })(window);

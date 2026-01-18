@@ -1,5 +1,40 @@
+/**
+ * @file standard-mp4-panel.js
+ * @description 普通MP4转换面板组件
+ * @author MeeWoo Team
+ * @date 2026-01-18
+ * 
+ * 功能说明：
+ * 1. 提供将各种格式（SVGA、Lottie、MP4等）转换为普通MP4的配置选项
+ * 2. 支持自定义尺寸、压缩质量和帧率
+ * 3. 显示转换进度和状态
+ * 4. 支持取消转换操作
+ * 
+ * 使用方式：
+ * ```html
+ * <standard-mp4-panel 
+ *   :visible="activeRightPanel === 'standard-mp4'" 
+ *   :source-info="standardMp4SourceInfo"
+ *   :initial-config="standardMp4Config"
+ *   :is-converting="isConvertingToStandardMp4"
+ *   :progress="standardMp4Progress"
+ *   :message="standardMp4Message"
+ *   :disabled="isGlobalTaskRunning"
+ *   :current-module="currentModule"
+ *   @close="closeRightPanel"
+ *   @cancel="cancelStandardMp4Conversion"
+ *   @convert="handleStandardMp4Convert">
+ * </standard-mp4-panel>
+ * ```
+ * 
+ * 与 panel-mixin.js 的关系：
+ * - 接收 panel-mixin.js 管理的 activeRightPanel 状态来控制显示/隐藏
+ * - 通过事件向父组件传递用户操作，由 panel-mixin.js 处理后续逻辑
+ */
+
 (function () {
   var template = `
+
     <div class="mp4-panel" :class="{'show': visible}">
       <div class="mp4-panel-container">
         <div class="mp4-panel-header">
@@ -89,13 +124,14 @@
     </div>
   `;
 
-  window.SvgaPreview = window.SvgaPreview || {};
-  window.SvgaPreview.Components = window.SvgaPreview.Components || {};
+  // 按照项目规范，使用 MeeWoo 作为项目级命名空间
+  window.MeeWoo = window.MeeWoo || {};
+  window.MeeWoo.Components = window.MeeWoo.Components || {};
 
   /**
    * 普通 MP4 转换面板组件
    */
-  window.SvgaPreview.Components.StandardMp4Panel = {
+  window.MeeWoo.Components.StandardMp4Panel = {
     template: template,
     props: {
       visible: {

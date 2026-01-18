@@ -11,8 +11,8 @@
   'use strict';
 
   // Ensure namespace
-  global.SvgaPreview = global.SvgaPreview || {};
-  global.SvgaPreview.Controllers = global.SvgaPreview.Controllers || {};
+  global.MeeWoo = global.MeeWoo || {};
+  global.MeeWoo.Controllers = global.MeeWoo.Controllers || {};
 
   var InputController = function (options) {
     this.options = options || {};
@@ -41,9 +41,9 @@
       if (this.container.dataset.hasInputController === 'true') {
         console.warn('InputController: Container already has an input controller. Overwriting...');
         // 我们无法直接获取之前的实例并销毁它，因为没有保留引用
-        // 但是我们可以通过全局变量 SvgaPreview_GlobalInputController 来销毁它
-        if (window.SvgaPreview_GlobalInputController && window.SvgaPreview_GlobalInputController.destroy) {
-          window.SvgaPreview_GlobalInputController.destroy();
+        // 但是我们可以通过全局变量 MeeWoo_GlobalInputController 来销毁它
+        if (window.MeeWoo_GlobalInputController && window.MeeWoo_GlobalInputController.destroy) {
+          window.MeeWoo_GlobalInputController.destroy();
         }
       }
 
@@ -107,6 +107,9 @@
   };
 
   // Export
-  global.SvgaPreview.Controllers.InputController = InputController;
+  // 按照项目规范，使用 MeeWoo 作为项目级命名空间
+  global.MeeWoo = global.MeeWoo || {};
+  global.MeeWoo.Controllers = global.MeeWoo.Controllers || {};
+  global.MeeWoo.Controllers.InputController = InputController;
 
 })(typeof window !== 'undefined' ? window : this);

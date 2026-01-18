@@ -134,14 +134,35 @@
     </div>
   `;
 
-  window.SvgaPreview = window.SvgaPreview || {};
-  window.SvgaPreview.Components = window.SvgaPreview.Components || {};
+  // 按照项目规范，使用 MeeWoo 作为项目级命名空间
+  window.MeeWoo = window.MeeWoo || {};
+  window.MeeWoo.Components = window.MeeWoo.Components || {};
 
   /**
    * 通用转双通道 MP4 面板组件
    * 适用于: SVGA, Lottie, Frames, MP4 转 Dual Channel MP4
+   * 
+   * 使用方式：
+   * ```html
+   * <dual-channel-panel 
+   *   :visible="activeRightPanel === 'dual-channel'" 
+   *   :source-info="dualChannelSourceInfo"
+   *   :initial-config="dualChannelConfig"
+   *   :is-converting="isConvertingToDualChannel"
+   *   :progress="dualChannelProgress"
+   *   :message="dualChannelMessage"
+   *   :disabled="isGlobalTaskRunning"
+   *   @close="closeRightPanel"
+   *   @cancel="cancelDualChannelConversion"
+   *   @convert="handleDualChannelConvert">
+   * </dual-channel-panel>
+   * ```
+   * 
+   * 与 panel-mixin.js 的关系：
+   * - 接收 panel-mixin.js 管理的 activeRightPanel 状态来控制显示/隐藏
+   * - 通过事件向父组件传递用户操作，由 panel-mixin.js 处理后续逻辑
    */
-  window.SvgaPreview.Components.DualChannelPanel = {
+  window.MeeWoo.Components.DualChannelPanel = {
     template: template,
     props: {
       visible: {
