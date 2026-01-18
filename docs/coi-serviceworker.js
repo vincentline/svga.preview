@@ -99,7 +99,7 @@ if (typeof window === 'undefined') {
       return;
     }
 
-    // 检查是否刚刚刷新过
+    // 检查是否刚刚刷新过，防止无限循环
     const justReloaded = sessionStorage.getItem('coi_reloaded');
     if (justReloaded === 'yes') {
       sessionStorage.removeItem('coi_reloaded');
@@ -116,27 +116,61 @@ if (typeof window === 'undefined') {
           console.log('[COI] Service Worker registered:', registration.scope);
 
           // 检查Service Worker状态
-          if (registration.active && navigator.serviceWorker.controller) {
-            console.log('[COI] Service Worker already controlling page');
-            return;
-          }
+          const checkSWStatus = () => {
+            // 如果已经被Service Worker控制，检查是否支持SharedArrayBuffer
+            if (navigator.serviceWorker.controller) {
+              // 检查SharedArrayBuffer是否可用
+              if (typeof SharedArrayBuffer !== 'undefined') {
+                console.log('[COI] Service Worker active and SharedArrayBuffer available');
+                return;
+              }
+              // 虽然被控制，但SharedArrayBuffer不可用，需要刷新
+              console.log('[COI] Service Worker active but SharedArrayBuffer not available, reloading...');
+              sessionStorage.setItem('coi_reloaded', 'yes');
+              window.location.reload();
+              return;
+            }
 
-          // 首次注册，需要刷新一次来激活Service Worker
-          if (!navigator.serviceWorker.controller) {
-            console.log('[COI] First registration, reloading to activate...');
-            sessionStorage.setItem('coi_reloaded', 'yes');
-            window.location.reload();
-          }
+            // 如果还没有被控制，检查Service Worker是否激活
+            if (registration.active) {
+              console.log('[COI] Service Worker activated, reloading to take control...');
+              sessionStorage.setItem('coi_reloaded', 'yes');
+              window.location.reload();
+              return;
+            }
+
+            // 继续检查，直到Service Worker激活或超时
+            setTimeout(checkSWStatus, 500);
+          };
+
+          // 立即检查状态
+          checkSWStatus();
+
+          // 监听Service Worker状态变化
+          registration.addEventListener('updatefound', () => {
+            const newWorker = registration.installing;
+            if (newWorker) {
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'activated') {
+                  console.log('[COI] New Service Worker activated, reloading...');
+                  sessionStorage.setItem('coi_reloaded', 'yes');
+                  window.location.reload();
+                }
+              });
+            }
+          });
         })
         .catch(err => {
           console.error('[COI] Service Worker registration failed:', err);
         });
     };
 
-    if (document.readyState === 'complete') {
-      registerSW();
+    // 立即注册Service Worker，无需等待页面完全加载
+    // 这样可以更快地激活Service Worker，减少用户等待时间
+    if (document.readyState === 'loading') {
+      window.addEventListener('DOMContentLoaded', registerSW);
     } else {
-      window.addEventListener('load', registerSW);
+      registerSW();
     }
   })();
 }

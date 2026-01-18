@@ -102,7 +102,11 @@
          * - 如果 enabled=true：只显示 position 对应的那个
          */
         applyConfig() {
-            const adConfig = window.SiteConfigLoader.getFeature('advertisement');
+            // 使用正确的 SiteConfig 实例路径
+            let adConfig = null;
+            if (window.MeeWoo && window.MeeWoo.Core && window.MeeWoo.Core.SiteConfig) {
+                adConfig = window.MeeWoo.Core.SiteConfig.getFeature('advertisement');
+            }
 
             if (!adConfig) {
                 this.hideAllAds();
