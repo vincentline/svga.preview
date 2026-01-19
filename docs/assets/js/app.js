@@ -329,7 +329,7 @@ function initApp() {
         },
 
         // ==================== 更多侧边栏状态 ====================
-        showMoreDrawer: false,
+        showMoreDrawer: true,
 
         // ==================== 绿幕抠图配置 ====================
         showChromaKeyPanel: false,
@@ -4070,6 +4070,11 @@ function initApp() {
         var scalePercent = this.compressConfig.scalePercent / 100;
 
         try {
+          // 重置压缩失败标志
+          if (window.MeeWoo && window.MeeWoo.Services && window.MeeWoo.Services.ImageCompressionService) {
+            window.MeeWoo.Services.ImageCompressionService.resetCompressionFailed();
+          }
+
           for (var i = 0; i < this.materialList.length; i++) {
             var material = this.materialList[i];
 
@@ -4106,7 +4111,15 @@ function initApp() {
                 var pngData = await window.MeeWoo.Services.ImageCompressionService.compressCanvas(canvas, this.compressConfig.pngQuality);
                 // 将Uint8Array转换为DataURL
                 var blob = new Blob([pngData], { type: 'image/png' });
-                compressedDataUrl = URL.createObjectURL(blob);
+                // 使用FileReader将blob转换为DataURL，以便后续atob解码
+                compressedDataUrl = await new Promise(function (resolve, reject) {
+                  var reader = new FileReader();
+                  reader.onloadend = function () {
+                    resolve(reader.result);
+                  };
+                  reader.onerror = reject;
+                  reader.readAsDataURL(blob);
+                });
               } catch (e) {
                 console.error('PNG压缩失败，使用Canvas原生输出:', e);
                 compressedDataUrl = canvas.toDataURL('image/png');
@@ -4168,7 +4181,17 @@ function initApp() {
           // 应用到播放器预览
           this.applyReplacedMaterials();
 
-          this.utils.showToast('压缩完成，共压缩 ' + total + ' 个素材');
+          // 检查是否有压缩失败
+          var compressionFailed = false;
+          if (window.MeeWoo && window.MeeWoo.Services && window.MeeWoo.Services.ImageCompressionService) {
+            compressionFailed = window.MeeWoo.Services.ImageCompressionService.hasCompressionFailed();
+          }
+
+          if (compressionFailed) {
+            this.utils.showToast('压缩完成，但部分图片使用了降级压缩方案');
+          } else {
+            this.utils.showToast('压缩完成，共压缩 ' + total + ' 个素材');
+          }
 
         } catch (err) {
           console.error('压缩失败:', err);
@@ -4420,7 +4443,7 @@ function initApp() {
                   }).then(function (blob) {
                     var originalName = _this.svga.fileInfo.name.replace(/\.svga$/i, '');
                     _this.utils.downloadFile(blob, originalName + '_modified.svga');
-                    this.utils.showToast('导出成功！已替换 ' + replacedCount + ' 个素材。');
+                    _this.utils.showToast('导出成功！已替换 ' + replacedCount + ' 个素材。');
                   }).catch(function (err) {
                     console.error('编码失败:', err);
                     alert('编码失败: ' + err.message);
@@ -9414,6 +9437,9 @@ function initApp() {
       this.editingKeyframeIndex = -1;
       this.editFrameInput = '';
       this.showFramesFpsDialog = false;
+
+      // 确保左侧面板默认打开
+      this.showMoreDrawer = true;
 
       this.initSvgaPlayer();
       this.initViewportController();

@@ -80,17 +80,18 @@
       checkFn: function () { return typeof Vue !== 'undefined'; },
       priority: 0 // 最高优先级
     },
-    'libimagequant': {
-      name: 'libimagequant',
-      url: 'https://cdn.jsdelivr.net/npm/pngquant-wasm@1.0.0/+esm',
+    'oxipng': {
+      name: 'oxipng',
+      url: 'assets/js/service/oxipng/codec/pkg/squoosh_oxipng_bg.wasm',
       checkFn: function () {
-        return typeof window.MeeWoo !== 'undefined' && 
-               typeof window.MeeWoo.Services !== 'undefined' && 
-               typeof window.MeeWoo.Services.ImageCompressionService !== 'undefined' &&
-               window.MeeWoo.Services.ImageCompressionService.isReady();
+        // 检查 ImageCompressionService 是否已初始化且 oxipng 模块可用
+        return typeof window.MeeWoo !== 'undefined' &&
+          typeof window.MeeWoo.Services !== 'undefined' &&
+          typeof window.MeeWoo.Services.ImageCompressionService !== 'undefined' &&
+          window.MeeWoo.Services.ImageCompressionService.isOxipngReady();
       },
       priority: 25,
-      loadMethod: 'import'
+      disabled: true // 禁用自动预加载，由 image-compression-service 手动处理
     },
     'svgaplayer': {
       name: 'SVGA Player',

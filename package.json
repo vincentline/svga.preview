@@ -4,5 +4,8 @@
   "description": "SVGA/Lottie动画在线预览工具",
   "private": true,
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "@jsquash/oxipng": "^2.3.0"
+  }
 }
