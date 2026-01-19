@@ -144,9 +144,9 @@
           targetPanel = 'dual-channel';
         } else if (panelName === 'material') {
           targetPanel = 'material';
-        } else if (panelName === 'showMp4ToSvgaPanel' || panelName === 'showLottieToSvgaPanel' || panelName === 'showFramesToSvgaPanel' || panelName === 'showYyevaToSvgaPanel') {
+        } else if (panelName === 'showMp4ToSvgaPanel' || panelName === 'showLottieToSvgaPanel' || panelName === 'showFramesToSvgaPanel' || panelName === 'showImagesToSvgaPanel' || panelName === 'showYyevaToSvgaPanel') {
           targetPanel = 'to-svga';
-        } else if (panelName === 'showMp4ToDualChannelPanel' || panelName === 'showLottieToDualChannelPanel' || panelName === 'showFramesToDualChannelPanel' || panelName === 'showSvgaToDualChannelPanel') {
+        } else if (panelName === 'showMp4ToDualChannelPanel' || panelName === 'showLottieToDualChannelPanel' || panelName === 'showFramesToDualChannelPanel' || panelName === 'showImagesToDualChannelPanel' || panelName === 'showSvgaToDualChannelPanel') {
           targetPanel = 'dual-channel';
         } else if (panelName === 'showGifPanel') {
           targetPanel = 'gif';

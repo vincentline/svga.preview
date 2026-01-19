@@ -80,6 +80,18 @@
       checkFn: function () { return typeof Vue !== 'undefined'; },
       priority: 0 // 最高优先级
     },
+    'libimagequant': {
+      name: 'libimagequant',
+      url: 'https://cdn.jsdelivr.net/npm/pngquant-wasm@1.0.0/+esm',
+      checkFn: function () {
+        return typeof window.MeeWoo !== 'undefined' && 
+               typeof window.MeeWoo.Services !== 'undefined' && 
+               typeof window.MeeWoo.Services.ImageCompressionService !== 'undefined' &&
+               window.MeeWoo.Services.ImageCompressionService.isReady();
+      },
+      priority: 25,
+      loadMethod: 'import'
+    },
     'svgaplayer': {
       name: 'SVGA Player',
       url: 'assets/js/lib/svga.min.js',

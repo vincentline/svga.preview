@@ -19,22 +19,27 @@
  * 2. 从已编码PNG构建（双通道MP4等）：
  *    SVGABuilder.buildFromPNG({ frames: [Uint8Array], scaledWidth, displayWidth, audios, muted, ... })
  */
-(function(global) {
-    'use strict';
+(function (global) {
+  'use strict';
 
-    // Ensure namespace
-    window.MeeWoo = window.MeeWoo || {};
-    window.MeeWoo.Services = window.MeeWoo.Services || {};
+  // Ensure namespace
+  window.MeeWoo = window.MeeWoo || {};
+  window.MeeWoo.Services = window.MeeWoo.Services || {};
 
-    const SVGABuilder = {
-        
-        /**
-     * 默认配置
-     */
+  const SVGABuilder = {
+
+    /**
+ * 默认配置
+ */
     defaults: {
       protoPath: './svga.proto',
       quality: 80,
-      fps: 30
+      fps: 30,
+      pngCompression: {
+        enabled: true,
+        quality: 80,
+        speed: 4
+      }
     },
 
     /**
@@ -122,12 +127,12 @@
           ctx.drawImage(img, 0, 0, scaledWidth, scaledHeight);
 
           // 清理blob URL (延迟清理以防止浏览器异步绘制时资源丢失)
-          (function(src) {
-              setTimeout(function() { URL.revokeObjectURL(src); }, 100);
+          (function (src) {
+            setTimeout(function () { URL.revokeObjectURL(src); }, 100);
           })(img.src);
 
-          // 转为PNG Uint8Array
-          var pngData = await _this._canvasToPNG(canvas);
+          // 转为PNG Uint8Array并使用图片压缩服务压缩
+          var pngData = await _this._canvasToPNG(canvas, quality);
           pngFrames.push(pngData);
 
           // 进度回调（0-50%）
@@ -136,7 +141,7 @@
       }
 
       // 阶段2：编码SVGA（50-100%）
-      return _this._encodeSVGA({
+      var result = await _this._encodeSVGA({
         pngFrames: pngFrames,
         scaledWidth: scaledWidth,
         scaledHeight: scaledHeight,
@@ -154,6 +159,19 @@
           onProgress(0.5 + progress * 0.5);
         }
       });
+
+      // 检查是否有压缩失败
+      if (window.MeeWoo && window.MeeWoo.Services && window.MeeWoo.Services.ImageCompressionService) {
+        var compressionService = window.MeeWoo.Services.ImageCompressionService;
+        if (compressionService.hasCompressionFailed()) {
+          // 弹窗提示压缩失败
+          alert('部分图片压缩失败，已使用降级方案处理');
+          // 重置压缩失败标记
+          compressionService.resetCompressionFailed();
+        }
+      }
+
+      return result;
     },
 
     /**
@@ -167,6 +185,7 @@
      * @param {Number} options.displayHeight - 显示高度（viewBox高度）
      * @param {Number} options.scaleFactor - 缩放因子
      * @param {Number} options.fps - 帧率
+     * @param {Number} options.quality - 压缩质量（10-100）
      * @param {Array} options.audios - 音频数据数组（可选）[{audioKey, audioData, startFrame, endFrame, ...}]
      * @param {Boolean} options.muted - 是否静音（可选，默认false）
      * @param {Function} options.onProgress - 进度回调 (progress: 0-1)
@@ -187,6 +206,7 @@
       var scaleFactor = options.scaleFactor || 1;
       var scaleUp = 1 / scaleFactor;
       var fps = options.fps || this.defaults.fps;
+      var quality = Math.max(10, Math.min(100, options.quality || this.defaults.quality));
       var audios = options.audios || [];
       var muted = options.muted || false;
       var onProgress = options.onProgress || function () { };
@@ -198,8 +218,24 @@
         throw new Error('帧数组不能为空');
       }
 
-      // 直接进入编码阶段（0-100%）
-      return this._encodeSVGA({
+      // 压缩已有的PNG帧数据
+      if (window.MeeWoo && window.MeeWoo.Services && window.MeeWoo.Services.ImageCompressionService) {
+        var compressionService = window.MeeWoo.Services.ImageCompressionService;
+        var compressedPNGFrames = [];
+
+        for (var i = 0; i < pngFrames.length; i++) {
+          var compressedData = await compressionService.compressPNG(pngFrames[i], quality);
+          compressedPNGFrames.push(compressedData);
+
+          // 进度回调（0-50%）
+          onProgress((i + 1) / pngFrames.length * 0.5);
+        }
+
+        pngFrames = compressedPNGFrames;
+      }
+
+      // 进入编码阶段（50-100%）
+      var result = await this._encodeSVGA({
         pngFrames: pngFrames,
         scaledWidth: scaledWidth,
         scaledHeight: scaledHeight,
@@ -212,8 +248,24 @@
         protoPath: protoPath,
         protobuf: protobuf,
         pako: pako,
-        onProgress: onProgress
+        onProgress: function (progress) {
+          // 映射到50-100%
+          onProgress(0.5 + progress * 0.5);
+        }
       });
+
+      // 检查是否有压缩失败
+      if (window.MeeWoo && window.MeeWoo.Services && window.MeeWoo.Services.ImageCompressionService) {
+        var compressionService = window.MeeWoo.Services.ImageCompressionService;
+        if (compressionService.hasCompressionFailed()) {
+          // 弹窗提示压缩失败
+          alert('部分图片压缩失败，已使用降级方案处理');
+          // 重置压缩失败标记
+          compressionService.resetCompressionFailed();
+        }
+      }
+
+      return result;
     },
 
     /**
@@ -403,56 +455,20 @@
     },
 
     /**
-     * Canvas转PNG Uint8Array（使用pako压缩）
-     * 
-     * 性能优化说明：
-     * 1. 使用 willReadFrequently: true 属性
-     *    - 原因：Canvas2D在频繁调用 getImageData 时会触发浏览器的性能警告，并导致硬件加速失效。
-     *    - 效果：提示浏览器该Canvas将用于频繁读取，浏览器会改用CPU渲染或优化显存回读路径，显著提升 readback 性能。
-     * 2. 使用 pako 进行 Deflate 压缩
-     *    - 原因：原生 toBlob 编码PNG速度较慢且不可控。
-     *    - 效果：手动构建简单的PNG结构（IHDR+IDAT+IEND），绕过浏览器的图像编码器，直接处理像素数据。
-     * 
+     * Canvas转PNG Uint8Array（使用ImageCompressionService压缩）
      * @private
      */
-    _canvasToPNG: async function (canvas) {
-      // 如果有pako库，使用 pako 压缩 PNG
-      if (typeof pako !== 'undefined') {
-        try {
-          // 获取像素数据
-          // [CRITICAL] willReadFrequently: true 是必须的，否则会导致大量 "Canvas2D: Multiple readback operations using getImageData are faster with the willReadFrequently attribute" 警告
-          var ctx = canvas.getContext('2d', { willReadFrequently: true });
-          var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-          var pixels = imageData.data;
-
-          // 准备未压缩的像素数据（每行前加filter byte 0）
-          var width = canvas.width;
-          var height = canvas.height;
-          var rawData = new Uint8Array(height * (1 + width * 4));
-          for (var y = 0; y < height; y++) {
-            rawData[y * (1 + width * 4)] = 0;  // filter type 0
-            for (var x = 0; x < width; x++) {
-              var idx = (y * width + x) * 4;
-              var pos = y * (1 + width * 4) + 1 + x * 4;
-              rawData[pos] = pixels[idx];
-              rawData[pos + 1] = pixels[idx + 1];
-              rawData[pos + 2] = pixels[idx + 2];
-              rawData[pos + 3] = pixels[idx + 3];
-            }
-          }
-
-          // 使用 pako 压缩（level 6 平衡）
-          var compressed = pako.deflate(rawData, { level: 6 });
-
-          // 构建完整的 PNG 文件
-          var png = this._buildSimplePNG(width, height, compressed);
-          return png;
-        } catch (e) {
-          console.warn('PNG压缩失败，使用原始数据:', e);
+    _canvasToPNG: async function (canvas, quality) {
+      // 使用图片压缩服务进行压缩
+      try {
+        if (window.MeeWoo && window.MeeWoo.Services && window.MeeWoo.Services.ImageCompressionService) {
+          return await window.MeeWoo.Services.ImageCompressionService.compressCanvas(canvas, quality);
         }
+      } catch (e) {
+        console.warn('ImageCompressionService压缩失败，使用原始数据:', e);
       }
 
-      // 没有压缩库或压缩失败，返回原始数据
+      // 降级：使用浏览器默认PNG编码
       var blob = await new Promise(function (resolve) {
         canvas.toBlob(resolve, 'image/png');
       });

@@ -277,7 +277,7 @@ function initApp() {
         compressProgress: 0,                // 压缩进度 0-100
         compressConfig: {
           scalePercent: 70,                 // 缩小比例 10-100%
-          level: 3,                         // PNG压缩级别 1-6，3平衡
+          pngQuality: 80,                   // PNG压缩质量 10-100%
           exportMuted: false                // 是否导出静音SVGA（不包含音频）
         },
         hasCompressedMaterials: false,      // 是否压缩过素材
@@ -4100,9 +4100,21 @@ function initApp() {
             ctx.drawImage(img, 0, 0, newWidth, newHeight);
 
             var compressedDataUrl;
-
-            // 获取Canvas原生输出（缩小后的PNG）
-            var compressedDataUrl = canvas.toDataURL('image/png');
+            if (window.MeeWoo && window.MeeWoo.Services && window.MeeWoo.Services.ImageCompressionService) {
+              try {
+                // 使用ImageCompressionService压缩Canvas
+                var pngData = await window.MeeWoo.Services.ImageCompressionService.compressCanvas(canvas, this.compressConfig.pngQuality);
+                // 将Uint8Array转换为DataURL
+                var blob = new Blob([pngData], { type: 'image/png' });
+                compressedDataUrl = URL.createObjectURL(blob);
+              } catch (e) {
+                console.error('PNG压缩失败，使用Canvas原生输出:', e);
+                compressedDataUrl = canvas.toDataURL('image/png');
+              }
+            } else {
+              // 降级：使用Canvas原生输出
+              compressedDataUrl = canvas.toDataURL('image/png');
+            }
 
             // 放大到原尺寸用于预览（SVGA播放器不会自动放大）
             var compressedImg;
