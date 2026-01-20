@@ -1,14 +1,35 @@
 /**
- * Dual Channel Composer - 双通道图像合成器
+ * Dual Channel Composer - 双通道图像合成器 主模块
  * 独立模块，将带透明通道的图像合成为双通道格式（彩色+Alpha灰度图）
  * 
- * 功能：
- * - 批量合成：ImageData[] → JPEG Uint8Array[]
+ * 【模块关系】
+ * - 主模块：dual-channel-composer.js（外部直接调用此模块）
+ * - 工作线程：dual-channel-worker.js（内部使用，处理计算密集型任务）
+ * 
+ * 【数据流】
+ * 外部调用 → dual-channel-composer.js（主模块）→ 发送任务到Web Worker → dual-channel-worker.js（工作线程）处理像素计算 → 
+ * 返回结果到主模块 → 主模块转换为最终格式 → 返回结果给调用者
+ * 
+ * 【功能特性】
+ * - 批量合成：ImageData[] → JPEG/PNG Uint8Array[]
+ * - 单帧合成：ImageData → JPEG/PNG Uint8Array
  * - 支持左彩右灰/左灰右彩两种模式
  * - 正确处理预乘Alpha，避免颜色失真和锯齿
+ * - 使用Web Worker处理计算密集型任务，提高UI响应性
+ * - 支持多种输出格式（JPEG/PNG）
+ * - 完善的资源管理和清理机制
  * 
- * 调用方式：
- *    var jpegFrames = await DualChannelComposer.composeToJPEG(frames, { mode, quality, onProgress })
+ * 【调用方式】
+ *    // 批量合成（推荐使用，支持进度回调）
+ *    var jpegFrames = await DualChannelComposer.composeToJPEG(frames, { mode, quality, onProgress });
+ *    // 单帧合成
+ *    var jpegFrame = await DualChannelComposer.composeSingleFrame(frame, { mode, quality });
+ *    // 支持PNG格式输出
+ *    var pngFrame = await DualChannelComposer.composeSingleFrame(frame, { mode, format: 'png' });
+ *    // 自定义配置
+ *    DualChannelComposer.setConfig({ jpegQuality: 0.8, mode: 'alpha-left-color-right' });
+ *    // 销毁资源（Web Worker）
+ *    DualChannelComposer.destroy();
  */
 (function(global) {
   'use strict';
@@ -24,42 +45,92 @@
      */
     defaults: {
       mode: 'color-left-alpha-right',  // 'color-left-alpha-right' | 'alpha-left-color-right'
-      jpegQuality: 0.6                  // JPEG质量 0-1
+      jpegQuality: 0.6,                 // JPEG质量 0-1
+      format: 'jpeg',                   // 默认输出格式
+      workerPath: 'assets/js/dual-channel-worker.js'  // Web Worker路径
     },
 
     /**
-     * 批量合成双通道图像并转换为JPEG
-     * @param {Array<ImageData>} frames - ImageData数组
+     * Web Worker实例
+     */
+    _worker: null,
+
+    /**
+     * 任务ID计数器
+     */
+    _taskId: 0,
+
+    /**
+     * 初始化Web Worker
+     * @private
+     */
+    _initWorker: function() {
+      if (!this._worker) {
+        this._worker = new Worker(this.defaults.workerPath);
+      }
+    },
+
+    /**
+     * 发送任务到Web Worker
+     * @param {string} type - 任务类型
+     * @param {Object} data - 任务数据
+     * @returns {Promise<Object>} - 任务结果
+     * @private
+     */
+    _sendTask: function(type, data) {
+      return new Promise((resolve, reject) => {
+        this._initWorker();
+        
+        const taskId = ++this._taskId;
+        const message = {
+          id: taskId,
+          type: type,
+          data: data
+        };
+
+        const handleMessage = (e) => {
+          if (e.data.id === taskId) {
+            this._worker.removeEventListener('message', handleMessage);
+            if (e.data.type === 'error') {
+              reject(new Error(e.data.error));
+            } else {
+              resolve(e.data.result);
+            }
+          }
+        };
+
+        this._worker.addEventListener('message', handleMessage);
+        this._worker.postMessage(message);
+      });
+    },
+
+    /**
+     * 单帧合成双通道图像
+     * @param {ImageData} frame - 单帧ImageData
      * @param {Object} options - 配置项
      * @param {String} options.mode - 通道模式
      * @param {Number} options.quality - JPEG质量 0-1（可选，默认自适应）
-     * @param {Function} options.onProgress - 进度回调 (progress: 0-1)
-     * @param {Function} options.onCancel - 取消检查函数，返回true则中止
-     * @returns {Promise<Array<Uint8Array>>} - JPEG Uint8Array数组
+     * @param {String} options.format - 输出格式：'jpeg' 或 'png'
+     * @returns {Promise<Uint8Array>} - 合成后的图像数据
      */
-    composeToJPEG: async function(frames, options) {
-      var _this = this;
+    composeSingleFrame: async function(frame, options) {
       options = options || {};
-      var mode = options.mode || this.defaults.mode;
-      var isColorLeftAlphaRight = mode === 'color-left-alpha-right';
-      var onProgress = options.onProgress || function() {};
-      var onCancel = options.onCancel || function() { return false; };
-      
-      var frameCount = frames.length;
-      if (frameCount === 0) {
-        throw new Error('帧数组不能为空');
+      const mode = options.mode || this.defaults.mode;
+      const format = options.format || this.defaults.format;
+      const quality = options.quality;
+
+      if (!frame || !frame.data) {
+        throw new Error('无效的ImageData对象');
       }
-      
-      var jpegFrames = [];
-      
+
       // 获取尺寸
-      var width = frames[0].width;
-      var height = frames[0].height;
+      const width = frame.width;
+      const height = frame.height;
       
       // 计算JPEG质量（自适应）
-      var jpegQuality = options.quality;
-      if (jpegQuality === undefined) {
-        var totalPixels = width * 2 * height;
+      let jpegQuality = quality;
+      if (jpegQuality === undefined && format === 'jpeg') {
+        const totalPixels = width * 2 * height;
         if (totalPixels < 500000) {
           jpegQuality = 0.7;
         } else if (totalPixels > 2000000) {
@@ -68,114 +139,153 @@
           jpegQuality = 0.6;
         }
       }
-      
-      // 复用Canvas
-      var dualCanvas = document.createElement('canvas');
+
+      // 使用Web Worker处理像素计算
+      const result = await this._sendTask('composeFrame', {
+        frame: frame,
+        mode: mode,
+        width: width,
+        height: height
+      });
+
+      // 转换为ImageData
+      const dualCanvas = document.createElement('canvas');
       dualCanvas.width = width * 2;
       dualCanvas.height = height;
-      var dualCtx = dualCanvas.getContext('2d', { 
+      const dualCtx = dualCanvas.getContext('2d', { 
         alpha: true,
         willReadFrequently: true 
       });
-      dualCtx.imageSmoothingEnabled = false;
       
-      // 黑底Canvas（用于JPEG转换）
-      var blackBgCanvas = document.createElement('canvas');
+      const dualImageData = dualCtx.createImageData(width * 2, height);
+      dualImageData.data.set(result.dualData);
+      dualCtx.putImageData(dualImageData, 0, 0);
+
+      // 合成黑底并转换为目标格式
+      const blackBgCanvas = document.createElement('canvas');
       blackBgCanvas.width = width * 2;
       blackBgCanvas.height = height;
-      var blackBgCtx = blackBgCanvas.getContext('2d');
-      var blackBgImageData = blackBgCtx.createImageData(width * 2, height);
-      var blackBgData = blackBgImageData.data;
+      const blackBgCtx = blackBgCanvas.getContext('2d');
+      const blackBgImageData = blackBgCtx.createImageData(width * 2, height);
+      blackBgImageData.data.set(result.blackBgData);
+      blackBgCtx.putImageData(blackBgImageData, 0, 0);
 
-      for (var i = 0; i < frameCount; i++) {
+      // 转换为目标格式
+      const blob = await new Promise(function(resolve) {
+        if (format === 'png') {
+          blackBgCanvas.toBlob(resolve, 'image/png');
+        } else {
+          blackBgCanvas.toBlob(resolve, 'image/jpeg', jpegQuality);
+        }
+      });
+      const buffer = await blob.arrayBuffer();
+      
+      // 清理Canvas资源
+      dualCanvas.width = 0;
+      dualCanvas.height = 0;
+      blackBgCanvas.width = 0;
+      blackBgCanvas.height = 0;
+      
+      return new Uint8Array(buffer);
+    },
+
+    /**
+     * 批量合成双通道图像
+     * @param {Array<ImageData>} frames - ImageData数组
+     * @param {Object} options - 配置项
+     * @param {String} options.mode - 通道模式
+     * @param {Number} options.quality - JPEG质量 0-1（可选，默认自适应）
+     * @param {String} options.format - 输出格式：'jpeg' 或 'png'
+     * @param {Function} options.onProgress - 进度回调 (progress: 0-1)
+     * @param {Function} options.onCancel - 取消检查函数，返回true则中止
+     * @returns {Promise<Array<Uint8Array>>} - 合成后的图像数组
+     */
+    composeToJPEG: async function(frames, options) {
+      return this.composeFrames(frames, options);
+    },
+
+    /**
+     * 批量合成双通道图像（支持多种格式）
+     * @param {Array<ImageData>} frames - ImageData数组
+     * @param {Object} options - 配置项
+     * @param {String} options.mode - 通道模式
+     * @param {Number} options.quality - JPEG质量 0-1（可选，默认自适应）
+     * @param {String} options.format - 输出格式：'jpeg' 或 'png'
+     * @param {Function} options.onProgress - 进度回调 (progress: 0-1)
+     * @param {Function} options.onCancel - 取消检查函数，返回true则中止
+     * @returns {Promise<Array<Uint8Array>>} - 合成后的图像数组
+     */
+    composeFrames: async function(frames, options) {
+      options = options || {};
+      const mode = options.mode || this.defaults.mode;
+      const format = options.format || this.defaults.format;
+      const quality = options.quality;
+      const onProgress = options.onProgress || function() {};
+      const onCancel = options.onCancel || function() { return false; };
+      
+      const frameCount = frames.length;
+      if (frameCount === 0) {
+        throw new Error('帧数组不能为空');
+      }
+      
+      const resultFrames = [];
+      
+      // 获取尺寸
+      const width = frames[0].width;
+      const height = frames[0].height;
+      
+      // 计算JPEG质量（自适应）
+      let jpegQuality = quality;
+      if (jpegQuality === undefined && format === 'jpeg') {
+        const totalPixels = width * 2 * height;
+        if (totalPixels < 500000) {
+          jpegQuality = 0.7;
+        } else if (totalPixels > 2000000) {
+          jpegQuality = 0.5;
+        } else {
+          jpegQuality = 0.6;
+        }
+      }
+
+      // 使用Web Worker处理多帧合成
+      const result = await this._sendTask('composeFrames', {
+        frames: frames,
+        mode: mode,
+        width: width,
+        height: height,
+        frameCount: frameCount
+      });
+
+      // 转换每一帧
+      for (let i = 0; i < frameCount; i++) {
         // 检查是否取消
         if (onCancel()) {
           throw new Error('用户取消');
         }
 
-        var srcData = frames[i].data;
-        
-        // 清空并创建双通道数据
-        dualCtx.clearRect(0, 0, width * 2, height);
-        var dualImageData = dualCtx.createImageData(width * 2, height);
-        var dualData = dualImageData.data;
-        
-        // 逐像素处理
-        for (var j = 0; j < srcData.length; j += 4) {
-          var r = srcData[j + 0];
-          var g = srcData[j + 1];
-          var b = srcData[j + 2];
-          var a = srcData[j + 3];
-
-          // 反预乘Alpha
-          var finalR = r, finalG = g, finalB = b;
-          if (a > 0 && a < 255) {
-            finalR = Math.min(255, Math.round(r * 255 / a));
-            finalG = Math.min(255, Math.round(g * 255 / a));
-            finalB = Math.min(255, Math.round(b * 255 / a));
-          } else if (a === 0) {
-            finalR = 0; finalG = 0; finalB = 0;
-          }
-
-          // 计算位置
-          var pixelIndex = Math.floor(j / 4);
-          var row = Math.floor(pixelIndex / width);
-          var col = pixelIndex % width;
-          var leftIdx = (row * width * 2 + col) * 4;
-          var rightIdx = (row * width * 2 + col + width) * 4;
-
-          if (isColorLeftAlphaRight) {
-            dualData[leftIdx + 0] = finalR;
-            dualData[leftIdx + 1] = finalG;
-            dualData[leftIdx + 2] = finalB;
-            dualData[leftIdx + 3] = a;
-            dualData[rightIdx + 0] = a;
-            dualData[rightIdx + 1] = a;
-            dualData[rightIdx + 2] = a;
-            dualData[rightIdx + 3] = 255;
-          } else {
-            dualData[leftIdx + 0] = a;
-            dualData[leftIdx + 1] = a;
-            dualData[leftIdx + 2] = a;
-            dualData[leftIdx + 3] = 255;
-            dualData[rightIdx + 0] = finalR;
-            dualData[rightIdx + 1] = finalG;
-            dualData[rightIdx + 2] = finalB;
-            dualData[rightIdx + 3] = a;
-          }
-        }
-        
-        dualCtx.putImageData(dualImageData, 0, 0);
-        
-        // 合成黑底并转换为JPEG
-        // 修复锯齿：彩色通道需要用alpha与黑底混合
-        for (var k = 0; k < dualData.length; k += 4) {
-          var pixelAlpha = dualData[k + 3];
-          
-          if (pixelAlpha === 255) {
-            blackBgData[k + 0] = dualData[k + 0];
-            blackBgData[k + 1] = dualData[k + 1];
-            blackBgData[k + 2] = dualData[k + 2];
-          } else if (pixelAlpha === 0) {
-            blackBgData[k + 0] = 0;
-            blackBgData[k + 1] = 0;
-            blackBgData[k + 2] = 0;
-          } else {
-            // 半透明像素：与黑底混合
-            blackBgData[k + 0] = Math.round(dualData[k + 0] * pixelAlpha / 255);
-            blackBgData[k + 1] = Math.round(dualData[k + 1] * pixelAlpha / 255);
-            blackBgData[k + 2] = Math.round(dualData[k + 2] * pixelAlpha / 255);
-          }
-          blackBgData[k + 3] = 255;
-        }
+        // 创建临时Canvas
+        const blackBgCanvas = document.createElement('canvas');
+        blackBgCanvas.width = width * 2;
+        blackBgCanvas.height = height;
+        const blackBgCtx = blackBgCanvas.getContext('2d');
+        const blackBgImageData = blackBgCtx.createImageData(width * 2, height);
+        blackBgImageData.data.set(result[i].blackBgData);
         blackBgCtx.putImageData(blackBgImageData, 0, 0);
-        
-        // 转换为JPEG
-        var blob = await new Promise(function(resolve) {
-          blackBgCanvas.toBlob(resolve, 'image/jpeg', jpegQuality);
+
+        // 转换为目标格式
+        const blob = await new Promise(function(resolve) {
+          if (format === 'png') {
+            blackBgCanvas.toBlob(resolve, 'image/png');
+          } else {
+            blackBgCanvas.toBlob(resolve, 'image/jpeg', jpegQuality);
+          }
         });
-        var buffer = await blob.arrayBuffer();
-        jpegFrames.push(new Uint8Array(buffer));
+        const buffer = await blob.arrayBuffer();
+        resultFrames.push(new Uint8Array(buffer));
+
+        // 清理Canvas资源
+        blackBgCanvas.width = 0;
+        blackBgCanvas.height = 0;
 
         // 进度回调
         onProgress((i + 1) / frameCount);
@@ -186,7 +296,33 @@
         }
       }
 
-      return jpegFrames;
+      return resultFrames;
+    },
+
+    /**
+     * 设置默认配置
+     * @param {Object} config - 配置对象
+     */
+    setConfig: function(config) {
+      Object.assign(this.defaults, config);
+    },
+
+    /**
+     * 获取当前配置
+     * @returns {Object} - 当前配置
+     */
+    getConfig: function() {
+      return { ...this.defaults };
+    },
+
+    /**
+     * 销毁Web Worker，释放资源
+     */
+    destroy: function() {
+      if (this._worker) {
+        this._worker.terminate();
+        this._worker = null;
+      }
     }
   };
 

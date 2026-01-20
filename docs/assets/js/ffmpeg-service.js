@@ -2,21 +2,23 @@
  * FFmpeg Service - FFmpeg音视频处理统一服务
  * 
  * 功能：
- * - 统一管理FFmpeg实例（单例模式，避免重复加载）
+ * - 统一管理FFmpeg实例（支持单例和多实例模式）
  * - 统一的初始化和加载机制（支持插队优先加载）
  * - 统一的进度回调接口（0-1比例）
  * - 统一的错误处理机制
  * - 统一的取消操作支持
  * - 统一的资源清理管理
+ * - 事件系统支持
+ * - 完善的资源释放机制
  * 
  * 支持的功能：
  * 1. 视频格式转换（MP4兼容性转换）
  * 2. 音频提取与变速处理
  * 3. 图像序列合成MP4（带音频）
- * 6. 通用命令执行接口 (runCommand)
+ * 4. 通用命令执行接口 (runCommand)
  * 
  * 使用示例：
- *   // 初始化
+ *   // 初始化单例
  *   await FFmpegService.init({ 
  *     corePath: 'assets/libs/ffmpeg-core.js',
  *     workerPath: 'assets/libs/ffmpeg-core.worker.js',
@@ -30,21 +32,13 @@
  *     onProgress: (p) => console.log(p)
  *   });
  * 
- *   // 通用命令执行 (例如：视频剪辑)
- *   var result = await FFmpegService.runCommand({
- *     inputFiles: [{ name: 'input.mp4', data: arrayBuffer }],
- *     args: ['-i', 'input.mp4', '-ss', '00:00:01', '-t', '5', '-c', 'copy', 'output.mp4'],
- *     outputFiles: ['output.mp4']
- *   });
- *   var outputData = result['output.mp4']; // Uint8Array
+ *   // 创建多实例
+ *   var ffmpegInstance = FFmpegService.createInstance();
+ *   await ffmpegInstance.init();
+ *   var result = await ffmpegInstance.runCommand(...);
  * 
- *   // 转换视频格式
- *   var blob = await FFmpegService.convertVideoFormat({
- *     inputFile: file,
- *     maxWidth: 1280,
- *     onProgress: (p) => console.log(p),
- *     checkCancelled: () => this.cancelled
- *   });
+ *   // 监听事件
+ *   FFmpegService.on('loaded', () => console.log('FFmpeg服务已加载'));
  */
 (function (window) {
     'use strict';
@@ -53,14 +47,21 @@
     window.MeeWoo = window.MeeWoo || {};
     window.MeeWoo.Services = window.MeeWoo.Services || {};
 
-    var FFmpegService = {
-        // ==================== 状态管理 ====================
-        ffmpeg: null,               // FFmpeg实例
-        isLoaded: false,            // 是否已加载
-        isLoading: false,           // 是否正在加载
-        loadError: null,            // 加载错误信息
-        isBusy: false,              // 是否正在执行任务
+    /**
+     * FFmpeg实例类
+     * 支持创建多个独立的FFmpeg实例
+     */
+    function FFmpegInstance() {
+        this.ffmpeg = null;               // FFmpeg实例
+        this.isLoaded = false;            // 是否已加载
+        this.isLoading = false;           // 是否正在加载
+        this.loadError = null;            // 加载错误信息
+        this.isBusy = false;              // 是否正在执行任务
+        this._eventListeners = {};        // 事件监听器
+        this._instanceId = Math.random().toString(36).substr(2, 9); // 实例ID
+    }
 
+    FFmpegInstance.prototype = {
         /**
          * 获取最佳的 Core Path (CDN 测速)
          * @private
@@ -94,7 +95,24 @@
         },
 
         /**
-         * ==================== 初始化与加载 ====================
+         * 触发事件
+         * @param {string} eventName - 事件名称
+         * @param {*} data - 事件数据
+         * @private
+         */
+        _emit: function (eventName, data) {
+            if (this._eventListeners[eventName]) {
+                this._eventListeners[eventName].forEach(function (listener) {
+                    try {
+                        listener(data);
+                    } catch (e) {
+                        console.error('事件处理函数执行错误:', e);
+                    }
+                });
+            }
+        },
+
+        /**
          * 初始化FFmpeg（支持插队优先加载）
          * @param {Object} options - 配置项
          * @param {Boolean} options.highPriority - 是否高优先级加载（插队）
@@ -126,6 +144,9 @@
             this.isLoading = true;
             this.loadError = null;
 
+            // 触发加载开始事件
+            this._emit('loading', { stage: 'start', progress: 0 });
+
             try {
                 // 1. 检查SharedArrayBuffer支持
                 this._checkSharedArrayBuffer();
@@ -133,6 +154,7 @@
                 // 2. 加载FFmpeg库 (优先使用 LibraryLoader 以支持插队)
                 if (typeof FFmpeg === 'undefined' || typeof FFmpeg.createFFmpeg === 'undefined') {
                     onProgress({ stage: 'loading-library', progress: 0.1, message: '正在加载FFmpeg库...' });
+                    this._emit('loading', { stage: 'loading-library', progress: 0.1, message: '正在加载FFmpeg库...' });
 
                     if (window.MeeWoo.Core.libraryLoader) {
                         // 使用 library-loader 加载，支持优先级
@@ -147,12 +169,14 @@
                 var corePath = options.corePath;
                 if (!corePath) {
                     onProgress({ stage: 'checking-cdn', progress: 0.2, message: '正在优选最佳线路...' });
+                    this._emit('loading', { stage: 'checking-cdn', progress: 0.2, message: '正在优选最佳线路...' });
                     corePath = await this._getBestCorePath();
                     console.log('Selected FFmpeg Core Path:', corePath);
                 }
 
                 // 4. 创建FFmpeg实例
                 onProgress({ stage: 'creating-instance', progress: 0.3, message: '正在创建FFmpeg实例...' });
+                this._emit('loading', { stage: 'creating-instance', progress: 0.3, message: '正在创建FFmpeg实例...' });
                 this.ffmpeg = FFmpeg.createFFmpeg({
                     log: log,
                     corePath: corePath,
@@ -163,14 +187,20 @@
 
                 // 5. 加载FFmpeg Core
                 onProgress({ stage: 'loading-core', progress: 0.5, message: '正在加载编码器（约25MB，首次加载较慢）...' });
+                this._emit('loading', { stage: 'loading-core', progress: 0.5, message: '正在加载编码器（约25MB，首次加载较慢）...' });
                 await this.ffmpeg.load();
 
                 onProgress({ stage: 'done', progress: 1.0, message: 'FFmpeg加载完成' });
+                this._emit('loading', { stage: 'done', progress: 1.0, message: 'FFmpeg加载完成' });
                 this.isLoaded = true;
+
+                // 触发加载完成事件
+                this._emit('loaded', { instanceId: this._instanceId });
 
             } catch (error) {
                 this.loadError = error.message;
                 console.error('FFmpeg加载失败:', error);
+                this._emit('error', { error: error, stage: 'loading' });
                 throw new Error('加载FFmpeg失败：' + error.message);
             } finally {
                 this.isLoading = false;
@@ -245,7 +275,6 @@
         },
 
         /**
-         * ==================== 音频处理 ====================
          * 从视频提取音频（支持变速）
          * @param {Object} options - 配置项
          * @param {File} options.videoFile - 视频文件
@@ -272,6 +301,7 @@
                 throw new Error('FFmpeg服务正忙，请稍后再试');
             }
             this.isBusy = true;
+            this._emit('busy', { status: true });
 
             try {
                 var ffmpeg = this.ffmpeg;
@@ -343,12 +373,15 @@
                 this._cleanupFiles(['input_audio.mp4', 'audio.mp3']);
 
                 if (error.message === '用户取消') {
+                    this._emit('cancelled', { task: 'extractAudio' });
                     throw error;
                 }
                 console.error('音频提取失败:', error);
+                this._emit('error', { error: error, task: 'extractAudio' });
                 return null;
             } finally {
                 this.isBusy = false;
+                this._emit('busy', { status: false });
             }
         },
 
@@ -422,21 +455,13 @@
             var keyframes = options.keyframes;
             var totalFrames = options.totalFrames;
 
-            // 🛡️ 参数校验与修正
+            // 参数校验与修正
             var fps = parseFloat(options.fps) || 30;
             if (fps <= 0) fps = 30;
 
             var originalTotalFrames = options.originalTotalFrames;
             var originalFps = options.originalFps || fps;
             if (!originalFps || originalFps <= 0) originalFps = 30;
-
-            // console.log('DEBUG: extractAudioWithSpeedRemap', {
-            //     keyframes: keyframes ? keyframes.length : 0,
-            //     totalFrames: totalFrames,
-            //     fps: fps,
-            //     originalTotalFrames: originalTotalFrames,
-            //     originalFps: originalFps
-            // });
 
             var onProgress = options.onProgress || function () { };
             var checkCancelled = options.checkCancelled || function () { return false; };
@@ -445,6 +470,7 @@
                 throw new Error('FFmpeg服务正忙，请稍后再试');
             }
             this.isBusy = true;
+            this._emit('busy', { status: true });
 
             try {
                 var ffmpeg = this.ffmpeg;
@@ -461,11 +487,10 @@
                 var originalDuration = originalTotalFrames / originalFps;
                 var outputTotalDuration = totalFrames / fps;
 
-                // 🛡️ 防止除零导致的Infinity
+                // 防止除零导致的Infinity
                 if (!Number.isFinite(outputTotalDuration)) outputTotalDuration = 0;
 
                 console.log('多段变速音频 - 原始:', originalDuration.toFixed(2) + 's', '目标:', outputTotalDuration.toFixed(2) + 's');
-                // console.log('keyframes数量:', keyframes.length, '最后position:', keyframes[keyframes.length - 1].position);
                 var segments = [];
 
                 for (var i = 0; i < keyframes.length - 1; i++) {
@@ -486,8 +511,6 @@
 
                     // 变速比例 = 原始时长 / 输出时长
                     var speedRatio = segmentDuration / outputDuration;
-
-                    // console.log('段' + i + ': ' + startTime.toFixed(2) + '-' + endTime.toFixed(2) + 's → ' + outputStartTime.toFixed(2) + '-' + outputEndTime.toFixed(2) + 's (' + speedRatio.toFixed(2) + 'x)');
 
                     segments.push({
                         startTime: startTime,
@@ -558,14 +581,6 @@
                     // 执行提取
                     await ffmpeg.run.apply(ffmpeg, args);
 
-                    // DEBUG: 检查生成的段文件大小
-                    // try {
-                    //     var stat = ffmpeg.FS('stat', segmentFile);
-                    //     console.log('DEBUG: 生成 ' + segmentFile + ' size=' + stat.size);
-                    // } catch (e) {
-                    //     console.error('DEBUG: 无法获取 ' + segmentFile + ' 状态', e);
-                    // }
-
                     segmentFiles.push(segmentFile);
                     onProgress(0.2 + (segmentFiles.length) * progressPerSegment);
 
@@ -605,7 +620,6 @@
                     ffmpeg.FS('writeFile', 'concat_list.txt', new TextEncoder().encode(concatList));
 
                     // 使用concat协议拼接并直接转码为MP3
-                    // 注意：输入是WAV(PCM)，使用concat demuxer拼接，然后编码为MP3
                     await ffmpeg.run(
                         '-f', 'concat',
                         '-safe', '0',
@@ -633,7 +647,7 @@
                 // 转换为SVGA需要的格式
                 var audioArray = Array.from(new Uint8Array(audioArrayBuffer));
 
-                // 🛡️ 确保totalTimeMs是有效整数
+                // 确保totalTimeMs是有效整数
                 var totalTimeMs = 0;
                 if (fps > 0) {
                     totalTimeMs = Math.round((totalFrames / fps) * 1000);
@@ -661,16 +675,18 @@
                 this._cleanupFiles(['input_video.mp4', 'output_audio.mp3']);
 
                 if (error.message === '用户取消') {
+                    this._emit('cancelled', { task: 'extractAudioWithSpeedRemap' });
                     throw error;
                 }
+                this._emit('error', { error: error, task: 'extractAudioWithSpeedRemap' });
                 return null;
             } finally {
                 this.isBusy = false;
+                this._emit('busy', { status: false });
             }
         },
 
         /**
-         * ==================== 视频格式转换 ====================
          * 转换视频为兼容格式（用于播放兼容性问题）
          * @param {Object} options - 配置项
          * @param {File} options.inputFile - 输入视频文件
@@ -693,6 +709,7 @@
                 throw new Error('FFmpeg服务正忙，请稍后再试');
             }
             this.isBusy = true;
+            this._emit('busy', { status: true });
 
             var ffmpeg = this.ffmpeg;
             var inputName = 'input.mp4';
@@ -747,14 +764,23 @@
 
             } catch (error) {
                 this._cleanupFiles([inputName, outputName]);
+                if (error.message === '用户取消') {
+                    this._emit('cancelled', { task: 'convertVideoFormat' });
+                    throw error;
+                }
+                this._emit('error', { error: error, task: 'convertVideoFormat' });
                 throw error;
             } finally {
+                // 清除进度回调
+                if (this.ffmpeg) {
+                    this.ffmpeg.setProgress(function () { });
+                }
                 this.isBusy = false;
+                this._emit('busy', { status: false });
             }
         },
 
         /**
-         * ==================== 帧序列合成 ====================
          * 将图像序列合成MP4（支持音频合并和变速）
          * @param {Object} options - 配置项
          * @param {Array<Uint8Array>} options.frames - 图像帧数据数组 (JPEG/PNG)
@@ -785,6 +811,7 @@
                 throw new Error('FFmpeg服务正忙，请稍后再试');
             }
             this.isBusy = true;
+            this._emit('busy', { status: true });
 
             var ffmpeg = this.ffmpeg;
             var frameCount = frames.length;
@@ -915,15 +942,17 @@
             } catch (error) {
                 // 错误清理
                 var cleanupList = [outputName, audioName];
-                // 仅清理可能已创建的帧 (保守估计全部，因为无法精确知道哪一帧失败前已创建)
-                // 但为了避免几千次 unlink 异常，这里可以只清理前 i 帧? 
-                // 简单起见，还是清理所有可能的，但在 _cleanupFiles 里我们要保证不报错
+                // 仅清理可能已创建的帧
                 for (var i = 0; i < frameCount; i++) {
                     cleanupList.push('frame_' + String(i).padStart(6, '0') + '.jpg');
                 }
                 this._cleanupFiles(cleanupList);
 
-                if (error.message === '用户取消') throw error;
+                if (error.message === '用户取消') {
+                    this._emit('cancelled', { task: 'convertFramesToMp4' });
+                    throw error;
+                }
+                this._emit('error', { error: error, task: 'convertFramesToMp4' });
                 throw error;
             } finally {
                 // 清除进度回调
@@ -931,17 +960,17 @@
                     this.ffmpeg.setProgress(function () { });
                 }
                 this.isBusy = false;
+                this._emit('busy', { status: false });
             }
         },
 
         /**
-         * ==================== 通用命令执行 ====================
          * 执行自定义FFmpeg命令（底层通用接口）
          * @param {Object} options - 配置项
-         * @param {Array<String>} options.args - FFmpeg参数数组，例如 ['-i', 'input.mp4', 'output.mp4']
+         * @param {Array<String>} options.args - FFmpeg参数数组
          * @param {Array<Object>} options.inputFiles - 输入文件数组 [{name: 'input.mp4', data: ArrayBuffer|Uint8Array}]
-         * @param {Array<String>} options.outputFiles - 需要读取的输出文件名数组 ['output.mp4']
-         * @param {Function} options.onProgress - 进度回调 (progress: 0-1) - 注意：通用命令的进度可能不准确
+         * @param {Array<String>} options.outputFiles - 需要读取的输出文件名数组
+         * @param {Function} options.onProgress - 进度回调 (progress: 0-1)
          * @returns {Promise<Object>} - 返回输出文件数据对象 { 'output.mp4': Uint8Array, ... }
          */
         runCommand: async function (options) {
@@ -958,6 +987,7 @@
                 throw new Error('FFmpeg服务正忙，请稍后再试');
             }
             this.isBusy = true;
+            this._emit('busy', { status: true });
 
             var ffmpeg = this.ffmpeg;
             var createdFiles = [];
@@ -1003,6 +1033,7 @@
 
             } catch (error) {
                 this._cleanupFiles(createdFiles);
+                this._emit('error', { error: error, task: 'runCommand' });
                 throw error;
             } finally {
                 // 清除进度监听
@@ -1010,11 +1041,11 @@
                     this.ffmpeg.setProgress(function () { });
                 }
                 this.isBusy = false;
+                this._emit('busy', { status: false });
             }
         },
 
         /**
-         * ==================== 工具方法 ====================
          * 清理FFmpeg文件系统中的临时文件
          * @param {Array<String>} fileNames - 文件名数组
          * @private
@@ -1044,11 +1075,180 @@
          * 重置服务（用于错误恢复）
          */
         reset: function () {
+            if (this.ffmpeg) {
+                try {
+                    // 尝试清理所有文件
+                    this._cleanupFiles(['input_audio.mp4', 'audio.mp3', 'input_video.mp4', 'output_audio.mp3', 'input.mp4', 'output.mp4', 'output.mp4', 'audio.mp3', 'concat_list.txt']);
+                } catch (e) {
+                    // 忽略清理错误
+                }
+            }
             this.ffmpeg = null;
             this.isLoaded = false;
             this.isLoading = false;
             this.loadError = null;
             this.isBusy = false; // 强制释放锁
+            this._emit('reset', {});
+        },
+
+        /**
+         * 销毁FFmpeg实例，释放资源
+         */
+        destroy: function () {
+            this.reset();
+            this._eventListeners = {};
+            this._emit('destroy', { instanceId: this._instanceId });
+        },
+
+        /**
+         * 监听事件
+         * @param {string} eventName - 事件名称
+         * @param {Function} callback - 事件回调函数
+         */
+        on: function (eventName, callback) {
+            if (!this._eventListeners[eventName]) {
+                this._eventListeners[eventName] = [];
+            }
+            this._eventListeners[eventName].push(callback);
+        },
+
+        /**
+         * 取消监听事件
+         * @param {string} eventName - 事件名称
+         * @param {Function} callback - 事件回调函数
+         */
+        off: function (eventName, callback) {
+            if (this._eventListeners[eventName]) {
+                this._eventListeners[eventName] = this._eventListeners[eventName].filter(function (listener) {
+                    return listener !== callback;
+                });
+            }
+        },
+
+        /**
+         * 获取实例ID
+         * @returns {string} - 实例ID
+         */
+        getInstanceId: function () {
+            return this._instanceId;
+        }
+    };
+
+    // FFmpeg Service 主服务对象
+    var FFmpegService = {
+        // 单例实例
+        _instance: null,
+        
+        // 实例列表
+        _instances: [],
+        
+        /**
+         * 获取单例实例
+         * @returns {FFmpegInstance} - FFmpeg实例
+         */
+        getInstance: function () {
+            if (!this._instance) {
+                this._instance = new FFmpegInstance();
+                this._instances.push(this._instance);
+            }
+            return this._instance;
+        },
+        
+        /**
+         * 创建新的FFmpeg实例
+         * @returns {FFmpegInstance} - 新的FFmpeg实例
+         */
+        createInstance: function () {
+            var instance = new FFmpegInstance();
+            this._instances.push(instance);
+            return instance;
+        },
+        
+        /**
+         * 销毁指定实例
+         * @param {FFmpegInstance} instance - 要销毁的实例
+         */
+        destroyInstance: function (instance) {
+            if (instance) {
+                instance.destroy();
+                this._instances = this._instances.filter(function (inst) {
+                    return inst.getInstanceId() !== instance.getInstanceId();
+                });
+                if (this._instance === instance) {
+                    this._instance = null;
+                }
+            }
+        },
+        
+        /**
+         * 销毁所有实例
+         */
+        destroyAllInstances: function () {
+            this._instances.forEach(function (instance) {
+                instance.destroy();
+            });
+            this._instances = [];
+            this._instance = null;
+        },
+        
+        /**
+         * 获取所有实例
+         * @returns {Array<FFmpegInstance>} - 所有实例列表
+         */
+        getAllInstances: function () {
+            return [...this._instances];
+        },
+        
+        /**
+         * 代理方法到单例实例
+         * 这样可以直接调用 FFmpegService.init() 而不是 FFmpegService.getInstance().init()
+         */
+        init: function () {
+            return this.getInstance().init.apply(this.getInstance(), arguments);
+        },
+        
+        extractAudio: function () {
+            return this.getInstance().extractAudio.apply(this.getInstance(), arguments);
+        },
+        
+        extractAudioWithSpeedRemap: function () {
+            return this.getInstance().extractAudioWithSpeedRemap.apply(this.getInstance(), arguments);
+        },
+        
+        convertVideoFormat: function () {
+            return this.getInstance().convertVideoFormat.apply(this.getInstance(), arguments);
+        },
+        
+        convertFramesToMp4: function () {
+            return this.getInstance().convertFramesToMp4.apply(this.getInstance(), arguments);
+        },
+        
+        runCommand: function () {
+            return this.getInstance().runCommand.apply(this.getInstance(), arguments);
+        },
+        
+        getVersion: function () {
+            return this.getInstance().getVersion.apply(this.getInstance(), arguments);
+        },
+        
+        reset: function () {
+            return this.getInstance().reset.apply(this.getInstance(), arguments);
+        },
+        
+        destroy: function () {
+            return this.getInstance().destroy.apply(this.getInstance(), arguments);
+        },
+        
+        on: function () {
+            return this.getInstance().on.apply(this.getInstance(), arguments);
+        },
+        
+        off: function () {
+            return this.getInstance().off.apply(this.getInstance(), arguments);
+        },
+        
+        buildAudioTempoFilter: function () {
+            return this.getInstance().buildAudioTempoFilter.apply(this.getInstance(), arguments);
         }
     };
 
