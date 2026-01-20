@@ -29,7 +29,7 @@
         // GIF编码器实例
         encoder: null,
         // [修复] 显式指定 worker 脚本路径，防止 gif.js 加载错误的默认路径
-        workerScript: './assets/js/gif.worker.js',
+        workerScript: './assets/js/service/gif/gif.worker.js',
 
     /**
      * 导出GIF

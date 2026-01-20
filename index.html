@@ -36,9 +36,9 @@
   <link rel="stylesheet" href="assets/css/drawer.css" />
 
   <!-- 库加载管理器（优先加载，独立模块） -->
-  <script src="assets/js/library-loader.js"></script>
+  <script src="assets/js/service/library-loader.js"></script>
   <!-- 资源管理器（管理 ObjectURL 生命周期） -->
-  <script src="assets/js/resource-manager.js"></script>
+  <script src="assets/js/service/resource-manager.js"></script>
   <!-- 图片压缩服务 -->
   <script src="assets/js/service/image-compression-service.js"></script>
   <script>
@@ -56,10 +56,10 @@
   </script>
 
   <!-- 站点配置加载器（用于广告位控制等功能） -->
-  <script src="assets/js/site-config-loader.js"></script>
+  <script src="assets/js/service/site-config-loader.js"></script>
 
   <!-- 广告位控制器 -->
-  <script src="assets/js/ad-controller.js"></script>
+  <script src="assets/js/controllers/ad-controller.js"></script>
 
   <!-- ===== 所有库统一由 library-loader.js 动态加载 ===== -->
   <!-- Vue.js - 核心框架，优先级最高 -->
@@ -1107,28 +1107,27 @@
   </div>
 
   <!-- FFmpeg音视频处理服务 -->
-  <script src="assets/js/ffmpeg-service.js"></script>
+  <script src="assets/js/service/ffmpeg/ffmpeg-service.js"></script>
 
   <!-- MP4转换器模块 (已废弃，功能迁移至 ffmpeg-service.js)
   <script src="assets/js/mp4-converter.js"></script>
   -->
 
   <!-- 双通道图像合成器模块 -->
-  <script src="assets/js/dual-channel-composer.js"></script>
+  <script src="assets/js/service/dual-channel/dual-channel-composer.js"></script>
 
   <!-- SVGA构建器模块 -->
-  <script src="assets/js/svga-builder.js"></script>
+  <script src="assets/js/service/svga/svga-builder.js"></script>
 
   <!-- GIF导出器模块 -->
-  <script src="assets/js/gif-exporter.js"></script>
+  <script src="assets/js/service/gif/gif-exporter.js"></script>
 
   <!-- 文件验证器模块 -->
-  <script src="assets/js/file-validator.js"></script>
+  <script src="assets/js/utils/file-validator.js"></script>
 
   <!-- 工具函数库模块 -->
-  <script src="assets/js/utils.js"></script>
-  <script src="assets/js/file-validator.js"></script>
-  <script src="assets/js/input-controller.js"></script>
+  <script src="assets/js/utils/utils.js"></script>
+  <script src="assets/js/controllers/input-controller.js"></script>
 
   <!-- 组件库 -->
   <script src="assets/js/components/index.js"></script>
@@ -1140,16 +1139,16 @@
   <script src="assets/js/components/chromakey-panel.js"></script>
 
   <!-- 播放控制器模块 -->
-  <script src="assets/js/player-controller.js?v=13"></script>
+  <script src="assets/js/controllers/player-controller.js?v=14"></script>
 
   <!-- 视图控制器模块 -->
-  <script src="assets/js/viewport-controller.js"></script>
+  <script src="assets/js/controllers/viewport-controller.js"></script>
 
   <!-- 面板管理 Mixin -->
   <script src="assets/js/mixins/panel-mixin.js"></script>
 
   <!-- 素材编辑器模块 -->
-  <script src="assets/js/material-editor.js"></script>
+  <script src="assets/js/core/material-editor.js"></script>
 
   <!-- 定义组件模板 -->
   <script type="text/x-template" id="tpl-gif-panel">
@@ -1385,14 +1384,14 @@
   </script>
 
   <!-- 用户配置管理器模块 -->
-  <script src="assets/js/config-manager.js"></script>
+  <script src="assets/js/service/config-manager.js"></script>
 
   <!-- 任务管理器模块 -->
-  <script src="assets/js/task-manager.js"></script>
+  <script src="assets/js/service/task-manager.js"></script>
 
   -->
   <!-- 应用主逻辑 -->
-  <script src="assets/js/app.js?v=1.15"></script>
+  <script src="assets/js/core/app.js?v=1.16"></script>
 </body>
 
 </html>

@@ -47,7 +47,7 @@
       mode: 'color-left-alpha-right',  // 'color-left-alpha-right' | 'alpha-left-color-right'
       jpegQuality: 0.6,                 // JPEG质量 0-1
       format: 'jpeg',                   // 默认输出格式
-      workerPath: 'assets/js/dual-channel-worker.js'  // Web Worker路径
+      workerPath: 'assets/js/service/dual-channel/dual-channel-worker.js'  // Web Worker路径
     },
 
     /**
