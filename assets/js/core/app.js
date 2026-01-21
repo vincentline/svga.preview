@@ -950,6 +950,12 @@ function initApp() {
         if (this.clearAllMaterialEditStates) {
           this.clearAllMaterialEditStates();
         }
+        // 关闭素材编辑器并重置状态
+        if (this.editor) {
+          this.editor.show = false;
+          this.editor.targetIndex = -1;
+          window.MeeWoo.Core.MaterialState.resetEditorState(this.editor);
+        }
         this.showCompressModal = false;
         this.isCompressingMaterials = false;
         this.compressProgress = 0;

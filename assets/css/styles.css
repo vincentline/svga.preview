@@ -1269,24 +1269,93 @@ body.dark-mode .info-item-value {
   gap: 6px;
 }
 
+/* 背景色选择器容器 */
+.bg-color-selector {
+  position: relative;
+  display: inline-block;
+}
+
+/* 当前背景色按钮 */
+.current-bg-color {
+  z-index: 10;
+  position: relative;
+}
+
+/* 背景色选项列表 */
+.bg-color-options {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  /* background-color: #fffffffe;
+  border: 1px solid #e6e6e6fe;
+  border-radius: 12px;
+  box-shadow: 0px 4px 16px rgba(0, 0, 0, 0.1);  */
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease;
+  transform-origin: bottom center;
+  transform: translateX(-50%) translateY(8px);
+  z-index: 9;
+}
+
+/* 暗黑模式下的背景色选项列表 */
+body.dark-mode .bg-color-options {
+  /* background-color: #2a2a2a;
+  border-color: #404040;
+  box-shadow: 0px 4px 16px rgba(0, 0, 0, 0.3); */
+}
+
+/* 鼠标悬停时显示背景色选项 */
+.bg-color-selector:hover .bg-color-options {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
+}
+
 /* 颜色选择按钮 */
 .color-btn {
   width: 28px;
   height: 28px;
   border-radius: 16px;
-  border: 1px solid #e6e6e6;
+  border: 3px solid #00000030;
   cursor: pointer;
   outline: none;
   transition: border-color 0.2s;
 }
 
 .color-btn:hover {
-  border-color: #5b5b5b;
+  border-color: #5b5b5b7b;
+  border-width: 3px;
 }
 
 .color-btn.is-active {
   border-color: #333333;
   border-width: 3px;
+}
+
+/* 暗黑模式下的颜色选择按钮 */
+body.dark-mode .color-btn {
+  border-color: #ffffff7b;
+}
+
+body.dark-mode .color-btn:hover {
+  border-color: #cccccc;
+}
+
+body.dark-mode .color-btn.is-active {
+  border-color: #ffffff;
+}
+
+/* 点阵背景按钮 - 暗黑模式 */
+body.dark-mode .pattern-btn {
+  background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjEiIGZpbGw9IiMzMzMzMzMiLz48L3N2Zz4=');
 }
 
 /* 播放/暂停按钮 */
