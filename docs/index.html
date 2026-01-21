@@ -415,23 +415,37 @@
                       </div>
                     </div>
                     <div class="controls-center">
-                      <button class="color-btn" :class="{'is-active': bgColorKey === 'black'}"
-                        style="background-color: #000000" @click="bgColorKey = 'black'"></button>
-                      <button class="color-btn" :class="{'is-active': bgColorKey === 'white'}"
-                        style="background-color: #ffffff" @click="bgColorKey = 'white'"></button>
-                      <button class="color-btn" :class="{'is-active': bgColorKey === 'green'}"
-                        style="background-color: #00ff00" @click="bgColorKey = 'green'"></button>
-                      <button class="color-btn" :class="{'is-active': bgColorKey === 'red'}"
-                        style="background-color: #df3321" @click="bgColorKey = 'red'"></button>
-                      <button class="color-btn" :class="{'is-active': bgColorKey === 'yellow'}"
-                        style="background-color: #f1c40d" @click="bgColorKey = 'yellow'"></button>
-                      <button class="color-btn" :class="{'is-active': bgColorKey === 'blue'}"
-                        style="background-color: #00b4ff" @click="bgColorKey = 'blue'"></button>
-                      <button class="color-btn" :class="{'is-active': bgColorKey === 'pattern'}" style="
-                      background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjEiIGZpbGw9IiNlM2UzZTMiLz48L3N2Zz4=');
-                      background-repeat: repeat;
-                      background-size: 8px 8px;
-                    " @click="bgColorKey = 'pattern'"></button>
+                      <!-- 背景色选择器容器 -->
+                      <div class="bg-color-selector">
+                        <!-- 当前背景色按钮 -->
+                        <button class="color-btn current-bg-color" :style="{
+                          backgroundColor: bgColorKey === 'pattern' ? 'transparent' : currentBgColor,
+                          backgroundImage: bgColorKey === 'pattern' ? 'url(\'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjEiIGZpbGw9IiNlM2UzZTMiLz48L3N2Zz4=\')' : 'none',
+                          backgroundRepeat: bgColorKey === 'pattern' ? 'repeat' : 'no-repeat',
+                          backgroundSize: bgColorKey === 'pattern' ? '8px 8px' : 'auto'
+                        }" :title="'当前背景色：' + (bgColorKey === 'pattern' ? '点阵' : bgColorKey)"></button>
+                        <!-- 背景色选项列表 -->
+                        <div class="bg-color-options">
+                          <button class="color-btn" :class="{'is-active': bgColorKey === 'black'}"
+                            style="background-color: #000000" @click="bgColorKey = 'black'"></button>
+                          <button class="color-btn" :class="{'is-active': bgColorKey === 'white'}"
+                            style="background-color: #ffffff" @click="bgColorKey = 'white'"></button>
+                          <button class="color-btn" :class="{'is-active': bgColorKey === 'green'}"
+                            style="background-color: #00ff00" @click="bgColorKey = 'green'"></button>
+                          <button class="color-btn" :class="{'is-active': bgColorKey === 'red'}"
+                            style="background-color: #df3321" @click="bgColorKey = 'red'"></button>
+                          <button class="color-btn" :class="{'is-active': bgColorKey === 'yellow'}"
+                            style="background-color: #f1c40d" @click="bgColorKey = 'yellow'"></button>
+                          <button class="color-btn" :class="{'is-active': bgColorKey === 'blue'}"
+                            style="background-color: #00b4ff" @click="bgColorKey = 'blue'"></button>
+                          <button class="color-btn pattern-btn" :class="{'is-active': bgColorKey === 'pattern'}" style="
+                          background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjEiIGZpbGw9IiNlM2UzZTMiLz48L3N2Zz4=');
+                          background-repeat: repeat;
+                          background-size: 8px 8px;
+                          background-color: transparent;
+                        " @click="bgColorKey = 'pattern'"></button>
+                        </div>
+                      </div>
                     </div>
                     <div class="controls-right">
                       <div class="scale-percentage">{{ Math.round(viewerScale * 100) }}%</div>

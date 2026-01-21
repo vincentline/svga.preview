@@ -159,6 +159,15 @@
             restoreOriginalMaterial: function () {
                 window.MeeWoo.Core.MaterialOperations.restoreOriginalMaterial(this);
             },
+            
+            /**
+             * 清除所有素材的编辑状态
+             * 用于恢复播放功能，重置所有编辑操作
+             */
+            clearAllMaterialEditStates: function () {
+                // 重置素材编辑状态映射为默认值（空对象）
+                this.materialEditStates = window.MeeWoo.Core.MaterialState.getDefaultMaterialEditStates();
+            },
 
             /**
              * 打开素材编辑器
