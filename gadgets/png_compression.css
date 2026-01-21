@@ -170,6 +170,7 @@ body.dark-mode .logo-link:hover {
     padding: var(--space-6);
     width: 100%;
     min-height: 0;
+    overflow-y: auto;
     /* 允许内容区域滚动 */
 }
 
@@ -186,7 +187,7 @@ body.dark-mode .logo-link:hover {
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 300px;
+    min-height: 200px;
 }
 
 .drag-area:hover {
@@ -440,7 +441,7 @@ body.dark-mode .logo-link:hover {
 
 /* 整体进度显示 */
 .overall-progress {
-    margin-top: var(--space-6);
+    /* margin-top: var(--space-6); */
     padding: var(--space-4);
     background-color: var(--bg-base);
     border-radius: var(--radius-md);
@@ -462,9 +463,9 @@ body.dark-mode .logo-link:hover {
 
 /* 下载区域 */
 .download-section {
-    margin-top: var(--space-6);
+    /* margin-top: var(--space-6);
     padding-top: var(--space-4);
-    border-top: 1px solid var(--border-light);
+    border-top: 1px solid var(--border-light); */
 }
 
 .download-stats {
@@ -575,10 +576,12 @@ body.dark-mode .logo-link:hover {
 
 /* 底部区域 */
 .footer {
-    background-color: var(--bg-elevated);
+    /* background-color: var(--bg-elevated);
     border-top: 1px solid var(--border-base);
+    */
     padding: var(--space-4) 0;
-    margin-top: auto;
+    margin-top: 24px;
+    position: relative;
 }
 
 .footer-content {
@@ -674,6 +677,7 @@ body.dark-mode .btn-large-primary:hover {
         flex-direction: column;
         align-items: flex-start;
         gap: var(--space-2);
+        padding: var(--space-4);
     }
 
     .action-buttons,
