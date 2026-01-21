@@ -4581,7 +4581,7 @@ body.dark-mode .btn-undo:hover:not(:disabled) {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 400px;
+  min-height: 100%;
   /* 最小高度 */
   border: 1px solid #e6e6e6;
   user-select: none;
@@ -4605,6 +4605,11 @@ body.dark-mode .editor-preview-area {
   transform-origin: center center;
   /* 允许鼠标操作 */
   cursor: grab;
+  pointer-events: auto;
+  /* 导出区域描边
+  border: 1px dashed #00B4FF; */
+  outline: 1px dashed #00B4FF;
+  outline-offset: 1px;
 }
 
 .editor-preview-wrapper:active {
@@ -4617,6 +4622,7 @@ body.dark-mode .editor-preview-area {
   background-color: transparent;
   width: 100%;
   height: 100%;
+  pointer-events: auto;
 }
 
 /* 底图 */
@@ -4792,7 +4798,7 @@ body.dark-mode .editor-preview-area {
 /* 底部按钮组 */
 .editor-bottom-actions {
   position: absolute;
-  bottom: 10px;
+  bottom: 16px;
   left: 0;
   right: 0;
   display: flex;
@@ -4801,6 +4807,8 @@ body.dark-mode .editor-preview-area {
   padding: 0 20px;
   pointer-events: none;
   /* 让事件穿透到下层，按钮自身开启 pointer-events */
+  z-index: 10;
+  /* 确保按钮组在最上层 */
 }
 
 .editor-bottom-actions>* {
@@ -4893,10 +4901,11 @@ body.dark-mode .editor-scale-percentage {
 
 /* 右侧控制区 */
 .editor-controls-area {
-  width: 300px;
+  width: 360px;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
+  gap: 20px;
 }
 
 .editor-control-group {
@@ -5861,101 +5870,7 @@ body.dark-mode .keyframe-speed-preset:hover {
   margin: 16px 0;
 }
 
-/* 左侧预览 */
-.editor-preview-area {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-width: 10px;
-}
 
-.editor-preview-wrapper {
-  /*overflow: hidden;*/
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid #333333;
-}
-
-body.dark-mode .editor-preview-wrapper {
-  border-color: #F5F5F5;
-}
-
-.editor-preview-content {
-  position: relative;
-  user-select: none;
-  transform-origin: center center;
-}
-
-.editor-base-image {
-  display: block;
-  max-width: none;
-  pointer-events: none;
-  width: 100%;
-  height: 100%;
-}
-
-
-/* 预览控制 */
-.editor-zoom-controls {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  background: #f9f9f9;
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: 1px solid #e6e6e6;
-}
-
-body.dark-mode .editor-zoom-controls {
-  background: #2d2d2d;
-  border-color: #404040;
-}
-
-.editor-zoom-controls button {
-  width: 28px;
-  height: 28px;
-  border: 1px solid #ddd;
-  background: #fff;
-  border-radius: 4px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  color: #666;
-}
-
-body.dark-mode .editor-zoom-controls button {
-  background: #333;
-  border-color: #555;
-  color: #ccc;
-}
-
-/* 底部按钮 
-.editor-bottom-actions {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-} */
-
-/* 右侧设置 */
-.editor-controls-area {
-  width: 360px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  /*margin-right: 16px; */
-
-  overflow-y: auto;
-}
-
-body.dark-mode .editor-controls-area {
-  border-left-color: #404040;
-}
 
 .material-btn-edit {
   box-sizing: border-box;

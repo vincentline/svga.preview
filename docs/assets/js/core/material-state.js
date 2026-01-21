@@ -2,7 +2,7 @@
  * ==================== 素材编辑器状态管理模块 (Material State Manager) ====================
  * 
  * 模块索引：
- * 1. 【状态定义】 - materialEditorState() - 素材编辑器状态定义
+ * 1. 【状态定义】 - 素材编辑器状态定义
  * 2. 【状态管理】 - 素材编辑状态管理相关方法
  * 3. 【历史记录】 - 编辑历史管理相关方法
  * 
@@ -16,7 +16,7 @@
  * 在 material-editor.js 中引入此文件，并使用 MeeWoo.Core.MaterialState 模块
  */
 
-(function(window) {
+(function (window) {
     'use strict';
 
     // 确保命名空间
@@ -28,10 +28,15 @@
      */
     var MaterialState = {
         /**
+         * ==================== 【状态定义】 ====================
+         * 素材编辑器状态定义
+         */
+
+        /**
          * 获取默认的编辑器状态
          * @returns {Object} 默认编辑器状态
          */
-        getDefaultEditorState: function() {
+        getDefaultEditorState: function () {
             return {
                 // 编辑器状态
                 show: false,
@@ -62,23 +67,34 @@
                 lastClickElement: 'none', // 上次点击的元素，用于重叠区域切换
                 lastClickTime: 0,         // 上次点击时间
 
+                // 预览区域拖拽状态
+                isDragging: false,
+                dragStartX: 0,
+                dragStartY: 0,
+                dragStartOffsetX: 0,
+                dragStartOffsetY: 0,
+
                 // 素材图交互状态
                 imageOffsetX: 0,     // 素材图X偏移(像素)
                 imageOffsetY: 0,     // 素材图Y偏移(像素)
                 imageScale: 1.0,     // 素材图缩放
-                imageDragging: false,
+                isImageDragging: false,
                 imageDragStartX: 0,
                 imageDragStartY: 0,
+                imageDragStartOffsetX: 0,
+                imageDragStartOffsetY: 0,
                 imageMouseMoved: false,  // 标记是否发生了拖拽移动
 
                 // 文字层交互状态
-                textDragging: false,
-                textDragStartX: 0,
-                textDragStartY: 0,
                 textPosX: 50,        // 文字X位置 (百分比 0-100)
                 textPosY: 50,        // 文字Y位置 (百分比 0-100)
                 textScale: 1.0,      // 文字缩放
                 textAlign: 'left',   // 文字对齐方式: 'left' | 'center' | 'right'
+                isTextDragging: false,
+                textDragStartX: 0,
+                textDragStartY: 0,
+                textDragStartPosX: 50,
+                textDragStartPosY: 50,
                 textMouseMoved: false  // 标记是否发生了拖拽移动
             };
         },
@@ -87,17 +103,22 @@
          * 获取默认的素材编辑状态映射
          * @returns {Object} 默认素材编辑状态映射
          */
-        getDefaultMaterialEditStates: function() {
+        getDefaultMaterialEditStates: function () {
             // 存储每个素材的编辑历史
             // key: imageKey, value: { textContent, textStyle, showImage, showText, textPosX, textPosY, textScale, imageOffsetX, imageOffsetY, imageScale, customBaseImage }
             return {};
         },
 
         /**
+         * ==================== 【状态管理】 ====================
+         * 素材编辑状态管理相关方法
+         */
+
+        /**
          * 重置编辑器状态为默认值
          * @param {Object} editorState - 编辑器状态对象
          */
-        resetEditorState: function(editorState) {
+        resetEditorState: function (editorState) {
             var defaultState = this.getDefaultEditorState();
             for (var key in defaultState) {
                 if (defaultState.hasOwnProperty(key)) {
@@ -110,7 +131,7 @@
          * 更新恢复按钮的显示状态
          * @param {Object} editorState - 编辑器状态对象
          */
-        updateRestoreButtonState: function(editorState) {
+        updateRestoreButtonState: function (editorState) {
             var show = false;
 
             // 1. 检查底图是否变更
@@ -130,12 +151,17 @@
         },
 
         /**
+         * ==================== 【历史记录】 ====================
+         * 编辑历史管理相关方法
+         */
+
+        /**
          * 保存当前素材的编辑状态
          * @param {Object} materialEditStates - 素材编辑状态映射
          * @param {string} imageKey - 素材键值
          * @param {Object} editorState - 当前编辑器状态
          */
-        saveMaterialEditState: function(materialEditStates, imageKey, editorState) {
+        saveMaterialEditState: function (materialEditStates, imageKey, editorState) {
             materialEditStates[imageKey] = {
                 textContent: editorState.textContent,
                 textStyle: editorState.textStyle,
@@ -144,6 +170,7 @@
                 textPosX: editorState.textPosX,
                 textPosY: editorState.textPosY,
                 textScale: editorState.textScale,
+                textAlign: editorState.textAlign,
                 imageOffsetX: editorState.imageOffsetX,
                 imageOffsetY: editorState.imageOffsetY,
                 imageScale: editorState.imageScale,
@@ -157,7 +184,7 @@
          * @param {string} imageKey - 素材键值
          * @param {Object} editorState - 目标编辑器状态
          */
-        restoreMaterialEditState: function(materialEditStates, imageKey, editorState) {
+        restoreMaterialEditState: function (materialEditStates, imageKey, editorState) {
             var savedState = materialEditStates[imageKey];
             if (savedState) {
                 editorState.showImage = savedState.showImage;
@@ -171,7 +198,7 @@
                 editorState.imageOffsetX = savedState.imageOffsetX !== undefined ? savedState.imageOffsetX : 0;
                 editorState.imageOffsetY = savedState.imageOffsetY !== undefined ? savedState.imageOffsetY : 0;
                 editorState.imageScale = savedState.imageScale !== undefined ? savedState.imageScale : 1.0;
-                
+
                 // 如果保存了自定义底图，则使用它
                 if (savedState.customBaseImage) {
                     editorState.baseImage = savedState.customBaseImage;
@@ -184,7 +211,7 @@
          * @param {Object} materialEditStates - 素材编辑状态映射
          * @param {string} imageKey - 素材键值
          */
-        clearMaterialEditState: function(materialEditStates, imageKey) {
+        clearMaterialEditState: function (materialEditStates, imageKey) {
             if (materialEditStates[imageKey]) {
                 delete materialEditStates[imageKey];
             }

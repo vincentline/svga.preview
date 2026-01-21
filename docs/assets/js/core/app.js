@@ -1,4 +1,4 @@
-﻿/*
+/*
  * ==================== SVGA Preview 应用主文件 ====================
  * 
  * 模块索引（按代码中顺序排列）：
@@ -329,7 +329,7 @@ function initApp() {
         },
 
         // ==================== 更多侧边栏状态 ====================
-        showMoreDrawer: true,
+        showMoreDrawer: false,
 
         // ==================== 绿幕抠图配置 ====================
         showChromaKeyPanel: false,
@@ -3889,6 +3889,9 @@ function initApp() {
       },
 
       restoreMaterial: function (index) {
+        // 调用统一的恢复原图方法
+        window.MeeWoo.Core.MaterialOperations.restoreOriginalMaterial(this, index);
+        return;
         var material = this.materialList[index];
         if (!material || !material.isReplaced) return;
 
@@ -9444,8 +9447,8 @@ function initApp() {
       this.editFrameInput = '';
       this.showFramesFpsDialog = false;
 
-      // 确保左侧面板默认打开
-      this.showMoreDrawer = true;
+      // 确保左侧面板默认关闭
+      this.showMoreDrawer = false;
 
       this.initSvgaPlayer();
       this.initViewportController();

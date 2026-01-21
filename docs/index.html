@@ -941,9 +941,9 @@
                 <div v-if="editor.showImage && editor.baseImage" class="editor-image-wrapper"
                   :class="{ 'active': editor.activeElement === 'image' }" :style="{ 
                     transform: 'translate(' + editor.imageOffsetX + 'px, ' + editor.imageOffsetY + 'px) scale(' + editor.imageScale + ')',
-                    pointerEvents: editor.activeElement === 'image' ? 'auto' : 'none',
+                    pointerEvents: 'auto',
                     outlineWidth: editor.activeElement === 'image' ? (2 / (editor.scale * editor.imageScale)) + 'px' : '0'
-                  }" @mousedown.stop="onImageMouseDown" @wheel.stop="onImageWheel">
+                  }" @mousedown="onImageMouseDown" @wheel="onImageWheel">
                   <img :src="editor.baseImage" class="editor-base-image" draggable="false" />
                   <!-- 底图激活状态标签（反向缩放保持固定尺寸） -->
                   <div v-if="editor.activeElement === 'image'" class="editor-layer-tag editor-layer-tag--image" :style="{ 
@@ -955,9 +955,9 @@
                 <!-- 文字层 Canvas -->
                 <div v-if="editor.showText" class="editor-canvas-wrapper"
                   :class="{ 'active': editor.activeElement === 'text' }" :style="{ 
-                    pointerEvents: editor.activeElement === 'text' ? 'auto' : 'none',
+                    pointerEvents: 'auto',
                     outlineWidth: editor.activeElement === 'text' ? (2 / editor.scale) + 'px' : '0'
-                  }" @mousedown.stop="onTextMouseDown" @wheel.stop="onTextWheel">
+                  }" @mousedown="onTextMouseDown" @wheel="onTextWheel">
                   <canvas ref="editorTextCanvas" class="editor-text-canvas" :width="editor.baseImageWidth"
                     :height="editor.baseImageHeight"></canvas>
                   <!-- 文字层激活状态标签（反向缩放保持固定尺寸） -->
@@ -1092,6 +1092,10 @@
           <span>名人礼物视频版</span>
           <img :src="isDarkMode ? 'assets/img/go_dark.png' : 'assets/img/go.png'" class="drawer-btn-icon" alt="Go">
         </div>
+        <div class="drawer-btn disabled">
+          <span>Avatar小图标生成</span>
+          <img :src="isDarkMode ? 'assets/img/go_dark.png' : 'assets/img/go.png'" class="drawer-btn-icon" alt="Go">
+        </div>
 
       </div>
       <div class="drawer-links">
@@ -1150,6 +1154,7 @@
   <!-- 素材编辑器模块（拆分版） -->
   <script src="assets/js/core/material-state.js"></script>
   <script src="assets/js/core/material-operations.js"></script>
+  <script src="assets/js/core/material-interactions.js"></script>
   <script src="assets/js/core/material-editor.js"></script>
 
   <!-- 定义组件模板 -->

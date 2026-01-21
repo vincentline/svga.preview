@@ -11,6 +11,7 @@
  * - protobuf.js（通过dependencies传入）
  * - pako（通过dependencies传入）
  * - svga.proto（固定路径或通过protoPath配置）
+ * - ImageCompressionService（间接依赖oxipng WASM模块，用于PNG压缩）
  * 
  * 调用方式：
  * 1. 从Blob构建（普通MP4、序列帧等）：
@@ -38,7 +39,7 @@
       pngCompression: {
         enabled: true,
         quality: 80,
-        speed: 4
+        speed: 6 // 优化：提高压缩速度，从4调整到6（1-10，1最快质量最低，10最慢质量最高）
       }
     },
 
@@ -111,32 +112,84 @@
         }
       } else {
         // 阶段1：处理帧 - 缩放并转为PNG Uint8Array（0-50%）
-        var canvas = document.createElement('canvas');
-        canvas.width = scaledWidth;
-        canvas.height = scaledHeight;
-        var ctx = canvas.getContext('2d');
+        var batchSize = 4; // 每批次处理的帧数，平衡内存和速度
 
-        for (var i = 0; i < totalFrames; i++) {
-          var frame = frames[i];
+        // 创建多个Canvas实例用于并行处理（避免Canvas单线程阻塞）
+        var canvases = [];
+        var contexts = [];
+        for (var c = 0; c < batchSize; c++) {
+          var canvas = document.createElement('canvas');
+          canvas.width = scaledWidth;
+          canvas.height = scaledHeight;
+          // 优化：添加willReadFrequently以提高getImageData性能
+          var ctx = canvas.getContext('2d', { willReadFrequently: true });
+          // 优化：禁用图像平滑，提高绘制速度
+          ctx.imageSmoothingEnabled = false;
+          canvases.push(canvas);
+          contexts.push(ctx);
+        }
 
-          // 从 blob创建图片
-          var img = await _this._loadImageFromBlob(frame.blob);
+        // 批次处理函数
+        async function processBatch(batchStart, batchFrames) {
+          // 并行处理当前批次的帧
+          var batchResults = await Promise.all(
+            batchFrames.map(async (frameData, batchIndex) => {
+              var frame = frameData.frame;
+              var index = frameData.index;
+              var canvas = canvases[batchIndex % batchSize];
+              var ctx = contexts[batchIndex % batchSize];
 
-          // 绘制缩放后的帧
-          ctx.clearRect(0, 0, scaledWidth, scaledHeight);
-          ctx.drawImage(img, 0, 0, scaledWidth, scaledHeight);
+              // 从 blob创建图片
+              var img = await _this._loadImageFromBlob(frame.blob);
 
-          // 清理blob URL (延迟清理以防止浏览器异步绘制时资源丢失)
-          (function (src) {
-            setTimeout(function () { URL.revokeObjectURL(src); }, 100);
-          })(img.src);
+              // 绘制缩放后的帧
+              ctx.clearRect(0, 0, scaledWidth, scaledHeight);
+              ctx.drawImage(img, 0, 0, scaledWidth, scaledHeight);
 
-          // 转为PNG Uint8Array并使用图片压缩服务压缩
-          var pngData = await _this._canvasToPNG(canvas, quality);
-          pngFrames.push(pngData);
+              // 清理blob URL (延迟清理以防止浏览器异步绘制时资源丢失)
+              (function (src) {
+                setTimeout(function () { URL.revokeObjectURL(src); }, 100);
+              })(img.src);
 
-          // 进度回调（0-50%）
-          onProgress((i + 1) / totalFrames * 0.5);
+              // 转为PNG Uint8Array并使用图片压缩服务压缩
+              var pngData = await _this._canvasToPNG(canvas, quality);
+
+              return {
+                index: index,
+                pngData: pngData
+              };
+            })
+          );
+
+          // 将结果按原始顺序放入数组
+          batchResults.forEach(result => {
+            pngFrames[result.index] = result.pngData;
+          });
+
+          // 更新进度
+          onProgress((batchStart + batchFrames.length) / totalFrames * 0.5);
+        }
+
+        // 初始化结果数组
+        pngFrames = new Array(totalFrames);
+
+        // 分批处理所有帧
+        for (var i = 0; i < totalFrames; i += batchSize) {
+          var batchEnd = Math.min(i + batchSize, totalFrames);
+          var batchFrames = [];
+          for (var j = i; j < batchEnd; j++) {
+            batchFrames.push({
+              frame: frames[j],
+              index: j
+            });
+          }
+
+          await processBatch(i, batchFrames);
+
+          // 检查是否取消
+          if (options.cancelled && options.cancelled()) {
+            throw new Error('用户取消转换');
+          }
         }
       }
 
@@ -313,32 +366,40 @@
 
             // 构建sprites数组（40-80%）
             var sprites = [];
+
+            // 预创建frame模板，避免重复创建对象
+            var visibleFrame = {
+              alpha: 1.0,
+              layout: {
+                x: 0,
+                y: 0,
+                width: scaledWidth,
+                height: scaledHeight
+              },
+              transform: {
+                a: scaleUp, b: 0, c: 0, d: scaleUp, tx: 0, ty: 0
+              }
+            };
+
+            var hiddenFrame = {
+              alpha: 0
+            };
+
             for (var i = 0; i < totalFrames; i++) {
               var imageKey = 'img_' + i;
 
               // 每个sprite只在对应帧显示
-              var spriteFrames = [];
-              for (var f = 0; f < totalFrames; f++) {
-                if (f === i) {
-                  // 当前帧显示，使用缩小后的图片尺寸，通过transform放大到显示尺寸
-                  spriteFrames.push({
-                    alpha: 1.0,
-                    layout: {
-                      x: 0,
-                      y: 0,
-                      width: scaledWidth,
-                      height: scaledHeight
-                    },
-                    transform: {
-                      a: scaleUp, b: 0, c: 0, d: scaleUp, tx: 0, ty: 0
-                    }
-                  });
-                } else {
-                  // 其他帧隐藏（alpha=0）
-                  spriteFrames.push({
-                    alpha: 0
-                  });
-                }
+              var spriteFrames = new Array(totalFrames);
+
+              // 设置可见帧
+              spriteFrames[i] = visibleFrame;
+
+              // 设置其他帧为隐藏
+              for (var f = 0; f < i; f++) {
+                spriteFrames[f] = hiddenFrame;
+              }
+              for (var f = i + 1; f < totalFrames; f++) {
+                spriteFrames[f] = hiddenFrame;
               }
 
               sprites.push({
@@ -465,15 +526,21 @@
           return await window.MeeWoo.Services.ImageCompressionService.compressCanvas(canvas, quality);
         }
       } catch (e) {
-        console.warn('ImageCompressionService压缩失败，使用原始数据:', e);
+        console.warn('ImageCompressionService压缩失败，使用优化的原始编码:', e);
       }
 
-      // 降级：使用浏览器默认PNG编码
-      var blob = await new Promise(function (resolve) {
-        canvas.toBlob(resolve, 'image/png');
-      });
-      var arrayBuffer = await blob.arrayBuffer();
-      return new Uint8Array(arrayBuffer);
+      // 优化：使用toDataURL直接获取PNG数据，避免Blob转换开销
+      // 注意：toDataURL质量参数只对JPEG有效，PNG始终是无损的
+      var dataUrl = canvas.toDataURL('image/png');
+      // 从dataURL转换为Uint8Array
+      var base64 = dataUrl.split(',')[1];
+      var binaryString = atob(base64);
+      var len = binaryString.length;
+      var bytes = new Uint8Array(len);
+      for (var i = 0; i < len; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      return bytes;
     },
 
     /**
