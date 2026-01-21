@@ -462,11 +462,11 @@ body.dark-mode .logo-link:hover {
 }
 
 /* 下载区域 */
-.download-section {
-    /* margin-top: var(--space-6);
+/*.download-section {
+     margin-top: var(--space-6);
     padding-top: var(--space-4);
-    border-top: 1px solid var(--border-light); */
-}
+    border-top: 1px solid var(--border-light); 
+}*/
 
 .download-stats {
     background-color: var(--bg-base);
