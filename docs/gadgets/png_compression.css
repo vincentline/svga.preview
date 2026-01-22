@@ -463,8 +463,8 @@ body.dark-mode .logo-link:hover {
 
 /* 下载区域 */
 .download-section {
+    padding-top: 0;
     /* margin-top: var(--space-6);
-    padding-top: var(--space-4);
     border-top: 1px solid var(--border-light); */
 }
 
