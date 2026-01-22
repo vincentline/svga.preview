@@ -828,36 +828,9 @@ body.dark-mode .empty-state-title {
   position: relative;
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
 }
 
-/* 右上角清空按钮区域*/
-.footer-top-actions {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 10px;
-  position: absolute;
-  right: 0;
-  bottom: 168px;
-  /* 添加全面的过渡动画：位置（300ms）、透明度（200ms） */
-  transition: bottom 0.3s ease, opacity 0.2s ease, visibility 0.2s;
-}
-
-/* 沉浸模式下调整footer-top-actions位置和居中 */
-.footer-main-wrapper-immersive .footer-top-actions {
-  bottom: -54px;
-}
-
-/* 娌夋蹈妯″紡涓嬫ā寮忓悕绉板眳涓樉绀?*/
-.footer-top-actions-immersive {
-  left: 50%;
-  right: auto;
-  transform: translateX(-50%);
-}
-
-/* 妯″紡鍚嶇О瀹瑰櫒 */
+/* 模式名称容器 - 左对齐 */
 .mode-name-box {
   display: flex;
   align-items: center;
@@ -869,6 +842,35 @@ body.dark-mode .empty-state-title {
   /* 娌夋蹈妯″紡涓嬫贰鍑哄姩鐢?*/
   opacity: 1;
   transition: opacity 1s ease;
+  margin-bottom: 10px;
+  align-self: flex-start;
+}
+
+/* 右上角清空按钮区域*/
+.footer-top-actions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  position: absolute;
+  right: 0;
+  top: 0;
+  /* 添加全面的过渡动画：位置（300ms）、透明度（200ms） */
+  transition: bottom 0.3s ease, opacity 0.2s ease, visibility 0.2s;
+}
+
+/* 沉浸模式下调整footer-top-actions位置和居中 */
+.footer-main-wrapper-immersive .footer-top-actions {
+  bottom: -54px;
+  top: auto;
+}
+
+/* 娌夋蹈妯″紡涓嬫ā寮忓悕绉板眳涓樉绀?*/
+.footer-top-actions-immersive {
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
 }
 
 /* 娌夋蹈妯″紡涓?s鍚庢贰鍑?*/
@@ -889,7 +891,7 @@ body.dark-mode .mode-name-box {
   font-size: 14px;
   line-height: 28px;
   color: #333333;
-  max-width: 200px;
+  max-width: 800px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -897,6 +899,18 @@ body.dark-mode .mode-name-box {
 
 body.dark-mode .mode-name-label {
   color: #e0e0e0;
+}
+
+/* 模式名称区域内的所有文本样式统一 */
+.mode-name-label * {
+  font-family: 'Segoe UI', sans-serif !important;
+  font-weight: 400 !important;
+  font-size: 14px !important;
+  color: #333333 !important;
+}
+
+body.dark-mode .mode-name-label * {
+  color: #e0e0e0 !important;
 }
 
 /* 清空画布按钮（右上角） */

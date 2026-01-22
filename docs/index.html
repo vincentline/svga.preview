@@ -277,18 +277,45 @@
 
         <!-- footer-main 容器（包含主控制区和右上角清空按钮） -->
         <div class="footer-main-wrapper" :class="{'footer-main-wrapper-immersive': isImmersiveMode}">
-          <!-- 右上角按钮区域：模式名（沉浸模式居中）、恢复播放（沉浸模式不显示）、清空画布（沉浸模式不显示） -->
+          <!-- 模式名称：底部浮层左对齐 -->
+          <div class="mode-name-box" :class="{'fade-out': isImmersiveMode && modeNameFadeOut}" v-if="!isEmpty"
+            @click.stop>
+            <span class="mode-name-label">
+              <!-- 模式名 -->
+              <template v-if="currentModule === 'svga'">SVGA</template>
+              <template v-else-if="currentModule === 'yyeva'">双通道MP4</template>
+              <template v-else-if="currentModule === 'mp4'">MP4</template>
+              <template v-else-if="currentModule === 'frames'">序列帧</template>
+              <template v-else>Lottie</template>
+              <!-- 文件名 -->
+              <template v-if="currentFileInfo.name">
+                &nbsp;/&nbsp;{{ currentFileInfo.name }}
+              </template>
+              <!-- 文件大小 -->
+              <template v-if="currentFileInfo.sizeText">
+                &nbsp;&nbsp;&nbsp;文件大小：{{ currentFileInfo.sizeText }}
+              </template>
+              <!-- 帧率 -->
+              <template v-if="currentFileInfo.fps">
+                &nbsp;&nbsp;&nbsp;帧率：{{ currentFileInfo.fps }}
+              </template>
+              <!-- 尺寸 -->
+              <template v-if="currentFileInfo.sizeWH">
+                &nbsp;&nbsp;&nbsp;尺寸：{{ currentFileInfo.sizeWH }}
+              </template>
+              <!-- 时长 -->
+              <template v-if="currentFileInfo.duration">
+                &nbsp;&nbsp;&nbsp;时长：{{ currentFileInfo.duration }}
+              </template>
+              <!-- SVGA内存占用 -->
+              <template v-if="currentModule === 'svga' && currentFileInfo.memoryText">
+                &nbsp;&nbsp;&nbsp;内存占用：{{ currentFileInfo.memoryText }}
+              </template>
+            </span>
+          </div>
+          <!-- 右上角按钮区域：恢复播放（沉浸模式不显示）、清空画布（沉浸模式不显示） -->
           <div class="footer-top-actions" :class="{'footer-top-actions-immersive': isImmersiveMode}" v-if="!isEmpty"
             @click.stop>
-            <div class="mode-name-box" :class="{'fade-out': isImmersiveMode && modeNameFadeOut}">
-              <span class="mode-name-label">
-                <template v-if="currentModule === 'svga'">SVGA</template>
-                <template v-else-if="currentModule === 'yyeva'">双通道MP4</template>
-                <template v-else-if="currentModule === 'mp4'">MP4</template>
-                <template v-else-if="currentModule === 'frames'">序列帧</template>
-                <template v-else>Lottie</template>
-              </span>
-            </div>
             <!-- 恢复播放按钮：回到刚打开文件时的初始状态（沉浸模式不显示） -->
             <button class="restore-playback-btn" v-show="!isImmersiveMode" @click="restorePlayback" title="恢复播放">
             </button>
@@ -465,7 +492,7 @@
                   </div>
 
                   <!-- 第二行：文件信息 -->
-                  <div class="footer-row-info">
+                  <!-- <div class="footer-row-info">
                     <div class="info-item" v-if="currentFileInfo.name">
                       <span class="info-item-label">文件名称：</span>
                       <span class="info-item-value">{{ currentFileInfo.name }}</span>
@@ -490,7 +517,7 @@
                       <span class="info-item-label">内存占用：</span>
                       <span class="info-item-value">{{ currentFileInfo.memoryText }}</span>
                     </div>
-                  </div>
+                  </div> -->
 
                   <!-- 第三行：操作按钮 -->
                   <div class="footer-row-tabs">
