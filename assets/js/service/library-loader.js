@@ -209,6 +209,17 @@
       ],
       checkFn: function () { return typeof html2canvas !== 'undefined'; },
       priority: 25
+    },
+    'konva': {
+      name: 'Konva',
+      url: 'assets/js/lib/konva.min.js',
+      fallbackUrls: [
+        'https://cdn.jsdelivr.net/npm/konva@9.3.6/konva.min.js',
+        'https://unpkg.com/konva@9.3.6/konva.min.js',
+        'https://cdnjs.cloudflare.com/ajax/libs/konva/9.3.6/konva.min.js'
+      ],
+      checkFn: function () { return typeof Konva !== 'undefined'; },
+      priority: 10
     }
   };
 
