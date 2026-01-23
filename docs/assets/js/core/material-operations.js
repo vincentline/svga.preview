@@ -841,6 +841,15 @@
                         // 设置isReplaced为true，显示恢复原图按钮
                         material.isReplaced = true;
 
+                        // 将替换后的图片应用到SVGA播放器
+                        if (vueInstance.svgaPlayer) {
+                            var img = new Image();
+                            img.onload = function () {
+                                vueInstance.svgaPlayer.setImage(img, targetKey);
+                            };
+                            img.src = dataURL;
+                        }
+
                         // 关闭编辑器
                         vueInstance.editor.show = false;
                         vueInstance.editor.loading = false;
