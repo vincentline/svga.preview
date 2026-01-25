@@ -27,6 +27,8 @@
 - 更新简述：如新增功能、修复问题、优化性能等，简单描述
 
 ## 更新记录
+[2026-01-25 20:18:59] 【修改文件】: docs/assets/js/core/app.js - 优化暗黑模式功能：默认随浏览器主题，允许手动切换，不本地存储偏好，实时监听浏览器主题变化
+[2026-01-25 20:04:48] 【修改文件】: docs/assets/js/service/library-loader.js - 优化最高优先级库加载逻辑，实现并行加载，最多同时5个库并行，提高首页加载速度
 [2026-01-25 19:25:40] 【修改文件】: docs/index.html - 修复首页点击footer-main footer-main-empty时重复弹出文件选择弹窗的问题，在footer-main的click事件中添加@click.stop阻止事件冒泡
 [2026-01-25 16:44:02] 【修改文件】: docs/assets/js/controllers/input-controller.js - 实现快捷键粘贴功能，支持Ctrl+V粘贴文件
 [2026-01-25 07:01:00] 【修改文件】: UPDATE_LOG.md - 新增更新日志文件，用于记录项目的每次修改

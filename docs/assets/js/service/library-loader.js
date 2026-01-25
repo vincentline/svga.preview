@@ -469,26 +469,63 @@
 
     var task = this.queue.shift();
 
-    // 顺序加载所有库
-    var loadChain = Promise.resolve();
-
-    task.libs.forEach(function (libKey) {
-      loadChain = loadChain.then(function () {
-        return _this.loadSingleLibrary(libKey, task.priority === 0);
+    // 最高优先级任务（priority === 0）：并行加载，最多同时5个
+    if (task.priority === 0) {
+      // 分批并行加载，每批最多5个
+      var batchSize = 5;
+      var batches = [];
+      
+      // 将libs分成多个批次
+      for (var i = 0; i < task.libs.length; i += batchSize) {
+        batches.push(task.libs.slice(i, i + batchSize));
+      }
+      
+      // 按批次顺序处理，每批次内并行加载
+      var batchChain = Promise.resolve();
+      
+      batches.forEach(function (batch) {
+        batchChain = batchChain.then(function () {
+          // 并行加载当前批次的所有库
+          var promises = batch.map(function (libKey) {
+            return _this.loadSingleLibrary(libKey, true);
+          });
+          return Promise.all(promises);
+        });
       });
-    });
+      
+      batchChain
+        .then(function () {
+          task.resolve();
+          _this.loading = false;
+          _this.processQueue(); // 继续处理队列
+        })
+        .catch(function (error) {
+          task.reject(error);
+          _this.loading = false;
+          _this.processQueue(); // 继续处理队列
+        });
+    } else {
+      // 其他优先级任务：顺序加载所有库
+      var loadChain = Promise.resolve();
 
-    loadChain
-      .then(function () {
-        task.resolve();
-        _this.loading = false;
-        _this.processQueue(); // 继续处理队列
-      })
-      .catch(function (error) {
-        task.reject(error);
-        _this.loading = false;
-        _this.processQueue(); // 继续处理队列
+      task.libs.forEach(function (libKey) {
+        loadChain = loadChain.then(function () {
+          return _this.loadSingleLibrary(libKey, task.priority === 0);
+        });
       });
+
+      loadChain
+        .then(function () {
+          task.resolve();
+          _this.loading = false;
+          _this.processQueue(); // 继续处理队列
+        })
+        .catch(function (error) {
+          task.reject(error);
+          _this.loading = false;
+          _this.processQueue(); // 继续处理队列
+        });
+    }
   };
 
   /**

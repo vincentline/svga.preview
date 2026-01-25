@@ -3352,10 +3352,8 @@ function initApp() {
         this.isDarkMode = !this.isDarkMode;
         if (this.isDarkMode) {
           document.body.classList.add('dark-mode');
-          if (this.configManager) this.configManager.set('theme', 'dark');
         } else {
           document.body.classList.remove('dark-mode');
-          if (this.configManager) this.configManager.set('theme', 'light');
         }
       },
 
@@ -9459,10 +9457,30 @@ function initApp() {
       this.initSvgaPlayer();
       this.initViewportController();
 
-      var savedTheme = this.configManager ? this.configManager.get('theme') : null;
-      if (savedTheme === 'dark') {
-        this.isDarkMode = true;
+      // 默认随浏览器主题
+      var checkDarkMode = function () {
+        return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      };
+
+      // 应用初始主题
+      var isDark = checkDarkMode();
+      this.isDarkMode = isDark;
+      if (isDark) {
         document.body.classList.add('dark-mode');
+      }
+
+      // 监听浏览器主题变化
+      if (window.matchMedia) {
+        var mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        mediaQuery.addEventListener('change', function (e) {
+          var newIsDark = e.matches;
+          _this.isDarkMode = newIsDark;
+          if (newIsDark) {
+            document.body.classList.add('dark-mode');
+          } else {
+            document.body.classList.remove('dark-mode');
+          }
+        });
       }
 
       // 点击外部关闭下拉菜单
