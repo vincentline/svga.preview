@@ -1,11 +1,11 @@
 (function () {
   var template = `
-    <div class="svga-panel" :class="{'show': visible}">
-      <div class="svga-panel-container">
+    <div class="side-panel side-panel--right to-svga-panel" :class="{'show': visible}">
+      <div class="side-panel-container">
         <!-- 标题区 -->
-        <div class="svga-panel-header">
-          <h3 class="svga-panel-title">转换为SVGA动画格式</h3>
-          <div class="svga-panel-divider"></div>
+        <div class="side-panel-header">
+          <h3 class="side-panel-title">转换为SVGA动画格式</h3>
+          <div class="side-panel-divider"></div>
         </div>
 
         <!-- 信息区 -->
@@ -82,7 +82,7 @@
         </div>
 
         <!-- 底部按钮 -->
-        <div class="svga-panel-footer">
+        <div class="side-panel-footer">
           <!-- 返回按钮（转换中变为取消按钮） -->
           <button v-if="!isConverting" class="material-btn-back" @click="close" title="返回">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">

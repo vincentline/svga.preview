@@ -34,12 +34,12 @@
 (function () {
   var template = `
 
-    <div class="chromakey-panel" :class="{'show': visible}">
-      <div class="chromakey-panel-container">
+    <div class="side-panel side-panel--left chromakey-panel" :class="{'show': visible}">
+      <div class="side-panel-container">
         <!-- 标题区 -->
-        <div class="chromakey-panel-header">
-          <h3 class="chromakey-panel-title">扣掉画面绿幕成透明</h3>
-          <div class="chromakey-panel-divider"></div>
+        <div class="side-panel-header">
+          <h3 class="side-panel-title">扣掉画面绿幕成透明</h3>
+          <div class="side-panel-divider"></div>
         </div>
 
         <!-- 信息区 -->
@@ -80,7 +80,7 @@
         </div>
 
         <!-- 底部按钮 -->
-        <div class="chromakey-panel-footer">
+        <div class="side-panel-footer">
           <!-- 确定按钮 -->
           <button class="btn-large-secondary" @click="apply">
             确定

@@ -34,6 +34,7 @@
   <link rel="stylesheet" href="assets/css/sprite-generated.css" />
   <link rel="stylesheet" href="assets/css/styles.css" />
   <link rel="stylesheet" href="assets/css/drawer.css" />
+  <link rel="stylesheet" href="assets/css/panel.css" />
 
   <!-- 库加载管理器（优先加载，独立模块） -->
   <script src="assets/js/service/library-loader.js"></script>
@@ -41,6 +42,8 @@
   <script src="assets/js/service/resource-manager.js"></script>
   <!-- 图片压缩服务 -->
   <script src="assets/js/service/image-compression-service.js"></script>
+  <!-- 侧边弹窗拖拽服务 -->
+  <script src="assets/js/service/panel-drag.js"></script>
   <script>
     // 立即加载核心库（Vue 和 SVGA Player）
     (function () {
@@ -409,7 +412,7 @@
           <transition name="footer-fade">
             <!-- 中间主控制区 -->
             <div v-if="!isImmersiveMode" class="footer-main" :class="{'footer-main-empty': isEmpty}"
-              @click.stop="isEmpty && triggerFileUpload()">
+              @click="isEmpty && triggerFileUpload()">
               <!-- 空状态 -->
               <template v-if="isEmpty">
                 <div class="footer-empty-tip">
@@ -1200,12 +1203,12 @@
 
   <!-- 定义组件模板 -->
   <script type="text/x-template" id="tpl-gif-panel">
-    <div class="svga-panel gif-panel" :class="{'show': visible}">
-      <div class="svga-panel-container">
+    <div class="side-panel side-panel--right svga-panel gif-panel" :class="{'show': visible}">
+      <div class="side-panel-container">
         <!-- 标题区 -->
-        <div class="svga-panel-header">
-          <h3 class="svga-panel-title">转成GIF动图</h3>
-          <div class="svga-panel-divider"></div>
+        <div class="side-panel-header">
+          <h3 class="side-panel-title">转成GIF动图</h3>
+          <div class="side-panel-divider"></div>
         </div>
 
         <!-- 当前文件信息 -->
@@ -1306,7 +1309,7 @@
         </div>
       </div>
 
-      <div class="svga-panel-footer">
+      <div class="side-panel-footer">
         <button v-if="!isExporting" class="material-btn-back" @click="close" title="返回">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
             <path d="M12 16L6 10L12 4" stroke="#333333" stroke-width="2" stroke-linecap="round"
@@ -1337,8 +1340,8 @@
     </div>
   </script>
   <script type="text/x-template" id="tpl-material-panel">
-    <div class="material-panel" :class="{'show': visible}">
-      <div class="material-panel-container">
+    <div class="side-panel side-panel--right material-panel" :class="{'show': visible}">
+      <div class="side-panel-container">
         <!-- 顶部统计信息 -->
         <div class="material-panel-stats">
           <div class="stats-header">素材图管理</div>

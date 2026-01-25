@@ -1,0 +1,692 @@
+/* ==================== 侧边弹窗样式系统 ==================== */
+
+/* 1. 基础样式 - 所有侧边弹窗共有属性 */
+.side-panel {
+  position: fixed;
+  top: 0;
+  height: 85%;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  padding: 10px;
+  z-index: 1000;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 2. 方向样式 - 左侧/右侧特有属性 */
+/* 默认状态：飞出去位置 */
+.side-panel--left {
+  left: -400px;
+  transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 显示状态：默认位置 */
+.side-panel--left.show {
+  left: 0;
+  /* 拖拽后的弹窗会有top样式，这里不重置，保持用户拖拽的位置 */
+}
+
+/* 默认状态：飞出去位置 */
+.side-panel--right {
+  right: -400px;
+  transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 显示状态：默认位置 */
+.side-panel--right.show {
+  right: 0;
+  /* 拖拽后的弹窗会有top样式，这里不重置，保持用户拖拽的位置 */
+}
+
+/* 3. 拖拽功能相关样式 */
+/* 只在头部区域显示move光标，其他区域使用默认光标 */
+.side-panel {
+  cursor: default;
+  /* 允许拖拽时使用transform定位 */
+  transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+/* 拖拽中状态：禁用过渡动画 */
+.side-panel.dragging {
+  transition: none !important;
+  /* 拖拽中整个弹窗都显示move光标 */
+  cursor: move !important;
+}
+
+/* 允许拖拽的头部区域 */
+.side-panel-header {
+  cursor: move;
+  user-select: none;
+}
+
+/* 4. 关闭动画样式 */
+/* 当弹窗失去show类且被拖拽过时，执行原地消失动画 */
+.side-panel:not(.show) {
+  transition: opacity 0.3s ease, transform 0.3s ease, left 0.1s ease 0.3s, right 0.1s ease 0.3s !important;
+  opacity: 0;
+  transform: scale(0.95);
+  /* 300ms后执行飞出去动画 */
+}
+
+/* 拖拽中的弹窗直接飞出去，不执行原地消失动画 */
+.side-panel.dragging:not(.show) {
+  transition: left 0.1s ease, right 0.1s ease !important;
+  opacity: 0;
+  transform: scale(1);
+}
+
+/* 3. 容器样式 - 所有弹窗容器共有属性 */
+.side-panel-container {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  padding: 20px;
+  gap: 16px;
+  width: 380px;
+  background: #FFFFFF;
+  border: 1px solid #e6e6e6;
+  box-shadow: none;
+  border-radius: 16px;
+  overflow-y: auto;
+  transition: box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.side-panel.show .side-panel-container {
+  box-shadow: 0px 10px 32px 0px rgba(51, 51, 51, 0.2);
+}
+
+/* 4. 主题支持 - 暗黑模式 */
+body.dark-mode .side-panel-container {
+  background: #1a1a1a;
+  border-color: #404040;
+}
+
+body.dark-mode .side-panel.show .side-panel-container {
+  box-shadow: 0px 10px 32px rgba(0, 0, 0, 0.5);
+}
+
+/* 5. 面板标题样式 */
+.side-panel-header {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  gap: 12px;
+}
+
+.side-panel-title {
+  font-family: 'Segoe UI', sans-serif;
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 16px;
+  color: #818181;
+  margin: 0;
+}
+
+body.dark-mode .side-panel-title {
+  color: #999999;
+}
+
+.side-panel-divider {
+  width: 100%;
+  height: 1px;
+  background: #F3F3F3;
+}
+
+body.dark-mode .side-panel-divider {
+  background: #404040;
+}
+
+/* 6. 面板页脚样式 */
+.side-panel-footer {
+  margin-top: auto;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.side-panel-footer .btn-large-secondary {
+  min-width: 120px;
+}
+
+/* 7. 绿幕抠图面板特有样式 */
+.chromakey-panel {
+  width: 400px;
+}
+
+/* 8. SVGA转换面板特有样式 */
+.svga-panel {
+  width: 400px;
+}
+
+/* 9. 素材面板特有样式 */
+.material-panel {
+  width: 400px;
+}
+
+/* 10. GIF导出面板特有样式 */
+.svga-panel.gif-panel {
+  width: 400px;
+}
+
+/* 11. 双通道MP4面板特有样式 */
+.dual-channel-panel {
+  width: 400px;
+}
+
+/* 12. 标准MP4面板特有样式 */
+.standard-mp4-panel {
+  width: 400px;
+}
+
+/* 13. 转SVGA面板特有样式 */
+.to-svga-panel {
+  width: 400px;
+}
+
+/* 14. 统一输入框宽度样式 */
+.svga-size-input-wrapper,
+.svga-value-input-wrapper,
+.mp4-size-input-wrapper,
+.mp4-value-input-wrapper {
+  width: 73px;
+}
+
+/* 15. 统一配置区域样式 */
+.mp4-config-section,
+.svga-config-section {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  gap: 24px;
+  flex: 1;
+}
+
+.mp4-config-section.disabled,
+.svga-config-section.disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.mp4-config-item,
+.svga-config-item {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  align-self: stretch;
+  gap: 8px;
+  height: 44px;
+}
+
+/* 配置项间距修饰符 */
+.mp4-config-item--mt,
+.svga-config-item--mt {
+  margin-top: 16px;
+}
+
+.mp4-config-label,
+.svga-config-label {
+  font-family: 'Segoe UI', sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 21px;
+  color: #333333;
+  margin: 0;
+  flex-shrink: 0;
+  text-align: left;
+}
+
+body.dark-mode .mp4-config-label,
+body.dark-mode .svga-config-label {
+  color: #cccccc;
+}
+
+/* 16. 统一尺寸和值容器样式 */
+.mp4-size-container,
+.svga-size-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+}
+
+.mp4-value-container,
+.svga-value-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+}
+
+/* 17. 统一单位标签样式 */
+.input-unit {
+  font-family: 'Segoe UI', sans-serif;
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 24px;
+  color: #333333;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.input-unit--hint {
+  font-weight: 400;
+  color: #818181;
+  font-size: 14px;
+}
+
+body.dark-mode .input-unit {
+  color: #cccccc;
+}
+
+body.dark-mode .input-unit--hint {
+  color: #999999;
+}
+
+/* 18. 统一锁图标样式 */
+.mp4-size-lock,
+.svga-size-lock {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #D3D3D3;
+}
+
+body.dark-mode .mp4-size-lock,
+body.dark-mode .svga-size-lock {
+  color: #666666;
+}
+
+/* 19. 统一静音/开关样式 */
+.mp4-mute-toggle,
+.svga-mute-toggle {
+  width: 46px;
+  height: 26px;
+  background: #5B5B5B;
+  border-radius: 100px;
+  cursor: pointer;
+  flex-shrink: 0;
+  position: relative;
+  transition: background 0.3s;
+}
+
+.mp4-mute-toggle.active,
+.svga-mute-toggle.active {
+  background: #409EFF;
+}
+
+.mp4-mute-toggle.disabled,
+.svga-mute-toggle.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+body.dark-mode .mp4-mute-toggle,
+body.dark-mode .svga-mute-toggle {
+  background: #5B5B5B;
+}
+
+body.dark-mode .mp4-mute-toggle.active,
+body.dark-mode .svga-mute-toggle.active {
+  background: #409EFF;
+}
+
+.mp4-mute-toggle-handle,
+.svga-mute-toggle-handle {
+  width: 24px;
+  height: 24px;
+  background: #FFFFFF;
+  border-radius: 50%;
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  transition: left 0.3s;
+}
+
+.mp4-mute-toggle.active .mp4-mute-toggle-handle,
+.svga-mute-toggle.active .svga-mute-toggle-handle {
+  left: 21px;
+}
+
+/* 20. 统一信息区域样式 */
+.mp4-info-section,
+.svga-info-section {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  gap: 4px;
+}
+
+.mp4-info-row,
+.svga-info-row {
+  font-family: 'Segoe UI', sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 19px;
+  color: #333333;
+  margin: 0;
+}
+
+body.dark-mode .mp4-info-row,
+body.dark-mode .svga-info-row {
+  color: #cccccc;
+}
+
+.mp4-compress-hint,
+.svga-compress-hint {
+  font-family: 'Segoe UI', sans-serif;
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 16px;
+  color: #AAAAAA;
+  margin: 0;
+}
+
+body.dark-mode .mp4-compress-hint,
+body.dark-mode .svga-compress-hint {
+  color: #666666;
+}
+
+/* 21. 统一信息标题样式 */
+.mp4-panel-title,
+.svga-panel-title {
+  font-family: 'Segoe UI', sans-serif;
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 16px;
+  color: #818181;
+  margin: 0;
+}
+
+body.dark-mode .mp4-panel-title,
+body.dark-mode .svga-panel-title {
+  color: #999999;
+}
+
+/* 22. 统一分割线样式 */
+.mp4-panel-divider,
+.svga-panel-divider {
+  width: 100%;
+  height: 1px;
+  background: #F3F3F3;
+}
+
+body.dark-mode .mp4-panel-divider,
+body.dark-mode .svga-panel-divider {
+  background: #404040;
+}
+
+/* 23. 统一下拉选择菜单样式 */
+.mp4-select-wrapper,
+.svga-select-wrapper {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 16px;
+  gap: 4px;
+  width: 218px;
+  min-width: 200px;
+  height: 44px;
+  background: #F3F3F3;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s ease;
+  flex: none;
+  flex-grow: 0;
+}
+
+.mp4-select-wrapper:hover,
+.svga-select-wrapper:hover {
+  background: #FCFCFC;
+  border: 1px solid #333333;
+}
+
+.mp4-select-wrapper:active,
+.svga-select-wrapper:active {
+  background: #FFFFFF;
+  border: 2px solid #333333;
+  padding: 0 14px;
+}
+
+.mp4-select-wrapper.disabled,
+.svga-select-wrapper.disabled {
+  background: #F3F3F3;
+  border: 1px solid #E6E6E6;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.mp4-select-wrapper.disabled:hover,
+.svga-select-wrapper.disabled:hover {
+  background: #F3F3F3;
+  border: 1px solid #E6E6E6;
+}
+
+body.dark-mode .mp4-select-wrapper,
+body.dark-mode .svga-select-wrapper {
+  background: #3a3a3a;
+  border: none;
+}
+
+body.dark-mode .mp4-select-wrapper:hover,
+body.dark-mode .svga-select-wrapper:hover {
+  background: #454545;
+  border: none;
+}
+
+body.dark-mode .mp4-select-wrapper:active,
+body.dark-mode .svga-select-wrapper:active {
+  background: #3a3a3a;
+  border: 2px solid #666666;
+  padding: 0 14px;
+}
+
+body.dark-mode .mp4-select-wrapper.disabled,
+body.dark-mode .svga-select-wrapper.disabled {
+  background: #2a2a2a;
+  border: 1px solid #404040;
+}
+
+body.dark-mode .mp4-select-wrapper.disabled:hover,
+body.dark-mode .svga-select-wrapper.disabled:hover {
+  background: #2a2a2a;
+  border: 1px solid #404040;
+}
+
+/* 选择框文本 */
+.mp4-select-text,
+.svga-select-text {
+  font-family: 'Segoe UI', sans-serif;
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 24px;
+  color: #333333;
+  margin: 0;
+}
+
+body.dark-mode .mp4-select-text,
+body.dark-mode .svga-select-text {
+  color: #cccccc;
+}
+
+.mp4-select-wrapper.disabled .mp4-select-text,
+.svga-select-wrapper.disabled .svga-select-text {
+  color: #D3D3D3;
+}
+
+body.dark-mode .mp4-select-wrapper.disabled .mp4-select-text,
+body.dark-mode .svga-select-wrapper.disabled .svga-select-text {
+  color: #666666;
+}
+
+/* 下拉箭头图标 */
+.mp4-select-icon,
+.svga-select-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mp4-select-icon svg,
+.svga-select-icon svg {
+  width: 100%;
+  height: 100%;
+  stroke: #333333;
+}
+
+body.dark-mode .mp4-select-icon svg,
+body.dark-mode .svga-select-icon svg {
+  stroke: #cccccc;
+}
+
+.mp4-select-wrapper.disabled .mp4-select-icon svg,
+.svga-select-wrapper.disabled .svga-select-icon svg {
+  stroke: #D3D3D3;
+}
+
+body.dark-mode .mp4-select-wrapper.disabled .mp4-select-icon svg,
+body.dark-mode .svga-select-wrapper.disabled .svga-select-icon svg {
+  stroke: #666666;
+}
+
+/* 下拉菜单 */
+.mp4-select-dropdown,
+.svga-select-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: #FFFFFF;
+  border: 1px solid #E6E6E6;
+  border-radius: 12px;
+  box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  overflow: hidden;
+  display: none;
+}
+
+.mp4-select-wrapper.open .mp4-select-dropdown,
+.svga-select-wrapper.open .svga-select-dropdown {
+  display: block;
+}
+
+body.dark-mode .mp4-select-dropdown,
+body.dark-mode .svga-select-dropdown {
+  background: #2c2c2c;
+  border-color: #666666;
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+/* 下拉选项 */
+.mp4-select-option,
+.svga-select-option {
+  padding: 12px 16px;
+  font-family: 'Segoe UI', sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 21px;
+  color: #333333;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.mp4-select-option:hover,
+.svga-select-option:hover {
+  background: #FCFCFC;
+}
+
+.mp4-select-option.selected,
+.svga-select-option.selected {
+  font-weight: 600;
+}
+
+body.dark-mode .mp4-select-option,
+body.dark-mode .svga-select-option {
+  color: #cccccc;
+}
+
+body.dark-mode .mp4-select-option:hover,
+body.dark-mode .svga-select-option:hover {
+  background: #3a3a3a;
+}
+
+body.dark-mode .mp4-select-option.selected,
+body.dark-mode .svga-select-option.selected {
+  background: #404040;
+}
+
+/* 24. 统一绿幕抠图开关样式 */
+.chromakey-switch-wrapper {
+  cursor: pointer;
+}
+
+.chromakey-switch {
+  width: 46px;
+  height: 26px;
+  background: #5B5B5B;
+  border-radius: 100px;
+  cursor: pointer;
+  flex-shrink: 0;
+  position: relative;
+  transition: background 0.3s;
+}
+
+.chromakey-switch.active {
+  background: #409EFF;
+}
+
+body.dark-mode .chromakey-switch {
+  background: #5B5B5B;
+}
+
+body.dark-mode .chromakey-switch.active {
+  background: #409EFF;
+}
+
+.chromakey-switch-handle {
+  width: 24px;
+  height: 24px;
+  background: #FFFFFF;
+  border-radius: 50%;
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  transition: left 0.3s;
+}
+
+.chromakey-switch.active .chromakey-switch-handle {
+  left: 21px;
+}
+
+/* 25. 统一素材面板底部按钮样式 */
+.material-panel-footer {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  margin-top: auto;
+}
+
+.material-panel-footer .material-btn-back {
+  min-width: 120px;
+}
+
+.material-panel-footer .btn-large-secondary {
+  flex: 1;
+  min-width: 120px;
+}

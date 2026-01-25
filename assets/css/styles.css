@@ -2394,54 +2394,7 @@ body.dark-mode .footer-empty-tip-sub {
 
 /* ==================== 绱犳潗寮圭獥 ==================== */
 
-.material-panel {
-  position: fixed;
-  top: 0;
-  right: -400px;
-  width: 400px;
-  height: 85%;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  padding: 10px;
-  transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 1000;
-}
 
-.material-panel.show {
-  right: 0;
-}
-
-.material-panel-container {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  width: 380px;
-  padding: 20px;
-  gap: 16px;
-  height: 100%;
-  max-height: 100%;
-  background: #FFFFFF;
-  border: 1px solid #e6e6e6;
-  box-shadow: none;
-  border-radius: 16px;
-  flex: none;
-  align-self: stretch;
-  transition: box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.material-panel.show .material-panel-container {
-  box-shadow: 0px 10px 32px rgba(51, 51, 51, 0.2);
-}
-
-body.dark-mode .material-panel-container {
-  background: #1a1a1a;
-  border-color: #404040;
-}
-
-body.dark-mode .material-panel.show .material-panel-container {
-  box-shadow: 0px 10px 32px rgba(0, 0, 0, 0.5);
-}
 
 /* 顶部统计信息 - Figma设计还原 */
 .material-panel-stats {
@@ -2568,7 +2521,7 @@ body.dark-mode .material-search-input:focus {
   border-color: #00b4ff;
 }
 
-/* 婊氬姩鍖哄煙 */
+/* 滚动区域 */
 .material-panel-scroll {
   display: flex;
   flex-direction: row;
@@ -2584,7 +2537,7 @@ body.dark-mode .material-search-input:focus {
   overflow-x: hidden;
 }
 
-/* 婊氬姩鏉℃牱寮?- 榛樿闅愯棌 */
+/* 滚动条样式- 默认隐藏 */
 .material-panel-scroll::-webkit-scrollbar {
   width: 6px;
 }
@@ -2652,7 +2605,7 @@ body.dark-mode .material-panel-scroll::-webkit-scrollbar-thumb:hover {
   object-fit: contain;
 }
 
-/* 绱犳潗淇℃伅鍖?(Frame 17) */
+/* 素材信息区(Frame 17) */
 .material-info {
   display: flex;
   flex-direction: column;
@@ -2753,7 +2706,7 @@ body.dark-mode .material-meta {
   color: #8e8e93;
 }
 
-/* 鎿嶄綔鎸夐挳鍖?(Frame 29) */
+/* 操作按钮区(Frame 29) */
 .material-actions {
   width: 161px;
   height: 28px;
@@ -2767,7 +2720,7 @@ body.dark-mode .material-meta {
   gap: 4px;
 }
 
-/* 鏇挎崲鎸夐挳 (btn01_Medium) */
+/* 替换按钮 (btn01_Medium) */
 .material-btn-replace {
   box-sizing: border-box;
   display: flex;
@@ -2853,7 +2806,7 @@ body.dark-mode .material-btn-replace:hover {
   height: 24px;
   flex: none;
   order: 0;
-  /* 闅愯棌SVG锛屼娇鐢ㄨ儗鏅浘 */
+  /* 关闭按钮默认隐藏SVG图标 */
   display: none;
 }
 
@@ -2978,25 +2931,7 @@ body.dark-mode .material-btn-new:hover {
   border-color: #606060;
 }
 
-/* 搴曢儴鎸夐挳鍖?*/
-.material-panel-footer {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  padding: 0px;
-  gap: 12px;
-  width: 100%;
-  height: auto;
-  flex: none;
-  order: 2;
-}
 
-/* 侧边弹窗中的大按钮需要flex布局 */
-.material-panel-footer .btn-large-secondary {
-  flex: 1;
-  display: flex;
-
-}
 
 /* 取消按钮（参考白色大按钮样式） */
 .material-btn-back {
@@ -3115,596 +3050,6 @@ body.dark-mode .material-empty {
   display: none !important;
 }
 
-/* ==================== MP4转换弹窗（Figma设计） ==================== */
-
-.mp4-panel {
-  position: fixed;
-  top: 0;
-  right: -400px;
-  width: 400px;
-  height: 85%;
-  display: flex;
-  flex-direction: row;
-  align-items: stretch;
-  padding: 10px;
-  transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 1000;
-}
-
-.mp4-panel.show {
-  right: 0;
-}
-
-.mp4-panel-container {
-  display: flex;
-  flex-direction: column;
-  align-self: stretch;
-  padding: 20px;
-  gap: 16px;
-  width: 380px;
-  background: #FFFFFF;
-  border: 1px solid #e6e6e6;
-  box-shadow: none;
-  border-radius: 16px;
-  overflow-y: auto;
-  transition: box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.mp4-panel.show .mp4-panel-container {
-  box-shadow: 0px 10px 32px 0px rgba(51, 51, 51, 0.2);
-}
-
-body.dark-mode .mp4-panel-container {
-  background: #1a1a1a;
-  border-color: #404040;
-}
-
-body.dark-mode .mp4-panel.show .mp4-panel-container {
-  box-shadow: 0px 10px 32px rgba(0, 0, 0, 0.5);
-}
-
-/* 标题区 */
-.mp4-panel-header {
-  display: flex;
-  flex-direction: column;
-  align-self: stretch;
-  gap: 12px;
-}
-
-.mp4-panel-title {
-  font-family: 'Segoe UI', sans-serif;
-  font-weight: 400;
-  font-size: 12px;
-  line-height: 16px;
-  color: #818181;
-  margin: 0;
-}
-
-body.dark-mode .mp4-panel-title {
-  color: #999999;
-}
-
-.mp4-panel-divider {
-  width: 100%;
-  height: 1px;
-  background: #F3F3F3;
-}
-
-body.dark-mode .mp4-panel-divider {
-  background: #404040;
-}
-
-/* SVGA淇℃伅鍖?*/
-.mp4-info-section {
-  display: flex;
-  flex-direction: column;
-  align-self: stretch;
-  gap: 4px;
-}
-
-.mp4-info-row {
-  font-family: 'Segoe UI', sans-serif;
-  font-weight: 400;
-  font-size: 14px;
-  line-height: 19px;
-  color: #333333;
-  margin: 0;
-}
-
-body.dark-mode .mp4-info-row {
-  color: #cccccc;
-}
-
-.mp4-compress-hint {
-  font-family: 'Segoe UI', sans-serif;
-  font-weight: 400;
-  font-size: 12px;
-  line-height: 16px;
-  color: #AAAAAA;
-  margin: 0;
-}
-
-body.dark-mode .mp4-compress-hint {
-  color: #666666;
-}
-
-/* 配置区域 */
-.mp4-config-section {
-  display: flex;
-  flex-direction: column;
-  align-self: stretch;
-  gap: 24px;
-}
-
-.mp4-config-item {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  align-self: stretch;
-  gap: 8px;
-  height: 44px;
-}
-
-.mp4-config-label {
-  font-family: 'Segoe UI', sans-serif;
-  font-weight: 400;
-  font-size: 16px;
-  line-height: 21px;
-  color: #333333;
-  margin: 0;
-  flex-shrink: 0;
-  text-align: left;
-}
-
-body.dark-mode .mp4-config-label {
-  color: #cccccc;
-}
-
-/* 下拉选择框样式 */
-.mp4-select-wrapper {
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 16px;
-  gap: 4px;
-  width: 218px;
-  min-width: 200px;
-  height: 44px;
-  background: #F3F3F3;
-  border: none;
-  border-radius: 12px;
-  cursor: pointer;
-  position: relative;
-  transition: all 0.2s ease;
-  flex: none;
-  flex-grow: 0;
-}
-
-.mp4-select-wrapper:hover {
-  background: #FCFCFC;
-  border: 1px solid #333333;
-}
-
-.mp4-select-wrapper:active {
-  background: #FFFFFF;
-  border: 2px solid #333333;
-  padding: 0 14px;
-}
-
-body.dark-mode .mp4-select-wrapper {
-  background: #3a3a3a;
-  border: none;
-}
-
-body.dark-mode .mp4-select-wrapper:hover {
-  background: #454545;
-  border: none;
-}
-
-body.dark-mode .mp4-select-wrapper:active {
-  background: #3a3a3a;
-  border: 2px solid #666666;
-  padding: 0 14px;
-}
-
-.mp4-select-text {
-  font-family: 'Segoe UI', sans-serif;
-  font-weight: 600;
-  font-size: 16px;
-  line-height: 24px;
-  color: #333333;
-  margin: 0;
-}
-
-body.dark-mode .mp4-select-text {
-  color: #cccccc;
-}
-
-.mp4-select-icon {
-  width: 16px;
-  height: 16px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.mp4-select-icon svg {
-  width: 100%;
-  height: 100%;
-  stroke: #333333;
-}
-
-body.dark-mode .mp4-select-icon svg {
-  stroke: #cccccc;
-}
-
-/* 下拉菜单 */
-.mp4-select-dropdown {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  right: 0;
-  background: #FFFFFF;
-  border: 1px solid #E6E6E6;
-  border-radius: 12px;
-  box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.15);
-  z-index: 1000;
-  overflow: hidden;
-  display: none;
-}
-
-.mp4-select-wrapper.open .mp4-select-dropdown {
-  display: block;
-}
-
-body.dark-mode .mp4-select-dropdown {
-  background: #2c2c2c;
-  border-color: #666666;
-  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.5);
-}
-
-.mp4-select-option {
-  padding: 12px 16px;
-  font-family: 'Segoe UI', sans-serif;
-  font-weight: 400;
-  font-size: 16px;
-  line-height: 21px;
-  color: #333333;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-
-.mp4-select-option:hover {
-  background: #FCFCFC;
-}
-
-.mp4-select-option.selected {
-  font-weight: 600;
-
-}
-
-body.dark-mode .mp4-select-option {
-  color: #cccccc;
-}
-
-body.dark-mode .mp4-select-option:hover {
-  background: #3a3a3a;
-}
-
-body.dark-mode .mp4-select-option.selected {
-  background: #404040;
-}
-
-/* 尺寸输入 */
-.mp4-size-container {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 8px;
-  flex: none;
-}
-
-/* MP4尺寸输入框 - 继承通用样式，仅定义特有属性 */
-.mp4-size-input-wrapper {
-  width: 73px;
-}
-
-.mp4-size-lock {
-  width: 16px;
-  height: 16px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.mp4-size-lock svg {
-  width: 100%;
-  height: 100%;
-  stroke: #333333;
-}
-
-body.dark-mode .mp4-size-lock svg {
-  stroke: #cccccc;
-}
-
-/* 质量和帧率输入 */
-.mp4-value-container {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 4px;
-  flex: none;
-}
-
-/* MP4值输入框 - 继承通用样式，仅定义特有属性 */
-.mp4-value-input-wrapper {
-  width: 73px;
-}
-
-/* 静音开关 */
-.mp4-mute-toggle {
-  width: 46px;
-  height: 26px;
-  background: #5B5B5B;
-  border-radius: 100px;
-  cursor: pointer;
-  flex-shrink: 0;
-  position: relative;
-  transition: background 0.3s;
-}
-
-.mp4-mute-toggle.active {
-  background: #409EFF;
-}
-
-body.dark-mode .mp4-mute-toggle {
-  background: #5B5B5B;
-}
-
-body.dark-mode .mp4-mute-toggle.active {
-  background: #409EFF;
-}
-
-.mp4-mute-toggle-handle {
-  width: 24px;
-  height: 24px;
-  background: #FFFFFF;
-  border-radius: 50%;
-  position: absolute;
-  top: 1px;
-  left: 1px;
-  transition: transform 0.3s;
-}
-
-.mp4-mute-toggle.active .mp4-mute-toggle-handle {
-  transform: translateX(20px);
-}
-
-/* Disabled状态样式 */
-/* 下拉选择框disabled */
-.mp4-select-wrapper.disabled {
-  background: #F3F3F3;
-  border: 1px solid #E6E6E6;
-  cursor: not-allowed;
-  pointer-events: none;
-}
-
-.mp4-select-wrapper.disabled .mp4-select-text {
-  color: #D3D3D3;
-}
-
-.mp4-select-wrapper.disabled .mp4-select-icon svg {
-  stroke: #D3D3D3;
-}
-
-.mp4-select-wrapper.disabled:hover {
-  background: #F3F3F3;
-  border: 1px solid #E6E6E6;
-}
-
-/* 输入框wrapper disabled */
-.mp4-size-input-wrapper:has(input:disabled),
-.mp4-value-input-wrapper:has(input:disabled) {
-  background: #F3F3F3;
-  border: 2px solid #F3F3F3;
-  padding: 0 15px;
-  pointer-events: none;
-}
-
-.mp4-size-input-wrapper:has(input:disabled):hover,
-.mp4-value-input-wrapper:has(input:disabled):hover {
-  background: #F3F3F3;
-  border: 2px solid #E6E6E6;
-  padding: 0 15px;
-}
-
-.mp4-size-input-wrapper:has(input:disabled):focus-within,
-.mp4-value-input-wrapper:has(input:disabled):focus-within {
-  background: #F3F3F3;
-  border: 1px solid #E6E6E6;
-  padding: 0 15px;
-}
-
-/* 输入框disabled */
-.mp4-input:disabled {
-  color: #D3D3D3;
-  cursor: not-allowed;
-}
-
-/* 静音开关disabled */
-.mp4-mute-toggle.disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-  pointer-events: none;
-}
-
-/* 单位文字disabled */
-.mp4-config-section.disabled .input-unit {
-  color: #D3D3D3;
-}
-
-.mp4-config-section.disabled .mp4-size-lock svg {
-  stroke: #D3D3D3;
-}
-
-body.dark-mode .mp4-config-section.disabled .input-unit {
-  color: #666666;
-}
-
-body.dark-mode .mp4-config-section.disabled .mp4-size-lock svg {
-  stroke: #666666;
-}
-
-/* 暗黑模式disabled状态 */
-body.dark-mode .mp4-select-wrapper.disabled {
-  background: #2a2a2a;
-  border: 1px solid #404040;
-}
-
-body.dark-mode .mp4-select-wrapper.disabled .mp4-select-text {
-  color: #666666;
-}
-
-body.dark-mode .mp4-select-wrapper.disabled .mp4-select-icon svg {
-  stroke: #666666;
-}
-
-body.dark-mode .mp4-select-wrapper.disabled:hover {
-  background: #2a2a2a;
-  border: 1px solid #404040;
-}
-
-body.dark-mode .mp4-size-input-wrapper:has(input:disabled),
-body.dark-mode .mp4-value-input-wrapper:has(input:disabled) {
-  background: #2a2a2a;
-  border: 1px solid #404040;
-  padding: 0 15px;
-}
-
-body.dark-mode .mp4-size-input-wrapper:has(input:disabled):hover,
-body.dark-mode .mp4-value-input-wrapper:has(input:disabled):hover {
-  background: #2a2a2a;
-  border: 1px solid #404040;
-  padding: 0 15px;
-}
-
-body.dark-mode .mp4-size-input-wrapper:has(input:disabled):focus-within,
-body.dark-mode .mp4-value-input-wrapper:has(input:disabled):focus-within {
-  background: #2a2a2a;
-  border: 1px solid #404040;
-  padding: 0 15px;
-}
-
-body.dark-mode .mp4-input:disabled {
-  color: #666666;
-}
-
-/* 底部按钮 */
-.mp4-panel-footer {
-  display: flex;
-  flex-direction: row;
-  justify-content: flex-end;
-  align-self: stretch;
-  gap: 12px;
-  margin-top: auto;
-}
-
-/* MP4侧边弹窗中的大按钮需要flex布局 */
-/*.mp4-panel-footer .btn-large-secondary {}*/
-
-.mp4-btn {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  padding: 0 20px;
-  height: 44px;
-
-  font-family: 'Segoe UI', sans-serif;
-  font-weight: 400;
-  font-size: 14px;
-  line-height: 22px;
-  cursor: pointer;
-  transition: all 0.2s;
-  border: none;
-  outline: none;
-  box-sizing: border-box;
-  user-select: none;
-}
-
-.mp4-btn-preview {
-  background: #FFFFFF;
-  border: 1px solid #e6e6e6;
-  color: #333333;
-  flex-shrink: 0;
-}
-
-.mp4-btn-preview:hover {
-  background: #f5f5f5;
-  border-color: #CCCCCC;
-}
-
-.mp4-btn-preview:active {
-  background: #EBEBEB;
-  border-color: #B3B3B3;
-}
-
-body.dark-mode .mp4-btn-preview {
-  background: #2c2c2c;
-  border-color: #404040;
-  color: #cccccc;
-}
-
-body.dark-mode .mp4-btn-preview:hover {
-  background: #363636;
-  border-color: #4d4d4d;
-}
-
-body.dark-mode .mp4-btn-preview:active {
-  background: #404040;
-  border-color: #595959;
-}
-
-.mp4-btn-convert {
-  background: #5B5B5B;
-  color: #FFFFFF;
-  flex: 1;
-}
-
-.mp4-btn-convert:hover:not(:disabled) {
-  background: #4A4A4A;
-}
-
-.mp4-btn-convert:active:not(:disabled) {
-  background: #333333;
-}
-
-.mp4-btn-convert:disabled {
-  background: rgba(91, 91, 91, 0.3);
-  cursor: not-allowed;
-}
-
-body.dark-mode .mp4-btn-convert {
-  background: #e0e0e0;
-  color: #1a1a1a;
-}
-
-body.dark-mode .mp4-btn-convert:hover:not(:disabled) {
-  background: #f0f0f0;
-}
-
-body.dark-mode .mp4-btn-convert:active:not(:disabled) {
-  background: #d0d0d0;
-}
-
-body.dark-mode .mp4-btn-convert:disabled {
-  background: rgba(224, 224, 224, 0.3);
-}
 
 
 
@@ -3820,82 +3165,9 @@ body.dark-mode .toast-message {
 
 /* ==================== SVGA转换弹窗（双通道MP4转SVGA） ==================== */
 
-.svga-panel {
-  position: fixed;
-  top: 0;
-  right: -400px;
-  width: 400px;
-  height: 85%;
-  display: flex;
-  flex-direction: row;
-  align-items: stretch;
-  padding: 10px;
-  transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 1000;
-}
 
-.svga-panel.show {
-  right: 0;
-}
 
-.svga-panel-container {
-  display: flex;
-  flex-direction: column;
-  align-self: stretch;
-  padding: 20px;
-  gap: 16px;
-  width: 380px;
-  background: #FFFFFF;
-  border: 1px solid #e6e6e6;
-  box-shadow: none;
-  border-radius: 16px;
-  overflow-y: auto;
-  transition: box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
 
-.svga-panel.show .svga-panel-container {
-  box-shadow: 0px 10px 32px 0px rgba(51, 51, 51, 0.2);
-}
-
-body.dark-mode .svga-panel-container {
-  background: #1a1a1a;
-  border-color: #404040;
-}
-
-body.dark-mode .svga-panel.show .svga-panel-container {
-  box-shadow: 0px 10px 32px rgba(0, 0, 0, 0.5);
-}
-
-/* 标题区 */
-.svga-panel-header {
-  display: flex;
-  flex-direction: column;
-  align-self: stretch;
-  gap: 12px;
-}
-
-.svga-panel-title {
-  font-family: 'Segoe UI', sans-serif;
-  font-weight: 400;
-  font-size: 12px;
-  line-height: 16px;
-  color: #818181;
-  margin: 0;
-}
-
-body.dark-mode .svga-panel-title {
-  color: #999999;
-}
-
-.svga-panel-divider {
-  width: 100%;
-  height: 1px;
-  background: #F3F3F3;
-}
-
-body.dark-mode .svga-panel-divider {
-  background: #404040;
-}
 
 /* MP4信息区 */
 .svga-info-section {
@@ -4016,52 +3288,9 @@ body.dark-mode .svga-size-lock {
   width: 60px;
 }
 
-/* 静音开关 */
-.svga-mute-toggle {
-  width: 46px;
-  height: 26px;
-  background: #5B5B5B;
-  border-radius: 100px;
-  position: relative;
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
 
-.svga-mute-toggle.active {
-  background: #409EFF;
-}
 
-.svga-mute-toggle.disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
 
-.svga-mute-toggle-handle {
-  position: absolute;
-  width: 24px;
-  height: 24px;
-  background: #FFFFFF;
-  border-radius: 50%;
-  top: 1px;
-  left: 1px;
-  transition: left 0.2s ease;
-}
-
-.svga-mute-toggle.active .svga-mute-toggle-handle {
-  left: 21px;
-}
-
-body.dark-mode .svga-mute-toggle {
-  background: #404040;
-}
-
-body.dark-mode .svga-mute-toggle.active {
-  background: #409EFF;
-}
-
-body.dark-mode .svga-mute-toggle-handle {
-  background: #cccccc;
-}
 
 /* 预估对比区域 */
 .svga-estimate-section {
@@ -4113,23 +3342,7 @@ body.dark-mode .svga-estimate-row {
   color: #999999;
 }
 
-/* 底部按钮 */
-.svga-panel-footer {
-  display: flex;
-  flex-direction: row;
-  justify-content: flex-end;
-  align-items: center;
-  align-self: stretch;
-  gap: 12px;
-}
 
-/* SVGA侧边弹窗中的大按钮需要flex布局 */
-.svga-panel-footer .btn-large-secondary {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
 
 .svga-btn-cancel {
   border-color: #ff4444 !important;
@@ -4228,82 +3441,10 @@ body.dark-mode .gif-color-value {
 /* ========================================
    绿幕抠图弹窗（普通MP4模式左侧弹窗）
    ======================================== */
-.chromakey-panel {
-  position: fixed;
-  top: 0;
-  left: -400px;
-  width: 400px;
-  height: 85%;
-  display: flex;
-  flex-direction: row;
-  align-items: stretch;
-  padding: 10px;
-  transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 1000;
-}
 
-.chromakey-panel.show {
-  left: 0;
-}
-
-.chromakey-panel-container {
-  display: flex;
-  flex-direction: column;
-  align-self: stretch;
-  padding: 20px;
-  gap: 16px;
-  width: 380px;
-  background: #FFFFFF;
-  border: 1px solid #e6e6e6;
-  box-shadow: none;
-  border-radius: 16px;
-  overflow-y: auto;
-  transition: box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.chromakey-panel.show .chromakey-panel-container {
-  box-shadow: 0px 10px 32px 0px rgba(51, 51, 51, 0.2);
-}
-
-body.dark-mode .chromakey-panel-container {
-  background: #1a1a1a;
-  border-color: #404040;
-}
-
-body.dark-mode .chromakey-panel.show .chromakey-panel-container {
-  box-shadow: 0px 10px 32px rgba(0, 0, 0, 0.5);
-}
 
 /* 标题区 */
-.chromakey-panel-header {
-  display: flex;
-  flex-direction: column;
-  align-self: stretch;
-  gap: 12px;
-}
 
-.chromakey-panel-title {
-  font-family: 'Segoe UI', sans-serif;
-  font-weight: 400;
-  font-size: 12px;
-  line-height: 16px;
-  color: #818181;
-  margin: 0;
-}
-
-body.dark-mode .chromakey-panel-title {
-  color: #999999;
-}
-
-.chromakey-panel-divider {
-  width: 100%;
-  height: 1px;
-  background: #F3F3F3;
-}
-
-body.dark-mode .chromakey-panel-divider {
-  background: #404040;
-}
 
 /* MP4淇℃伅鍖?*/
 .chromakey-info-section {
@@ -4400,20 +3541,7 @@ body.dark-mode .chromakey-switch.active {
   background: #0A84FF;
 }
 
-.chromakey-switch-handle {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 24px;
-  height: 24px;
-  background: #FFFFFF;
-  border-radius: 12px;
-  transition: left 0.3s;
-}
 
-.chromakey-switch.active .chromakey-switch-handle {
-  left: 22px;
-}
 
 /* 滑块 */
 .chromakey-slider-wrapper {
@@ -4463,23 +3591,7 @@ body.dark-mode .chromakey-slider::-moz-range-thumb {
   background: #0A84FF;
 }
 
-/* 底部按钮 */
-.chromakey-panel-footer {
-  display: flex;
-  flex-direction: row;
-  justify-content: flex-end;
-  align-self: stretch;
-  gap: 12px;
-  margin-top: auto;
-}
 
-/* 色键弹窗中的大按钮需要flex布局 */
-.chromakey-panel-footer .btn-large-secondary {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
 
 /* ==================== 居中弹窗通用样式（统一管理） ==================== */
 
@@ -6017,28 +5129,7 @@ body.dark-mode .material-btn-edit:hover {
   z-index: 2;
 }
 
-/* ==================== 
-   GIF导出弹窗遮罩��?   ==================== */
-/* 1. 遮罩��?*/
-.svga-panel-overlay {
-  display: none !important;
-}
 
-/* 2. GIF弹窗位置修正 - 移除特殊样式，回归默��?*/
-.svga-panel.gif-panel {
-  /* 重置为默认右侧面板样��?*/
-  height: 85%;
-  max-height: 85%;
-  top: 0;
-  bottom: 0;
-  border-radius: 0;
-}
-
-.svga-panel.gif-panel .svga-panel-container {
-  height: 100%;
-  max-height: 100%;
-  border-radius: 16px;
-}
 
 /* 文案内容标题带按钮的容器 */
 .editor-control-label-with-buttons {

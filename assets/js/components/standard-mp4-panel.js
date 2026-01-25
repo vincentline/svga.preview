@@ -35,11 +35,11 @@
 (function () {
   var template = `
 
-    <div class="mp4-panel" :class="{'show': visible}">
-      <div class="mp4-panel-container">
-        <div class="mp4-panel-header">
-          <h3 class="mp4-panel-title">转换为普通MP4格式</h3>
-          <div class="mp4-panel-divider"></div>
+    <div class="side-panel side-panel--right standard-mp4-panel" :class="{'show': visible}">
+      <div class="side-panel-container">
+        <div class="side-panel-header">
+          <h3 class="side-panel-title">转换为普通MP4格式</h3>
+          <div class="side-panel-divider"></div>
         </div>
         <div class="mp4-info-section">
           <div class="mp4-info-row">
@@ -96,7 +96,7 @@
             </div>
           </div>
         </div>
-        <div class="mp4-panel-footer">
+        <div class="side-panel-footer">
           <button v-if="!isConverting" class="material-btn-back" @click="close" title="返回">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
               <path d="M12 16L6 10L12 4" stroke="#333333" stroke-width="2" stroke-linecap="round"
