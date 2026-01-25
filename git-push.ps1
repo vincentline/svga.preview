@@ -89,7 +89,7 @@ $changes = git status --short 2>$null
 $changeDetails = ""
 if ($changes) {
     # 解析UPDATE_LOG.md
-    $updateLogPath = Join-Path -Path $PSScriptRoot -ChildPath "UPDATE_LOG.md"
+    $updateLogPath = Join-Path -Path $PWD -ChildPath "UPDATE_LOG.md"
     $updateLogMapping = Get-UpdateLogMapping -logFilePath $updateLogPath
     
     # 确保变更详情使用正确的编码，并按行格式化
