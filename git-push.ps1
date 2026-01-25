@@ -44,8 +44,8 @@ if (-not $status) {
 Write-Host "发现变更:" -ForegroundColor Green
 git status --short
 
-# 获取变更详情
-$changes = git diff --name-status 2>$null
+# 获取变更详情（在add之前获取，确保能获取到所有变更）
+$changes = git status --short 2>$null
 $changeDetails = ""
 if ($changes) {
     # 确保变更详情使用正确的编码
