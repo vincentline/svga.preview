@@ -1,5 +1,5 @@
-﻿﻿# 简单的Git推送脚本
-# 使用方法: PowerShell.exe -ExecutionPolicy Bypass -File git-push.ps1
+﻿# 简单的Git推送脚本
+# 使用方法: PowerShell.exe -ExecutionPolicy Bypass -File git-push-new.ps1
 
 # 设置PowerShell输出编码为UTF-8
 [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new()
@@ -12,15 +12,6 @@ $PSDefaultParameterValues['*:Encoding'] = 'utf8'
 git config --global core.quotepath false 2>$null
 git config --global i18n.commitencoding utf-8 2>$null
 git config --global i18n.logoutputencoding utf-8 2>$null
-
-# 设置环境变量，确保使用UTF-8编码
-$env:LC_ALL="zh_CN.UTF-8"
-$env:LANG="zh_CN.UTF-8"
-$env:LC_CTYPE="zh_CN.UTF-8"
-$env:LC_MESSAGES="zh_CN.UTF-8"
-
-# 确保控制台使用UTF-8代码页
-$OutputEncoding = [System.Text.UTF8Encoding]::new()
 
 # 注意：此脚本必须使用UTF-8 with BOM编码保存，否则中文会显示为乱码
 
@@ -45,24 +36,18 @@ Write-Host "发现变更:" -ForegroundColor Green
 git status --short
 
 # 解析UPDATE_LOG.md，提取文件路径与更新简述的对应关系
-function Get-UpdateLogDetails {
+function Get-UpdateLogMapping {
     param (
-        [string]$logPath
+        [string]$logFilePath
     )
     
-    if (-not (Test-Path $logPath)) {
-        Write-Host "警告: UPDATE_LOG.md文件不存在" -ForegroundColor Yellow
+    if (-not (Test-Path $logFilePath)) {
         return @{}
     }
     
     try {
-        # 使用UTF-8 with BOM编码读取文件
-        $logContent = Get-Content -Path $logPath -Encoding UTF8
-        $logMap = @{}
-        
-        # 匹配更新记录行：[时间戳] 【操作类型】 : 路径信息 - 更新简述
-        # 修复正则表达式，确保正确匹配完整路径和描述
-        $logPattern = '^\[(.+?)\]\s+【(.+?)】\s*:\s+([^\-]+?)\s*\-\s*(.+)$'
+        $logContent = Get-Content -Path $logFilePath -Encoding UTF8
+        $mapping = @{}
         
         foreach ($line in $logContent) {
             # 跳过空行和注释行
@@ -70,18 +55,31 @@ function Get-UpdateLogDetails {
                 continue
             }
             
-            if ($line -match $logPattern) {
-                # 正确的分组索引：1-时间戳, 2-操作类型, 3-文件路径, 4-描述
-                $filePath = $matches[3].Trim()
-                $updateDesc = $matches[4].Trim()
-                $logMap[$filePath] = $updateDesc
-                Write-Host "DEBUG: 解析到记录 - 路径: $filePath, 描述: $updateDesc" -ForegroundColor Gray
+            # 找到第一个" - "分隔符
+            $sepIndex = $line.IndexOf(" - ")
+            if ($sepIndex -eq -1) {
+                continue
+            }
+            
+            # 提取路径部分和描述部分
+            $pathPart = $line.Substring(0, $sepIndex)
+            $descPart = $line.Substring($sepIndex + 3).Trim()
+            
+            # 从路径部分中提取实际的文件路径
+            # 路径部分格式：[时间戳] 【操作类型】 : 路径信息
+            $pathStartIndex = $pathPart.IndexOf(":")
+            if ($pathStartIndex -eq -1) {
+                continue
+            }
+            
+            $filePath = $pathPart.Substring($pathStartIndex + 1).Trim()
+            if ($filePath -and $descPart) {
+                $mapping[$filePath] = $descPart
             }
         }
         
-        return $logMap
+        return $mapping
     } catch {
-        Write-Host "错误: 解析UPDATE_LOG.md失败 - $($_.Exception.Message)" -ForegroundColor Red
         return @{}
     }
 }
@@ -92,8 +90,7 @@ $changeDetails = ""
 if ($changes) {
     # 解析UPDATE_LOG.md
     $updateLogPath = Join-Path -Path $PSScriptRoot -ChildPath "UPDATE_LOG.md"
-    Write-Host "DEBUG: UPDATE_LOG.md路径: $updateLogPath" -ForegroundColor Gray
-    $updateLogMap = Get-UpdateLogDetails -logPath $updateLogPath
+    $updateLogMapping = Get-UpdateLogMapping -logFilePath $updateLogPath
     
     # 确保变更详情使用正确的编码，并按行格式化
     $changeDetails = "`n变更详情:`n"
@@ -106,16 +103,13 @@ if ($changes) {
         
         # 提取文件路径（格式：XY file/path）
         $filePath = $changeLine -replace '^\s*[MADRCU?!]\s+', ''
-        Write-Host "DEBUG: 变更文件路径: $filePath" -ForegroundColor Gray
         
         # 查找对应的更新简述
-        if ($updateLogMap.ContainsKey($filePath)) {
-            $updateDesc = $updateLogMap[$filePath]
-            $changeDetails += "  $($changeLine.Trim()) - $updateDesc`n"
-            Write-Host "DEBUG: 找到匹配的更新简述: $updateDesc" -ForegroundColor Gray
-        } else {
-            $changeDetails += "  $($changeLine.Trim())`n"
+        $changeDetails += "  $($changeLine.Trim())"
+        if ($updateLogMapping.ContainsKey($filePath)) {
+            $changeDetails += " - $($updateLogMapping[$filePath])"
         }
+        $changeDetails += "`n"
     }
 }
 
