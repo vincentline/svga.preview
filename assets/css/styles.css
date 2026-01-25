@@ -2481,7 +2481,6 @@ body.dark-mode .stats-help {
   width: 100%;
   margin-top: 0;
   flex: none;
-  order: 1;
   align-self: stretch;
 }
 
