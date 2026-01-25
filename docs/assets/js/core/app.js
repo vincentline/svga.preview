@@ -171,6 +171,8 @@ function initApp() {
 
         // 主题模式
         isDarkMode: false,
+        // 主题是否由用户手动设置
+        isThemeManuallySet: false,
 
         // Help 内容
         helpContent: '',
@@ -3355,6 +3357,8 @@ function initApp() {
         } else {
           document.body.classList.remove('dark-mode');
         }
+        // 标记为用户手动切换，不再跟随浏览器主题变化
+        this.isThemeManuallySet = true;
       },
 
       /* 缩放 + 平移 */
@@ -9473,12 +9477,15 @@ function initApp() {
       if (window.matchMedia) {
         var mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
         mediaQuery.addEventListener('change', function (e) {
-          var newIsDark = e.matches;
-          _this.isDarkMode = newIsDark;
-          if (newIsDark) {
-            document.body.classList.add('dark-mode');
-          } else {
-            document.body.classList.remove('dark-mode');
+          // 只有在用户没有手动设置主题的情况下，才跟随浏览器主题变化
+          if (!_this.isThemeManuallySet) {
+            var newIsDark = e.matches;
+            _this.isDarkMode = newIsDark;
+            if (newIsDark) {
+              document.body.classList.add('dark-mode');
+            } else {
+              document.body.classList.remove('dark-mode');
+            }
           }
         });
       }
