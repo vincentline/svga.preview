@@ -2476,26 +2476,64 @@ body.dark-mode .stats-help {
   color: #666666;
 }
 
-/* 鎼滅储妗?*/
+/* 搜索框 */
 .material-search {
   width: 100%;
   margin-top: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  padding: 0 16px;
+  gap: 4px;
+  min-width: 50px;
+  height: 36px;
+  background: #F3F3F3;
+  border: 2px solid #F3F3F3;
+  border-radius: 8px;
   flex: none;
-  align-self: stretch;
+  flex-grow: 0;
+  transition: all 0.3s;
+}
+
+.material-search:hover {
+  background: #FCFCFC;
+  border: 2px solid #333333;
+}
+
+.material-search:focus-within {
+  background: #FFFFFF;
+  border: 2px solid #333333;
+}
+
+body.dark-mode .material-search {
+  background: #3a3a3a;
+  border: 2px solid #3a3a3a;
+}
+
+body.dark-mode .material-search:hover {
+  background: #454545;
+  border: 2px solid #999999;
+}
+
+body.dark-mode .material-search:focus-within {
+  background: #3a3a3a;
+  border: 2px solid #999999;
 }
 
 .material-search-input {
   width: 100%;
-  height: 36px;
-  padding: 0 12px;
-  border: 1px solid #e6e6e6;
-  border-radius: 8px;
+  height: 100%;
+  padding: 0;
+  border: none;
+  border-radius: 0;
   font-family: 'Segoe UI';
   font-size: 14px;
   color: #333333;
-  background: #ffffff;
+  background: transparent;
   outline: none;
-  /* 移除hover过渡动画，直接切换 */
+  transition: all 0.3s;
 }
 
 .material-search-input::placeholder {
@@ -2503,13 +2541,13 @@ body.dark-mode .stats-help {
 }
 
 .material-search-input:focus {
-  border-color: #00b4ff;
+  outline: none;
 }
 
 body.dark-mode .material-search-input {
-  background: #2a2a2a;
-  border-color: #444444;
   color: #e0e0e0;
+  background: transparent;
+  border-color: transparent;
 }
 
 body.dark-mode .material-search-input::placeholder {
