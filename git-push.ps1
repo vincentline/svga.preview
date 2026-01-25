@@ -135,7 +135,7 @@ if ($changes) {
         Write-Host "DEBUG: 处理变更行: '$changeLine'" -ForegroundColor Gray
         
         # 提取文件路径（格式：XY file/path）
-        $filePath = $changeLine -replace '^\s*[MADRCU?!]\s+', ''
+        $filePath = $changeLine -replace '^\s*[MADRCU?!]+\s+', ''
         Write-Host "DEBUG: 提取到变更文件路径: '$filePath'" -ForegroundColor Gray
         
         # 查找对应的更新简述
