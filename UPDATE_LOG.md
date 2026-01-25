@@ -27,6 +27,7 @@
 - 更新简述：如新增功能、修复问题、优化性能等，简单描述
 
 ## 更新记录
+[2026-01-26 05:22:13] 【修改文件】: docs/index.html - 修复首页点击footer-main footer-main-empty时重复弹出文件选择弹窗的问题，重新添加@click.stop阻止事件冒泡
 [2026-01-26 04:49:24] 【修改文件】: docs/assets/css/styles.css - 修改material-search样式，使用input-wrapper样式，设置高度为36px
 [2026-01-26 10:00:00] 【修改文件】: docs/assets/js/components/chromakey-panel.js - 修改绿幕抠图面板文本，将'打开扮绿幕'改为'打开绿幕抠图'
 [2026-01-26 10:00:00] 【修改文件】: docs/assets/js/core/app.js - 修复关闭绿幕抠图后视频播放异常问题，添加视频播放状态恢复逻辑和渲染循环清除逻辑
