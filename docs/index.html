@@ -409,7 +409,7 @@
           <transition name="footer-fade">
             <!-- 中间主控制区 -->
             <div v-if="!isImmersiveMode" class="footer-main" :class="{'footer-main-empty': isEmpty}"
-              @click="isEmpty && triggerFileUpload()">
+              @click.stop="isEmpty && triggerFileUpload()">
               <!-- 空状态 -->
               <template v-if="isEmpty">
                 <div class="footer-empty-tip">
