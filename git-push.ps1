@@ -42,35 +42,22 @@ function Get-UpdateLogMapping {
     )
     
     if (-not (Test-Path $logFilePath)) {
-        Write-Host "DEBUG: UPDATE_LOG.md不存在于路径: $logFilePath" -ForegroundColor Yellow
         return @{}
     }
     
     try {
-        Write-Host "DEBUG: 开始解析UPDATE_LOG.md文件: $logFilePath" -ForegroundColor Gray
         $logContent = Get-Content -Path $logFilePath -Encoding UTF8
         $mapping = @{}
         
-        Write-Host "DEBUG: 读取到 $($logContent.Length) 行内容" -ForegroundColor Gray
-        
         foreach ($line in $logContent) {
             # 跳过空行和注释行
-            if ([string]::IsNullOrWhiteSpace($line)) {
-                Write-Host "DEBUG: 跳过空行" -ForegroundColor Gray
+            if ([string]::IsNullOrWhiteSpace($line) -or $line -match '^\s*#') {
                 continue
             }
-            
-            if ($line -match '^\s*#') {
-                Write-Host "DEBUG: 跳过注释行: $line" -ForegroundColor Gray
-                continue
-            }
-            
-            Write-Host "DEBUG: 处理行: $line" -ForegroundColor Gray
             
             # 找到第一个" - "分隔符
             $sepIndex = $line.IndexOf(" - ")
             if ($sepIndex -eq -1) {
-                Write-Host "DEBUG: 未找到分隔符，跳过该行" -ForegroundColor Gray
                 continue
             }
             
@@ -78,34 +65,23 @@ function Get-UpdateLogMapping {
             $pathPart = $line.Substring(0, $sepIndex)
             $descPart = $line.Substring($sepIndex + 3).Trim()
             
-            Write-Host "DEBUG: 路径部分: '$pathPart', 描述部分: '$descPart'" -ForegroundColor Gray
-            
             # 从路径部分中提取实际的文件路径
             # 路径部分格式：[时间戳] 【操作类型】 : 路径信息
             # 找到操作类型后面的冒号（不是时间戳中的冒号）
             $pathStartIndex = $pathPart.LastIndexOf(":")
             if ($pathStartIndex -eq -1) {
-                Write-Host "DEBUG: 未找到冒号，跳过该行" -ForegroundColor Gray
                 continue
             }
             
             $filePath = $pathPart.Substring($pathStartIndex + 1).Trim()
-            Write-Host "DEBUG: 提取到文件路径: '$filePath'" -ForegroundColor Gray
             
             if ($filePath -and $descPart) {
                 $mapping[$filePath] = $descPart
-                Write-Host "DEBUG: 添加到映射表 - 路径: '$filePath', 描述: '$descPart'" -ForegroundColor Cyan
             }
-        }
-        
-        Write-Host "DEBUG: 解析完成，共找到 $($mapping.Count) 条映射记录" -ForegroundColor Green
-        foreach ($entry in $mapping.GetEnumerator()) {
-            Write-Host "DEBUG: 映射记录 - 路径: '$($entry.Key)', 描述: '$($entry.Value)'" -ForegroundColor Green
         }
         
         return $mapping
     } catch {
-        Write-Host "DEBUG: 解析失败 - $($_.Exception.Message)" -ForegroundColor Red
         return @{}
     }
 }
@@ -114,13 +90,9 @@ function Get-UpdateLogMapping {
 $changes = git status --short 2>$null
 $changeDetails = ""
 if ($changes) {
-    Write-Host "DEBUG: 开始处理变更详情" -ForegroundColor Gray
     # 解析UPDATE_LOG.md
     $updateLogPath = Join-Path -Path $PWD -ChildPath "UPDATE_LOG.md"
-    Write-Host "DEBUG: UPDATE_LOG.md路径: $updateLogPath" -ForegroundColor Gray
     $updateLogMapping = Get-UpdateLogMapping -logFilePath $updateLogPath
-    
-    Write-Host "DEBUG: 解析完成，映射表包含 $($updateLogMapping.Count) 条记录" -ForegroundColor Gray
     
     # 确保变更详情使用正确的编码，并按行格式化
     $changeDetails = "`n变更详情:`n"
@@ -128,29 +100,20 @@ if ($changes) {
         $changeLine = $_
         # 跳过空行
         if ([string]::IsNullOrWhiteSpace($changeLine)) {
-            Write-Host "DEBUG: 跳过空变更行" -ForegroundColor Gray
             continue
         }
         
-        Write-Host "DEBUG: 处理变更行: '$changeLine'" -ForegroundColor Gray
-        
         # 提取文件路径（格式：XY file/path）
         $filePath = $changeLine -replace '^\s*[MADRCU?!]+\s+', ''
-        Write-Host "DEBUG: 提取到变更文件路径: '$filePath'" -ForegroundColor Gray
         
         # 查找对应的更新简述
         $changeDetails += "  $($changeLine.Trim())"
         if ($updateLogMapping.ContainsKey($filePath)) {
             $updateDesc = $updateLogMapping[$filePath]
             $changeDetails += " - $updateDesc"
-            Write-Host "DEBUG: 找到匹配的更新简述: '$updateDesc'" -ForegroundColor Cyan
-        } else {
-            Write-Host "DEBUG: 未找到匹配的更新简述" -ForegroundColor Gray
         }
         $changeDetails += "`n"
     }
-    
-    Write-Host "DEBUG: 生成的变更详情: '$changeDetails'" -ForegroundColor Gray
 }
 
 # 添加所有变更
