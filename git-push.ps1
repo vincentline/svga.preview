@@ -82,7 +82,8 @@ function Get-UpdateLogMapping {
             
             # 从路径部分中提取实际的文件路径
             # 路径部分格式：[时间戳] 【操作类型】 : 路径信息
-            $pathStartIndex = $pathPart.IndexOf(":")
+            # 找到操作类型后面的冒号（不是时间戳中的冒号）
+            $pathStartIndex = $pathPart.LastIndexOf(":")
             if ($pathStartIndex -eq -1) {
                 Write-Host "DEBUG: 未找到冒号，跳过该行" -ForegroundColor Gray
                 continue
