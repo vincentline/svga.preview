@@ -1,0 +1,3 @@
+这是一个测试文件，用于测试git-push.ps1脚本的自动提交功能
+创建时间：$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')
+测试内容：自动生成包含文件变更内容的提交信息
