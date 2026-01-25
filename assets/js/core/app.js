@@ -5213,7 +5213,10 @@ function initApp() {
        * 更新绿幕抠图效果
        */
       updateChromaKeyEffect: function () {
-        if (!this.chromaKeyEnabled || !this.mp4Video) return;
+        if (!this.chromaKeyEnabled || !this.mp4Video) {
+          this.removeChromaKeyEffect();
+          return;
+        }
 
         var _this = this;
         var video = this.mp4Video;
@@ -5270,6 +5273,9 @@ function initApp() {
 
         var renderChromaKey = function (currentTime) {
           if (!_this.chromaKeyEnabled || !_this.mp4Video || _this.currentModule !== 'mp4') {
+            // 如果绿幕抠图已关闭，确保渲染循环被正确清除并移除效果
+            _this.chromaKeyRenderLoop = null;
+            _this.removeChromaKeyEffect();
             return;
           }
 
@@ -5332,14 +5338,32 @@ function initApp() {
         var container = this.$refs.svgaContainer;
         if (!container || !this.mp4Video) return;
 
-        // 移除chromakey canvas
-        var chromakeyCanvas = container.querySelector('canvas.chromakey-canvas');
-        if (chromakeyCanvas) {
-          container.removeChild(chromakeyCanvas);
+        // 移除所有canvas元素，确保没有残留
+        var allCanvases = container.querySelectorAll('canvas');
+        allCanvases.forEach(function (canvas) {
+          if (canvas.classList.contains('chromakey-canvas')) {
+            container.removeChild(canvas);
+          }
+        });
+
+        // 确保视频元素完全可见
+        this.mp4Video.style.display = 'block';
+        this.mp4Video.style.visibility = 'visible';
+        this.mp4Video.style.opacity = '1';
+
+        // 确保视频播放位置与当前进度同步
+        if (this.currentTime > 0) {
+          this.mp4Video.currentTime = this.currentTime;
         }
 
-        // 显示video
-        this.mp4Video.style.display = '';
+        // 确保视频播放状态正确恢复
+        if (this.isPlaying) {
+          this.mp4Video.play();
+        }
+
+        // 重置canvas缓存，避免复用无效元素
+        this._chromaKeyCanvas = null;
+        this._chromaKeyCtx = null;
       },
 
       /**
@@ -5347,6 +5371,11 @@ function initApp() {
        */
       applyChromaKey: function () {
         this.chromaKeyApplied = this.chromaKeyEnabled;
+        if (this.chromaKeyEnabled) {
+          this.updateChromaKeyEffect();
+        } else {
+          this.removeChromaKeyEffect();
+        }
         this.closeChromaKeyPanel();
       },
 

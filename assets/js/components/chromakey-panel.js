@@ -52,7 +52,7 @@
         <div class="chromakey-config-section">
           <!-- 打开扮绿幕开关 -->
           <div class="chromakey-config-item">
-            <div class="chromakey-config-label">打开扮绿幕：</div>
+            <div class="chromakey-config-label">打开绿幕抠图：</div>
             <div class="chromakey-switch-wrapper" @click="toggleEnabled">
               <div class="chromakey-switch" :class="{active: enabled}">
                 <div class="chromakey-switch-handle"></div>
