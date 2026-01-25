@@ -61,7 +61,8 @@ function Get-UpdateLogDetails {
         $logMap = @{}
         
         # 匹配更新记录行：[时间戳] 【操作类型】 : 路径信息 - 更新简述
-        $logPattern = '^\[.*?\]\s+【[^】]+】\s+:\s+(.+?)\s+-\s+(.+)$'
+        # 修复正则表达式，确保正确匹配
+        $logPattern = '^\[.*?\]\s+【[^】]+】\s*:\s*(.*?)\s*\-\s*(.*?)$'
         
         foreach ($line in $logContent) {
             # 跳过空行和注释行
