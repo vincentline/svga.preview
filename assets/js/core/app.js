@@ -374,7 +374,7 @@ function initApp() {
 
         // 静音控制
         isMuted: false,
-        volume: 1, // 音量值 0-1
+        volume: 1, // 音量 值 0-1
         isDraggingVolume: false, // 音量滑块拖动状态
         yyevaHasAudio: false, // 双通道MP4视频是否包含音频轨道
 

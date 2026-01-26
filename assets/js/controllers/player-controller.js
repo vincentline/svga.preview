@@ -78,7 +78,7 @@
     seekTo: function (percentage) { throw new Error('子类必须实现 seekTo'); },
     // 设置静音
     setMuted: function (muted) { throw new Error('子类必须实现 setMuted'); },
-    // 设置音量
+    // 设置 音量
     setVolume: function (volume) { throw new Error('子类必须实现 setVolume'); },
     // 检查是否可用
     canHandle: function () { return this.state.hasFile; },
