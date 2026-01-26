@@ -8,6 +8,21 @@
   <meta name="description" content="MeeWoo  - 免费在线预览SVGA、Lottie、双通道MP4动画，支持素材管理、GIF导出、MP4转换、帧率调整、变速编辑，无需安装即用" />
   <meta name="keywords" content="MeeWoo,SVGA预览,Lottie播放器,双通道MP4,动画预览工具,GIF导出,SVGA素材管理,在线动画编辑器,MP4转换" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- 控制颜色方案，拒绝浏览器自动暗黑模式 -->
+  <meta name="color-scheme" content="light dark" />
+  <style>
+    /* 确保背景色不受浏览器自动暗黑模式影响 */
+    :root {
+      color-scheme: light dark;
+    }
+    html {
+      background-color: #fcfcfc;
+      transition: background-color 0.3s;
+    }
+    body.dark-mode html {
+      background-color: #1a1a1a;
+    }
+  </style>
 
   <!-- Open Graph / 社交分享优化 -->
   <meta property="og:type" content="website" />
@@ -236,6 +251,7 @@
             <template v-else-if="currentModule === 'mp4'">MP4</template>
             <template v-else-if="currentModule === 'frames'">序列帧</template>
             <template v-else>Lottie</template>
+            <template v-if="currentFileInfo.sizeWH"> / {{ currentFileInfo.sizeWH }}</template>
           </div>
 
           <div ref="svgaContainer" class="viewer-canvas"></div>

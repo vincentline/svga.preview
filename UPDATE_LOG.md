@@ -53,3 +53,6 @@
 [2026-01-26 03:45:00] 【新增文件】: test-update-log.txt - 测试git-push.ps1脚本从UPDATE_LOG.md中提取更新简述的功能
 [2026-01-26 03:50:00] 【新增文件】: test-update-log2.txt - 测试优化后的git-push.ps1脚本解析UPDATE_LOG.md的功能
 [2026-01-26 04:00:00] 【新增文件】: test-update.md - 测试git-push.ps1脚本提取更新简述的功能
+[2026-01-26 12:00:00] 【修改文件】: docs/index.html - 添加color-scheme元标签和相关样式，拒绝浏览器自动控制颜色
+[2026-01-26 12:00:00] 【修改文件】: docs/assets/js/core/app.js - 添加主题初始化逻辑、系统主题监听器，修改toggleTheme方法支持sessionStorage存储，删除重复注释
+[2026-01-26 12:30:00] 【修改文件】: docs/index.html - 播放器上面文字信息显示优化：添加尺寸显示（如"/ 750×1096"），在原来的文字后面添加，不新增div

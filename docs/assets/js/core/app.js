@@ -3348,14 +3348,73 @@ function initApp() {
       /* ==================== UI交互 ==================== */
 
       /**
+       * 初始化主题
+       */
+      initTheme: function () {
+        // 优先检查sessionStorage中的用户选择
+        var savedTheme = sessionStorage.getItem('theme');
+        if (savedTheme !== null) {
+          this.isDarkMode = savedTheme === 'dark';
+          this.isThemeManuallySet = true;
+        } else {
+          // 检测浏览器主题偏好
+          var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+          this.isDarkMode = prefersDark;
+          this.isThemeManuallySet = false;
+        }
+        
+        // 应用主题
+        if (this.isDarkMode) {
+          document.body.classList.add('dark-mode');
+        } else {
+          document.body.classList.remove('dark-mode');
+        }
+      },
+
+      /**
+       * 设置主题变化监听器
+       */
+      setupThemeListener: function () {
+        var _this = this;
+        var mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        
+        // 监听变化
+        var handleChange = function (e) {
+          // 仅在用户未手动设置时响应系统变化
+          if (!_this.isThemeManuallySet) {
+            _this.isDarkMode = e.matches;
+            if (_this.isDarkMode) {
+              document.body.classList.add('dark-mode');
+            } else {
+              document.body.classList.remove('dark-mode');
+            }
+          }
+        };
+        
+        // 添加监听器
+        if (mediaQuery.addEventListener) {
+          mediaQuery.addEventListener('change', handleChange);
+        } else {
+          // 兼容旧浏览器
+          mediaQuery.addListener(handleChange);
+        }
+        
+        // 保存监听器引用，便于后续清理
+        this._themeMediaQuery = mediaQuery;
+        this._themeChangeHandler = handleChange;
+      },
+
+      /**
        * 切换主题模式
        */
       toggleTheme: function () {
         this.isDarkMode = !this.isDarkMode;
         if (this.isDarkMode) {
           document.body.classList.add('dark-mode');
+          sessionStorage.setItem('theme', 'dark');
         } else {
           document.body.classList.remove('dark-mode');
+          sessionStorage.setItem('theme', 'light');
         }
         // 标记为用户手动切换，不再跟随浏览器主题变化
         this.isThemeManuallySet = true;
@@ -9331,6 +9390,12 @@ function initApp() {
         this.configManager = new Core.ConfigManager();
         this.loadUserConfig();
       }
+
+      // 初始化主题
+      this.initTheme();
+
+      // 监听系统主题变化
+      this.setupThemeListener();
 
       /**
        * [模式策略配置表]
