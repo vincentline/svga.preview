@@ -56,3 +56,7 @@
 [2026-01-26 12:00:00] 【修改文件】: docs/index.html - 添加color-scheme元标签和相关样式，拒绝浏览器自动控制颜色
 [2026-01-26 12:00:00] 【修改文件】: docs/assets/js/core/app.js - 添加主题初始化逻辑、系统主题监听器，修改toggleTheme方法支持sessionStorage存储，删除重复注释
 [2026-01-26 12:30:00] 【修改文件】: docs/index.html - 播放器上面文字信息显示优化：添加尺寸显示（如"/ 750×1096"），在原来的文字后面添加，不新增div
+[2026-01-26 12:34:00] 【修改文件】: docs/index.html - 为静音按钮添加音量滑块容器，支持正常模式和沉浸模式
+[2026-01-26 12:34:00] 【修改文件】: docs/assets/css/styles.css - 添加音量滑块样式系统，包括垂直滑块、动画效果和暗黑模式适配
+[2026-01-26 12:34:00] 【修改文件】: docs/assets/js/controllers/player-controller.js - 为GlobalAudioManager添加音量控制方法，为所有播放器适配器添加音量控制接口
+[2026-01-26 12:34:00] 【修改文件】: docs/assets/js/core/app.js - 添加音量相关状态变量和方法，实现音量滑块的拖动逻辑

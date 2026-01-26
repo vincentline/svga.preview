@@ -78,6 +78,8 @@
     seekTo: function (percentage) { throw new Error('子类必须实现 seekTo'); },
     // 设置静音
     setMuted: function (muted) { throw new Error('子类必须实现 setMuted'); },
+    // 设置音量
+    setVolume: function (volume) { throw new Error('子类必须实现 setVolume'); },
     // 检查是否可用
     canHandle: function () { return this.state.hasFile; },
     // 进度转换（用于变速等特殊场景）
@@ -138,6 +140,10 @@
     // Lottie 本身没有音频
   };
 
+  LottiePlayerAdapter.prototype.setVolume = function (volume) {
+    // Lottie 本身没有音频
+  };
+
   // ==================== 视频播放器适配器基类 ====================
 
   function VideoPlayerAdapter(state, video) {
@@ -174,6 +180,11 @@
 
   VideoPlayerAdapter.prototype.setMuted = function (muted) {
     this.video.muted = muted;
+  };
+
+  VideoPlayerAdapter.prototype.setVolume = function (volume) {
+    volume = Math.max(0, Math.min(1, volume));
+    this.video.volume = volume;
   };
 
   VideoPlayerAdapter.prototype.afterPlay = function () { };
@@ -311,6 +322,10 @@
     // 序列帧没有音频
   };
 
+  FramesPlayerAdapter.prototype.setVolume = function (volume) {
+    // 序列帧没有音频
+  };
+
   // ==================== SVGA 播放器适配器 ====================
 
   /**
@@ -392,6 +407,26 @@
       this.instances.forEach(function (howl) {
         howl.mute(muted);
       });
+    },
+
+    /**
+     * 设置所有音频音量
+     */
+    setVolume: function (volume) {
+      volume = Math.max(0, Math.min(1, volume));
+      this.instances.forEach(function (howl) {
+        howl.volume(volume);
+      });
+    },
+
+    /**
+     * 获取第一个音频实例的音量（作为当前音量参考）
+     */
+    getVolume: function () {
+      if (this.instances.length > 0) {
+        return this.instances[0].volume();
+      }
+      return 1;
     },
 
     /**
@@ -657,6 +692,7 @@
       html5: false, // 使用 Web Audio API 以获得更精准的 Seek 控制
       loop: false,
       autoplay: false,
+      volume: GlobalAudioManager.getVolume(),
       onload: function () {
         // 音频加载完成后，如果当前处于播放状态，尝试同步
         // 这可以解决音频加载延迟导致的首次播放无声问题
@@ -683,6 +719,10 @@
 
   SvgaPlayerAdapter.prototype.setMuted = function (muted) {
     GlobalAudioManager.muteAll(muted);
+  };
+
+  SvgaPlayerAdapter.prototype.setVolume = function (volume) {
+    GlobalAudioManager.setVolume(volume);
   };
 
   // 销毁时清理音频
@@ -848,6 +888,22 @@
       adapter.setMuted(muted);
     } catch (e) {
       console.error('设置静音失败:', e);
+    }
+  };
+
+  /**
+   * 设置音量
+   * @param {number} volume 音量值 0-1
+   */
+  PlayerController.prototype.setVolume = function (volume) {
+    var adapter = this.getAdapter();
+
+    if (!adapter) return;
+
+    try {
+      adapter.setVolume(volume);
+    } catch (e) {
+      console.error('设置音量失败:', e);
     }
   };
 

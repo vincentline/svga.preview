@@ -374,6 +374,8 @@ function initApp() {
 
         // 静音控制
         isMuted: false,
+        volume: 1, // 音量值 0-1
+        isDraggingVolume: false, // 音量滑块拖动状态
         yyevaHasAudio: false, // 双通道MP4视频是否包含音频轨道
 
         // 序列帧模式状态
@@ -2104,6 +2106,58 @@ function initApp() {
         if (this.playerController) {
           this.playerController.setMuted(this.isMuted);
         }
+      },
+
+      /**
+       * 开始拖动音量滑块
+       */
+      startVolumeDrag: function (event) {
+        event.preventDefault();
+        this.isDraggingVolume = true;
+        this.updateVolume(event);
+        
+        // 添加全局事件监听
+        document.addEventListener('mousemove', this.updateVolume);
+        document.addEventListener('mouseup', this.stopVolumeDrag);
+        document.addEventListener('touchmove', this.updateVolume);
+        document.addEventListener('touchend', this.stopVolumeDrag);
+      },
+
+      /**
+       * 更新音量
+       */
+      updateVolume: function (event) {
+        if (!this.isDraggingVolume) return;
+        event.preventDefault();
+        
+        var track = event.currentTarget;
+        if (!track) return;
+        
+        var rect = track.getBoundingClientRect();
+        var clientY = event.clientY || (event.touches && event.touches[0] && event.touches[0].clientY);
+        if (!clientY) return;
+        
+        var y = clientY - rect.top;
+        var percentage = 1 - Math.max(0, Math.min(1, y / rect.height));
+        var volume = percentage;
+        
+        this.volume = volume;
+        if (this.playerController) {
+          this.playerController.setVolume(volume);
+        }
+      },
+
+      /**
+       * 停止拖动音量滑块
+       */
+      stopVolumeDrag: function () {
+        this.isDraggingVolume = false;
+        
+        // 移除全局事件监听
+        document.removeEventListener('mousemove', this.updateVolume);
+        document.removeEventListener('mouseup', this.stopVolumeDrag);
+        document.removeEventListener('touchmove', this.updateVolume);
+        document.removeEventListener('touchend', this.stopVolumeDrag);
       },
 
       // 检测视频是否包含音频轨道

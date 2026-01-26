@@ -2537,6 +2537,116 @@ body.dark-mode .material-search:focus-within {
   transition: all 0.3s;
 }
 
+/* ==================== 音量控制样式 ==================== */
+
+/* 静音控制容器 */
+.mute-control-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 迷你模式下的静音控制容器 */
+.mute-control-container.mini-mute-control {
+  gap: 6px;
+}
+
+/* 音量滑块容器 */
+.volume-slider-container {
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  transform: translateX(-50%);
+  margin-bottom: 8px;
+  width: 24px;
+  height: 80px;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease;
+  z-index: 100;
+}
+
+/* 迷你模式下的音量滑块 */
+.volume-slider-container.mini-volume-slider {
+  height: 60px;
+  margin-bottom: 6px;
+}
+
+/* 鼠标悬停时显示音量滑块 */
+.mute-control-container:hover .volume-slider-container {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* 音量滑块轨道 */
+.volume-slider-track {
+  position: relative;
+  width: 4px;
+  height: 100%;
+  background-color: #f3f3f3;
+  border-radius: 2px;
+  margin: 0 auto;
+  cursor: pointer;
+}
+
+body.dark-mode .volume-slider-track {
+  background-color: #5B5B5B;
+}
+
+/* 音量滑块填充 */
+.volume-slider-fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background-color: #5B5B5B;
+  border-radius: 2px;
+  transition: height 0.1s ease;
+}
+
+body.dark-mode .volume-slider-fill {
+  background-color: #EBEBEB;
+}
+
+/* 音量滑块手柄 */
+.volume-slider-handle {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%) translateY(50%);
+  width: 12px;
+  height: 12px;
+  background-color: #5B5B5B;
+  border-radius: 50%;
+  cursor: grab;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  z-index: 2;
+}
+
+body.dark-mode .volume-slider-handle {
+  background-color: #EBEBEB;
+}
+
+.volume-slider-handle:hover {
+  transform: translateX(-50%) translateY(50%) scale(1.2);
+  box-shadow: 0 0 0 4px rgba(64, 158, 255, 0.2);
+  background-color: #409eff;
+}
+
+body.dark-mode .volume-slider-handle:hover {
+  background-color: #409eff;
+}
+
+.volume-slider-handle:active {
+  cursor: grabbing;
+  transform: translateX(-50%) translateY(50%) scale(1.3);
+  box-shadow: 0 0 0 6px rgba(64, 158, 255, 0.3);
+  background-color: #409eff;
+}
+
 .material-search-input::placeholder {
   color: #999999;
 }
