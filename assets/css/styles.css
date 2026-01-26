@@ -839,11 +839,12 @@ body.dark-mode .empty-state-title {
   background: #ffffff;
   border: 1px solid #F3F3F3;
   border-radius: 8px;
-  /* 娌夋蹈妯″紡涓嬫贰鍑哄姩鐢?*/
+  /* 沉浸模式下淡出动画*/
   opacity: 1;
   transition: opacity 1s ease;
   margin-bottom: 10px;
   align-self: flex-start;
+  width: 90%;
 }
 
 /* 右上角清空按钮区域*/
@@ -884,14 +885,14 @@ body.dark-mode .mode-name-box {
   border-color: #404040;
 }
 
-/* 妯″紡鍚嶇О鏍囩 */
+/* 模式名称标签 */
 .mode-name-label {
   font-family: 'Segoe UI', sans-serif;
   font-weight: 400;
   font-size: 14px;
   line-height: 28px;
   color: #333333;
-  max-width: 800px;
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
