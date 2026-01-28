@@ -740,6 +740,7 @@
   function PlayerController(options) {
     this.options = options || {};
     this.onProgressChange = options.onProgressChange || function () { };
+    this.onVolumeChange = options.onVolumeChange || function () { };
     // 拦截外部传入的 onPlayStateChange，注入内部处理逻辑
     var externalOnPlayStateChange = options.onPlayStateChange || function () { };
     var _this = this;
@@ -756,6 +757,11 @@
     this.progressBar = null;
     this.progressThumb = null;
 
+    // 音量滑块拖拽状态
+    this.isVolumeDragging = false;
+    this.volumeBar = null;
+    this.volumeThumb = null;
+
     // 适配器缓存（新增：避免每帧重新创建）
     this.currentAdapter = null;
     this.currentMode = null;
@@ -766,6 +772,11 @@
     // 初始化进度条拖拽
     if (options.progressBar && options.progressThumb) {
       this.initProgressDrag(options.progressBar, options.progressThumb);
+    }
+
+    // 初始化音量滑块拖拽
+    if (options.volumeBar && options.volumeThumb) {
+      this.initVolumeDrag(options.volumeBar, options.volumeThumb);
     }
   }
 
@@ -1078,6 +1089,112 @@
   };
 
   /**
+   * 初始化音量滑块拖拽
+   * @param {HTMLElement} volumeBar 音量条容器
+   * @param {HTMLElement} volumeThumb 音量滑块元素
+   */
+  PlayerController.prototype.initVolumeDrag = function (volumeBar, volumeThumb) {
+    var _this = this;
+    this.volumeBar = volumeBar;
+    this.volumeThumb = volumeThumb;
+
+    // 鼠标/触摸开始
+    var onVolumeDragStart = function (e) {
+      e.preventDefault();
+      _this.isVolumeDragging = true;
+
+      // 立即更新音量（标记为拖拽中）
+      updateVolume(e, true);
+
+      // 添加全局事件监听
+      document.addEventListener('mousemove', onVolumeDragMove);
+      document.addEventListener('mouseup', onVolumeDragEnd);
+      document.addEventListener('touchmove', onVolumeDragMove, { passive: false });
+      document.addEventListener('touchend', onVolumeDragEnd);
+    };
+
+    // 节流工具函数
+    var throttle = function (func, limit) {
+      var inThrottle;
+      return function () {
+        var args = arguments;
+        var context = this;
+        if (!inThrottle) {
+          func.apply(context, args);
+          inThrottle = true;
+          setTimeout(function () {
+            inThrottle = false;
+          }, limit);
+        }
+      }
+    };
+
+    // 拖拽中（增加节流防止高频触发）
+    var updateVolumeThrottled = throttle(function (e) {
+      updateVolume(e, true); // 标记为拖拽中
+    }, 50); // 50ms 节流 (20fps)
+
+    var onVolumeDragMove = function (e) {
+      if (!_this.isVolumeDragging) return;
+      e.preventDefault();
+      updateVolumeThrottled(e);
+    };
+
+    // 拖拽结束
+    var onVolumeDragEnd = function () {
+      _this.isVolumeDragging = false;
+
+      // 移除全局事件监听
+      document.removeEventListener('mousemove', onVolumeDragMove);
+      document.removeEventListener('mouseup', onVolumeDragEnd);
+      document.removeEventListener('touchmove', onVolumeDragMove);
+      document.removeEventListener('touchend', onVolumeDragEnd);
+    };
+
+    // 更新音量
+    var updateVolume = function (e, isDragging) {
+      var clientY = e.clientY || (e.touches && e.touches[0] && e.touches[0].clientY);
+      if (!clientY) return;
+
+      var rect = _this.volumeBar.getBoundingClientRect();
+      var y = clientY - rect.top;
+      var percentage = 1 - Math.max(0, Math.min(1, y / rect.height));
+      var volumePercentage = Math.round(percentage * 100); // 借鉴进度条，使用整数百分比
+      var volume = volumePercentage / 100; // 转换为 0-1 范围供播放器使用
+
+      // 先触发音量变化回调，更新 UI
+      _this.onVolumeChange(volume);
+      // 再设置音量，更新播放器
+      _this.setVolume(volume);
+    };
+
+    // 绑定滑块事件
+    volumeThumb.addEventListener('mousedown', onVolumeDragStart);
+    volumeThumb.addEventListener('touchstart', onVolumeDragStart, { passive: false });
+
+    // 点击音量条跳转（保存函数引用以便清理）
+    var onVolumeBarClick = function (e) {
+      // 如果点击的是滑块，不处理（由拖拽处理）
+      if (e.target === volumeThumb || volumeThumb.contains(e.target)) {
+        return;
+      }
+      updateVolume(e, false); // 点击是直接跳转，不是拖拽中
+    };
+    volumeBar.addEventListener('click', onVolumeBarClick);
+
+    // 保存清理函数
+    this._cleanupVolumeDrag = function () {
+      // 清理滑块事件
+      volumeThumb.removeEventListener('mousedown', onVolumeDragStart);
+      volumeThumb.removeEventListener('touchstart', onVolumeDragStart);
+      // 清理音量条点击事件
+      volumeBar.removeEventListener('click', onVolumeBarClick);
+      // 确保清理全局监听
+      onVolumeDragEnd();
+    };
+  };
+
+  /**
    * 销毁控制器
    */
   PlayerController.prototype.destroy = function () {
@@ -1095,6 +1212,13 @@
     }
     this.progressBar = null;
     this.progressThumb = null;
+
+    if (this._cleanupVolumeDrag) {
+      this._cleanupVolumeDrag();
+      this._cleanupVolumeDrag = null;
+    }
+    this.volumeBar = null;
+    this.volumeThumb = null;
   };
 
   // 导出到全局命名空间

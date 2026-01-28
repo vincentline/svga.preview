@@ -2001,11 +2001,15 @@ function initApp() {
         this.$nextTick(function () {
           var progressBar = _this.$refs.progressBar;
           var progressThumb = _this.$refs.progressThumb;
+          var volumeBar = _this.$refs.volumeSliderTrack;
+          var volumeThumb = _this.$refs.volumeSliderHandle;
 
           if (progressBar && progressThumb) {
             _this.playerController = new Controllers.PlayerController({
               progressBar: progressBar,
               progressThumb: progressThumb,
+              volumeBar: volumeBar,
+              volumeThumb: volumeThumb,
               onProgressChange: function (progress, currentFrame) {
                 _this.progress = progress;
                 _this.currentFrame = currentFrame;
@@ -2013,6 +2017,9 @@ function initApp() {
                 if (_this.totalDuration > 0) {
                   _this.currentTime = (progress / 100) * _this.totalDuration;
                 }
+              },
+              onVolumeChange: function (volume) {
+                _this.volume = volume;
               },
               onPlayStateChange: function (isPlaying) {
                 _this.isPlaying = isPlaying;

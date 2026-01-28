@@ -456,9 +456,9 @@
                           :title="hasAudio ? (isMuted ? '取消静音' : '静音') : '无音频'"></button>
                         <!-- 音量滑块 -->
                         <div class="volume-slider-container" v-show="hasAudio">
-                          <div class="volume-slider-track" @mousedown="startVolumeDrag" @touchstart="startVolumeDrag">
+                          <div class="volume-slider-track" ref="volumeSliderTrack">
                             <div class="volume-slider-fill" :style="{height: volume * 100 + '%'}"></div>
-                            <div class="volume-slider-handle" :style="{bottom: volume * 100 + '%'}" @mousedown="startVolumeDrag" @touchstart="startVolumeDrag"></div>
+                            <div class="volume-slider-handle" ref="volumeSliderHandle" :style="{bottom: volume * 100 + '%'}"></div>
                           </div>
                         </div>
                       </div>
