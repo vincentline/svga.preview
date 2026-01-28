@@ -65,14 +65,18 @@ try {
     }
     
     # Use git subtree split to separate docs directory into independent commit
-    Write-Host "Separating docs directory..."
+    Write-Host "[进度] 正在分离docs目录... (此步骤可能需要几分钟)"
+    Write-Host "[进度] 正在执行: git subtree split --prefix docs main"
     $splitHash = git subtree split --prefix docs main 2>&1
+    
+    Write-Host "[进度] 分离完成，正在处理结果..."
     if ($LASTEXITCODE -ne 0) {
         Write-Host "Error: Failed to separate docs directory: $splitHash"
         exit 1
     }
     
     # Remove possible error messages, keep only hash value
+    Write-Host "[进度] 正在提取提交哈希值..."
     $splitHash = $splitHash | Where-Object { $_ -match '^[0-9a-f]{40}$' }
     if (-not $splitHash) {
         Write-Host "Error: Failed to get separated commit hash"
@@ -82,8 +86,11 @@ try {
     Write-Host "Successfully separated docs directory, commit hash: $splitHash"
     
     # Push separated commit to gh-pages branch
-    Write-Host "Pushing to gh-pages branch..."
+    Write-Host "[进度] 正在推送到gh-pages分支..."
+    Write-Host "[进度] 正在执行: git push origin ${splitHash}:refs/heads/gh-pages --force"
     $pushResult = git push origin ${splitHash}:refs/heads/gh-pages --force 2>&1
+    
+    Write-Host "[进度] 推送完成，正在检查结果..."
     if ($LASTEXITCODE -ne 0) {
         Write-Host "Error: Push failed: $pushResult"
         exit 1
