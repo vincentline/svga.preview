@@ -27,6 +27,9 @@
 - 更新简述：如新增功能、修复问题、优化性能等，简单描述
 
 ## 更新记录
+[2026-01-28 11:03:34] 【修改文件】: docs/assets/js/core/material-operations.js - 删除调试语句，清理console.log、console.error等调试输出
+[2026-01-28 11:03:34] 【修改文件】: docs/assets/js/service/library-loader.js - 删除调试语句，清理console.error、console.warn等调试输出
+[2026-01-28 11:03:34] 【修改文件】: INDEX.md - 更新项目功能索引，调整文件结构，添加新文件和目录的索引，移除已归档的文档索引
 [2026-01-26 21:34:15] 【修改文件】: scripts/GET_TIME.ps1 - 修复编码问题，确保中文注释正常显示，添加UTF-8 BOM编码支持
 [2026-01-26 05:22:13] 【修改文件】: docs/index.html - 修复首页点击footer-main footer-main-empty时重复弹出文件选择弹窗的问题，重新添加@click.stop阻止事件冒泡
 [2026-01-26 04:49:24] 【修改文件】: docs/assets/css/styles.css - 修改material-search样式，使用input-wrapper样式，设置高度为36px
