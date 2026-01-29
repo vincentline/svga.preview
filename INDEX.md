@@ -61,6 +61,7 @@ MeeWoo 是一个 SVGA 动画预览与转换工具，支持多种动画格式的�
 | `docs/assets/js/controllers/ad-controller.js` | 广告控制器，管理广告位和广告显示 | 广告管理、广告控制、广告位 |
 | `docs/assets/js/controllers/input-controller.js` | 输入控制器，处理用户输入事件 | 输入处理、事件管理、用户交互 |
 | `docs/assets/js/controllers/player-controller.js` | 播放器控制器，管理 SVGA 播放器状态 | 播放器管理、状态控制、播放控制 |
+| `docs/assets/js/controllers/user-type-controller.js` | 用户类型控制器，根据用户类型控制页面元素显示/隐藏 | 用户类型、权限控制、元素显示 |
 | `docs/assets/js/controllers/viewport-controller.js` | 视口控制器，管理页面视图状态和缩放 | 视口管理、状态控制、缩放控制 |
 
 ### 6. 服务模块 (docs/assets/js/service/)
@@ -182,6 +183,6 @@ MeeWoo 是一个 SVGA 动画预览与转换工具，支持多种动画格式的�
 
 ## 版本信息
 
-- 索引版本：1.1.0
-- 最后更新：[2026-01-26 20:58:02]
+- 索引版本：1.1.1
+- 最后更新：[2026-01-29 12:59:15]
 - 适用项目版本：v1.0.0
