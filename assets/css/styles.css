@@ -1320,11 +1320,11 @@ body.dark-mode .info-item-value {
 }
 
 /* 暗黑模式下的背景色选项列表 */
-body.dark-mode .bg-color-options {
-  /* background-color: #2a2a2a;
+/* body.dark-mode .bg-color-options {
+  background-color: #2a2a2a;
   border-color: #404040;
-  box-shadow: 0px 4px 16px rgba(0, 0, 0, 0.3); */
-}
+  box-shadow: 0px 4px 16px rgba(0, 0, 0, 0.3); 
+}*/
 
 /* 鼠标悬停时显示背景色选项 */
 .bg-color-selector:hover .bg-color-options {
