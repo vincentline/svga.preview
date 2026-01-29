@@ -80,7 +80,7 @@ try {
     git clone "file://$PSScriptRoot" "$tempDir"
     if ($LASTEXITCODE -ne 0) {
         Write-Host "Error: Failed to clone repository"
-        Remove-Item $tempDir -Recurse -Force
+        Remove-Item $tempDir -Recurse -Force -ErrorAction SilentlyContinue
         exit 1
     }
     
@@ -110,7 +110,7 @@ try {
     foreach ($file in $allFiles) {
         $currentFile++
         Write-Host "[Progress] Deleting file " $currentFile "/" $totalFiles ": " $file.Name
-        Remove-Item $file.FullName -Recurse -Force
+        Remove-Item $file.FullName -Recurse -Force -ErrorAction SilentlyContinue
     }
     
     # Copy docs directory content
@@ -127,7 +127,7 @@ try {
         if (-not (Test-Path $targetDir)) {
             New-Item -ItemType Directory -Path $targetDir -Force | Out-Null
         }
-        Copy-Item -Path $file.FullName -Destination $targetPath -Force
+        Copy-Item -Path $file.FullName -Destination $targetPath -Force -ErrorAction SilentlyContinue
         Write-Host "[Progress] Copying file " $currentDocsFile "/" $totalDocsFiles ": " $relativePath
     }
     
@@ -140,26 +140,35 @@ try {
         Write-Host "Warning: No changes to commit"
     }
     
-    # Push to gh-pages branch
+    # Push to gh-pages branch with force
     Write-Host "[Progress] Pushing to gh-pages branch..."
-    git push origin gh-pages
+    git push --force origin gh-pages
     if ($LASTEXITCODE -ne 0) {
         Write-Host "Error: Push failed"
-        Remove-Item $tempDir -Recurse -Force
+        cd $PSScriptRoot
+        Remove-Item $tempDir -Recurse -Force -ErrorAction SilentlyContinue
         exit 1
     }
-    
-    # Clean up temporary directory
-    cd $PSScriptRoot
-    Remove-Item $tempDir -Recurse -Force
-    Write-Host "[Progress] Cleaning up temporary directory"
     
     # Switch back to original branch
     git checkout $currentBranch
     
+    # Clean up temporary directory
+    cd $PSScriptRoot
+    Write-Host "[Progress] Cleaning up temporary directory"
+    # 等待几秒钟，确保所有文件都已释放
+    Start-Sleep -Seconds 2
+    Remove-Item $tempDir -Recurse -Force -ErrorAction SilentlyContinue
+    
     Write-Host "Success: docs directory has been published to gh-pages branch"
 } catch {
     Write-Host "Error: Failed to publish to gh-pages branch: $($_.Exception.Message)"
+    try {
+        cd $PSScriptRoot
+        Remove-Item $tempDir -Recurse -Force -ErrorAction SilentlyContinue
+    } catch {
+        # Ignore cleanup errors
+    }
     exit 1
 }
 
