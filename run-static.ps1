@@ -1,14 +1,22 @@
-# Start a HTTP server with SharedArrayBuffer support for FFmpeg.wasm
+#!/usr/bin/env powershell
+# -*- coding: utf-8 -*-
+# 启动支持 SharedArrayBuffer 的 HTTP 服务器，用于 FFmpeg.wasm
+# 注意：此脚本必须使用 UTF-8 with BOM 编码保存，否则中文会显示为乱码
 
-Write-Output "Starting server with SharedArrayBuffer support..."
-Write-Output "URL: http://localhost:8081/index.html"
+# 设置编码为 UTF-8
+$OutputEncoding = [System.Text.Encoding]::UTF8
+[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new()
+[System.Console]::InputEncoding = [System.Text.UTF8Encoding]::new()
+
+Write-Output "正在启动支持 SharedArrayBuffer 的服务器..."
+Write-Output "访问地址: http://localhost:8081/index.html"
 Write-Output ""
-Write-Output "Note: This server enables Cross-Origin-Opener-Policy headers"
-Write-Output "      required by FFmpeg.wasm and other WASM libraries."
+Write-Output "注意：此服务器启用了 Cross-Origin-Opener-Policy 头"
+Write-Output "      这是 FFmpeg.wasm 和其他 WASM 库所必需的。"
 Write-Output ""
-Write-Output "Press Ctrl+C to stop"
+Write-Output "按 Ctrl+C 停止服务器"
 Write-Output ""
 
-# Use custom Python server with COOP/COEP headers
-cd docs
-python run-server.py
+# 使用自定义的 Python 服务器，带有 COOP/COEP 头
+# 调用根目录下的 start_server.py 文件
+python ../start_server.py
