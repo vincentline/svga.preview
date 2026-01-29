@@ -8394,7 +8394,185 @@ function initApp() {
 
       /* ==================== 格式转换：SVGA转MP4 ==================== */
 
-      
+      /**
+       * 开始 SVGA 转 MP4 转换
+       
+      startMP4Conversion: async function (config) {
+        var _this = this;
+
+        // 如果传入了配置（来自组件），则更新本地配置
+        if (config) {
+          this.dualChannelConfig = Object.assign({}, this.dualChannelConfig, config);
+        }
+
+        // 前置检查
+        if (!this.svgaPlayer || !this.svga.hasFile || !this.originalVideoItem) {
+          alert('请先加载 SVGA 文件');
+          return;
+        }
+
+        // 检查是否有其他正在进行的任务
+        if (!this.confirmIfHasOngoingTasks('SVGA转双通道', 'task')) {
+          return; // 用户取消
+        }
+
+        // 参数验证
+        var width = this.dualChannelConfig.width;
+        var height = this.dualChannelConfig.height;
+        var quality = this.dualChannelConfig.quality;
+        var fps = this.dualChannelConfig.fps;
+
+        // 验证宽度
+        if (width < 1 || width > 9999) {
+          alert('宽度超出范围！\n\n合法范围：1-9999 像素\n当前值：' + width);
+          return;
+        }
+
+        // 验证高度
+        if (height < 1 || height > 9999) {
+          alert('高度超出范围！\n\n合法范围：1-9999 像素\n当前值：' + height);
+          return;
+        }
+
+        // 验证压缩质量
+        if (quality < 1 || quality > 100) {
+          alert('压缩质量超出范围！\n\n合法范围：1-100\n当前值：' + quality);
+          return;
+        }
+
+        // 验证帧率
+        if (fps < 1 || fps > 120) {
+          alert('帧率超出范围！\n\n合法范围：1-120 fps\n当前值：' + fps);
+          return;
+        }
+
+        // 保存配置到 configManager
+        try {
+          if (this.configManager) {
+            this.configManager.set('mp4_quality', this.dualChannelConfig.quality);
+            this.configManager.set('mp4_fps', this.dualChannelConfig.fps);
+          }
+        } catch (e) {
+          console.error('Failed to save MP4 config:', e);
+        }
+
+        this.isConvertingToDualChannel = true;
+        this.dualChannelProgress = 0;
+        this.dualChannelCancelled = false;
+        this.dualChannelStage = 'loading';
+        this.dualChannelMessage = '正在加载转换器...';
+
+        var taskId = null;
+        if (this.taskManager) {
+          taskId = this.taskManager.register('SVGA转双通道', function () {
+            _this.cancelSvgaToDualChannelConversion();
+          });
+        }
+
+        try {
+          // 1. 加载 FFmpeg (使用统一服务)
+          await Services.FFmpegService.init();
+          if (this.dualChannelCancelled) throw new Error('用户取消转换');
+
+          // 2. 提取序列帧
+          this.dualChannelStage = 'extracting';
+          this.dualChannelMessage = '正在提取序列帧...';
+          var frames = await this.extractFrames();
+          if (this.dualChannelCancelled) throw new Error('用户取消转换');
+
+          // 3. 合成双通道
+          this.dualChannelStage = 'composing';
+          this.dualChannelMessage = '正在合成双通道...';
+          var dualFrames = await this.composeDualChannelFrames(frames);
+          if (this.dualChannelCancelled) throw new Error('用户取消转换');
+
+          // 4. 编码为 MP4 (使用统一服务)
+          this.dualChannelStage = 'encoding';
+          this.dualChannelMessage = '正在编码为MP4...';
+
+          // 准备音频数据
+          var audioData = null;
+          var hasAudioData = this.svgaAudioData && Object.keys(this.svgaAudioData).length > 0;
+          if (!this.dualChannelConfig.muted && hasAudioData) {
+            var audioKeys = Object.keys(this.svgaAudioData);
+            audioData = this.svgaAudioData[audioKeys[0]];
+          }
+
+          var videoItem = this.originalVideoItem;
+          var inputFps = videoItem.FPS || videoItem.fps || 30;
+
+          var mp4Blob = await Services.FFmpegService.convertFramesToMp4({
+            frames: dualFrames,
+            fps: this.dualChannelConfig.fps,
+            inputFps: inputFps,
+            quality: this.dualChannelConfig.quality,
+            audioData: audioData,
+            onProgress: function (p) {
+              _this.dualChannelProgress = Math.round(p * 100);
+              if (p < 0.4) {
+                _this.dualChannelMessage = '正在写入帧数据... ' + Math.round(p / 0.4 * 100) + '%';
+              } else if (p < 0.45) {
+                _this.dualChannelMessage = '正在处理音频...';
+              } else if (p < 0.95) {
+                _this.dualChannelMessage = '正在编码视频... ' + Math.round((p - 0.45) / 0.5 * 100) + '%';
+              } else {
+                _this.dualChannelMessage = '正在生成文件...';
+              }
+            },
+            checkCancelled: function () {
+              return _this.dualChannelCancelled;
+            }
+          });
+
+          if (this.dualChannelCancelled) throw new Error('用户取消转换');
+
+          // 5. 下载文件
+          this.dualChannelStage = 'done';
+          this.dualChannelMessage = '转换完成！';
+          this.dualChannelProgress = 100;
+          this.downloadMP4(mp4Blob);
+
+          // 提示音频状态
+          setTimeout(function () {
+            var isMuted = _this.dualChannelConfig.muted;
+            var msg = '';
+
+            if (isMuted) {
+              msg = '✅ 转换完成！\n\n已按您的要求生成静音MP4文件。';
+            } else if (!hasAudioData) {
+              msg = '✅ 转换完成！\n\nSVGA文件不包含音频，已生成静音MP4文件。';
+            } else if (audioData) {
+              msg = '✅ 转换完成！\n\n已成功将SVGA中的音频合成到MP4文件中。\n\n请播放检查音频效果，如有问题请反馈。';
+            } else {
+              msg = '✅ 转换完成！';
+            }
+
+            if (msg) {
+              alert(msg);
+            }
+          }, 500);
+
+          // 重置状态
+          setTimeout(function () {
+            if (!_this.isConvertingToDualChannel) {
+              _this.dualChannelProgress = 0;
+              _this.dualChannelStage = '';
+              _this.dualChannelMessage = '';
+            }
+          }, 1000);
+
+        } catch (error) {
+          if (error.message !== '用户取消转换') {
+            console.error('MP4转换失败:', error);
+            alert('转换失败：' + error.message);
+          }
+        } finally {
+          if (this.taskManager && taskId) {
+            this.taskManager.finish(taskId);
+          }
+          this.isConvertingToDualChannel = false;
+        }
+      },*/
 
       /**
        * 从 MP4视频提取音频数据

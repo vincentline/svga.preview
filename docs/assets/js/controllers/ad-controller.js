@@ -99,13 +99,16 @@
          * 逻辑：
          * - 如果未配置 / 加载失败：隐藏所有广告位（不影响主功能）
          * - 如果 enabled=false：隐藏所有广告位
-         * - 如果 enabled=true：只显示 position 对应的那个
+         * - 如果是内部用户：隐藏所有广告位
+         * - 如果 enabled=true 且是普通用户：只显示 position 对应的那个
          */
         applyConfig() {
             // 使用正确的 SiteConfig 实例路径
             let adConfig = null;
+            let userTypeConfig = {};
             if (window.MeeWoo && window.MeeWoo.Core && window.MeeWoo.Core.SiteConfig) {
                 adConfig = window.MeeWoo.Core.SiteConfig.getFeature('advertisement');
+                userTypeConfig = window.MeeWoo.Core.SiteConfig.getUserTypeConfig();
             }
 
             if (!adConfig) {
@@ -114,9 +117,10 @@
             }
 
             const { enabled, position } = adConfig;
+            const { showAdvertisement = true } = userTypeConfig;
 
-            if (enabled && position) {
-                // 启用指定位置的广告位
+            if (enabled && position && showAdvertisement) {
+                // 启用指定位置的广告位（仅当启用广告且用户类型配置允许显示广告时）
                 this.showAd(position);
             } else {
                 // 隐藏所有广告位

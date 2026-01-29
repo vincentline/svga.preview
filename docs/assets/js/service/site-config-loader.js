@@ -190,6 +190,49 @@
         }
 
         /**
+         * 获取当前用户类型
+         * @returns {string} 用户类型 (public/internal)
+         */
+        getUserType() {
+            // 从URL参数中获取用户类型
+            const urlParams = new URLSearchParams(window.location.search);
+            const userType = urlParams.get('type');
+            
+            // 验证用户类型是否有效
+            const validTypes = ['public', 'internal'];
+            if (userType && validTypes.includes(userType)) {
+                return userType;
+            }
+            
+            // 默认使用配置中的默认用户类型
+            const userTypeConfig = this.getFeature('userType');
+            return userTypeConfig ? userTypeConfig.default || 'public' : 'public';
+        }
+
+        /**
+         * 获取用户类型对应的控制配置
+         * @returns {Object} 用户类型控制配置
+         */
+        getUserTypeConfig() {
+            const userType = this.getUserType();
+            const userTypeConfig = this.getFeature('userType');
+            
+            if (userTypeConfig && userTypeConfig.controls) {
+                return userTypeConfig.controls[userType] || userTypeConfig.controls.public || {};
+            }
+            
+            return {};
+        }
+
+        /**
+         * 检查是否为内部用户
+         * @returns {boolean} 是否为内部用户
+         */
+        isInternalUser() {
+            return this.getUserType() === 'internal';
+        }
+
+        /**
          * 等待配置加载完成
          * @returns {Promise<Object>} 配置对象
          * 

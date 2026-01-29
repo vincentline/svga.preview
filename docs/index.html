@@ -79,6 +79,9 @@
   <!-- 广告位控制器 -->
   <script src="assets/js/controllers/ad-controller.js"></script>
 
+  <!-- 用户类型控制器 -->
+  <script src="assets/js/controllers/user-type-controller.js"></script>
+
   <!-- ===== 所有库统一由 library-loader.js 动态加载 ===== -->
   <!-- Vue.js - 核心框架，优先级最高 -->
   <!-- SVGA播放器 - 核心功能，优先级次之 -->
@@ -1155,7 +1158,7 @@
         </div>
       </div>
       <div class="drawer-content">
-        <a href="sth_auto.html" class="drawer-btn">
+        <a href="sth_auto.html" class="drawer-btn" data-user-type="material-self-service">
           <span>素材自助</span>
           <img :src="isDarkMode ? 'assets/img/go_dark.png' : 'assets/img/go.png'" class="drawer-btn-icon" alt="Go">
         </a>
@@ -1167,11 +1170,11 @@
           <span>修复中文乱码工具</span>
           <img :src="isDarkMode ? 'assets/img/go_dark.png' : 'assets/img/go.png'" class="drawer-btn-icon" alt="Go">
         </a>
-        <div class="drawer-btn disabled">
+        <div class="drawer-btn disabled" data-user-type="celebrity-gift-video">
           <span>名人礼物视频版</span>
           <img :src="isDarkMode ? 'assets/img/go_dark.png' : 'assets/img/go.png'" class="drawer-btn-icon" alt="Go">
         </div>
-        <div class="drawer-btn disabled">
+        <div class="drawer-btn disabled" data-user-type="avatar-generator">
           <span>Avatar小图标生成</span>
           <img :src="isDarkMode ? 'assets/img/go_dark.png' : 'assets/img/go.png'" class="drawer-btn-icon" alt="Go">
         </div>

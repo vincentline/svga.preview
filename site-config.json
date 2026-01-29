@@ -1,20 +1,34 @@
-﻿{
-  "_comment": "站点配置文件 - 用于控制广告位等功能的开关",
+{
+  "_comment": "站点配置文件 - 用于控制广告位和用户类型等功能",
   "_usage": "本地调试用，线上应部署到腾讯云COS并修改 site-config-loader.js 中的 CONFIG_URL",
   
   "_how_to_config": {
     "开启广告位": "1. 修改 features.advertisement.enabled 为 true",
     "关闭广告位": "1. 修改 features.advertisement.enabled 为 false",
     "修改后必做": "2. 修改 version（如 1.0.0 → 1.0.1），版本号递增即可",
-    "广告位位置": "position 可选值: right-float（右侧浮层）、bottom-float（底部浮层）、inline-top（顶部内嵌）"
+    "广告位位置": "position 可选值: right-float（右侧浮层）、bottom-float（底部浮层）、inline-top（顶部内嵌）",
+    "用户类型控制": "通过URL参数 ?type=internal 访问内部版本"
   },
   
-  "version": "1.0.3",
+  "version": "1.0.12",
   
   "features": {
     "advertisement": {
       "enabled": true,
       "position": "right-float"
+    },
+    "userType": {
+      "default": "public",
+      "controls": {
+        "public": {
+          "hideButtons": ["material-self-service", "celebrity-gift-video", "avatar-generator"],
+          "showAdvertisement": true
+        },
+        "internal": {
+          "hideButtons": [],
+          "showAdvertisement": false
+        }
+      }
     }
   }
 }
