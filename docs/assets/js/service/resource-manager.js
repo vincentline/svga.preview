@@ -51,7 +51,12 @@
     if (!url) return;
 
     // 真正的释放操作
-    URL.revokeObjectURL(url);
+    try {
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      // 忽略已释放或无效的URL错误
+      console.warn('Error revoking object URL:', e);
+    }
 
     // 从记录中移除
     if (group && this._groups[group]) {
@@ -76,7 +81,12 @@
 
     var urls = this._groups[group];
     urls.forEach(function (url) {
-      URL.revokeObjectURL(url);
+      try {
+        URL.revokeObjectURL(url);
+      } catch (e) {
+        // 忽略已释放或无效的URL错误
+        console.warn('Error revoking object URL:', e);
+      }
     });
 
     // 清空该组

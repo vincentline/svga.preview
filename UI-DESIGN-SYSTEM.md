@@ -12,8 +12,8 @@
 
 #### 主色调
 ```css
---primary-blue: #409eff;      /* 主要操作、链接、进度条 */
---primary-gray: #5b5b5b;      /* 次要按钮、强调文字 */
+--primary-blue: #409eff;      /* 主要操作、链接、进度条、滑块 */
+--primary-gray: #5b5b5b;      /* 次要按钮、强调文字、进度条 */
 --primary-red: #ff4444;       /* 危险操作（清空、删除、取消转换） */
 --primary-red-hover: #FF8888; /* 危险操作hover */
 --primary-red-active: #FF5252;/* 危险操作active */
@@ -45,6 +45,7 @@
 --bg-input: #F3F3F3;          /* 输入框背景 */
 --bg-hover: #F5F5F7;          /* Hover状态背景 */
 --bg-active: #E8E8ED;         /* Active状态背景 */
+--bg-overlay: rgba(255, 255, 255, 0.7); /* 拖拽覆盖层背景 */
 
 /* 暗黑模式 */
 --bg-base-dark: #1a1a1a;      /* 页面基础背景（带点阵图案） */
@@ -52,6 +53,7 @@
 --bg-input-dark: #3a3a3a;     /* 输入框背景 */
 --bg-hover-dark: #333333;     /* Hover状态背景 */
 --bg-active-dark: #404040;    /* Active状态背景 */
+--bg-overlay-dark: rgba(0, 0, 0, 0.7); /* 暗黑模式拖拽覆盖层背景 */
 ```
 
 #### 边框颜色
@@ -90,11 +92,11 @@
 #### 字号规范
 ```css
 --font-size-xs: 10px;         /* 阶段/进度说明 */
---font-size-sm: 12px;         /* 标题标签、帮助说明 */
+--font-size-sm: 12px;         /* 标题标签、帮助说明、统计信息 */
 --font-size-base: 13px;       /* 按钮文字、搜索框 */
---font-size-md: 14px;         /* 信息文字、输入框 */
---font-size-lg: 16px;         /* 配置标签、选择器文字 */
---font-size-xl: 20px;         /* 空状态提示 */
+--font-size-md: 14px;         /* 信息文字、输入框、素材名称 */
+--font-size-lg: 16px;         /* 配置标签、选择器文字、空状态标题 */
+--font-size-xl: 20px;         /* 空状态提示、大标题 */
 --font-size-xxl: 120px;       /* 404错误码 */
 ```
 
@@ -102,15 +104,15 @@
 ```css
 --font-weight-normal: 400;    /* 正常字重 */
 --font-weight-medium: 500;    /* 中等字重 */
---font-weight-semibold: 600;  /* 半粗体 */
---font-weight-bold: 700;      /* 粗体 */
+--font-weight-semibold: 600;  /* 半粗体（输入框、信息值） */
+--font-weight-bold: 700;      /* 粗体（大标题） */
 ```
 
 #### 行高规范
 ```css
---line-height-tight: 1.2;     /* 紧凑行高 */
---line-height-base: 1.5;      /* 基础行高 */
---line-height-loose: 1.8;     /* 宽松行高 */
+--line-height-tight: 1.2;     /* 紧凑行高（导航标题） */
+--line-height-base: 1.5;      /* 基础行高（按钮、输入框） */
+--line-height-loose: 1.8;     /* 宽松行高（帮助文本） */
 ```
 
 ### 1.3 间距系统
@@ -118,15 +120,15 @@
 基于 **4px 基准单位**（4px Grid System）：
 
 ```css
---space-1: 4px;               /* 0.25rem */
---space-2: 8px;               /* 0.5rem */
---space-3: 12px;              /* 0.75rem */
---space-4: 16px;              /* 1rem */
---space-5: 20px;              /* 1.25rem */
---space-6: 24px;              /* 1.5rem */
---space-8: 32px;              /* 2rem */
---space-10: 40px;             /* 2.5rem */
---space-12: 48px;             /* 3rem */
+--space-1: 4px;               /* 0.25rem - 小间距、按钮内边距 */
+--space-2: 8px;               /* 0.5rem - 组件内部间距、图标间距 */
+--space-3: 12px;              /* 0.75rem - 组件之间间距、工具栏间距 */
+--space-4: 16px;              /* 1rem - 区块间距、弹窗内边距 */
+--space-5: 20px;              /* 1.25rem - 大组件间距、页面边距 */
+--space-6: 24px;              /* 1.5rem - 大区块间距、配置项间距 */
+--space-8: 32px;              /* 2rem - 大区域间距、空状态间距 */
+--space-10: 40px;             /* 2.5rem - 页面边距、Help按钮大小 */
+--space-12: 48px;             /* 3rem - 大页面边距 */
 ```
 
 **常用场景**：
@@ -134,14 +136,17 @@
 - 组件之间间距：16px、20px
 - 区块间距：24px、32px
 - 页面边距：40px、48px
+- 工具栏间距：6px、10px、12px
+- 弹窗内边距：16px、20px
 
 ### 1.4 圆角系统
 
 ```css
 --radius-none: 0;             /* 无圆角：进度条 */
---radius-sm: 8px;             /* 小组件：按钮、输入框、标签、Tooltip */
---radius-md: 12px;            /* 中等组件：选择器、输入包裹器 */
---radius-lg: 16px;            /* 大组件：弹窗、底部控制栏、大按钮 */
+--radius-sm: 8px;             /* 小组件：按钮、输入框、标签、Tooltip、文件名容器 */
+--radius-md: 12px;            /* 中等组件：选择器、输入包裹器、大按钮 */
+--radius-lg: 16px;            /* 大组件：弹窗、底部控制栏、Mini浮层 */
+--radius-xl: 20px;            /* 超大组件：进度条滑块 */
 --radius-full: 9999px;        /* 圆形：头像、颜色按钮、开关 */
 ```
 
@@ -154,6 +159,7 @@
 --shadow-panel: 0px 10px 32px rgba(51, 51, 51, 0.2);       /* 底部控制栏/侧边弹窗 */
 --shadow-toast: 0px 4px 12px rgba(0, 0, 0, 0.15);          /* Toast提示 */
 --shadow-dropdown: 0px 2px 8px rgba(0, 0, 0, 0.15);        /* 下拉菜单 */
+--shadow-mini: 0px 10px 32px rgba(51, 51, 51, 0.2);        /* Mini浮层阴影 */
 
 /* 暗黑模式 */
 --shadow-tooltip-dark: 0px 6px 10px rgba(0, 0, 0, 0.5);
@@ -161,15 +167,17 @@
 --shadow-panel-dark: 0px 10px 32px rgba(0, 0, 0, 0.5);
 --shadow-toast-dark: 0px 4px 12px rgba(0, 0, 0, 0.5);
 --shadow-dropdown-dark: 0px 4px 12px rgba(0, 0, 0, 0.5);
+--shadow-mini-dark: 0px 10px 32px rgba(0, 0, 0, 0.4);      /* 暗黑模式Mini浮层阴影 */
 ```
 
 ### 1.6 过渡动画
 
 ```css
---transition-fast: 0.15s ease;       /* 快速响应：按钮点击 */
---transition-base: 0.2s ease;        /* 基础过渡：hover状态 */
+--transition-fast: 0.15s ease;       /* 快速响应：按钮点击、素材操作 */
+--transition-base: 0.2s ease;        /* 基础过渡：hover状态、标签切换 */
 --transition-slow: 0.3s ease;        /* 缓慢过渡：弹窗展开、主题切换、背景色 */
 --transition-panel: 0.3s cubic-bezier(0.4, 0, 0.2, 1);  /* 侧边弹窗滑动 */
+--transition-footer: 0.4s cubic-bezier(0.4, 0, 0.2, 1); /* 底部控制栏切换 */
 ```
 
 ### 1.7 动画关键帧
@@ -666,6 +674,201 @@ body.dark-mode .help-popup {
 
 ### 2.2 输入框组件（Input）
 
+#### 通用输入框系统
+
+##### 基础输入框（Base Input）
+```html
+<input type="text" class="base-input" placeholder="请输入内容">
+```
+
+```css
+.base-input {
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  border: none;
+  font-family: 'Segoe UI', sans-serif;
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 24px;
+  color: #333333;
+  text-align: center;
+  outline: none;
+}
+
+/* 隐藏数字输入框箭头 */
+.base-input::-webkit-outer-spin-button,
+.base-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+
+.base-input[type="number"] {
+  -webkit-appearance: textfield;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.base-input:disabled {
+  color: #D3D3D3;
+}
+
+/* 暗黑模式 */
+body.dark-mode .base-input {
+  color: #cccccc;
+}
+
+body.dark-mode .base-input:disabled {
+  color: #666666;
+}
+```
+
+##### 输入框容器（Input Wrapper）
+```html
+<div class="input-wrapper input-wrapper--lg">
+  <input type="text" class="base-input" placeholder="请输入内容">
+  <span class="input-unit">px</span>
+</div>
+```
+
+```css
+.input-wrapper {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  padding: 0 16px;
+  gap: 4px;
+  min-width: 50px;
+  background: #F3F3F3;
+  border: 2px solid #F3F3F3;
+  border-radius: 12px;
+  flex: none;
+  flex-grow: 0;
+}
+
+.input-wrapper:hover {
+  background: #FCFCFC;
+  border: 2px solid #333333;
+}
+
+.input-wrapper:focus-within {
+  background: #FFFFFF;
+  border: 2px solid #333333;
+}
+
+/* 尺寸修饰符 */
+.input-wrapper--sm {
+  height: 32px;
+  border-radius: 8px;
+}
+
+.input-wrapper--md {
+  height: 40px;
+}
+
+.input-wrapper--lg {
+  height: 44px;
+}
+
+/* 边框修饰符 */
+.input-wrapper--thin {
+  border-width: 1px;
+}
+
+.input-wrapper--thin:hover,
+.input-wrapper--thin:focus-within {
+  border-width: 1px;
+}
+
+/* 单位标签样式 */
+.input-unit {
+  font-family: 'Segoe UI', sans-serif;
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 24px;
+  color: #333333;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+/* 单位标签 - 提示文字样式 */
+.input-unit--hint {
+  font-size: 11px;
+  font-weight: 400;
+  color: #999999;
+}
+
+/* 暗黑模式 */
+body.dark-mode .input-wrapper {
+  background: #3a3a3a;
+  border: 2px solid #3a3a3a;
+}
+
+body.dark-mode .input-wrapper:hover {
+  background: #454545;
+  border: 2px solid #999999;
+}
+
+body.dark-mode .input-wrapper:focus-within {
+  background: #3a3a3a;
+  border: 2px solid #999999;
+}
+
+body.dark-mode .input-unit {
+  color: #cccccc;
+}
+```
+
+##### 多行输入框（Textarea）
+```html
+<div class="input-wrapper input-wrapper--textarea input-wrapper--lg">
+  <textarea class="base-input textarea-input textarea-input--lg" placeholder="请输入内容"></textarea>
+</div>
+```
+
+```css
+/* 多行输入框容器 */
+.input-wrapper--textarea {
+  width: 100%;
+  height: auto;
+  padding: 8px 12px;
+  align-items: flex-start;
+}
+
+.input-wrapper--textarea-lg {
+  min-height: 160px;
+}
+
+/* 多行输入框元素 */
+.textarea-input {
+  text-align: left;
+  resize: none;
+}
+
+.textarea-input--sm {
+  height: 60px;
+}
+
+.textarea-input--lg {
+  height: 144px;
+  overflow-y: auto;
+  /* 隐藏滚动条 */
+  scrollbar-width: none;
+  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE 10+ */
+}
+
+.textarea-input--lg::-webkit-scrollbar {
+  display: none;
+  /* Chrome, Safari, Edge */
+}
+```
+
 #### 选择器包裹器（用于下拉选择）
 ```html
 <div class="mp4-select-wrapper" :class="{open: isOpen, disabled: isDisabled}">
@@ -820,15 +1023,46 @@ body.dark-mode .mp4-input:disabled {
 ```
 
 ```css
+.material-search {
+  width: 100%;
+  margin-top: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  padding: 0 16px;
+  gap: 4px;
+  min-width: 50px;
+  height: 36px;
+  background: #F3F3F3;
+  border: 2px solid #F3F3F3;
+  border-radius: 8px;
+  flex: none;
+  flex-grow: 0;
+  transition: all 0.3s;
+}
+
+.material-search:hover {
+  background: #FCFCFC;
+  border: 2px solid #333333;
+}
+
+.material-search:focus-within {
+  background: #FFFFFF;
+  border: 2px solid #333333;
+}
+
 .material-search-input {
   width: 100%;
-  height: 32px;
-  padding: 0 12px;
-  border: 1px solid #e3e3e3;
-  border-radius: 8px;
+  height: 100%;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  font-family: 'Segoe UI';
   font-size: 14px;
   color: #333333;
-  background: #ffffff;
+  background: transparent;
   outline: none;
   transition: all 0.3s;
 }
@@ -838,18 +1072,37 @@ body.dark-mode .mp4-input:disabled {
 }
 
 .material-search-input:focus {
-  border-color: #00b4ff;
+  outline: none;
 }
 
 /* 暗黑模式 */
+body.dark-mode .material-search {
+  background: #3a3a3a;
+  border: 2px solid #3a3a3a;
+}
+
+body.dark-mode .material-search:hover {
+  background: #454545;
+  border: 2px solid #999999;
+}
+
+body.dark-mode .material-search:focus-within {
+  background: #3a3a3a;
+  border: 2px solid #999999;
+}
+
 body.dark-mode .material-search-input {
-  background: #2a2a2a;
-  border-color: #444444;
   color: #e0e0e0;
+  background: transparent;
+  border-color: transparent;
 }
 
 body.dark-mode .material-search-input::placeholder {
   color: #666666;
+}
+
+body.dark-mode .material-search-input:focus {
+  border-color: #00b4ff;
 }
 ```
 
@@ -951,8 +1204,14 @@ body.dark-mode .file-name-label {
 ```html
 <div class="progress-bar" @click="onProgressBarClick">
   <div class="progress-fill" :style="{width: progress + '%'}"></div>
+  <div class="progress-thumb" :style="{left: progress + '%'}"></div>
 </div>
-<span class="progress-text">12 / 60</span>
+<span class="progress-text">
+  <span class="progress-time">12:00</span>
+  <span>/</span>
+  <span class="progress-time">60:00</span>
+  <span class="progress-frames">120/600</span>
+</span>
 ```
 
 ```css
@@ -960,30 +1219,99 @@ body.dark-mode .file-name-label {
   width: 260px;
   height: 16px;
   background-color: #f3f3f3;
-  border-radius: 0;           /* 无圆角 */
-  border: 1px solid #e3e3e3;
+  border-radius: 20px;           /* 圆角 */
   position: relative;
   cursor: pointer;
 }
 
 .progress-bar:hover {
-  border-color: #5b5b5b;
+  border-color: #E6E6E6;
 }
 
 .progress-fill {
   height: 100%;
-  background-color: #409eff;  /* 主色调 */
-  border-radius: 0;
+  background-color: #5B5B5B;
+  border-radius: 10px 0 0 10px;
   transition: width 0.1s;
+  pointer-events: none;
+}
+
+.progress-fill:hover {
+  background-color: #333333;
+}
+
+/* 进度条滑块 */
+.progress-thumb {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 16px;
+  height: 16px;
+  background-color: #5B5B5B;
+  border-radius: 50%;
+  cursor: grab;
+  transition: left 0.1s, transform 0.1s, box-shadow 0.1s;
+  z-index: 2;
+  pointer-events: auto;
+}
+
+.progress-thumb:hover {
+  transform: translate(-50%, -50%) scale(1.2);
+  box-shadow: 0 0 0 4px rgba(64, 158, 255, 0.2);
+  background-color: #409eff;
+}
+
+.progress-thumb:active {
+  cursor: grabbing;
+  transform: translate(-50%, -50%) scale(1.3);
+  box-shadow: 0 0 0 6px rgba(64, 158, 255, 0.3);
+  background-color: #409eff;
 }
 
 .progress-text {
   margin-left: 8px;
-  width: 60px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Segoe UI', sans-serif;
+  font-weight: 400;
   font-size: 14px;
+  line-height: 1.33;
   color: #818181;
   white-space: nowrap;
-  text-align: left;
+}
+
+.progress-time {
+  min-width: 45px;
+}
+
+.progress-frames {
+  min-width: 60px;
+}
+
+/* 暗黑模式 */
+body.dark-mode .progress-bar {
+  background-color: #5B5B5B;
+}
+
+body.dark-mode .progress-fill {
+  background-color: #EBEBEB;
+}
+
+body.dark-mode .progress-fill:hover {
+  background-color: #f5f5f5;
+}
+
+body.dark-mode .progress-thumb {
+  background-color: #EBEBEB;
+}
+
+body.dark-mode .progress-thumb:hover {
+  background-color: #409eff;
+}
+
+body.dark-mode .progress-text {
+  color: #999999;
 }
 ```
 
@@ -1167,7 +1495,133 @@ body.dark-mode .stats-help {
 }
 ```
 
-### 2.8 Toast提示组件
+### 2.8 音量控制组件（Volume Control）
+
+```html
+<div class="volume-control">
+  <button class="mute-btn" :class="{is-muted: isMuted, is-disabled: isDisabled}"></button>
+  <input type="range" class="volume-slider" min="0" max="100" v-model="volume">
+</div>
+```
+
+```css
+/* 音量按钮 */
+.mute-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  border: none;
+  background-color: transparent;
+  background-image: url('../img/controls-sprite.png');
+  background-size: 400px 360px;
+  background-position: -240px -40px;
+  background-repeat: no-repeat;
+  cursor: pointer;
+  outline: none;
+  margin-left: 4px;
+}
+
+.mute-btn:hover {
+  background-position: -280px -40px;
+}
+
+.mute-btn:active {
+  background-position: -320px -40px;
+}
+
+/* 静音状态 */
+.mute-btn.is-muted {
+  background-position: -360px -40px;
+}
+
+.mute-btn.is-muted:hover {
+  background-position: 0px -80px;
+}
+
+.mute-btn.is-muted:active {
+  background-position: -40px -80px;
+}
+
+/* 禁用状态（无音频） */
+.mute-btn.is-disabled {
+  background-position: -80px -80px;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* 暗黑模式 */
+body.dark-mode .mute-btn {
+  background-position: -120px -80px;
+}
+
+body.dark-mode .mute-btn:hover {
+  background-position: -160px -80px;
+}
+
+body.dark-mode .mute-btn:active {
+  background-position: -200px -80px;
+}
+
+body.dark-mode .mute-btn.is-muted {
+  background-position: -240px -80px;
+}
+
+body.dark-mode .mute-btn.is-muted:hover {
+  background-position: -280px -80px;
+}
+
+body.dark-mode .mute-btn.is-muted:active {
+  background-position: -320px -80px;
+}
+
+body.dark-mode .mute-btn.is-disabled {
+  background-position: -360px -80px;
+}
+
+/* 音量滑块 */
+.volume-slider {
+  width: 80px;
+  height: 4px;
+  background: #f3f3f3;
+  border-radius: 2px;
+  outline: none;
+  -webkit-appearance: none;
+  margin-left: 8px;
+}
+
+.volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  background: #5b5b5b;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.volume-slider::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  background: #5b5b5b;
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+}
+
+body.dark-mode .volume-slider {
+  background: #5b5b5b;
+}
+
+body.dark-mode .volume-slider::-webkit-slider-thumb {
+  background: #e0e0e0;
+}
+
+body.dark-mode .volume-slider::-moz-range-thumb {
+  background: #e0e0e0;
+}
+```
+
+### 2.9 Toast提示组件
 
 ```html
 <div class="toast-container">
@@ -1224,11 +1678,9 @@ body.dark-mode .toast-message {
 ```css
 .library-loading-indicator {
   position: fixed;
-  top: 60px;                  /* 在header-navbar下方 */
-  left: 50%;
-  transform: translateX(-50%);
+  top: 16px;
   width: 400px;
-  max-width: 90%;
+  max-width: 50%;
   background: #ffffff;
   border: 1px solid #e3e3e3;
   border-radius: 8px;
@@ -1288,6 +1740,616 @@ body.dark-mode .library-loading-indicator .loading-bar {
 }
 ```
 
+### 2.10 音量控制组件（Volume Control）
+
+```html
+<div class="mute-control-container">
+  <button class="mute-btn"></button>
+  <div class="volume-slider-container">
+    <div class="volume-slider-track">
+      <div class="volume-slider-fill" :style="{height: volume + '%'}"></div>
+      <div class="volume-slider-handle" :style="{bottom: volume + '%'}"></div>
+    </div>
+  </div>
+</div>
+```
+
+```css
+/* 静音控制容器 */
+.mute-control-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 迷你模式下的静音控制容器 */
+.mute-control-container.mini-mute-control {
+  gap: 6px;
+}
+
+/* 音量滑块容器 */
+.volume-slider-container {
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  transform: translateX(-50%);
+  padding-bottom: 8px;
+  width: 24px;
+  height: 80px;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease;
+  z-index: 100;
+}
+
+/* 迷你模式下的音量滑块 */
+.volume-slider-container.mini-volume-slider {
+  height: 60px;
+  margin-bottom: 6px;
+}
+
+/* 鼠标悬停时显示音量滑块 */
+.mute-control-container:hover .volume-slider-container {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* 音量滑块轨道 */
+.volume-slider-track {
+  position: relative;
+  width: 8px;
+  height: 100%;
+  background-color: #f3f3f3;
+  border-radius: 8px;
+  margin: 0 10px;
+  cursor: pointer;
+}
+
+/* 音量滑块填充 */
+.volume-slider-fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background-color: #5B5B5B;
+  border-radius: 8px;
+  transition: height 0.1s ease;
+}
+
+/* 音量滑块手柄 */
+.volume-slider-handle {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%) translateY(50%);
+  width: 12px;
+  height: 12px;
+  background-color: #5B5B5B;
+  border-radius: 50%;
+  cursor: grab;
+  transition: bottom 0.1s ease, transform 0.1s ease, box-shadow 0.1s ease;
+  z-index: 2;
+  pointer-events: auto;
+}
+
+.volume-slider-handle:hover {
+  transform: translateX(-50%) translateY(50%) scale(1.2);
+  box-shadow: 0 0 0 4px rgba(64, 158, 255, 0.2);
+  background-color: #409eff;
+}
+
+.volume-slider-handle:active {
+  cursor: grabbing;
+  transform: translateX(-50%) translateY(50%) scale(1.3);
+  box-shadow: 0 0 0 6px rgba(64, 158, 255, 0.3);
+  background-color: #409eff;
+}
+
+/* 暗黑模式 */
+body.dark-mode .volume-slider-track {
+  background-color: #5B5B5B;
+}
+
+body.dark-mode .volume-slider-fill {
+  background-color: #EBEBEB;
+}
+
+body.dark-mode .volume-slider-handle {
+  background-color: #EBEBEB;
+}
+
+body.dark-mode .volume-slider-handle:hover {
+  background-color: #409eff;
+}
+```
+
+### 2.11 素材管理组件（Material Management）
+
+#### 素材卡片（Material Item）
+```html
+<div class="material-item">
+  <div class="material-thumb">
+    <img src="material-preview.png" alt="素材预览">
+  </div>
+  <div class="material-info">
+    <div class="material-name-row">
+      <span class="material-name">素材名称</span>
+      <button class="material-btn-copy" title="复制路径">
+        <svg>...</svg>
+      </button>
+    </div>
+    <div class="material-meta">1024x768 • PNG</div>
+  </div>
+  <div class="material-actions">
+    <button class="material-btn-replace">替换</button>
+    <button class="material-btn-close">恢复</button>
+    <button class="material-btn-new">新建</button>
+  </div>
+</div>
+```
+
+```css
+/* 素材卡片（列表样式）*/
+.material-item {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 161px;
+  align-items: flex-start;
+  padding: 0px;
+  gap: 10px;
+  height: auto;
+  flex: none;
+}
+
+/* 缩略图 */
+.material-thumb {
+  width: 161px;
+  height: 100px;
+  flex: none;
+  order: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition: background-color 0.3s;
+}
+
+.material-thumb img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+/* 素材信息区 */
+.material-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 161px;
+  align-items: flex-start;
+  padding: 0px;
+  gap: 4px;
+  height: 59px;
+  flex: none;
+  order: 1;
+  align-self: stretch;
+}
+
+/* 素材名称行 */
+.material-name-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  width: 161px;
+  flex: none;
+  order: 0;
+  align-self: stretch;
+}
+
+.material-name {
+  flex: 1;
+  height: 19px;
+  font-family: 'Segoe UI';
+  font-style: normal;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 19px;
+  display: flex;
+  align-items: center;
+  color: #333333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color 0.3s;
+}
+
+/* 复制按钮 */
+.material-btn-copy {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  opacity: 0.6;
+  transition: opacity 0.3s;
+}
+
+.material-btn-copy:hover {
+  opacity: 1;
+}
+
+.material-meta {
+  width: 161px;
+  height: 16px;
+  font-family: 'Segoe UI';
+  font-style: normal;
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 16px;
+  display: flex;
+  align-items: center;
+  color: #333333;
+  flex: none;
+  align-self: stretch;
+}
+
+/* 操作按钮区 */
+.material-actions {
+  width: 161px;
+  height: 28px;
+  flex: none;
+  order: 2;
+  align-self: stretch;
+  position: relative;
+  display: flex;
+  justify-content: flex-start;
+  flex-direction: row;
+  gap: 4px;
+}
+
+/* 暗黑模式 */
+body.dark-mode .material-name {
+  color: #e0e0e0;
+}
+
+body.dark-mode .material-meta {
+  color: #8e8e93;
+}
+
+body.dark-mode .material-btn-copy svg rect {
+  stroke: #999999;
+  fill: #2a2a2a;
+}
+
+body.dark-mode .material-btn-copy svg rect:first-child {
+  fill: none;
+}
+```
+
+### 2.12 沉浸模式组件（Immersive Mode）
+
+#### Mini浮层（Footer Mini）
+```html
+<div class="footer-mini">
+  <button class="mini-play-btn"></button>
+  <button class="mini-mute-btn"></button>
+  <button class="mini-scale-btn"></button>
+  <button class="mini-maximize-btn"></button>
+</div>
+```
+
+```css
+/* Mini浮层容器 */
+.footer-mini {
+  display: flex;
+  position: absolute;
+  top: 114px;
+  align-items: center;
+  gap: 12px;
+  height: 68px;
+  padding: 0 20px;
+  background-color: #ffffff;
+  border: 1px solid #e6e6e6;
+  border-radius: 16px;
+  box-shadow: 0px 10px 32px 0px rgba(51, 51, 0, 0.2);
+  z-index: 10;
+}
+
+body.dark-mode .footer-mini {
+  background-color: #2a2a2a;
+  border-color: #404040;
+  box-shadow: 0px 10px 32px 0px rgba(0, 0, 0, 0.4);
+}
+```
+
+### 2.13 主题切换按钮（Theme Toggle）
+
+```html
+<button class="theme-toggle" title="切换主题">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+    <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"/>
+  </svg>
+  <span class="tooltip-text">切换主题</span>
+</button>
+```
+
+```css
+.theme-toggle {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  outline: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.3s;
+  flex-shrink: 0;
+}
+
+.theme-toggle:hover {
+  opacity: 0.7;
+}
+
+.theme-toggle svg {
+  width: 20px;
+  height: 20px;
+  fill: #2c3e50;
+  transition: fill 0.3s;
+}
+
+body.dark-mode .theme-toggle svg {
+  fill: #e0e0e0;
+}
+
+/* 主题切换按钮的tooltip在下方 */
+.theme-toggle .tooltip-text {
+  bottom: auto;
+  top: 125%;
+}
+
+.theme-toggle .tooltip-text::after {
+  top: auto;
+  bottom: 100%;
+  border-color: transparent transparent #ffffff transparent;
+}
+
+body.dark-mode .theme-toggle .tooltip-text::after {
+  border-color: transparent transparent #2a2a2a transparent;
+}
+```
+
+### 2.14 导航栏组件（Header Navbar）
+
+```html
+<header class="header-navbar">
+  <div class="header-left-action">
+    <img class="header-logo" src="logo.png" alt="Logo">
+  </div>
+  <h1 class="header-navbar-title">SVGA Preview</h1>
+  <div class="header-right-action">
+    <a href="#" class="nav-link">文档</a>
+    <a href="#" class="avatar-link">
+      <img class="avatar-icon" src="avatar.png" alt="用户头像">
+    </a>
+    <button class="theme-toggle">...</button>
+  </div>
+</header>
+```
+
+```css
+.header-logo {
+  height: 24px;
+  width: auto;
+  margin-right: 12px;
+  content: url('../img/logo.png');
+  transition: all 0.2s ease;
+}
+
+.header-logo:hover {
+  content: url('../img/logo_hover.png');
+}
+
+body.dark-mode .header-logo {
+  content: url('../img/logo_dark.png');
+}
+
+body.dark-mode .header-logo:hover {
+  content: url('../img/logo_hover.png');
+}
+
+.header-navbar {
+  width: 100%;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+  position: absolute;
+  z-index: 100;
+  transition: background-color 0.3s, border-color 0.3s, transform 0.3s ease, opacity 0.3s ease;
+}
+
+.nav-link {
+  font-family: 'Noto Sans SC', sans-serif;
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 1.2;
+  color: #409eff;
+  text-decoration: none;
+  cursor: pointer;
+  transition: opacity 0.3s;
+  flex-shrink: 0;
+}
+
+.nav-link:hover {
+  opacity: 0.7;
+  text-decoration: underline;
+}
+
+body.dark-mode .nav-link {
+  color: #66b1ff;
+}
+
+.avatar-link {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.avatar-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  transition: opacity 0.3s;
+}
+
+.avatar-link:hover .avatar-icon {
+  opacity: 0.7;
+}
+
+body.dark-mode .header-navbar {
+  background-color: transparent;
+  border-bottom-color: transparent;
+}
+
+.header-navbar-title {
+  font-family: 'Noto Sans SC', sans-serif;
+  font-weight: 500;
+  font-size: 12px;
+  line-height: 1.2;
+  color: #2c3e50;
+  transition: color 0.3s;
+  flex: 1;
+  text-align: center;
+}
+
+body.dark-mode .header-navbar-title {
+  color: #e0e0e0;
+}
+
+/* 左侧操作按钮 */
+.header-left-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  position: absolute;
+  left: 16px;
+  top: 16px;
+}
+
+/* 右侧操作按钮 */
+.header-right-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  position: absolute;
+  right: 16px;
+  top: 16px;
+}
+
+/* 导航栏隐藏时的动画 */
+.header-navbar.header-hidden {
+  transform: translateY(-100%);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+```
+
+### 2.15 拖拽覆盖层组件（Drop Overlay）
+
+```html
+<div class="drop-overlay show">
+  <div class="drop-hint">
+    <span class="drop-hint-text">拖拽文件到此处</span>
+  </div>
+</div>
+```
+
+```css
+/* 全屏拖拽覆盖层（默认隐藏，拖拽时显示） */
+.drop-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  /* 默认不阻挡点击 */
+  transition: opacity 0.2s ease;
+}
+
+.drop-overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+  /* 显示时可接收拖拽事件 */
+}
+
+/* 拖拽提示 */
+.drop-hint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  outline: 4px dashed #333333;
+  outline-offset: -80px;
+  border-radius: 100px;
+  width: 100%;
+  height: 100%;
+  /* margin: 60px 24px 24px 24px; */
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.drop-hint-text {
+  font-size: 40px;
+  font-weight: 500;
+  color: #333333;
+}
+
+/* 暗黑模式 */
+body.dark-mode .drop-overlay {
+  background-color: rgba(0, 0, 0, 0.7);
+}
+
+body.dark-mode .drop-hint {
+  outline: 4px dashed #F5F5F5;
+}
+
+body.dark-mode .drop-hint-text {
+  color: #F5F5F5;
+}
+```
+
 ---
 
 ## 3. 布局规范
@@ -1338,6 +2400,20 @@ body.dark-mode .library-loading-indicator .loading-bar {
 }
 ```
 
+#### 垂直分布
+```css
+.flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.flex-column-between {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+```
+
 ### 3.2 间距使用规范
 
 #### 组件内部间距（Padding）
@@ -1384,6 +2460,19 @@ body.dark-mode .library-loading-indicator .loading-bar {
 .gap-lg {
   gap: 24px;
 }
+
+/* 工具间距 */
+.tool-gap-xs {
+  gap: 4px;
+}
+
+.tool-gap-sm {
+  gap: 6px;
+}
+
+.tool-gap-md {
+  gap: 10px;
+}
 ```
 
 ### 3.3 栅格系统
@@ -1419,6 +2508,10 @@ body.dark-mode .library-loading-indicator .loading-bar {
 .col-3 {
   width: 25%;
 }
+
+.col-2 {
+  width: 16.666%;
+}
 ```
 
 ### 3.4 播放器布局系统
@@ -1427,12 +2520,15 @@ body.dark-mode .library-loading-indicator .loading-bar {
 
 ```
 .main-page
+├─ .header-navbar            ← 顶部导航栏（绝对定位）
 ├─ .viewer-area              ← 主播放区域（Flexbox 布局）
 │   ├─ .viewer-container      ← 播放器容器（由 JS 控制 transform）
 │   │   ├─ .viewer-filename   ← 文件名（绝对定位于播放器上方）
 │   │   └─ .viewer-canvas     ← 播放器画布（包含 canvas 元素）
-│   └─ .empty-state-overlay   ← 空状态覆盖层
-└─ .footer-bar               ← 底部浮层（绝对定位）
+│   ├─ .empty-state-overlay   ← 空状态覆盖层
+│   └─ .drop-overlay          ← 拖拽覆盖层
+└─ .footer-bar               ← 底部控制栏（绝对定位）
+    └─ .footer-mini           ← 沉浸模式 Mini 浮层
 ```
 
 #### .viewer-area（主播放区域）
@@ -1442,15 +2538,14 @@ body.dark-mode .library-loading-indicator .loading-bar {
  * 布局控制：
  *   - align-items: flex-start → 子元素从顶部开始，不自动垂直居中
  *   - justify-content: center → 子元素水平居中
- *   - padding-bottom: 154px → 为 .footer-bar 留空间，确保拖拽虚线边界不超出屏幕
- * 位置控制：子元素的垂直位置由 JS 的 offsetY 控制（transform: translateY）
+ *   - padding-bottom: 190px → 为 .footer-bar 留空间，确保拖拽虚线边界不超出屏幕
+ * 位置控制：子元素 .viewer-container 的垂直位置由 JS 的 offsetY 控制（通过 transform: translateY）
  */
 .viewer-area {
   flex: 1;
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding: 0px 200px 154px;
   position: relative;
 }
 ```
@@ -1461,10 +2556,10 @@ body.dark-mode .library-loading-indicator .loading-bar {
 /* 结构：包裹文件名 + 播放器画布，大小由 JS 设置为原始尺寸
  * 缩放机制：
  *   - transform-origin: top center → 缩放原点在顶部中心，缩放时视觉顶部保持在 y=0 处
- *   - transform: translate + scale → 由 JS 设置，translate 控制位置，scale 控制缩放
+ *   - transform: translate + scale → 由 JS 动态设置，translate 控制位置，scale 控制缩放
  * 关键设计：
- *   - 使用 top center 而非 center center，避免缩放后视觉顶部位置偏移
- *   - width/height 为原始尺寸，缩放通过 transform: scale() 实现
+ *   - 使用 top center 而非 center center，避免缩放后视觉顶部位置偏移导致内容显示偏下
+ *   - width/height 为原始尺寸，缩放通过 transform: scale() 实现，保证布局计算正确
  */
 .viewer-container {
   position: relative;
@@ -1490,7 +2585,7 @@ body.dark-mode .library-loading-indicator .loading-bar {
 
 ```javascript
 // centerViewer() 的计算逻辑
-var footerHeight = 154;  // 底部浮层高度
+var footerHeight = 190;  // 底部浮层高度
 var availableHeight = window.innerHeight - footerHeight;  // 可用高度
 var contentHeight = originalHeight * viewerScale;  // 内容显示高度
 
@@ -1523,6 +2618,196 @@ var inverseScale = 1 / viewerScale;
 style.transform = 'scale(' + inverseScale + ')';
 style.transformOrigin = 'left bottom';
 style.marginBottom = (8 * viewerScale) + 'px';  // 补偿边距
+```
+
+### 3.5 底部控制栏布局
+
+#### .footer-bar（底部控制栏）
+
+```css
+/* 结构：固定宽度的底部控制栏，包含多个功能模块
+ * 定位方式：绝对定位，水平居中
+ * 响应式：根据内容状态调整大小和位置
+ */
+.footer-bar {
+  position: absolute;
+  top: calc(100vh - 190px);
+  left: calc((100vw - 1020px) / 2);
+  right: calc((100vw - 1020px) / 2);
+  width: 1020px;
+  height: 190px;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  justify-content: center;
+  padding: 10px;
+  gap: 10px;
+  transition: background-color 0.3s, height 0.3s ease, top 0.3s ease, left 0.3s ease, right 0.3s ease, width 0.3s ease;
+  z-index: 130;
+}
+
+/* 空状态 */
+.footer-bar.is-empty {
+  top: 540px;
+  width: 300px;
+  height: 120px;
+  left: calc((100vw - 300px) / 2);
+  right: calc((100vw - 300px) / 2);
+}
+
+/* 沉浸模式 */
+.footer-bar.footer-immersive {
+  height: 88px;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+```
+
+### 3.6 顶部导航栏布局
+
+#### .header-navbar（顶部导航栏）
+
+```css
+/* 结构：固定高度的顶部导航栏，包含 Logo、标题和操作按钮
+ * 定位方式：绝对定位，顶部对齐
+ * 布局控制：flex 布局，两端对齐 + 居中标题
+ */
+.header-navbar {
+  width: 100%;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+  position: absolute;
+  z-index: 100;
+  transition: background-color 0.3s, border-color 0.3s, transform 0.3s ease, opacity 0.3s ease;
+}
+
+/* 左侧操作区 */
+.header-left-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  position: absolute;
+  left: 16px;
+  top: 16px;
+}
+
+/* 右侧操作区 */
+.header-right-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  position: absolute;
+  right: 16px;
+  top: 16px;
+}
+
+/* 标题区域 */
+.header-navbar-title {
+  font-family: 'Noto Sans SC', sans-serif;
+  font-weight: 500;
+  font-size: 12px;
+  line-height: 1.2;
+  color: #2c3e50;
+  transition: color 0.3s;
+  flex: 1;
+  text-align: center;
+}
+```
+
+### 3.7 侧边弹窗布局
+
+#### .material-panel（侧边弹窗）
+
+```css
+/* 结构：右侧滑出式弹窗，包含标题、统计信息和操作按钮
+ * 定位方式：固定定位，右侧滑出
+ * 动画：使用 CSS transition 实现平滑滑入滑出效果
+ */
+.material-panel {
+  position: fixed;
+  top: 0;
+  right: -400px;              /* 隐藏在右侧 */
+  width: 400px;
+  height: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 10px;
+  transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1000;
+}
+
+.material-panel.show {
+  right: 0;                   /* 滑入显示 */
+}
+
+.material-panel-container {
+  display: flex;
+  flex-direction: column;
+  width: 380px;
+  height: 100%;
+  padding: 20px;
+  gap: 16px;
+  background: #FFFFFF;
+  border: 1px solid #E3E3E3;
+  box-shadow: 0px 10px 32px rgba(51, 51, 51, 0.2);
+  border-radius: 16px;
+  overflow-y: auto;
+}
+```
+
+### 3.8 响应式布局规范
+
+#### 断点设置
+
+| 断点名称 | 屏幕宽度 | 布局调整 |
+|---------|---------|---------|
+| 移动端 | < 768px | 单栏布局，隐藏侧边栏 |
+| 平板 | 768px - 1024px | 双栏布局，调整组件大小 |
+| 桌面 | > 1024px | 完整布局，三栏结构 |
+
+#### 响应式工具类
+
+```css
+/* 移动端隐藏 */
+@media (max-width: 767px) {
+  .hidden-mobile {
+    display: none !important;
+  }
+}
+
+/* 平板隐藏 */
+@media (max-width: 1023px) {
+  .hidden-tablet {
+    display: none !important;
+  }
+}
+
+/* 桌面隐藏 */
+@media (min-width: 1024px) {
+  .hidden-desktop {
+    display: none !important;
+  }
+}
+
+/* 响应式字体大小 */
+@media (max-width: 767px) {
+  .responsive-text {
+    font-size: 14px;
+  }
+}
+
+@media (min-width: 768px) {
+  .responsive-text {
+    font-size: 16px;
+  }
+}
 ```
 
 ---
@@ -1583,9 +2868,11 @@ style.marginBottom = (8 * viewerScale) + 'px';  // 补偿边距
 
 | 动画类型 | 时长 | 适用场景 |
 |---------|------|---------|
-| 快速 | 0.15s | 按钮 hover、小元素状态变化 |
-| 标准 | 0.2s | 输入框 focus、颜色变化 |
-| 缓慢 | 0.3s | 弹窗展开、页面切换 |
+| 快速 | 0.15s | 按钮 hover、小元素状态变化、素材操作 |
+| 标准 | 0.2s | 输入框 focus、颜色变化、标签切换 |
+| 缓慢 | 0.3s | 弹窗展开、页面切换、主题切换 |
+| 面板 | 0.3s cubic-bezier(0.4, 0, 0.2, 1) | 侧边弹窗滑动 |
+| 底部栏 | 0.4s cubic-bezier(0.4, 0, 0.2, 1) | 底部控制栏切换 |
 
 ### 4.3 暗黑模式切换
 
@@ -1616,6 +2903,174 @@ localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'd
 body.dark-mode .component {
   background: #2a2a2a;
   color: #e0e0e0;
+}
+```
+
+### 4.4 拖拽交互规范
+
+#### 文件拖拽
+
+**触发条件**：文件拖拽到页面区域
+**视觉反馈**：
+- 显示半透明覆盖层（`drop-overlay`）
+- 显示虚线边框和提示文字
+- 鼠标指针变化为拖拽指针
+
+**操作流程**：
+1. 文件拖拽进入页面 → 显示拖拽覆盖层
+2. 文件悬停在有效区域 → 覆盖层保持显示
+3. 文件放置 → 处理文件上传
+4. 文件拖拽离开 → 隐藏拖拽覆盖层
+
+**代码示例**：
+```javascript
+// 拖拽进入
+function handleDragEnter(e) {
+  e.preventDefault();
+  dropOverlay.classList.add('show');
+}
+
+// 拖拽离开
+function handleDragLeave(e) {
+  e.preventDefault();
+  dropOverlay.classList.remove('show');
+}
+
+// 文件放置
+function handleDrop(e) {
+  e.preventDefault();
+  dropOverlay.classList.remove('show');
+  const files = e.dataTransfer.files;
+  processFiles(files);
+}
+```
+
+### 4.5 缩放交互规范
+
+#### 鼠标缩放
+
+**触发方式**：鼠标滚轮
+**操作流程**：
+1. 鼠标悬停在播放器区域
+2. 滚动鼠标滚轮 → 放大/缩小
+3. 按住 Ctrl 键 + 滚动 → 以鼠标位置为中心点缩放
+
+**视觉反馈**：
+- 播放器内容平滑缩放
+- 缩放时保持视觉中心点
+
+#### 按钮缩放
+
+**触发方式**：点击缩放按钮
+**操作流程**：
+1. 点击放大按钮 → 放大 1.2 倍
+2. 点击缩小按钮 → 缩小 0.8 倍
+3. 点击 1:1 按钮 → 恢复原始大小
+4. 点击适应屏幕按钮 → 适应屏幕高度
+
+**限制**：
+- 最小缩放：0.1
+- 最大缩放：10
+
+### 4.6 沉浸模式交互
+
+#### 进入沉浸模式
+
+**触发方式**：
+- 点击 Mini 按钮
+- 快捷键：F11
+
+**视觉变化**：
+- 底部控制栏收缩为 Mini 浮层
+- 顶部导航栏隐藏
+- 播放器区域最大化
+
+#### 退出沉浸模式
+
+**触发方式**：
+- 点击 Mini 浮层上的最大化按钮
+- 快捷键：F11
+
+**视觉变化**：
+- 底部控制栏恢复完整大小
+- 顶部导航栏显示
+- 播放器区域恢复正常布局
+
+### 4.7 快捷键规范
+
+#### 通用快捷键
+
+| 快捷键 | 功能 | 说明 |
+|-------|------|------|
+| Ctrl + O | 打开文件 | 打开文件选择对话框 |
+| Ctrl + S | 保存文件 | 保存当前内容 |
+| Ctrl + Z | 撤销 | 撤销上一步操作 |
+| Ctrl + Y | 重做 | 重做上一步操作 |
+| F11 | 切换全屏 | 进入/退出沉浸模式 |
+| Esc | 关闭弹窗 | 关闭当前打开的弹窗 |
+
+#### 播放器快捷键
+
+| 快捷键 | 功能 | 说明 |
+|-------|------|------|
+| 空格 | 播放/暂停 | 控制动画播放状态 |
+| ↑ | 音量增大 | 增加音量 10% |
+| ↓ | 音量减小 | 减小音量 10% |
+| M | 静音切换 | 切换静音状态 |
+| + | 放大 | 放大播放器内容 |
+| - | 缩小 | 缩小播放器内容 |
+| 0 | 重置缩放 | 恢复 1:1 缩放比例 |
+| F | 适应屏幕 | 适应屏幕高度 |
+
+### 4.8 反馈机制
+
+#### 即时反馈
+
+**操作**：按钮点击、滑块调整
+**反馈**：
+- 按钮状态变化（hover/active）
+- 滑块实时更新
+- 进度条动画
+
+#### 延迟反馈
+
+**操作**：文件上传、格式转换
+**反馈**：
+- 加载指示器（loading spinner）
+- 进度条显示
+- Toast 提示消息
+
+#### Toast 提示
+
+**使用场景**：
+- 操作成功确认
+- 错误提示
+- 信息通知
+
+**设计规范**：
+- 位置：屏幕顶部中央
+- 显示时长：2-3 秒
+- 动画：淡入淡出
+- 样式：半透明背景，圆角边框
+
+**代码示例**：
+```javascript
+function showToast(message, type = 'info') {
+  const toast = document.createElement('div');
+  toast.className = `toast-message toast-${type}`;
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  
+  setTimeout(() => {
+    toast.classList.add('show');
+  }, 100);
+  
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => {
+      document.body.removeChild(toast);
+    }, 300);
+  }, 3000);
 }
 ```
 
@@ -1658,6 +3113,190 @@ body.dark-mode .component {
 <!-- 为 Tooltip 添加 aria-describedby -->
 <button aria-describedby="tooltip-1">帮助</button>
 <div id="tooltip-1" role="tooltip">这是帮助信息</div>
+
+<!-- 为模态框添加 aria-modal -->
+<div class="modal" aria-modal="true" role="dialog" aria-labelledby="modal-title">
+  <h2 id="modal-title">弹窗标题</h2>
+  <!-- 弹窗内容 -->
+</div>
+```
+
+### 5.5 屏幕阅读器支持
+
+#### 角色和状态
+
+- 为所有交互元素添加适当的 `role` 属性
+- 使用 `aria-hidden` 隐藏装饰性元素
+- 为动态内容添加 `aria-live` 属性
+
+**示例**：
+```html
+<!-- 进度条 -->
+<div role="progressbar" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100">
+  50%
+</div>
+
+<!-- 实时通知 -->
+<div aria-live="polite" class="notification">
+  操作成功
+</div>
+```
+
+#### 标签和描述
+
+- 使用 `aria-label` 为无文本的元素提供标签
+- 使用 `aria-labelledby` 关联元素和其标签
+- 使用 `aria-describedby` 提供额外描述信息
+
+### 5.6 焦点管理
+
+#### 焦点陷阱
+
+- 模态框打开时，将焦点限制在模态框内
+- 模态框关闭时，将焦点返回到触发元素
+
+**代码示例**：
+```javascript
+// 模态框焦点陷阱
+function setupFocusTrap(modal, trigger) {
+  const focusableElements = modal.querySelectorAll('button, input, select, textarea, [tabindex]:not([tabindex="-1"])');
+  const firstElement = focusableElements[0];
+  const lastElement = focusableElements[focusableElements.length - 1];
+
+  modal.addEventListener('keydown', (e) => {
+    if (e.key === 'Tab') {
+      if (e.shiftKey) {
+        // Shift + Tab
+        if (document.activeElement === firstElement) {
+          e.preventDefault();
+          lastElement.focus();
+        }
+      } else {
+        // Tab
+        if (document.activeElement === lastElement) {
+          e.preventDefault();
+          firstElement.focus();
+        }
+      }
+    }
+
+    if (e.key === 'Escape') {
+      closeModal();
+      trigger.focus();
+    }
+  });
+
+  firstElement.focus();
+}
+```
+
+#### 焦点指示
+
+- 确保所有可聚焦元素都有明显的焦点样式
+- 使用 `:focus-visible` 为键盘导航提供更明显的焦点指示
+
+**代码示例**：
+```css
+/* 键盘焦点 */
+.interactive-element:focus-visible {
+  outline: 2px solid #409eff;
+  outline-offset: 2px;
+}
+
+/* 鼠标焦点 */
+.interactive-element:focus:not(:focus-visible) {
+  outline: none;
+}
+```
+
+### 5.7 错误处理的无障碍性
+
+#### 表单验证
+
+- 使用 `aria-invalid` 标记无效字段
+- 使用 `aria-describedby` 关联错误信息
+- 错误信息应该清晰、具体
+
+**代码示例**：
+```html
+<div class="form-group">
+  <label for="email">邮箱</label>
+  <input type="email" id="email" aria-invalid="true" aria-describedby="email-error">
+  <div id="email-error" class="error-message">请输入有效的邮箱地址</div>
+</div>
+```
+
+#### 错误通知
+
+- 使用 `aria-live="assertive"` 为错误通知
+- 确保错误信息能够被屏幕阅读器读取
+
+### 5.8 响应式设计的无障碍性
+
+#### 触摸目标
+
+- 移动设备上的触摸目标至少为 48px × 48px
+- 触摸目标之间的间距至少为 8px
+
+**代码示例**：
+```css
+/* 移动设备触摸目标 */
+@media (max-width: 767px) {
+  .touch-target {
+    min-width: 48px;
+    min-height: 48px;
+    margin: 4px;
+  }
+}
+```
+
+#### 屏幕方向
+
+- 确保在横屏和竖屏模式下都能正常访问
+- 避免依赖屏幕方向的交互
+
+### 5.9 无障碍测试工具
+
+#### 推荐工具
+
+| 工具名称 | 用途 | 平台 |
+|---------|------|------|
+| axe DevTools | 全面的无障碍测试 | 浏览器扩展 |
+| WAVE | 可视化无障碍评估 | 浏览器扩展 |
+| Lighthouse | 性能和无障碍测试 | Chrome 开发工具 |
+| screenreader | 屏幕阅读器模拟 | 命令行工具 |
+
+#### 测试方法
+
+1. **键盘导航测试**：仅使用键盘操作整个应用
+2. **屏幕阅读器测试**：使用 NVDA、VoiceOver 等测试
+3. **对比度测试**：使用工具检查颜色对比度
+4. **响应式测试**：在不同设备上测试
+5. **自动化测试**：集成 axe-core 到 CI/CD 流程
+
+### 5.10 最佳实践
+
+1. **始终优先使用语义化 HTML**
+2. **为所有交互元素提供键盘支持**
+3. **确保颜色不是唯一的信息传递方式**
+4. **为复杂组件提供完整的 ARIA 支持**
+5. **测试、测试、再测试**
+6. **持续学习无障碍标准和技术**
+
+**示例：完整的无障碍按钮**
+```html
+<button 
+  class="btn-primary"
+  aria-label="播放动画"
+  aria-pressed="false"
+  tabindex="0"
+  role="button"
+>
+  <svg aria-hidden="true" width="20" height="20">
+    <path d="M8 5v14l11-7z"/>
+  </svg>
+  <span>播放</span>
+</button>
 ```
 
 ---
