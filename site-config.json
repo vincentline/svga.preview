@@ -10,7 +10,7 @@
     "用户类型控制": "通过URL参数 ?type=internal 访问内部版本"
   },
   
-  "version": "1.0.19",
+  "version": "1.1.19",
   
   "features": {
     "advertisement": {

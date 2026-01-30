@@ -159,6 +159,19 @@
             const element = elements[0];
             return element && element.getAttribute('data-user-visible') === 'true';
         }
+
+        /**
+         * 刷新用户类型配置
+         * 重新查找元素并应用配置
+         * 
+         * 当动态元素加载后（如Vue的v-if条件渲染）调用此方法
+         */
+        refresh() {
+            // 重新查找所有需要控制的元素
+            this.findControlledElements();
+            // 重新应用用户类型配置
+            this.applyUserTypeConfig();
+        }
     }
 
     // 创建全局实例：window.MeeWoo.Controllers.UserTypeController

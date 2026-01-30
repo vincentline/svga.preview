@@ -594,6 +594,14 @@
             // 使用 imageKey 作为唯一标识，而不是 index
             vueInstance.editor.targetKey = material.imageKey;
             vueInstance.editor.show = true;
+            
+            // 刷新用户类型配置，控制AI生成按钮的显示/隐藏
+            if (window.MeeWoo && window.MeeWoo.Controllers && window.MeeWoo.Controllers.UserTypeController) {
+                setTimeout(() => {
+                    window.MeeWoo.Controllers.UserTypeController.refresh();
+                }, 0);
+            }
+            
             vueInstance.editor.loading = false;
             vueInstance.editor.viewMode = 'fit-height'; // 默认适应高度模式
             vueInstance.editor.scale = 1.0;

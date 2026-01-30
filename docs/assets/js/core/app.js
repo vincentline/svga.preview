@@ -1139,6 +1139,13 @@ function initApp() {
 
         // 设置文件信息
         this.svga.hasFile = true;
+        
+        // 刷新用户类型配置，控制AI生成按钮的显示/隐藏
+        if (window.MeeWoo && window.MeeWoo.Controllers && window.MeeWoo.Controllers.UserTypeController) {
+            setTimeout(() => {
+                window.MeeWoo.Controllers.UserTypeController.refresh();
+            }, 0);
+        }
         // 性能优化：File 对象为只读数据，冻结后避免 Vue 响应式监听开销
         this.svga.file = Object.freeze(file);
         this.svga.fileInfo.name = file.name;
