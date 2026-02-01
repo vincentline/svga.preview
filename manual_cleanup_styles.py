@@ -1,4 +1,6 @@
-/* ==================== 全局重置 & 基础布局 ==================== */
+# 手动创建适合登录页的CSS文件
+
+css_content = """/* ==================== 全局重置 & 基础布局 ==================== */
 
 * {
   margin: 0;
@@ -31,21 +33,6 @@ body.dark-mode {
   flex-direction: column;
 }
 
-/* ==================== 全局基础样式 ==================== */
-
-:root {
-  color-scheme: light dark;
-}
-
-html {
-  background-color: #fcfcfc;
-  transition: background-color 0.3s;
-}
-
-body.dark-mode html {
-  background-color: #1a1a1a;
-}
-
 /* ==================== 通用输入框样式系统 ==================== */
 
 /* 基础输入框样式 - 用于input元素内部 */
@@ -55,7 +42,7 @@ body.dark-mode html {
   background: transparent;
   border: none;
   font-family: 'Segoe UI', sans-serif;
-  font-weight: 500;
+  font-weight: 600;
   font-size: 16px;
   line-height: 24px;
   color: #333333;
@@ -159,8 +146,6 @@ body.dark-mode .input-wrapper:focus-within {
   cursor: not-allowed;
   opacity: 1;
 }
-
-
 
 /* ==================== 登录页面专用样式 ==================== */
 
@@ -304,3 +289,12 @@ body.dark-mode .loading-overlay {
     transform: rotate(360deg);
   }
 }
+"""
+
+# 保存清理后的CSS
+output_path = 'docs/auth/styles_cleaned.css'
+with open(output_path, 'w', encoding='utf-8') as f:
+    f.write(css_content)
+
+print(f"手动清理后的CSS文件已保存到: {output_path}")
+print(f"清理后的CSS文件大小: {len(css_content)} 字符")

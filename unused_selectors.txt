@@ -1,0 +1,1052 @@
+*/
+
+/* 大按钮 - 次要按钮（btn02_Large） */
+.btn-large-secondary
+*/
+
+/* 鼠标悬停时显示背景色选项 */
+.bg-color-selector:hover .bg-color-options
+-280px） */
+.sprite-AI-img.btn-icon-ai
+-280px） */
+.sprite-AI-img.btn-icon-ai:hover
+-320px） */
+body.dark-mode .sprite-AI-img.btn-icon-ai
+-320px） */
+body.dark-mode .sprite-AI-img.btn-icon-ai:hover
+.ad-position-right[data-ad-visible="false"]
+.avatar-icon
+.avatar-link
+.avatar-link:hover .avatar-icon
+.base-input::-webkit-inner-spin-button
+.base-input:disabled
+.base-input[type="number"]
+.btn-large-primary:active
+.btn-large-primary:disabled
+.btn-large-primary:hover
+.btn-large-secondary.svga-btn-converting
+.btn-large-secondary:active
+.btn-large-secondary:disabled
+.btn-large-secondary:hover
+.btn-primary:active
+.btn-primary:hover
+.btn-secondary
+.btn-secondary:active
+.btn-secondary:hover
+.btn-speed-reset svg
+.btn-undo:active:not(:disabled)
+.btn-undo:disabled
+.btn-undo:hover:not(:disabled)
+.center-modal-header h3
+.chromakey-config-item
+.chromakey-config-label
+.chromakey-info-row
+.chromakey-slider
+.chromakey-slider::-moz-range-thumb
+.chromakey-slider::-webkit-slider-thumb
+.chromakey-switch
+.chromakey-switch.active
+.clear-btn svg
+.clear-btn svg path
+.clear-btn:active
+.clear-btn:hover
+.clear-canvas-btn .btn-icon-close
+.clear-canvas-btn:active
+.clear-canvas-btn:hover
+.click-upload-text
+.click-upload-text:hover
+.close-btn
+.close-btn::after
+.close-btn::after
+.close-btn::before
+.close-btn::before
+.close-btn:active::after
+.close-btn:active::before
+.close-btn:hover::after
+.close-btn:hover::before
+.color-btn.is-active
+.color-btn:hover
+.controls-center
+.controls-left
+.controls-right
+.drop-hint-text
+.drop-overlay.show
+.edit-dot
+.editor-bottom-actions>*
+.editor-canvas-wrapper.active
+.editor-control-group
+.editor-control-label
+.editor-control-label--mt
+.editor-hint
+.editor-image-wrapper.active
+.editor-preview-wrapper:active
+.editor-switch-row
+.editor-text-controls
+.editor-view-btn.is-contain:hover
+.editor-view-btn:hover
+.editor-zoom-controls button
+.editor-zoom-controls button:hover
+.empty-state-icon
+.empty-state-icon img
+.empty-state-icon svg
+.empty-state-slogan
+.empty-state-subtitle
+.empty-state-text
+.empty-state-title
+.footer-actions
+.footer-actions .btn-large-secondary
+.footer-bar.is-empty
+.footer-empty-tip-main
+.footer-empty-tip-sub
+.footer-empty-tip-sub
+.footer-fade-enter
+.footer-fade-leave-active
+.footer-fade-leave-to
+.footer-main.footer-main-empty .click-upload-text
+.footer-main.footer-main-empty .click-upload-text:hover
+.footer-tabs
+.form-group label
+.fps-input-row
+.fps-unit
+.gif-color-input
+.gif-color-input::-webkit-color-swatch
+.gif-color-input::-webkit-color-swatch-wrapper
+.gif-color-input:disabled
+.gif-color-input:hover
+.gif-color-value
+.header-logo:hover
+.header-navbar
+.header-navbar-title
+.help-button:hover
+.help-button:hover .help-popup
+.help-popup
+.help-popup li
+.help-popup ul
+.help-popup::-webkit-scrollbar
+.icon-editor-recover
+.info-item
+.info-item-label
+.info-item-value
+.input-wrapper--md
+.input-wrapper--textarea-lg
+.input-wrapper--thin:focus-within
+.input-wrapper--thin:hover
+.input-wrapper:focus-within
+.input-wrapper:hover
+.keyframe-endpoint-left .keyframe-handle
+.keyframe-endpoint-right .keyframe-handle
+.keyframe-frame-label:hover
+.keyframe-handle:hover
+.keyframe-speed-confirm
+.keyframe-speed-confirm:hover
+.keyframe-speed-delete
+.keyframe-speed-delete:hover
+.keyframe-speed-info
+.keyframe-speed-label-text
+.keyframe-speed-popup
+.keyframe-speed-popup-content
+.keyframe-speed-popup-footer
+.keyframe-speed-popup-title
+.keyframe-speed-preset
+.keyframe-speed-preset-label
+.keyframe-speed-preset:hover
+.keyframe-speed-presets
+.keyframe-speed-slider
+.keyframe-speed-slider-row
+.keyframe-speed-slider::-moz-range-thumb
+.keyframe-speed-slider::-webkit-slider-thumb
+.keyframe-speed-value
+.library-loading-indicator .loading-bar
+.library-loading-indicator .loading-content
+.library-loading-indicator .loading-percentage
+.library-loading-indicator .loading-progress
+.library-loading-indicator .loading-text
+.material-btn-back:active
+.material-btn-back:hover
+.material-btn-close svg
+.material-btn-close:active
+.material-btn-close:hover
+.material-btn-copy svg rect
+.material-btn-copy:hover
+.material-btn-edit
+.material-btn-edit svg
+.material-btn-edit svg path
+.material-btn-edit:active
+.material-btn-edit:hover
+.material-btn-new svg
+.material-btn-new svg path
+.material-btn-new:active
+.material-btn-new:hover
+.material-btn-replace span
+.material-btn-replace:active
+.material-btn-replace:hover
+.material-editor-body
+.material-editor-body
+.material-list
+.material-meta
+.material-name
+.material-panel-scroll::-webkit-scrollbar-thumb
+.material-panel-scroll::-webkit-scrollbar-thumb:hover
+.material-panel-scroll::-webkit-scrollbar-track
+.material-panel-scroll:hover::-webkit-scrollbar-thumb
+.material-search-input
+.material-search-input::placeholder
+.material-search-input:focus
+.material-search:focus-within
+.material-search:hover
+.material-thumb img
+.mini-maximize-btn:hover
+.mini-mute-btn.is-disabled
+.mini-mute-btn.is-muted
+.mini-mute-btn.is-muted:hover
+.mini-mute-btn:hover
+.mini-play-btn.is-playing
+.mini-play-btn.is-playing:hover
+.mini-play-btn:hover
+.mini-scale-btn.is-contain
+.mini-scale-btn.is-contain:hover
+.mini-scale-btn:hover
+.minimize-btn:hover
+.modal-body
+.modal-footer
+.modal-footer .btn-primary:active
+.modal-footer .btn-primary:disabled
+.modal-footer .btn-primary:hover
+.modal-footer .btn-secondary:active
+.modal-footer .btn-secondary:disabled
+.modal-footer .btn-secondary:hover
+.modal-header
+.modal-header h3
+.mp4-btn-cancel
+.mp4-btn-cancel:hover
+.mp4-progress-text
+.mp4-stage-text
+.mute-btn.is-disabled:active
+.mute-btn.is-muted:active
+.mute-btn.is-muted:hover
+.mute-btn:active
+.mute-btn:hover
+.nav-link
+.nav-link:hover
+.pan-btn
+.pan-btn:active
+.pan-btn:hover
+.pan-row
+.play-btn.is-playing:active
+.play-btn.is-playing:hover
+.play-btn:active
+.play-btn:hover
+.progress-bar:hover
+.progress-fill
+.progress-fill:hover
+.progress-frames
+.progress-text
+.progress-thumb:active
+.progress-thumb:hover
+.progress-time
+.reset-scale-btn.is-contain:hover
+.reset-scale-btn:hover
+.restore-playback-btn:active
+.restore-playback-btn:hover
+.speed-remap-editor-content
+.speed-remap-timeline:hover .speed-remap-timeline-hover-frame-number
+.speed-remap-timeline:hover .speed-remap-timeline-hover-line
+.speed-remap-timeline:hover .speed-remap-timeline-hover-speed
+.stats-help
+.stats-title
+.svga-btn-cancel
+.svga-btn-converting
+.svga-btn-converting::before
+.svga-compress-hint
+.svga-config-item
+.svga-config-label
+.svga-config-section.disabled
+.svga-estimate-box
+.svga-estimate-row
+.svga-estimate-title
+.svga-info-row
+.svga-progress-text
+.svga-progress-text
+.svga-size-lock
+.svga-stage-text
+.svga-stage-text
+.svga-textarea:focus
+.tab-btn
+.tab-btn.is-active
+.tab-btn.is-active:active
+.tab-btn.is-active:hover
+.tab-btn:hover
+.text-align-btn img
+.text-align-btn.active
+.text-align-btn:hover
+.textarea-input--lg
+.textarea-input--lg::-webkit-scrollbar
+.textarea-input--sm
+.theme-toggle svg
+.theme-toggle:hover
+.toast-container
+.toast-container.visible
+.toast-message
+.tooltip .tooltip-text
+.tooltip .tooltip-text::after
+.tooltip:hover .tooltip-text
+.viewer-canvas canvas
+.volume-slider-handle:active
+.volume-slider-handle:hover
+.zoom-btn[data-type="in"]:hover
+.zoom-btn[data-type="out"]:hover
+/* 1:1按钮（默认状态：适应屏幕高度模式下显示） */
+.reset-scale-btn
+/* ===== 库加载进度条 ===== */
+.library-loading-indicator
+/* ====================  主页面容器 ==================== */
+
+.main-page
+/* ==================== K帧速度调整弹窗 ==================== */
+
+.keyframe-speed-overlay
+/* ==================== SVGA转换弹窗（双通道MP4转SVGA） ==================== */
+
+
+
+
+
+/* MP4信息区 */
+.svga-info-section
+/* ==================== Toast提示 ==================== */
+
+/* v-cloak隐藏Vue未加载时的内容 */
+[v-cloak]
+/* ==================== 主题切换按钮 ==================== */
+.theme-toggle
+/* ==================== 全局重置 &  基础布局 ==================== */
+
+*
+/* ==================== 变速时间轴编辑器 ==================== */
+
+.speed-remap-editor
+/* ==================== 右侧操作按钮 ==================== */
+.header-right-action
+/* ==================== 导航栏隐藏时的动画 ==================== */
+
+/* 导航栏隐藏时的动画 */
+.header-navbar.header-hidden
+/* ==================== 居中弹窗通用样式（统一管理） ==================== */
+
+/* Vue未加载时隐藏弹窗（防止闪现） */
+[v-cloak] .center-modal-overlay
+/* ==================== 左侧操作按钮 ==================== */
+.header-left-action
+/* ==================== 广告位 ==================== */
+.ad-slot
+/* ==================== 广告位样式 ==================== */
+
+/* 右侧浮层广告位 */
+.ad-position-right
+/* ==================== 底部主控制区 ==================== */
+
+.footer-bar
+/* ==================== 沉浸模式样式结束 ==================== */
+
+/* 清空/关闭按钮 (btn03样式) */
+.clear-btn
+/* ==================== 素材编辑器弹窗 ==================== */
+
+.material-editor-modal
+/* ==================== 素材编辑器弹窗 ==================== */
+
+.material-editor-modal
+/* ==================== 绱犳潗寮圭獥 ==================== */
+
+
+
+/* 顶部统计信息 - Figma设计还原 */
+.material-panel-stats
+/* ==================== 编辑K帧帧数弹窗 ==================== */
+
+.modal-overlay
+/* ==================== 通用按钮系统 ==================== */
+
+/* 中按钮通用样式（28px高度，8px圆角） */
+.btn-primary
+/* ==================== 通用输入框样式系统 ==================== */
+
+/* 基础输入框样式 - 用于input元素内部 */
+.base-input
+/* ==================== 音量控制样式 ==================== */
+
+/* 静音控制容器 */
+.mute-control-container
+/* ==================== 顶部导航栏 ==================== */
+
+.header-logo
+/* ========================================
+   GIF导出弹窗颜色选择器
+   ======================================== */
+.gif-color-picker
+/* ========================================
+   绿幕抠图弹窗（普通MP4模式左侧弹窗）
+   ======================================== */
+
+
+/* 标题区 */
+
+
+/* MP4淇℃伅鍖?*/
+.chromakey-info-section
+/* AI图标hover状态（原始720px
+/* AI图标位置调整（原始640px
+/* AI生图按钮图标样式（24px显示） */
+.btn-icon-ai
+/* AI生图按钮特殊样式：宽度自适应，图标居中显示 */
+.btn-large-primary.btn-ai-generate
+/* Help 图标 */
+.help-button
+/* K帧帧数标签（手柄上方2px） */
+.keyframe-frame-label
+/* K帧手柄 */
+.keyframe-handle
+/* K帧竖线 */
+.keyframe-line
+/* K帧节点容器 - 包含线和手柄 */
+.keyframe-node
+/* Mini娴眰闈欓煶鎸夐挳 */
+.mini-mute-btn
+/* Mini浮层容器 */
+.footer-mini
+/* Mini浮层按钮（进入沉浸模式） */
+.minimize-btn
+/* Mini浮层播放按钮 */
+.mini-play-btn
+/* Mini浮层最大化按钮（退出沉浸模式） */
+.mini-maximize-btn
+/* Mini浮层缩放按钮（1:1/适应屏幕） */
+.mini-scale-btn
+/* SVGA值输入框 - 继承通用样式，仅定义特有属性 */
+.svga-value-input-wrapper
+/* SVGA尺寸输入框 - 继承通用样式，仅定义特有属性 */
+.svga-size-input-wrapper
+/* Tooltip 气泡 */
+.tooltip
+/* Vue未加载时隐藏Toast（防止闪现） */
+[v-cloak] .toast-container
+/* hover预览线 - 蓝色 */
+.speed-remap-timeline-hover-line
+/* hover预览线上方的帧数提示（蓝线上方4px） */
+.speed-remap-timeline-hover-frame-number
+/* hover预览线下方的速率提示（蓝线下方4px） */
+.speed-remap-timeline-hover-speed
+/* wrapper娌夋蹈妯″紡 */
+.footer-main-wrapper.footer-main-wrapper-immersive
+/* 中按钮 - 主要按钮（btn01_Medium） */
+.btn-primary
+/* 中按钮 - 次要按钮（btn02_Medium） */
+.btn-secondary
+/* 主题切换按钮的 tooltip 在下方 */
+.theme-toggle .tooltip-text
+/* 主题切换按钮的箭头在上方 */
+.theme-toggle .tooltip-text::after
+/* 使用雪碧图添加recover图标 - 通过::before伪元素 */
+.btn-speed-reset::before
+/* 侧边弹窗按钮已统一使用 btn-large-secondary，不再需要 material-btn-export */
+
+.material-empty
+/* 值输入容器 */
+.svga-value-container
+/* 全屏拖拽覆盖层（默认隐藏，拖拽时显示） */
+.drop-overlay
+/* 关闭/恢复按钮 (btn03_Medium) */
+.material-btn-close
+/* 内容区 */
+.stats-content
+/* 减速区间（浅蓝色） */
+.speed-remap-segment-overlay.segment-slowdown
+/* 分隔线 */
+.stats-divider
+/* 刻度标签 */
+.tick-label
+/* 刻度标记 */
+.tick-mark
+/* 刻度点 */
+.timescale-tick
+/* 加速区间（深蓝色） */
+.speed-remap-segment-overlay.segment-speedup
+/* 单个对齐按钮 */
+.text-align-btn
+/* 单位标签 - 提示文字样式 */
+.input-unit--hint
+/* 单位标签样式 */
+.input-unit
+/* 压缩区域可视化（底色） */
+.speed-remap-timeline-range
+/* 取消按钮 */
+/* 取消按钮已改为大按钮次要样式，不再需要 btn-speed-cancel */
+
+/* 变速按钮激活状态 */
+.btn-active
+/* 取消按钮（参考白色大按钮样式） */
+.material-btn-back
+/* 右上角清空按钮区域*/
+.footer-top-actions
+/* 右侧按钮组 */
+.editor-bottom-right
+/* 右侧控制区 */
+.editor-controls-area
+/* 响应式调整 */
+@media (max-width: 1400px)
+/* 复制按钮 */
+.material-btn-copy
+/* 多行输入框元素 */
+.textarea-input
+/* 多行输入框容器 */
+.input-wrapper--textarea
+/* 大按钮 - 主要按钮（btn01_Large） */
+.btn-large-primary
+/* 大按钮通用样式（44px高度，16px圆角） */
+.btn-large-primary
+/* 娌夋蹈妯″紡涓?s鍚庢贰鍑?*/
+.mode-name-box.fade-out
+/* 娌夋蹈妯″紡涓嬫ā寮忓悕绉板眳涓樉绀?*/
+.footer-top-actions-immersive
+/* 实际内容层 (1:1 尺寸) */
+.editor-preview-content
+/* 尺寸修饰符 */
+.input-wrapper--sm
+/* 尺寸输入 */
+.svga-size-container
+/* 左侧按钮组 */
+.editor-bottom-left
+/* 左侧预览区 */
+.editor-preview-area
+/* 平移控制 (新增) */
+.editor-pan-controls
+/* 广告位显示状态 */
+.ad-position-right[data-ad-visible="true"]
+/* 广告内容占位符 */
+.ad-content-placeholder
+/* 底图 */
+.editor-base-image
+/* 底图标签样式 */
+.editor-layer-tag--image
+/* 底部主控制区 */
+.footer-main
+/* 底部主控制区容器 */
+.footer-main-wrapper
+/* 底部内容布局容器 */
+.footer-content
+/* 底部按钮组 */
+.editor-bottom-actions
+/* 底部控制区切换动画 */
+.footer-fade-enter-active
+/* 底部浮层中的大按钮不使用flex:1，宽度自适应 */
+.footer-actions .btn-large-primary
+/* 底部浮层广告位（预留） */
+.ad-position-bottom
+/* 开关按钮 */
+.chromakey-switch-wrapper
+/* 弹窗中的svga-panel-container使用auto */
+.modal-overlay .svga-panel-container
+/* 弹窗中的svga-panel-container使用auto（避免侧边弹窗样式干扰） */
+.center-modal-overlay .svga-panel-container
+/* 弹窗内容区 */
+.center-modal-body
+/* 弹窗头部 */
+.center-modal-header
+/* 弹窗容器 */
+.center-modal-dialog
+/* 弹窗底部 */
+.center-modal-footer
+/* 弹窗按钮样式（基于Figma设计） */
+/* 取消按钮 - btn01_Large */
+.modal-footer .btn-primary
+/* 弹窗按钮直接使用大按钮样式，无需覆盖 */
+
+/* 压缩弹窗特殊样式（说明文字） */
+.compress-hint
+/* 弹窗遮罩层 */
+.center-modal-overlay
+/* 当前背景色按钮 */
+.current-bg-color
+/* 性能提示 */
+.chromakey-performance-hint
+/* 恢复原图按钮特殊 样式 */
+.btn-editor-recover
+/* 恢复原图按钮特殊样式
+.btn-editor-recover
+/* 恢复按钮 */
+/* 恢复按钮（基于大按钮次要，添加图标） */
+.btn-speed-reset
+/* 恢复播放按钮（在清空画布按钮左边） */
+.restore-playback-btn
+/* 打开文件按钮特殊样式 */
+.btn-open-file
+/* 按钮区域 */
+.speed-remap-buttons
+/* 搜索框 */
+.material-search
+/* 撤销按钮（基于大按钮，自定义橙色样式） */
+.btn-undo
+/* 播放/暂停按钮 */
+.play-btn
+/* 播放中状态（暂停按钮） */
+.play-btn.is-playing
+/* 播放区域 */
+/* 播放区域 - 主容器
+ * 结构：占据除顶栏外的所有空间，使用 Flexbox 布局
+ * 布局控制：
+ *   - align-items: flex-start → 子元素从顶部开始排列，不自动垂直居中
+ *   - justify-content: center → 子元素水平居中
+ *   - padding-bottom: 190px → 为底部的 .footer-bar 留出空间，确保拖拽虚线边界不超出屏幕
+ * 位置控制：子元素 .viewer-container 的垂直位置由 JS 的 offsetY 控制（通过 transform: translateY）
+ */
+.viewer-area
+/* 播放器上方文件名 */
+/* 播放器上方文件名
+ * 位置：绝对定位于 .viewer-container 的顶部上方（bottom: 100%）
+ * 缩放补偿：父容器缩放时，文件名通过 JS 设置反向 scale 保持字体大小不变
+ * 显示控制：最大宽度跟随播放器宽度，超出部分显示省略号
+ */
+.viewer-filename
+/* 播放器容器
+ * 结构：包裹文件名 + 播放器画布，大小由 JS 动态设置为原始尺寸（如 1080x1920）
+ * 缩放机制：
+ *   - transform-origin: top center → 缩放原点在顶部中心，缩放时视觉顶部保持在y=0处
+ *   - transform: translate + scale → 由 JS 动态设置，translate 控制位置，scale 控制缩放
+ * 关键设计：
+ *   - 使用 top center 而非 center center，避免缩放后视觉顶部位置偏移导致内容显示偏下
+ *   - width/height 为原始尺寸，缩放通过 transform: scale() 实现，保证布局计算正确
+ */
+.viewer-container
+/* 播放器画布
+ * 结构：填充父容器的 100% 宽高，内部由 SVGA/Lottie/MP4 播放器创建 canvas 元素
+ * 布局：Flexbox 居中对齐，确保 canvas 在画布内居中显示
+ */
+.viewer-canvas
+/* 操作按钮区(Frame 29) */
+.material-actions
+/* 放大按钮 */
+.zoom-btn[data-type="in"]
+/* 文字 Canvas 容器 */
+.editor-canvas-wrapper
+/* 文字对齐按钮组 */
+.text-align-buttons
+/* 文字层 Canvas */
+.editor-text-canvas
+/* 文字层标签样式 */
+.editor-layer-tag--text
+/* 文字层选中/悬停时的辅助框 - 已移除 */
+.editor-text-border
+/* 文案内容标题带按钮的容器 */
+.editor-control-label-with-buttons
+/* 新按钮 - 在material-btn-close右边8px */
+.material-btn-new
+/* 时长显示（时间轴右侧4px） */
+.speed-remap-duration-label
+/* 时长预估 */
+.speed-remap-duration
+/* 时间刻度容器 */
+.speed-remap-timescale
+/* 时间轴主体 */
+.speed-remap-timeline
+/* 时间轴容器（垂直布局） */
+.speed-remap-timeline-wrapper
+/* 显示状态 */
+.center-modal-overlay.show
+/* 显示状态下的弹窗 */
+.center-modal-overlay.show .center-modal-dialog
+/* 显示缩放百分比*/
+.scale-percentage
+/* 暗黑模式 */
+body.dark-mode .clear-canvas-btn
+/* 暗黑模式 */
+body.dark-mode .drop-overlay
+/* 暗黑模式 */
+body.dark-mode .editor-view-btn
+/* 暗黑模式 */
+body.dark-mode .library-loading-indicator
+/* 暗黑模式 */
+body.dark-mode .mute-btn
+/* 暗黑模式 */
+body.dark-mode .play-btn
+/* 暗黑模式hover状态（原始80px
+/* 暗黑模式下的AI图标（原始0px
+/* 暗黑模式下的背景色选项列表 */
+/* body.dark-mode .bg-color-options
+/* 暗黑模式下的颜色选择按钮 */
+body.dark-mode .color-btn
+/* 暗黑模式禁用状态不响应hover和active */
+body.dark-mode .mute-btn.is-disabled:hover
+/* 暗黑模式适配 */
+body.dark .text-align-btn
+/* 替换按钮 (btn01_Medium) */
+.material-btn-replace
+/* 标题：素材图替换 */
+.stats-header
+/* 模式名称区域内的所有文本样式统一 */
+.mode-name-label *
+/* 模式名称容器 - 左对齐 */
+.mode-name-box
+/* 模式名称标签 */
+.mode-name-label
+/* 每段区间的速率颜色覆盖 */
+.speed-remap-segment-overlay
+/* 沉浸模式下footer-main的样式 */
+.footer-main-wrapper-immersive .footer-main
+/* 沉浸模式下底部主控制区高度 */
+.footer-bar.footer-immersive
+/* 沉浸模式下调整footer-top-actions位置和居中 */
+.footer-main-wrapper-immersive .footer-top-actions
+/* 清空画布按钮（右上角） */
+.clear-canvas-btn
+/* 滑块 */
+.chromakey-slider-wrapper
+/* 滚动区域 */
+.material-panel-scroll
+/* 滚动条样式- 默认隐藏 */
+.material-panel-scroll::-webkit-scrollbar
+/* 激活状态标签（固定尺寸，不受缩放影响） */
+.editor-layer-tag
+/* 点阵背景按钮 - 暗黑模式 */
+body.dark-mode .pattern-btn
+/* 确定按钮 - btn02_Large */
+.modal-footer .btn-secondary
+/* 禁用状态不响应hover和active */
+.mute-btn.is-disabled:hover
+/* 禁用状态（无音频） */
+.mute-btn.is-disabled
+/* 空状态底部提示 */
+.footer-empty-tip
+/* 空状态样式*/
+.footer-empty-tip
+/* 空状态：宽度240px，居中*/
+.footer-main.footer-main-empty
+/* 空白页状态下的文字颜色覆盖 */
+.footer-main.footer-main-empty .footer-empty-tip-sub
+/* 端点帧数标签（黑色） */
+.frame-label-endpoint
+/* 端点手柄 - 左右不同 */
+.keyframe-endpoint .keyframe-handle
+/* 端点节点（起点/终点） */
+.keyframe-endpoint .keyframe-line
+/* 第一行：模块切换 + 清空按钮 */
+.footer-row-tabs
+/* 第三行：控制区域 */
+.footer-row-controls
+/* 第二行：文件信息 */
+.footer-row-info
+/* 素材信息区(Frame 17) */
+.material-info
+/* 素材卡片（列表样式）*/
+.material-item
+/* 素材名称行 */
+.material-name-row
+/* 素材图容器 */
+.editor-image-wrapper
+/* 素材管理按钮特殊样式 */
+.btn-material-manager
+/* 绌虹姸鎬佽鐩栧眰 */
+.empty-state-overlay
+/* 编辑器缩放百分比显示 */
+.editor-scale-percentage
+/* 缩小按钮 - 通过data属性区分 */
+.zoom-btn[data-type="out"]
+/* 缩放按钮 */
+.zoom-btn
+/* 缩放控制 */
+.editor-zoom-controls
+/* 缩略图 */
+.material-thumb
+/* 背景色选择器容器 */
+.bg-color-selector
+/* 背景色选项列表 */
+.bg-color-options
+/* 蓝色线点击区域（5px宽） */
+.keyframe-line-clickarea
+/* 覆盖 textarea 样式 */
+.svga-textarea
+/* 视图模式切换按钮（1:1/适应高度） */
+.editor-view-btn
+/* 转换按钮进度显示（适配大按钮） */
+.btn-large-secondary.mp4-btn-converting
+/* 输入框容器通用样式 */
+.input-wrapper
+/* 边框修饰符 */
+.input-wrapper--thin
+/* 进度条 */
+.progress-bar
+/* 进度条滑块 */
+.progress-thumb
+/* 迷你模式下的静音控制容器 */
+.mute-control-container.mini-mute-control
+/* 迷你模式下的音量滑块 */
+.volume-slider-container.mini-volume-slider
+/* 适应屏幕高度按钮（当1:1模式下显示） */
+.reset-scale-btn.is-contain
+/* 适应高度按钮（当one-to-one模式下显示） */
+.editor-view-btn.is-contain
+/* 选中状态 */
+.keyframe-selected .keyframe-handle
+/* 遮罩层 - 隐藏 */
+.material-overlay
+/* 配置区域 */
+.chromakey-config-section
+/* 配置区域 */
+.svga-config-section
+/* 配置项间距修饰符 */
+.svga-config-item--mt
+/* 鎷栨嫿鎻愮ず */
+.drop-hint
+/* 闈欓煶鐘舵€侊紙宸插紑鍚潤闊筹級 */
+.mute-btn.is-muted
+/* 隐藏数字输入框箭头 */
+.base-input::-webkit-outer-spin-button
+/* 静音按钮 */
+.mute-btn
+/* 音量滑块填充 */
+.volume-slider-fill
+/* 音量滑块容器 */
+.volume-slider-container
+/* 音量滑块手柄 */
+.volume-slider-handle
+/* 音量滑块轨道 */
+.volume-slider-track
+/* 预估对比区域 */
+.svga-estimate-section
+/* 预览内容容器 (视口内的可移动层) */
+.editor-preview-wrapper
+/* 颜色选择按钮 */
+.color-btn
+/* 骨架屏加载动画  */
+@keyframes spin
+/* 鼠标悬停时显示音量滑块 */
+.mute-control-container:hover .volume-slider-container
+560px -> 缩小到1/2 = -320px
+560px -> 缩小到1/2 = -360px
+640px -> 缩小到1/2 = -40px
+640px -> 缩小到1/2 = 0px
+@keyframes slideDown
+@keyframes slideDown
+@media (max-width: 1200px)
+body.dark .text-align-btn.active
+body.dark .text-align-btn:hover
+body.dark-mode .ad-content-placeholder
+body.dark-mode .ad-position-bottom
+body.dark-mode .ad-position-right
+body.dark-mode .base-input
+body.dark-mode .base-input:disabled
+body.dark-mode .btn-large-primary
+body.dark-mode .btn-large-primary:active
+body.dark-mode .btn-large-primary:disabled
+body.dark-mode .btn-large-primary:hover
+body.dark-mode .btn-material-manager
+body.dark-mode .btn-open-file
+body.dark-mode .btn-primary
+body.dark-mode .btn-primary:active
+body.dark-mode .btn-primary:hover
+body.dark-mode .btn-speed-reset::before
+body.dark-mode .btn-undo
+body.dark-mode .btn-undo:hover:not(:disabled)
+body.dark-mode .center-modal-dialog
+body.dark-mode .center-modal-header
+body.dark-mode .center-modal-header h3
+body.dark-mode .chromakey-config-label
+body.dark-mode .chromakey-info-row
+body.dark-mode .chromakey-performance-hint
+body.dark-mode .chromakey-slider
+body.dark-mode .chromakey-slider::-moz-range-thumb
+body.dark-mode .chromakey-slider::-webkit-slider-thumb
+body.dark-mode .chromakey-switch
+body.dark-mode .chromakey-switch.active
+body.dark-mode .clear-btn
+body.dark-mode .clear-btn svg path
+body.dark-mode .clear-btn:active
+body.dark-mode .clear-btn:hover
+body.dark-mode .clear-canvas-btn .sprite-close
+body.dark-mode .clear-canvas-btn:active
+body.dark-mode .clear-canvas-btn:active .sprite-close
+body.dark-mode .clear-canvas-btn:hover
+body.dark-mode .clear-canvas-btn:hover .sprite-close
+body.dark-mode .click-upload-text
+body.dark-mode .click-upload-text:hover
+body.dark-mode .color-btn.is-active
+body.dark-mode .color-btn:hover
+body.dark-mode .compress-hint
+body.dark-mode .drop-hint
+body.dark-mode .drop-hint-text
+body.dark-mode .editor-control-group
+body.dark-mode .editor-control-label
+body.dark-mode .editor-preview-area
+body.dark-mode .editor-scale-percentage
+body.dark-mode .editor-switch-row
+body.dark-mode .editor-view-btn.is-contain
+body.dark-mode .editor-view-btn.is-contain:hover
+body.dark-mode .editor-view-btn:hover
+body.dark-mode .empty-state-slogan
+body.dark-mode .empty-state-subtitle
+body.dark-mode .empty-state-title
+body.dark-mode .footer-empty-tip-main
+body.dark-mode .footer-empty-tip-sub
+body.dark-mode .footer-empty-tip-sub
+body.dark-mode .footer-main
+body.dark-mode .footer-mini
+body.dark-mode .fps-unit
+body.dark-mode .frame-label-endpoint
+body.dark-mode .gif-color-input
+body.dark-mode .gif-color-input:hover
+body.dark-mode .gif-color-value
+body.dark-mode .header-logo
+body.dark-mode .header-logo:hover
+body.dark-mode .header-navbar
+body.dark-mode .header-navbar-title
+body.dark-mode .help-button
+body.dark-mode .help-button:hover
+body.dark-mode .help-popup
+body.dark-mode .info-item-label
+body.dark-mode .info-item-value
+body.dark-mode .input-unit
+body.dark-mode .input-unit--hint
+body.dark-mode .input-wrapper
+body.dark-mode .input-wrapper:focus-within
+body.dark-mode .input-wrapper:hover
+body.dark-mode .keyframe-endpoint .keyframe-line
+body.dark-mode .keyframe-frame-label
+body.dark-mode .keyframe-line
+body.dark-mode .keyframe-speed-info
+body.dark-mode .keyframe-speed-label-text
+body.dark-mode .keyframe-speed-popup
+body.dark-mode .keyframe-speed-popup-title
+body.dark-mode .keyframe-speed-preset
+body.dark-mode .keyframe-speed-preset-label
+body.dark-mode .keyframe-speed-preset:hover
+body.dark-mode .keyframe-speed-slider
+body.dark-mode .library-loading-indicator .loading-bar
+body.dark-mode .library-loading-indicator .loading-percentage
+body.dark-mode .library-loading-indicator .loading-text
+body.dark-mode .material-btn-back
+body.dark-mode .material-btn-back svg path
+body.dark-mode .material-btn-back:hover
+body.dark-mode .material-btn-close
+body.dark-mode .material-btn-close:hover
+body.dark-mode .material-btn-copy svg rect
+body.dark-mode .material-btn-copy svg rect:first-child
+body.dark-mode .material-btn-edit
+body.dark-mode .material-btn-edit svg path
+body.dark-mode .material-btn-edit:hover
+body.dark-mode .material-btn-new
+body.dark-mode .material-btn-new svg path
+body.dark-mode .material-btn-new:hover
+body.dark-mode .material-btn-replace
+body.dark-mode .material-btn-replace span
+body.dark-mode .material-btn-replace:hover
+body.dark-mode .material-empty
+body.dark-mode .material-meta
+body.dark-mode .material-name
+body.dark-mode .material-panel-scroll::-webkit-scrollbar-thumb:hover
+body.dark-mode .material-panel-scroll:hover::-webkit-scrollbar-thumb
+body.dark-mode .material-search
+body.dark-mode .material-search-input
+body.dark-mode .material-search-input::placeholder
+body.dark-mode .material-search-input:focus
+body.dark-mode .material-search:focus-within
+body.dark-mode .material-search:hover
+body.dark-mode .mini-maximize-btn
+body.dark-mode .mini-maximize-btn:hover
+body.dark-mode .mini-mute-btn
+body.dark-mode .mini-mute-btn.is-disabled
+body.dark-mode .mini-mute-btn.is-muted
+body.dark-mode .mini-mute-btn.is-muted:hover
+body.dark-mode .mini-mute-btn:hover
+body.dark-mode .mini-play-btn
+body.dark-mode .mini-play-btn.is-playing
+body.dark-mode .mini-play-btn.is-playing:hover
+body.dark-mode .mini-play-btn:hover
+body.dark-mode .mini-scale-btn
+body.dark-mode .mini-scale-btn.is-contain
+body.dark-mode .mini-scale-btn.is-contain:hover
+body.dark-mode .mini-scale-btn:hover
+body.dark-mode .minimize-btn
+body.dark-mode .minimize-btn:hover
+body.dark-mode .modal-footer
+body.dark-mode .modal-footer .btn-primary
+body.dark-mode .modal-footer .btn-primary:active
+body.dark-mode .modal-footer .btn-primary:hover
+body.dark-mode .modal-footer .btn-secondary
+body.dark-mode .modal-footer .btn-secondary:active
+body.dark-mode .modal-footer .btn-secondary:hover
+body.dark-mode .modal-header
+body.dark-mode .modal-header h3
+body.dark-mode .mode-name-box
+body.dark-mode .mode-name-label
+body.dark-mode .mode-name-label *
+body.dark-mode .mp4-progress-text
+body.dark-mode .mp4-stage-text
+body.dark-mode .mute-btn.is-disabled
+body.dark-mode .mute-btn.is-disabled:active
+body.dark-mode .mute-btn.is-muted
+body.dark-mode .mute-btn.is-muted:active
+body.dark-mode .mute-btn.is-muted:hover
+body.dark-mode .mute-btn:active
+body.dark-mode .mute-btn:hover
+body.dark-mode .nav-link
+body.dark-mode .play-btn.is-playing
+body.dark-mode .play-btn.is-playing:active
+body.dark-mode .play-btn.is-playing:hover
+body.dark-mode .play-btn:active
+body.dark-mode .play-btn:hover
+body.dark-mode .progress-bar
+body.dark-mode .progress-bar:hover
+body.dark-mode .progress-fill
+body.dark-mode .progress-fill:hover
+body.dark-mode .progress-thumb
+body.dark-mode .progress-thumb:hover
+body.dark-mode .reset-scale-btn
+body.dark-mode .reset-scale-btn.is-contain
+body.dark-mode .reset-scale-btn.is-contain:hover
+body.dark-mode .reset-scale-btn:hover
+body.dark-mode .restore-playback-btn
+body.dark-mode .restore-playback-btn:hover
+body.dark-mode .scale-percentage
+body.dark-mode .speed-remap-duration
+body.dark-mode .speed-remap-duration-label
+body.dark-mode .speed-remap-editor
+body.dark-mode .speed-remap-segment-overlay.segment-slowdown
+body.dark-mode .speed-remap-segment-overlay.segment-speedup
+body.dark-mode .speed-remap-timeline
+body.dark-mode .speed-remap-timeline-hover-frame-number
+body.dark-mode .speed-remap-timeline-hover-speed
+body.dark-mode .speed-remap-timeline-range
+body.dark-mode .stats-divider
+body.dark-mode .stats-header
+body.dark-mode .stats-help
+body.dark-mode .stats-title
+body.dark-mode .svga-btn-converting
+body.dark-mode .svga-compress-hint
+body.dark-mode .svga-config-label
+body.dark-mode .svga-estimate-box
+body.dark-mode .svga-estimate-row
+body.dark-mode .svga-estimate-title
+body.dark-mode .svga-info-row
+body.dark-mode .svga-progress-text
+body.dark-mode .svga-size-lock
+body.dark-mode .svga-stage-text
+body.dark-mode .svga-textarea
+body.dark-mode .svga-textarea:focus
+body.dark-mode .tab-btn
+body.dark-mode .tab-btn.is-active
+body.dark-mode .tab-btn:hover
+body.dark-mode .theme-toggle .tooltip-text::after
+body.dark-mode .theme-toggle svg
+body.dark-mode .tick-label
+body.dark-mode .tick-mark
+body.dark-mode .toast-message
+body.dark-mode .tooltip .tooltip-text
+body.dark-mode .tooltip .tooltip-text::after
+body.dark-mode .viewer-filename
+body.dark-mode .volume-slider-fill
+body.dark-mode .volume-slider-handle
+body.dark-mode .volume-slider-handle:hover
+body.dark-mode .volume-slider-track
+body.dark-mode .zoom-btn[data-type="in"]
+body.dark-mode .zoom-btn[data-type="in"]:hover
+body.dark-mode .zoom-btn[data-type="out"]
+body.dark-mode .zoom-btn[data-type="out"]:hover
