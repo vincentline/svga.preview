@@ -67,5 +67,8 @@ docs/ffmpeg/
 # 临时测试文件
 figma-mcp-example.md
 
+# 归档文件夹
+归档/
+
 # package-lock.json（可选，建议忽略避免冲突）
 package-lock.json

@@ -11,7 +11,11 @@ AI-Protocol-Hub 子模块安装脚本
 使用方法：
 在目标项目根目录执行：
 python install_submodule.py
+
 """
+
+# 脚本版本号
+VERSION = "1.0.1"
 
 import os
 import sys
@@ -229,6 +233,7 @@ def create_update_log_md():
 - 更新简述：如新增功能、修复问题、优化性能等，简单描述
 
 ## 更新记录
+[2026-01-01 09:30:00] 【新增文件】 : UPDATE_LOG.md - 新增文件
 """
             with open(update_log_path, "w", encoding="utf-8") as f:
                 f.write(content)
@@ -246,7 +251,7 @@ def main():
     """
     脚本主函数
     """
-    logger.info("开始执行 AI-Protocol-Hub 子模块安装脚本")
+    logger.info(f"开始执行 AI-Protocol-Hub 子模块安装脚本 (v{VERSION})")
     
     # 步骤 1: 添加并克隆子模块
     if not add_submodule():
@@ -279,4 +284,8 @@ def main():
 
 
 if __name__ == "__main__":
+    # 检查是否需要显示版本号
+    if len(sys.argv) > 1 and sys.argv[1] in ["--version", "-v"]:
+        print(f"AI-Protocol-Hub 子模块安装脚本 v{VERSION}")
+        sys.exit(0)
     sys.exit(main())

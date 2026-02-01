@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="utf-8" />
+  <title>MeeWoo - 登录</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- 控制颜色方案，拒绝浏览器自动暗黑模式 -->
+  <meta name="color-scheme" content="light dark" />
+  <style>
+    /* 确保背景色不受浏览器自动暗黑模式影响 */
+    :root {
+      color-scheme: light dark;
+    }
+    html {
+      background-color: #fcfcfc;
+      transition: background-color 0.3s;
+    }
+    body.dark-mode html {
+      background-color: #1a1a1a;
+    }
+  </style>
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="../docs/favicon.png">
+
+  <!-- COI Service Worker for SharedArrayBuffer support on GitHub Pages -->
+  <script src="../docs/coi-serviceworker.js?v=8"></script>
+
+  <!-- 外部样式表 -->
+  <link rel="stylesheet" href="../docs/assets/css/sprite-generated.css" />
+  <link rel="stylesheet" href="../docs/assets/css/styles.css" />
+  <link rel="stylesheet" href="../docs/assets/css/drawer.css" />
+  <link rel="stylesheet" href="../docs/assets/css/panel.css" />
+
+  <!-- 登录页面专用样式 -->
+  <style>
+    .login-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    .login-card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      padding: 40px;
+      width: 100%;
+      max-width: 420px;
+      box-sizing: border-box;
+    }
+
+    body.dark-mode .login-card {
+      background: #2a2a2a;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .login-logo {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .login-logo img {
+      width: 80px;
+      height: 80px;
+      margin-bottom: 16px;
+    }
+
+    .login-logo h1 {
+      font-size: 24px;
+      font-weight: 600;
+      color: #333;
+      margin: 0;
+    }
+
+    body.dark-mode .login-logo h1 {
+      color: #fff;
+    }
+
+    .login-form {
+      margin-bottom: 24px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #666;
+    }
+
+    body.dark-mode .form-group label {
+      color: #ccc;
+    }
+
+    .form-actions {
+      margin-top: 32px;
+    }
+
+    .form-actions .btn-large-secondary {
+      width: 100%;
+    }
+
+    .login-footer {
+      text-align: center;
+      margin-top: 24px;
+      font-size: 14px;
+      color: #999;
+    }
+
+    body.dark-mode .login-footer {
+      color: #777;
+    }
+
+    .login-footer a {
+      color: #00b4ff;
+      text-decoration: none;
+    }
+
+    .login-footer a:hover {
+      text-decoration: underline;
+    }
+
+    .error-message {
+      background: #ffebee;
+      color: #c62828;
+      padding: 12px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      font-size: 14px;
+    }
+
+    body.dark-mode .error-message {
+      background: #4e342e;
+      color: #ffab91;
+    }
+
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255, 255, 255, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+
+    body.dark-mode .loading-overlay {
+      background: rgba(26, 26, 26, 0.8);
+    }
+
+    .loading-spinner {
+      width: 48px;
+      height: 48px;
+      border: 4px solid #e0e0e0;
+      border-top-color: #00b4ff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app" v-cloak>
+    <div class="login-container">
+      <div class="login-card">
+        <div class="login-logo">
+          <img :src="isDarkMode ? '../docs/assets/img/logo04_dark.png' : '../docs/assets/img/logo04.png'" alt="MeeWoo Logo" style="width: auto; height: auto; max-width: 120px; max-height: 120px;" />
+        </div>
+
+        <div v-if="errorMessage" class="error-message">
+          {{ errorMessage }}
+        </div>
+
+        <form class="login-form" @submit.prevent="handleLogin">
+          <div class="form-group">
+            <label for="username">用户名</label>
+            <div class="input-wrapper input-wrapper--lg">
+              <input 
+                type="text" 
+                id="username" 
+                v-model="form.username" 
+                placeholder="请输入用户名" 
+                required
+                autocomplete="username"
+                class="base-input"
+                style="font-weight: 500;"
+              />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="password">密码</label>
+            <div class="input-wrapper input-wrapper--lg" style="position: relative;">
+              <input 
+                :type="showPassword ? 'text' : 'password'" 
+                id="password" 
+                v-model="form.password" 
+                placeholder="请输入密码" 
+                required
+                autocomplete="current-password"
+                class="base-input"
+                style="padding-right: 40px;"
+              />
+              <button 
+                type="button" 
+                @click="togglePasswordVisibility"
+                style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 4px;"
+                :title="showPassword ? '隐藏密码' : '显示密码'"
+              >
+                <svg v-if="!showPassword" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                <svg v-else xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"></path>
+                  <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"></path>
+                  <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"></path>
+                  <line x1="2" y1="2" x2="22" y2="22"></line>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button 
+              type="submit" 
+              class="btn-large-secondary" 
+              :disabled="isLoading"
+            >
+              {{ isLoading ? '登录中...' : '登录' }}
+            </button>
+          </div>
+        </form>
+
+        <div class="login-footer">
+          <p>还没有账号？<span style="color: #999; cursor: not-allowed;">立即注册（暂不支持）</span></p>
+          <p><span style="color: #999; cursor: not-allowed;">忘记密码？（暂不支持）</span></p>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="isLoading" class="loading-overlay">
+      <div class="loading-spinner"></div>
+    </div>
+  </div>
+
+  <!-- COI Service Worker for SharedArrayBuffer support on GitHub Pages -->
+  <script src="../docs/coi-serviceworker.js?v=8"></script>
+
+  <!-- 库加载管理器 -->
+  <script src="../docs/assets/js/service/library-loader.js"></script>
+
+  <!-- Vue.js -->
+  <script src="../docs/assets/js/lib/vue.min.js"></script>
+
+  <!-- 登录页面逻辑 -->
+  <script>
+    new Vue({
+      el: '#app',
+      data: {
+        form: {
+          username: '',
+          password: ''
+        },
+        errorMessage: '',
+        isLoading: false,
+        isDarkMode: false,
+        showPassword: false
+      },
+      mounted() {
+        // 检测系统暗黑模式偏好
+        this.checkDarkMode();
+        // 监听暗黑模式变化
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+          this.checkDarkMode();
+        });
+      },
+      methods: {
+        checkDarkMode() {
+          this.isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          if (this.isDarkMode) {
+            document.body.classList.add('dark-mode');
+          } else {
+            document.body.classList.remove('dark-mode');
+          }
+        },
+        togglePasswordVisibility() {
+          this.showPassword = !this.showPassword;
+        },
+        handleLogin() {
+          // 表单验证
+          if (!this.form.username || !this.form.password) {
+            this.errorMessage = '请输入用户名和密码';
+            return;
+          }
+
+          // 模拟登录加载
+          this.isLoading = true;
+          this.errorMessage = '';
+
+          // 模拟登录请求
+          setTimeout(() => {
+            // 简单的模拟验证
+            if (this.form.username && this.form.password) {
+              // 登录成功，跳转到主页面
+              window.location.href = '../docs/index.html';
+            } else {
+              this.errorMessage = '用户名或密码错误';
+              this.isLoading = false;
+            }
+          }, 1000);
+        }
+      }
+    });
+  </script>
+</body>
+
+</html>

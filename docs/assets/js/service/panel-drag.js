@@ -276,11 +276,23 @@
     });
   });
 
-  // 开始监听DOM变化
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true
-  });
+  // 开始监听DOM变化 - 确保document.body存在
+  if (document.body) {
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+  } else {
+    // 如果document.body不存在，等待DOMContentLoaded事件
+    document.addEventListener('DOMContentLoaded', () => {
+      if (document.body) {
+        observer.observe(document.body, {
+          childList: true,
+          subtree: true
+        });
+      }
+    });
+  }
 
   // 为动态添加的面板提供初始化方法
   global.MeeWoo.Service.PanelDrag.setupPanel = function (panelElement) {

@@ -71,9 +71,37 @@
     _persist() {
       try {
         const data = JSON.stringify(this.config);
+        // 检查存储大小是否可能超出配额
+        const dataSize = new Blob([data]).size;
+        // localStorage 通常有 5MB 配额，这里检查是否接近限制
+        if (dataSize > 4.5 * 1024 * 1024) {
+          console.warn('[ConfigManager] 配置数据接近存储配额限制:', dataSize, 'bytes');
+          // 可以在这里添加清理逻辑，例如移除旧的或不常用的配置
+        }
         localStorage.setItem(STORAGE_KEY, data);
       } catch (e) {
-        console.error('[ConfigManager] 配置保存失败:', e);
+        if (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
+          console.error('[ConfigManager] 存储配额超出，配置保存失败');
+          // 可以在这里添加清理逻辑，例如清空部分配置
+          this._handleQuotaExceeded();
+        } else {
+          console.error('[ConfigManager] 配置保存失败:', e);
+        }
+      }
+    }
+
+    /**
+     * 处理存储配额超出的情况
+     * @private
+     */
+    _handleQuotaExceeded() {
+      try {
+        // 尝试清空所有配置以释放空间
+        this.config = {};
+        localStorage.removeItem(STORAGE_KEY);
+        console.warn('[ConfigManager] 已清空配置以释放存储空间');
+      } catch (e) {
+        console.error('[ConfigManager] 清理配置失败:', e);
       }
     }
 
