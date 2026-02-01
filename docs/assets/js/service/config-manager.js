@@ -54,10 +54,20 @@
      */
     _load() {
       try {
+        // 检查 localStorage 是否可用
+        if (!localStorage) {
+          console.warn('[ConfigManager] localStorage 不可用');
+          return {};
+        }
         const data = localStorage.getItem(STORAGE_KEY);
         return data ? JSON.parse(data) : {};
       } catch (e) {
-        console.warn('[ConfigManager] 配置加载失败，可能数据已损坏:', e);
+        if (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
+          console.error('[ConfigManager] 存储配额超出，配置加载失败');
+          this._handleQuotaExceeded();
+        } else {
+          console.warn('[ConfigManager] 配置加载失败，可能数据已损坏:', e);
+        }
         // 发生错误时返回空对象，但在实际生产中可能需要备份旧数据
         // 这里简单处理：若解析失败，视为无配置，不覆盖原始损坏数据（直到下一次保存）
         return {};
