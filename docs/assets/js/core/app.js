@@ -402,7 +402,11 @@ function initApp() {
         // 序列帧帧率设置弹窗
         showFramesFpsDialog: false,
         framesFpsInput: 25,      // 弹窗中的帧率输入值
-        framesWasPlayingBeforeDialog: undefined // 打开帧率弹窗前的播放状态
+        framesWasPlayingBeforeDialog: undefined, // 打开帧率弹窗前的播放状态
+
+        // 登录状态
+        isLoggedIn: false,
+        userInfo: null
       };
     },
     methods: {
@@ -529,6 +533,53 @@ function initApp() {
         if (this.configManager) {
           this.configManager.set(key, value);
         }
+      },
+
+      /* ==================== 登录状态管理 ==================== */
+
+      /**
+       * 处理登录
+       */
+      handleLogin: function () {
+        if (this.isLoggedIn) {
+          // 已登录，跳转到用户中心或执行其他操作
+          console.log('用户已登录:', this.userInfo);
+        } else {
+          // 未登录，重定向到 ImgHLP 登录页
+          if (window.authUtils) {
+            window.authUtils.redirectToLogin(window.location.href);
+          }
+        }
+      },
+
+      /**
+       * 处理登出
+       */
+      handleLogout: function () {
+        if (window.authUtils) {
+          window.authUtils.clearAuth();
+          this.updateLoginStatus();
+        }
+      },
+
+      /**
+       * 更新登录状态
+       */
+      updateLoginStatus: function () {
+        if (window.authUtils) {
+          this.isLoggedIn = window.authUtils.isLoggedIn();
+          this.userInfo = window.authUtils.getUserInfo();
+        }
+      },
+
+      /**
+       * 处理登录回调
+       */
+      handleLoginCallback: function () {
+        if (window.authUtils) {
+          return window.authUtils.handleLoginCallback();
+        }
+        return false;
       },
 
       /**
@@ -9695,6 +9746,18 @@ function initApp() {
 
       // 加载 help.md
       this.loadHelpContent();
+
+      // 检查登录回调和登录状态
+      if (window.authUtils) {
+        // 检查登录回调
+        if (this.handleLoginCallback()) {
+          // 登录成功，更新登录状态
+          this.updateLoginStatus();
+        } else {
+          // 检查登录状态
+          this.updateLoginStatus();
+        }
+      }
 
       // 注册库加载进度回调（更新响应式数据）
       if (Core.libraryLoader) {
