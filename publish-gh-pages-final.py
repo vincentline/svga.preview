@@ -275,9 +275,9 @@ def publish_to_gh_pages():
         if commit_result and commit_result.returncode != 0:
             print_with_encoding("警告：没有需要提交的更改")
         
-        # 推送到 gh-pages 分支
+        # 推送到 gh-pages 分支 - 使用强制推送，因为我们是重建分支内容
         print_with_encoding("[进度] 推送到 gh-pages 分支...")
-        push_result = run_command('git push origin gh-pages')
+        push_result = run_command('git push -f origin gh-pages')
         if push_result:
             if push_result.returncode != 0:
                 print_with_encoding("错误：推送失败")
