@@ -2043,7 +2043,7 @@ body.dark-mode .sprite-AI-img.btn-icon-ai:hover {
   background-image: url('../img/controls-sprite.png');
   background-repeat: no-repeat;
   background-position: -235px -154px;
-  background-size: 400px 360px;
+  background-size: 400px 400px;
   width: 40px;
   height: 40px;
   transform: scale(1.2);
@@ -3128,7 +3128,7 @@ body.dark-mode .material-btn-replace:hover {
   transition: all 0.15s ease;
   /* 使用雪碧图 - recover图标，原始80x80通过background-size缩小50%显示 */
   background-image: url('../img/controls-sprite.png');
-  background-size: 400px 360px;
+  background-size: 400px 400px;
   background-position: -239px -159px;
   background-repeat: no-repeat;
 }
@@ -4991,7 +4991,7 @@ body.dark-mode .speed-remap-duration-label {
   width: 24px;
   height: 24px;
   background-image: url('../img/controls-sprite.png');
-  background-size: 400px 360px;
+  background-size: 400px 400px;
   background-position: -240px -160px;
   background-repeat: no-repeat;
   flex-shrink: 0;

@@ -1,7 +1,7 @@
 {
-  "name": "svga-preview",
+  "name": "meewoo",
   "version": "1.0.0",
-  "description": "SVGA/Lottie动画在线预览工具",
+  "description": "MeeWoo - SVGA、双通道MP4、Lottie动画在线预览工具",
   "private": true,
   "author": "",
   "license": "ISC",
