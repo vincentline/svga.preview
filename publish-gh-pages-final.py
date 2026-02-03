@@ -21,15 +21,29 @@ def print_with_encoding(text):
 def run_command(cmd, cwd=None, shell=True):
     """运行命令并返回结果"""
     try:
-        # 对于Windows系统，使用系统默认编码
+        # 对于Windows系统，先尝试使用utf-8编码
         if os.name == 'nt':
-            result = subprocess.run(
-                cmd, 
-                cwd=cwd, 
-                shell=shell, 
-                capture_output=True, 
-                text=True
-            )
+            try:
+                result = subprocess.run(
+                    cmd, 
+                    cwd=cwd, 
+                    shell=shell, 
+                    capture_output=True, 
+                    text=True,
+                    encoding='utf-8'
+                )
+                return result
+            except UnicodeDecodeError:
+                # 如果utf-8失败，尝试使用gbk编码
+                result = subprocess.run(
+                    cmd, 
+                    cwd=cwd, 
+                    shell=shell, 
+                    capture_output=True, 
+                    text=True, 
+                    encoding='gbk'
+                )
+                return result
         else:
             # 对于非Windows系统，使用UTF-8编码
             result = subprocess.run(
@@ -40,22 +54,7 @@ def run_command(cmd, cwd=None, shell=True):
                 text=True, 
                 encoding='utf-8'
             )
-        return result
-    except UnicodeDecodeError:
-        # 如果编码解码失败，尝试使用gbk编码（Windows默认编码）
-        try:
-            result = subprocess.run(
-                cmd, 
-                cwd=cwd, 
-                shell=shell, 
-                capture_output=True, 
-                text=True, 
-                encoding='gbk'
-            )
             return result
-        except Exception as e:
-            print_with_encoding(f"错误：运行命令失败（编码问题）：{e}")
-            return None
     except Exception as e:
         print_with_encoding(f"错误：运行命令失败：{e}")
         return None
@@ -103,7 +102,7 @@ def check_and_commit_git_changes():
     
     # 检查是否在 Git 仓库中
     result = run_command('git status --short')
-    if result:
+    if result and result.stdout:
         if result.stdout.strip():
             print_with_encoding("发现未提交的更改，正在提交...")
             

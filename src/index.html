@@ -1,0 +1,1516 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="utf-8" />
+  <title>MeeWoo - SVGA、双通道MP4、Lottie动画在线预览工具</title>
+  <meta name="google-site-verification" content="YNpktNFlNRdSuuYYoTSmqsP4FCYT-jwmf1lyAduMsfM" />
+  <meta name="description" content="MeeWoo  - 免费在线预览SVGA、Lottie、双通道MP4动画，支持素材管理、GIF导出、MP4转换、帧率调整、变速编辑，无需安装即用" />
+  <meta name="keywords" content="MeeWoo,SVGA预览,Lottie播放器,双通道MP4,动画预览工具,GIF导出,SVGA素材管理,在线动画编辑器,MP4转换" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- 控制颜色方案，拒绝浏览器自动暗黑模式 -->
+  <meta name="color-scheme" content="light dark" />
+  <style>
+    /* 确保背景色不受浏览器自动暗黑模式影响 */
+    :root {
+      color-scheme: light dark;
+    }
+    html {
+      background-color: #fcfcfc;
+      transition: background-color 0.3s;
+    }
+    body.dark-mode html {
+      background-color: #1a1a1a;
+    }
+  </style>
+
+  <!-- Open Graph / 社交分享优化 -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="MeeWoo - SVGA、Lottie、双通道MP4动画在线预览和转换工具" />
+  <meta property="og:description" content="MeeWoo - 免费在线预览和编辑SVGA、Lottie、双通道MP4动画，支持素材管理、GIF导出、变速编辑" />
+  <meta property="og:url" content="https://svga.io" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="MeeWoo - SVGA、Lottie、双通道MP4动画在线预览和转换工具" />
+  <meta name="twitter:description" content="MeeWoo - 免费在线预览和编辑SVGA、Lottie、双通道MP4动画，支持素材管理、GIF导出、变速编辑" />
+
+  <!-- 搜索引擎优化 -->
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://svga.io" />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png">
+
+  <!-- COI Service Worker for SharedArrayBuffer support on GitHub Pages -->
+  <script src="coi-serviceworker.js?v=8"></script>
+
+  <!-- 外部样式表（优先加载） -->
+  <link rel="stylesheet" href="assets/css/sprite-generated.css" />
+  <link rel="stylesheet" href="assets/css/styles.css" />
+  <link rel="stylesheet" href="assets/css/drawer.css" />
+  <link rel="stylesheet" href="assets/css/panel.css" />
+
+  <!-- 库加载管理器（优先加载，独立模块） -->
+  <script src="assets/js/service/library-loader.js"></script>
+  <!-- 资源管理器（管理 ObjectURL 生命周期） -->
+  <script src="assets/js/service/resource-manager.js"></script>
+  <!-- 图片压缩服务 -->
+  <script src="assets/js/service/image-compression-service.js"></script>
+  <!-- 侧边弹窗拖拽服务 -->
+  <script src="assets/js/service/panel-drag.js"></script>
+  <!-- 登录状态管理工具 -->
+  <script src="assets/js/utils/auth-utils.js"></script>
+  <!-- 图片处理API调用工具 -->
+  <script src="assets/js/utils/image-api.js"></script>
+  <script>
+    // 立即加载核心库（Vue 和 SVGA Player）
+    (function () {
+      // 按照项目规范，使用 MeeWoo 作为项目级命名空间
+      var libraryLoader = window.MeeWoo && window.MeeWoo.Core && window.MeeWoo.Core.libraryLoader;
+      if (libraryLoader) {
+        // 高优先级加载核心库
+        libraryLoader.load(['vue', 'svgaplayer'], true).catch(function (err) {
+          console.error('核心库加载失败:', err);
+        });
+      }
+    })();
+  </script>
+
+  <!-- 站点配置加载器（用于广告位控制等功能） -->
+  <script src="assets/js/service/site-config-loader.js"></script>
+
+  <!-- 广告位控制器 -->
+  <script src="assets/js/controllers/ad-controller.js"></script>
+
+  <!-- 用户类型控制器 -->
+  <script src="assets/js/controllers/user-type-controller.js"></script>
+
+  <!-- ===== 所有库统一由 library-loader.js 动态加载 ===== -->
+  <!-- Vue.js - 核心框架，优先级最高 -->
+  <!-- SVGA播放器 - 核心功能，优先级次之 -->
+  <!-- Lottie、Howler - 后台加载 -->
+  <!-- Marked - 帮助文档时加载 -->
+  <!-- GIF.js - 导出GIF时加载 -->
+  <!-- Protobuf、Pako - 导出SVGA时加载 -->
+  <!-- FFmpeg - 转MP4时加载 -->
+</head>
+
+<body>
+  <!-- 首屏骨架屏（Vue加载前显示） -->
+  <div id="loading-skeleton" style="
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-color, #f5f5f5);
+      z-index: 9999;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    ">
+    <div style="text-align: center;">
+      <div style="
+          width: 48px;
+          height: 48px;
+          margin: 0 auto 16px;
+          border: 4px solid #e0e0e0;
+          border-top-color: #666;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        "></div>
+      <div id="loading-text" style="color: #666; font-size: 14px;">加载中...</div>
+    </div>
+  </div>
+
+  <!-- 页面加载超时检测脚本（独立运行，防止业务脚本阻塞导致无法提示） -->
+  <script>
+    (function () {
+      // 全局状态标记
+      window.SvgaPreview = window.SvgaPreview || {};
+      window.SvgaPreview.APP_LOADED = false;
+
+      var checkCount = 0;
+      var maxChecks = 300; // 30秒 (300 * 100ms)
+      var retryCount = 0;  // 重试次数记录
+
+      function checkAppLoaded() {
+        if (window.APP_LOADED) return; // 加载成功，停止检测
+
+        checkCount++;
+
+        // 10秒提示 (100次)
+        if (checkCount === 100) {
+          var textNode = document.getElementById('loading-text');
+          if (textNode) textNode.innerText = '网络较慢，正在加载核心组件，请稍候...';
+        }
+
+        // 30秒超时 (300次)
+        if (checkCount >= maxChecks) {
+          var skeleton = document.getElementById('loading-skeleton');
+          if (skeleton) {
+            // 根据重试次数显示不同提示
+            var isLastRetry = retryCount >= 1; // 已经重试过一次了
+            var tipText = isLastRetry
+              ? '加载依然失败，点击屏幕刷新页面'
+              : '加载失败，点击屏幕重试';
+
+            skeleton.innerHTML = '<div style="text-align: center; color: red; cursor: pointer; padding: 20px;">' + tipText + '</div>';
+
+            // 点击处理逻辑
+            var onAction = function () {
+              skeleton.removeEventListener('click', onAction);
+
+              if (isLastRetry) {
+                // 第二次超时，直接刷新页面
+                location.reload();
+              } else {
+                // 第一次超时，尝试软重试
+                retryCount++;
+                // 恢复 Loading 状态
+                skeleton.style.cursor = 'default';
+                skeleton.innerHTML =
+                  '<div style="text-align: center;">' +
+                  '<div style="width: 48px; height: 48px; margin: 0 auto 16px; border: 4px solid #e0e0e0; border-top-color: #666; border-radius: 50%; animation: spin 1s linear infinite;"></div>' +
+                  '<div id="loading-text" style="color: #666; font-size: 14px;">正在重新加载...</div>' +
+                  '</div>';
+
+                checkCount = 0;
+                setTimeout(checkAppLoaded, 100);
+              }
+            };
+            skeleton.addEventListener('click', onAction);
+            return; // 停止当前轮询
+          }
+        }
+
+        setTimeout(checkAppLoaded, 100);
+      }
+
+      // 启动检测
+      setTimeout(checkAppLoaded, 100);
+    })();
+  </script>
+
+  <div id="app" v-cloak>
+    <!-- 顶部导航栏 -->
+    <div class="header-navbar" :class="{'header-hidden': isImmersiveMode}">
+      <div class="header-left-action" @click="showMoreDrawer = true">
+        <img class="header-more-icon"
+          :src="isDarkMode ? './assets/img/home_more_dark.png' : './assets/img/home_more.png'" alt="More"
+          style="width: 24px; height: 24px;">
+      </div>
+      <!-- 库加载进度条 -->
+      <div v-if="loadingLibraryInfo" class="library-loading-indicator">
+        <div class="loading-text">正在加载 {{ loadingLibraryInfo.name }}（{{ loadingLibraryInfo.progress }}%）</div>
+      </div>
+
+      <div class="header-right-action">
+        <div class="login-btn-container" :class="{ 'is-logged-in': isLoggedIn }">
+          <a href="#" class="login-btn" :class="{ 'disabled': isLoggedIn }" @click.prevent="handleLogin">
+            <span class="login-icon"></span>
+          </a>
+          <!-- 登录状态下的菜单 -->
+          <div class="login-menu">
+            <div class="login-menu-item" v-if="isLoggedIn" @click="handleLogout">退出登录</div>
+          </div>
+        </div>
+        <button class="theme-toggle tooltip" @click="toggleTheme">
+          <span class="tooltip-text">{{ isDarkMode ? '切换到白天模式' : '切换到暗黑模式' }}</span>
+          <svg v-if="!isDarkMode" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <!-- 太阳图标 -->
+            <circle cx="12" cy="12" r="5" />
+            <line x1="12" y1="1" x2="12" y2="3" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            <line x1="12" y1="21" x2="12" y2="23" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" />
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" />
+            <line x1="1" y1="12" x2="3" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            <line x1="21" y1="12" x2="23" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" />
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" />
+          </svg>
+          <svg v-else viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <!-- 月亮图标 -->
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+          </svg>
+        </button>
+
+      </div>
+    </div>
+
+    <!-- Toast提示 (Moved to global utils) -->
+
+
+
+    <!-- Help 按钮（沉浸模式隐藏） -->
+    <div class="help-button" v-show="!isImmersiveMode">
+      <div class="help-popup" v-html="helpContent"></div>
+    </div>
+
+    <!-- 主页面 -->
+    <div class="main-page">
+      <!-- 播放区域 -->
+      <div class="viewer-area" @wheel="onWheel" @mousedown="onMouseDown" @mousemove="onMouseMove" @mouseup="onMouseUp"
+        @mouseleave="onMouseUp">
+        <div class="viewer-container" :style="viewerContainerStyle" v-if="!isEmpty">
+          <!-- 文件名显示（在播放器上方） -->
+          <div class="viewer-filename" v-if="!isEmpty && currentFileInfo.name" :style="viewerFilenameStyle">
+            {{ currentFileInfo.name }} /
+            <template v-if="currentModule === 'svga'">SVGA</template>
+            <template v-else-if="currentModule === 'yyeva'">双通道MP4</template>
+            <template v-else-if="currentModule === 'mp4'">MP4</template>
+            <template v-else-if="currentModule === 'frames'">序列帧</template>
+            <template v-else>Lottie</template>
+            <template v-if="currentFileInfo.sizeWH"> / {{ currentFileInfo.sizeWH }}</template>
+          </div>
+
+          <div ref="svgaContainer" class="viewer-canvas"></div>
+        </div>
+
+        <!-- 加载中提示 - 移动到viewer-area内，确保居中显示 -->
+        <div class="loading-overlay" v-if="isLoading"
+          style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; background: rgba(0,0,0,0.6); padding: 8px 16px; border-radius: 4px; pointer-events: none; z-index: 100; font-size: 14px;">
+          正在加载中...
+        </div>
+
+        <!-- 空状态覆盖层 -->
+        <div v-if="isEmpty" class="empty-state-overlay">
+          <div class="empty-state-icon">
+            <img :src="isDarkMode ? 'assets/img/logo04_dark.png' : 'assets/img/logo04.png'" alt="Logo" />
+          </div>
+          <div class="empty-state-slogan">动画格式预览与转换工具...</div>
+          <div class="empty-state-text">
+            <div class="empty-state-title">你可以转GIF；SVGA素材图替换；转双通道MP4；转SVGA；转MP4...</div>
+            <div class="empty-state-subtitle">支持文件包括：SVGA、双通道MP4、普通MP4、Lottie格式、序列帧、webp（开发中...）</div>
+          </div>
+        </div>
+
+        <input ref="fileInput" type="file" accept=".svga,.json,.lottie,.mp4,.png,.jpg,.jpeg" multiple
+          style="display: none;" @change="onFileSelect" />
+      </div>
+
+      <!-- 右侧广告位容器 -->
+      <div id="ad-container" class="ad-position-right" data-ad-position="right-float" style="display: none;">
+        <!-- 右侧广告160x600 -->
+        <ins class="adsbygoogle"
+          style="display:inline-block;width:160px;height:600px"
+          data-ad-client="ca-pub-9291089781078791"
+          data-ad-slot="6512306484"></ins>
+      </div>
+
+
+
+      <!-- 底部浮层 -->
+      <div class="footer-bar" :class="{'footer-immersive': isImmersiveMode, 'is-empty': isEmpty}"
+        @click="isEmpty && triggerFileUpload()">
+        <!-- 左侧广告位 -->
+        <div class="ad-slot" @click.stop></div>
+
+        <!-- footer-main 容器（包含主控制区和右上角清空按钮） -->
+        <div class="footer-main-wrapper" :class="{'footer-main-wrapper-immersive': isImmersiveMode}">
+          <!-- 模式名称：底部浮层左对齐 -->
+          <div class="mode-name-box" :class="{'fade-out': isImmersiveMode && modeNameFadeOut}" v-if="!isEmpty"
+            @click.stop>
+            <span class="mode-name-label">
+              <!-- 模式名 -->
+              <template v-if="currentModule === 'svga'">SVGA</template>
+              <template v-else-if="currentModule === 'yyeva'">双通道MP4</template>
+              <template v-else-if="currentModule === 'mp4'">MP4</template>
+              <template v-else-if="currentModule === 'frames'">序列帧</template>
+              <template v-else>Lottie</template>
+              <!-- 文件名 -->
+              <template v-if="currentFileInfo.name">
+                &nbsp;/&nbsp;{{ currentFileInfo.name }}
+              </template>
+              <!-- 文件大小 -->
+              <template v-if="currentFileInfo.sizeText">
+                &nbsp;&nbsp;&nbsp;文件大小：{{ currentFileInfo.sizeText }}
+              </template>
+              <!-- 帧率 -->
+              <template v-if="currentFileInfo.fps">
+                &nbsp;&nbsp;&nbsp;帧率：{{ currentFileInfo.fps }}
+              </template>
+              <!-- 尺寸 -->
+              <template v-if="currentFileInfo.sizeWH">
+                &nbsp;&nbsp;&nbsp;尺寸：{{ currentFileInfo.sizeWH }}
+              </template>
+              <!-- 时长 -->
+              <template v-if="currentFileInfo.duration">
+                &nbsp;&nbsp;&nbsp;时长：{{ currentFileInfo.duration }}
+              </template>
+              <!-- SVGA内存占用 -->
+              <template v-if="currentModule === 'svga' && currentFileInfo.memoryText">
+                &nbsp;&nbsp;&nbsp;内存占用：{{ currentFileInfo.memoryText }}
+              </template>
+            </span>
+          </div>
+          <!-- 右上角按钮区域：恢复播放（沉浸模式不显示）、清空画布（沉浸模式不显示） -->
+          <div class="footer-top-actions" :class="{'footer-top-actions-immersive': isImmersiveMode}" v-if="!isEmpty"
+            @click.stop>
+            <!-- 恢复播放按钮：回到刚打开文件时的初始状态（沉浸模式不显示） -->
+            <button class="restore-playback-btn" v-show="!isImmersiveMode" @click="restorePlayback" title="恢复播放">
+            </button>
+            <!-- 清空画布按钮（沉浸模式不显示） -->
+            <button class="clear-canvas-btn" v-show="!isImmersiveMode" @click="clearAll" title="清空画布">
+            </button>
+          </div>
+          <!-- 变速时间轴编辑器（浮层外左对齐） -->
+          <div class="speed-remap-editor" v-if="showSpeedRemapEditor && currentModule === 'mp4'">
+            <div class="speed-remap-editor-content">
+
+              <!-- 时间轴容器（垂直布局） -->
+              <div class="speed-remap-timeline-wrapper">
+                <!-- 时间轴 -->
+                <div class="speed-remap-timeline" ref="speedRemapTimeline" @click="onTimelineClick"
+                  @mousemove="onTimelineMouseMove" @mouseleave="onTimelineMouseLeave">
+                  <!-- 压缩区域可视化（底色） -->
+                  <div class="speed-remap-timeline-range"
+                    :style="{ left: (speedRemapConfig.keyframes[0] ? speedRemapConfig.keyframes[0].position * 500 : 0) + 'px', 
+                               width: ((speedRemapConfig.keyframes.length >= 2 ? speedRemapConfig.keyframes[speedRemapConfig.keyframes.length-1].position - speedRemapConfig.keyframes[0].position : 1) * 500) + 'px' }">
+                  </div>
+                  <!-- 每段区间的速率颜色覆盖 -->
+                  <template v-for="(segment, segIndex) in speedRemapSegments">
+                    <div :key="'seg-' + segIndex" class="speed-remap-segment-overlay"
+                      :class="{ 'segment-speedup': segment.speed > 1, 'segment-slowdown': segment.speed < 1 }" :style="{ 
+                      left: (segment.startPos * 500) + 'px', 
+                      width: ((segment.endPos - segment.startPos) * 500) + 'px',
+                      opacity: segment.opacity
+                    }"></div>
+                  </template>
+                  <!-- hover预览线 -->
+                  <div class="speed-remap-timeline-hover-line"
+                    :style="{ left: timelineHoverX + 'px', display: timelineHoverX >= 0 ? 'block' : 'none' }"></div>
+                  <!-- hover预览线上方的帧数提示 -->
+                  <div class="speed-remap-timeline-hover-frame-number"
+                    :style="{ left: timelineHoverX + 'px', display: timelineHoverX >= 0 ? 'block' : 'none' }">
+                    {{ timelineHoverX >= 0 ? getOriginalFrameAtPosition(timelineHoverX / 500) : '' }}
+                  </div>
+                  <!-- hover预览线下方的速率提示 -->
+                  <div class="speed-remap-timeline-hover-speed"
+                    :style="{ left: timelineHoverX + 'px', display: timelineHoverX >= 0 ? 'block' : 'none' }">
+                    <template v-if="timelineHoverX >= 0">
+                      当前段<br>{{ getSpeedAtPosition(timelineHoverX / 500).toFixed(2) }}倍速
+                    </template>
+                  </div>
+                  <!-- K帧节点 -->
+                  <div v-for="(kf, index) in speedRemapConfig.keyframes" :key="index" class="keyframe-node" :class="{
+                    'keyframe-endpoint': kf.isEndpoint,
+                    'keyframe-endpoint-left': kf.isEndpoint && index === 0,
+                    'keyframe-endpoint-right': kf.isEndpoint && index === speedRemapConfig.keyframes.length - 1,
+                    'keyframe-selected': selectedKeyframeIndex === index
+                  }" :style="{ left: (kf.position * 500) + 'px' }">
+                    <!-- 帧数标签：显示在手柄上方2px，双击编辑 -->
+                    <div class="keyframe-frame-label" :class="{ 'frame-label-endpoint': kf.isEndpoint }"
+                      @dblclick.stop="onFrameLabelDblClick(index)">
+                      {{ kf.originalFrame }}
+                    </div>
+                    <!-- 蓝色线：点击删除K帧（仅中间K帧） -->
+                    <div class="keyframe-line-clickarea" @click.stop="onKeyframeLineClick(index)">
+                      <div class="keyframe-line"></div>
+                    </div>
+                    <!-- 手柄：拖动 -->
+                    <div class="keyframe-handle" @mousedown.stop="onKeyframeMouseDown($event, index)"></div>
+                  </div>
+                </div>
+                <!-- 时间刻度 -->
+                <div class="speed-remap-timescale">
+                  <div v-for="tick in timeScaleTicks" :key="tick.time" class="timescale-tick"
+                    :style="{ left: tick.position + 'px' }">
+                    <div class="tick-mark"></div>
+                    <div class="tick-label">{{ tick.label }}</div>
+                  </div>
+                </div>
+              </div>
+              <!-- 时长显示：应用后/原始 -->
+              <div class="speed-remap-duration-label">
+                {{ speedRemapEstimate.outputDuration }}s/{{ speedRemapConfig.originalDuration.toFixed(1) }}s
+              </div>
+              <!-- 按钮 -->
+              <div class="speed-remap-buttons">
+                <button v-if="speedRemapConfig.enabled" class="btn-large-primary btn-speed-reset"
+                  @click="resetSpeedRemap">
+                </button>
+                <button class="btn-large-primary" @click="cancelSpeedRemap">取消</button>
+                <button class="btn-large-secondary" @click="confirmSpeedRemap">确定</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 使用transition组件实现平滑切换 -->
+          <transition name="footer-fade">
+            <!-- 中间主控制区 -->
+            <div v-if="!isImmersiveMode" class="footer-main" :class="{'footer-main-empty': isEmpty}"
+              @click.stop="isEmpty && triggerFileUpload()">
+              <!-- 空状态 -->
+              <template v-if="isEmpty">
+                <div class="footer-empty-tip">
+                  <div class="footer-empty-tip-sub">
+                    拖入文件，或<br><span class="click-upload-text">点击上传</span>
+                  </div>
+                </div>
+              </template>
+
+              <!-- 非空状态 -->
+              <template v-else>
+                <!-- 过渡完成后才显示内 容 -->
+                <div v-show="footerContentVisible" class="footer-content">
+                  <!-- 第一行：播放控制 + 背景色选择 + 缩放控制 -->
+                  <div class="footer-row-controls">
+                    <div class="controls-left">
+                      <button class="play-btn" :class="{'is-playing': isPlaying}" @click="togglePlay"></button>
+                      <div class="mute-control-container">
+                        <button class="mute-btn" :class="{
+                        'is-muted': isMuted,
+                        'is-disabled': !hasAudio
+                      }" :disabled="!hasAudio" @click="toggleMute"
+                          :title="hasAudio ? (isMuted ? '取消静音' : '静音') : '无音频'"></button>
+                        <!-- 音量滑块 -->
+                        <div class="volume-slider-container" v-show="hasAudio">
+                          <div class="volume-slider-track" ref="volumeSliderTrack">
+                            <div class="volume-slider-fill" :style="{height: volume * 100 + '%'}"></div>
+                            <div class="volume-slider-handle" ref="volumeSliderHandle" :style="{bottom: volume * 100 + '%'}"></div>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="progress-bar" ref="progressBar">
+                        <div class="progress-fill" :style="{width: progress + '%'}"></div>
+                        <div class="progress-thumb" ref="progressThumb" :style="{left: progress + '%'}"></div>
+                      </div>
+                      <div class="progress-text">
+                        <span class="progress-time">{{ currentTime.toFixed(2) }}s</span>
+                        <span class="progress-frames">{{ currentFrame }}/{{ totalFrames }}</span>
+                      </div>
+                    </div>
+                    <div class="controls-center">
+                      <!-- 背景色选择器容器 -->
+                      <div class="bg-color-selector">
+                        <!-- 当前背景色按钮 -->
+                        <button class="color-btn current-bg-color" :style="{
+                          backgroundColor: bgColorKey === 'pattern' ? 'transparent' : currentBgColor,
+                          backgroundImage: bgColorKey === 'pattern' ? 'url(\'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjEiIGZpbGw9IiNlM2UzZTMiLz48L3N2Zz4=\')' : 'none',
+                          backgroundRepeat: bgColorKey === 'pattern' ? 'repeat' : 'no-repeat',
+                          backgroundSize: bgColorKey === 'pattern' ? '8px 8px' : 'auto'
+                        }" :title="'当前背景色：' + (bgColorKey === 'pattern' ? '点阵' : bgColorKey)"></button>
+                        <!-- 背景色选项列表 -->
+                        <div class="bg-color-options">
+                          <button class="color-btn" :class="{'is-active': bgColorKey === 'black'}"
+                            style="background-color: #000000" @click="bgColorKey = 'black'"></button>
+                          <button class="color-btn" :class="{'is-active': bgColorKey === 'white'}"
+                            style="background-color: #ffffff" @click="bgColorKey = 'white'"></button>
+                          <button class="color-btn" :class="{'is-active': bgColorKey === 'green'}"
+                            style="background-color: #00ff00" @click="bgColorKey = 'green'"></button>
+                          <button class="color-btn" :class="{'is-active': bgColorKey === 'red'}"
+                            style="background-color: #df3321" @click="bgColorKey = 'red'"></button>
+                          <button class="color-btn" :class="{'is-active': bgColorKey === 'yellow'}"
+                            style="background-color: #f1c40d" @click="bgColorKey = 'yellow'"></button>
+                          <button class="color-btn" :class="{'is-active': bgColorKey === 'blue'}"
+                            style="background-color: #00b4ff" @click="bgColorKey = 'blue'"></button>
+                          <button class="color-btn pattern-btn" :class="{'is-active': bgColorKey === 'pattern'}" style="
+                          background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjEiIGZpbGw9IiNlM2UzZTMiLz48L3N2Zz4=');
+                          background-repeat: repeat;
+                          background-size: 8px 8px;
+                          background-color: transparent;
+                        " @click="bgColorKey = 'pattern'"></button>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="controls-right">
+                      <div class="scale-percentage">{{ Math.round(viewerScale * 100) }}%</div>
+                      <button class="zoom-btn" data-type="out" @click="zoomOut" title="缩小"></button>
+                      <button class="zoom-btn" data-type="in" @click="zoomIn" title="放大"></button>
+                      <!-- 
+                      视图模式切换按钮：
+                      - viewMode='fit-height'：显示1:1图标，点击后切换到1:1模式
+                      - viewMode='1:1'：显示contain图标（is-contain class），点击后切换到适应屏幕高度模式
+                      - 无论用户手动缩放过，按钮只在1:1和适应屏幕高度两种状态间切换
+                    -->
+                      <button class="reset-scale-btn" :class="{'is-contain': viewMode === '1:1'}" @click="resetScale"
+                        :title="viewMode === 'fit-height' ? '切换到1:1尺寸' : '适应屏幕高度'"></button>
+                      <!-- 沉浸模式切换按钮：点击后隐藏标题栏，底部浮层变为mini浮层 -->
+                      <button class="minimize-btn" @click="toggleImmersiveMode" title="进入沉浸模式"></button>
+                    </div>
+                  </div>
+
+                  <!-- 第二行：文件信息 -->
+                  <!-- <div class="footer-row-info">
+                    <div class="info-item" v-if="currentFileInfo.name">
+                      <span class="info-item-label">文件名称：</span>
+                      <span class="info-item-value">{{ currentFileInfo.name }}</span>
+                    </div>
+                    <div class="info-item" v-if="currentFileInfo.sizeText">
+                      <span class="info-item-label">文件大小：</span>
+                      <span class="info-item-value">{{ currentFileInfo.sizeText }}</span>
+                    </div>
+                    <div class="info-item" v-if="currentFileInfo.fps">
+                      <span class="info-item-label">帧率：</span>
+                      <span class="info-item-value">{{ currentFileInfo.fps }}</span>
+                    </div>
+                    <div class="info-item" v-if="currentFileInfo.sizeWH">
+                      <span class="info-item-label">尺寸：</span>
+                      <span class="info-item-value">{{ currentFileInfo.sizeWH }}</span>
+                    </div>
+                    <div class="info-item" v-if="currentFileInfo.duration">
+                      <span class="info-item-label">时长：</span>
+                      <span class="info-item-value">{{ currentFileInfo.duration }}</span>
+                    </div>
+                    <div class="info-item" v-if="currentFileInfo.memoryText">
+                      <span class="info-item-label">内存占用：</span>
+                      <span class="info-item-value">{{ currentFileInfo.memoryText }}</span>
+                    </div>
+                  </div> -->
+
+                  <!-- 第三行：操作按钮 -->
+                  <div class="footer-row-tabs">
+                    <!-- SVGA 模式 -->
+                    <template v-if="currentModule === 'svga'">
+                      <div class="footer-actions">
+                        <button class="btn-large-primary btn-open-file" @click="triggerChangePreviewFile"
+                          v-if="svga.hasFile" title="打开文件...">
+                        </button>
+                        <button class="btn-large-primary btn-download-file tooltip"
+                          v-if="svga.hasFile" title="下载文件...">
+                          <span class="tooltip-text">功能开发中...</span>
+                        </button>
+                        <button class="btn-large-primary btn-material-manager" @click="openMaterialPanel"
+                          v-if="svga.hasFile" title="素材图管理">
+
+                        </button>
+                        <button class="btn-large-primary btn-ai-generate tooltip" data-user-type="ai-generate"
+                          v-if="svga.hasFile" title="AI 素材生成">
+                          <i class="sprite-icon sprite-AI-img btn-icon-ai"></i>
+                          <span class="tooltip-text">功能开发中...</span>
+                        </button>
+                        <button class="btn-large-primary tooltip" v-else>
+                          <span class="tooltip-text">请先拖入 SVGA 文件</span>
+                          素材图管理
+                        </button>
+                      </div>
+                      <div class="footer-actions">
+                        <button class="btn-large-primary tooltip">
+                          <span class="tooltip-text">功能开发中...</span>
+                          转序列帧
+                        </button>
+                        <button class="btn-large-primary" :class="{'tooltip': !svga.hasFile}" :disabled="!svga.hasFile"
+                          @click="openGifPanel">
+                          <span v-if="!svga.hasFile" class="tooltip-text">请先拖入 SVGA 文件</span>
+                          {{ isExportingGIF ? '导出中 ' + gifExportProgress + '%' : '转GIF' }}
+                        </button>
+                        <button class="btn-large-primary tooltip">
+                          <span class="tooltip-text">功能开发中...</span>
+                          转webp
+                        </button>
+                        <button class="btn-large-secondary" :class="{'tooltip': !svga.hasFile}"
+                          :disabled="!svga.hasFile" @click="openStandardMp4Panel('svga')">
+                          <span v-if="!svga.hasFile" class="tooltip-text">请先拖入 SVGA 文件</span>
+                          转MP4
+                        </button>
+                        <button class="btn-large-secondary" :class="{'tooltip': !svga.hasFile}"
+                          :disabled="!svga.hasFile" @click="openSvgaToDualChannelPanel">
+                          <span v-if="!svga.hasFile" class="tooltip-text">请先拖入 SVGA 文件</span>
+                          转双通道MP4
+                        </button>
+                      </div>
+                    </template>
+
+                    <!-- 双通MP4 模式 -->
+                    <template v-else-if="currentModule === 'yyeva'">
+                      <div class="footer-actions">
+                        <button class="btn-large-primary btn-open-file" @click="triggerChangePreviewFile"
+                          title="打开文件...">
+                        </button>
+                        <button class="btn-large-primary btn-download-file tooltip"
+                          title="下载文件...">
+                          <span class="tooltip-text">功能开发中...</span>
+                        </button>
+                      </div>
+                      <div class="footer-actions">
+                        <button class="btn-large-primary tooltip">
+                          <span class="tooltip-text">功能开发中...</span>
+                          转序列帧
+                        </button>
+                        <button class="btn-large-primary" :class="{'tooltip': !yyeva.hasFile}"
+                          :disabled="!yyeva.hasFile" @click="openGifPanel">
+                          <span v-if="!yyeva.hasFile" class="tooltip-text">请先拖入 MP4 文件</span>
+                          {{ isExportingGIF ? '导出中 ' + gifExportProgress + '%' : '转GIF' }}
+                        </button>
+                        <button class="btn-large-primary tooltip">
+                          <span class="tooltip-text">功能开发中...</span>
+                          转webp
+                        </button>
+                        <button class="btn-large-secondary" :class="{'tooltip': !yyeva.hasFile}"
+                          :disabled="!yyeva.hasFile" @click="openStandardMp4Panel('yyeva')">
+                          <span v-if="!yyeva.hasFile" class="tooltip-text">请先拖入 MP4 文件</span>
+                          转MP4
+                        </button>
+                        <button class="btn-large-secondary" :class="{'tooltip': !yyeva.hasFile}"
+                          :disabled="!yyeva.hasFile || isGlobalTaskRunning" @click="openYyevaToSvgaPanel">
+                          <span v-if="!yyeva.hasFile" class="tooltip-text">请先拖入 MP4 文件</span>
+                          转SVGA
+                        </button>
+                      </div>
+                    </template>
+
+                    <!-- 普通MP4 模式 -->
+                    <template v-else-if="currentModule === 'mp4'">
+                      <div class="footer-actions">
+                        <button class="btn-large-primary btn-open-file" @click="triggerChangePreviewFile"
+                          title="打开文件...">
+                        </button>
+                        <button class="btn-large-primary btn-download-file tooltip"
+                          :class="{'tooltip': !mp4.hasFile}" :disabled="!mp4.hasFile"
+                          title="下载文件...">
+                          <span v-if="!mp4.hasFile" class="tooltip-text">请先拖入 MP4 文件</span>
+                          <span v-else class="tooltip-text">功能开发中...</span>
+                        </button>
+                        <button class="btn-large-primary btn-green-screen-keying" :class="{'tooltip': !mp4.hasFile}" :disabled="!mp4.hasFile"
+                          @click="openChromaKeyPanel" title="绿幕抠图">
+                          <span v-if="!mp4.hasFile" class="tooltip-text">请先拖入 MP4 文件</span>
+                          <span v-if="chromaKeyEnabled" class="btn-checkmark">✓</span>
+                        </button>
+                        <button class="btn-large-primary btn-time-remapping"
+                          :class="{'tooltip': !mp4.hasFile}"
+                          :disabled="!mp4.hasFile" @click="openSpeedRemapEditor" title="多段变速">
+                          <span v-if="!mp4.hasFile" class="tooltip-text">请先拖入 MP4 文件</span>
+                          
+                          <span v-if="speedRemapConfig.enabled" class="btn-checkmark">✓</span>
+                        </button>
+                      </div>
+                      <div class="footer-actions">
+                        <button class="btn-large-primary tooltip">
+                          <span class="tooltip-text">功能开发中...</span>
+                          转序列帧
+                        </button>
+                        <button class="btn-large-primary" :class="{'tooltip': !mp4.hasFile}" :disabled="!mp4.hasFile"
+                          @click="openGifPanel">
+                          <span v-if="!mp4.hasFile" class="tooltip-text">请先拖入 MP4 文件</span>
+                          {{ isExportingGIF ? '导出中 ' + gifExportProgress + '%' : '转GIF' }}
+                        </button>
+                        <button class="btn-large-primary tooltip">
+                          <span class="tooltip-text">功能开发中...</span>
+                          转webp
+                        </button>
+                        <button class="btn-large-primary" :class="{'tooltip': !mp4.hasFile}" :disabled="!mp4.hasFile"
+                          @click="openMp4ToSvgaPanel">
+                          <span v-if="!mp4.hasFile" class="tooltip-text">请先拖入 MP4 文件</span>
+                          转SVGA
+                        </button>
+                        <button class="btn-large-secondary" :class="{'tooltip': !mp4.hasFile}" :disabled="!mp4.hasFile"
+                          @click="openMp4ToDualChannelPanel">
+                          <span v-if="!mp4.hasFile" class="tooltip-text">请先拖入 MP4 文件</span>
+                          转双通道MP4
+                        </button>
+                      </div>
+                    </template>
+
+                    <!-- Lottie 模式 -->
+                    <template v-else-if="currentModule === 'lottie'">
+                      <div class="footer-actions">
+                        <button class="btn-large-primary btn-open-file" @click="triggerChangePreviewFile"
+                          title="打开文件...">
+                        </button>
+                        <button class="btn-large-primary btn-download-file tooltip"
+                          title="下载文件...">
+                          <span class="tooltip-text">功能开发中...</span>
+                        </button>
+                      </div>
+                      <div class="footer-actions">
+                        <button class="btn-large-primary tooltip">
+                          <span class="tooltip-text">功能开发中...</span>
+                          转序列帧
+                        </button>
+                        <button class="btn-large-primary" :class="{'tooltip': !lottie.hasFile}"
+                          :disabled="!lottie.hasFile" @click="openGifPanel">
+                          <span v-if="!lottie.hasFile" class="tooltip-text">请先拖入 Lottie 文件</span>
+                          {{ isExportingGIF ? '导出中 ' + gifExportProgress + '%' : '转GIF' }}
+                        </button>
+                        <button class="btn-large-primary tooltip">
+                          <span class="tooltip-text">功能开发中...</span>
+                          转webp
+                        </button>
+                        <button class="btn-large-secondary" :class="{'tooltip': !lottie.hasFile}"
+                          :disabled="!lottie.hasFile" @click="openLottieToSvgaPanel">
+                          <span v-if="!lottie.hasFile" class="tooltip-text">请先拖入 Lottie 文件</span>
+                          转SVGA
+                        </button>
+                        <button class="btn-large-secondary" :class="{'tooltip': !lottie.hasFile}"
+                          :disabled="!lottie.hasFile" @click="openStandardMp4Panel('lottie')">
+                          <span v-if="!lottie.hasFile" class="tooltip-text">请先拖入 Lottie 文件</span>
+                          转MP4
+                        </button>
+                        <button class="btn-large-secondary" :class="{'tooltip': !lottie.hasFile}"
+                          :disabled="!lottie.hasFile" @click="openLottieToDualChannelPanel">
+                          <span v-if="!lottie.hasFile" class="tooltip-text">请先拖入 Lottie 文件</span>
+                          转双通道MP4
+                        </button>
+                      </div>
+                    </template>
+
+                    <!-- 序列帧模式 -->
+                    <template v-else-if="currentModule === 'frames'">
+                      <div class="footer-actions">
+                        <button class="btn-large-primary btn-open-file" @click="triggerChangePreviewFile"
+                          title="打开文件...">
+                        </button>
+                        <button class="btn-large-primary btn-download-file tooltip"
+                          title="下载文件...">
+                          <span class="tooltip-text">功能开发中...</span>
+                        </button>
+                        <button class="btn-large-primary" @click="openChangeFpsDialog">
+                          改变帧率
+                        </button>
+                      </div>
+                      <div class="footer-actions">
+                        <button class="btn-large-primary" :class="{'tooltip': !frames.hasFile}"
+                          :disabled="!frames.hasFile" @click="openGifPanel">
+                          <span v-if="!frames.hasFile" class="tooltip-text">请先拖入序列帧图片</span>
+                          {{ isExportingGIF ? '导出中 ' + gifExportProgress + '%' : '转GIF' }}
+                        </button>
+                        <button class="btn-large-primary tooltip">
+                          <span class="tooltip-text">功能开发中...</span>
+                          转webp
+                        </button>
+                        <button class="btn-large-secondary" :class="{'tooltip': !frames.hasFile}"
+                          :disabled="!frames.hasFile" @click="openFramesToSvgaPanel">
+                          <span v-if="!frames.hasFile" class="tooltip-text">请先拖入序列帧图片</span>
+                          转SVGA
+                        </button>
+                        <button class="btn-large-secondary" :class="{'tooltip': !frames.hasFile}"
+                          :disabled="!frames.hasFile" @click="openStandardMp4Panel('frames')">
+                          <span v-if="!frames.hasFile" class="tooltip-text">请先拖入序列帧图片</span>
+                          转MP4
+                        </button>
+                        <button class="btn-large-secondary tooltip" :disabled="!frames.hasFile"
+                          @click="openFramesToDualChannelPanel">
+                          <span v-if="!frames.hasFile" class="tooltip-text">请先拖入序列帧图片</span>
+                          转双通道MP4
+                        </button>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </transition>
+
+          <!-- 使用transition组件实现平滑切换 -->
+          <transition name="footer-fade">
+            <!-- Mini浮层（沉浸模式下显示） -->
+            <div v-if="isImmersiveMode && !isEmpty" class="footer-mini">
+              <!-- 播放/暂停按钮 -->
+              <button class="mini-play-btn" :class="{'is-playing': isPlaying}" @click="togglePlay"
+                :title="isPlaying ? '暂停' : '播放'"></button>
+              <!-- 静音控制 -->
+              <div class="mute-control-container mini-mute-control">
+                <button class="mini-mute-btn" :class="{
+                'is-muted': isMuted,
+                'is-disabled': !hasAudio
+              }" :disabled="!hasAudio" @click="toggleMute"
+                  :title="hasAudio ? (isMuted ? '取消静音' : '静音') : '无音频'">
+                </button>
+                <!-- 音量滑块 -->
+                <div class="volume-slider-container mini-volume-slider" v-show="hasAudio">
+                  <div class="volume-slider-track" @mousedown="startVolumeDrag" @touchstart="startVolumeDrag">
+                    <div class="volume-slider-fill" :style="{height: volume * 100 + '%'}"></div>
+                    <div class="volume-slider-handle" :style="{bottom: volume * 100 + '%'}" @mousedown="startVolumeDrag" @touchstart="startVolumeDrag"></div>
+                  </div>
+                </div>
+              </div>
+              <!-- 1:1/适应屏幕切换 -->
+              <button class="mini-scale-btn" :class="{'is-contain': viewMode === '1:1'}" @click="resetScale"
+                :title="viewMode === 'fit-height' ? '切换到1:1尺寸' : '适应屏幕高度'"></button>
+              <!-- 最大化按钮：退出沉浸模式 -->
+              <button class="mini-maximize-btn" @click="toggleImmersiveMode" title="退出沉浸模式"></button>
+            </div>
+          </transition>
+        </div>
+
+        <!-- 右侧广告位 -->
+        <div class="ad-slot"></div>
+      </div>
+
+      <!-- 全屏拖拽覆盖层（最顶层） -->
+      <div class="drop-overlay" :class="{'show': dropHover}">
+        <div class="drop-hint">
+          <div class="drop-hint-text">松开鼠标！</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 素材弹窗（SVGA模式右侧弹窗） -->
+    <div class="material-overlay" :class="{'show': activeRightPanel === 'material' && currentModule === 'svga'}"
+      @click="activeRightPanel = null"></div>
+
+    <material-panel :visible="activeRightPanel === 'material' && currentModule === 'svga'" :list="materialList"
+      :replaced-images="replacedImages" :thumb-bg-color="materialThumbBgColor" :svga-file-info="svga.fileInfo"
+      :is-compressing="isCompressingMaterials" :compress-progress="compressProgress"
+      :has-compressed="hasCompressedMaterials" :material-edit-states="materialEditStates"
+      @close="activeRightPanel = null" @replace="replaceMaterial" @restore="restoreMaterial"
+      @download="downloadMaterial" @edit="openMaterialEditor" @compress="openCompressAndExportModal"></material-panel>
+
+    <!-- 统一 转双通道MP4 弹窗 (SVGA/MP4/Lottie/Frames -> Dual Channel MP4) -->
+    <dual-channel-panel :visible="activeRightPanel === 'dual-channel'" :source-info="dualChannelSourceInfo"
+      :initial-config="dualChannelConfig" :is-converting="isConvertingToDualChannel" :progress="dualChannelProgress"
+      :message="dualChannelMessage" :disabled="isGlobalTaskRunning" @close="closeRightPanel"
+      @cancel="cancelDualChannelConversion" @convert="handleDualChannelConvert">
+    </dual-channel-panel>
+
+    <!-- GIF导出弹窗（所有模式通用右侧弹窗） -->
+    <gif-panel :visible="activeRightPanel === 'gif'" :source-info="getGifSourceInfo()" :initial-config="gifConfig"
+      :bg-color-key="bgColorKey" :current-bg-color="currentBgColor" :is-exporting="isExportingGIF"
+      :export-progress="gifExportProgress" :export-stage="gifExportStage" :export-message="gifExportMessage"
+      :disabled="isGlobalTaskRunning" @close="closeGifPanel" @cancel="cancelGifExport" @export="handleGifExport"
+      @config-change="handleGifConfigChange"></gif-panel>
+
+    <!-- 素材压缩弹窗（使用通用居中弹窗样式） -->
+    <div class="center-modal-overlay" :class="{'show': showCompressModal && currentModule === 'svga'}">
+      <div class="center-modal-dialog" style="width: 420px;">
+        <div class="center-modal-header">
+          <h3>设置素材图压缩参数</h3>
+        </div>
+        <div class="center-modal-body">
+          <!-- 图片缩小比例 -->
+          <div class="svga-config-item">
+            <div class="svga-config-label">图片缩小比例：</div>
+            <div class="svga-value-container">
+              <div class="input-wrapper input-wrapper--lg svga-value-input-wrapper">
+                <input type="number" class="base-input" v-model.number="compressConfig.scalePercent"
+                  :disabled="isCompressingMaterials" min="10" max="100" />
+              </div>
+              <div class="input-unit">%</div>
+            </div>
+          </div>
+          <div class="compress-hint">缩小图片尺寸来降低内存和文件大小。</div>
+
+          <!-- PNG压缩质量 -->
+          <div class="svga-config-item svga-config-item--mt">
+            <div class="svga-config-label">PNG压缩质量：</div>
+            <div class="svga-value-container">
+              <div class="input-wrapper input-wrapper--lg svga-value-input-wrapper">
+                <input type="number" class="base-input" v-model.number="compressConfig.pngQuality"
+                  :disabled="isCompressingMaterials" min="10" max="100" />
+              </div>
+              <div class="input-unit">%</div>
+            </div>
+          </div>
+          <div class="compress-hint">PNG压缩质量，10%最低质量（文件最小），100%最高质量（文件最大），80%平衡。</div>
+
+          <!-- 静音导出开关 -->
+          <div class="svga-config-item svga-config-item--mt">
+            <div class="svga-config-label">导出静音SVGA</div>
+            <div class="svga-mute-toggle"
+              :class="{active: compressConfig.exportMuted, disabled: isCompressingMaterials}"
+              @click="!isCompressingMaterials && (compressConfig.exportMuted = !compressConfig.exportMuted)">
+              <div class="svga-mute-toggle-handle"></div>
+            </div>
+          </div>
+          <div class="compress-hint">开启后导出的SVGA文件将不包含任何音频数据。</div>
+        </div>
+        <div class="center-modal-footer">
+          <!-- 如果已压缩过，显示撤销按钮 -->
+          <button v-if="hasCompressedMaterials" class="btn-undo" @click="undoCompressMaterials"
+            :disabled="isCompressingMaterials">撤销</button>
+          <button class="btn-large-primary" @click="closeCompressModal" :disabled="isCompressingMaterials">取消</button>
+          <button class="btn-large-secondary" @click="startCompressAndExport"
+            :disabled="isCompressingMaterials">压缩并导出</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- K帧编辑弹窗（使用通用居中弹窗样式） -->
+    <div class="center-modal-overlay"
+      :class="{'show': showEditFrameDialog && currentModule === 'mp4' && showSpeedRemapEditor}">
+      <div class="center-modal-dialog" style="width: 400px;">
+        <div class="center-modal-header">
+          <h3>编辑K帧帧数</h3>
+        </div>
+        <div class="center-modal-body">
+          <div class="form-group">
+            <label>帧数 (0-{{ speedRemapConfig.originalTotalFrames }})</label>
+            <div class="input-wrapper input-wrapper--lg svga-size-input-wrapper">
+              <input type="number" class="base-input" v-model="editFrameInput" :min="0"
+                :max="speedRemapConfig.originalTotalFrames" @keyup.enter="confirmEditFrame" />
+            </div>
+          </div>
+        </div>
+        <div class="center-modal-footer">
+          <button class="btn-large-primary" @click="cancelEditFrame">取消</button>
+          <button class="btn-large-secondary" @click="confirmEditFrame">确定</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 视频转换弹窗（使用通用居中弹窗样式） -->
+    <div class="center-modal-overlay" :class="{'show': showVideoConvertModal}">
+      <div class="center-modal-dialog" style="width: 480px;">
+        <div class="center-modal-header">
+          <h3>视频播放异常</h3>
+        </div>
+        <div class="center-modal-body">
+          <div style="margin-bottom: 16px; line-height: 1.6; color: #666;">
+            <template v-if="!isConverting">
+              检测到该MP4视频的编码格式可能不兼容，导致浏览器解码卡死。<br><br>
+              <strong>原因：</strong>视频编码参数不符合浏览器解码器要求<br>
+              <strong>建议：</strong>转换为兼容格式后再播放<br><br>
+              是否立即转换为兼容格式？
+            </template>
+            <template v-else>
+              正在转换视频格式，请稍候...
+            </template>
+          </div>
+
+          <!-- 转换进度条 -->
+          <div v-if="isConverting" style="margin-top: 20px;">
+            <div
+              style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px; color: #666;">
+              <span>转换进度</span>
+              <span>{{ videoConvertProgress }}%</span>
+            </div>
+            <div style="width: 100%; height: 6px; background: #f0f0f0; border-radius: 3px; overflow: hidden;">
+              <div style="height: 100%; background: #409EFF; border-radius: 3px; transition: width 0.3s;"
+                :style="{ width: videoConvertProgress + '%' }"></div>
+            </div>
+          </div>
+        </div>
+        <div class="center-modal-footer">
+          <button class="btn-large-primary" @click="cancelConvertVideo">否</button>
+          <button class="btn-large-secondary" @click="confirmConvertVideo" :disabled="isConverting">是</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 统一 转SVGA 弹窗 (MP4/Lottie/Frames -> SVGA) 已移动到底部 -->
+
+    <!-- 统一 转双通道MP4 弹窗 (SVGA/MP4/Lottie/Frames -> Dual Channel MP4) 已移动到底部 -->
+
+    <!-- 绿幕抠图弹窗（普通MP4模式左侧弹窗） -->
+    <chromakey-panel :visible="showChromaKeyPanel && currentModule === 'mp4'" :source-info="mp4.fileInfo"
+      :enabled="chromaKeyEnabled" :similarity.sync="chromaKeySimilarity" :smoothness.sync="chromaKeySmoothness"
+      @toggle="chromaKeyEnabled = !chromaKeyEnabled; updateChromaKeyEffect()" @update-effect="updateChromaKeyEffect"
+      @close="showChromaKeyPanel = false" @apply="showChromaKeyPanel = false">
+    </chromakey-panel>
+
+    <!-- 隐藏的文件输入框，用于重传SVGA -->
+    <input type="file" ref="reuploadSvgaInput" accept=".svga" style="display: none;" @change="handleReuploadSVGA" />
+
+    <!-- 隐藏的文件输入框，用于打开文件...（支持SVGA、Lottie、MP4、序列帧） -->
+    <input type="file" ref="changePreviewFileInput" accept=".svga,.json,.lottie,.mp4,.png,.jpg,.jpeg" multiple
+      style="display: none;" @change="handleChangePreviewFile" />
+
+    <!-- 普通MP4转换弹窗 -->
+    <standard-mp4-panel :visible="showStandardMp4Panel" :source-info="standardMp4SourceInfo"
+      :initial-config="standardMp4Config" :is-converting="isConvertingStandardMp4" :progress="standardMp4Progress"
+      :message="standardMp4Message" :disabled="isGlobalTaskRunning" :current-module="currentModule"
+      @close="closeStandardMp4Panel" @cancel="cancelStandardMp4Conversion" @convert="startStandardMp4Conversion">
+    </standard-mp4-panel>
+
+    <!-- 序列帧帧率设置弹窗（复用通用居中弹窗样式） -->
+    <div class="center-modal-overlay" :class="{'show': showFramesFpsDialog}">
+      <div class="center-modal-dialog" style="width: 400px;">
+        <div class="center-modal-header">
+          <h3>设置帧率</h3>
+        </div>
+        <div class="center-modal-body">
+          <div class="fps-hint">请输入序列帧的播放帧率（1-120 fps）</div>
+          <div class="fps-input-row">
+            <div class="input-wrapper input-wrapper--lg svga-size-input-wrapper">
+              <input type="number" class="base-input" v-model.number="framesFpsInput" min="1" max="120"
+                @keyup.enter="confirmFramesFps" />
+            </div>
+            <span class="fps-unit">fps</span>
+          </div>
+        </div>
+        <div class="center-modal-footer">
+          <button class="btn-large-secondary" @click="confirmFramesFps">确定</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 统一 转SVGA 弹窗 (MP4/Lottie/Frames -> SVGA) -->
+    <to-svga-panel :visible="activeRightPanel === 'to-svga'" :source-info="toSvgaSourceInfo"
+      :initial-config="toSvgaConfig" :is-converting="isConvertingToSvga" :progress="toSvgaProgress"
+      :message="toSvgaMessage" :disabled="isGlobalTaskRunning" @close="closeRightPanel" @cancel="cancelToSvgaConversion"
+      @convert="handleToSvgaConvert">
+    </to-svga-panel>
+
+    <!-- 素材编辑器弹窗 -->
+    <div class="center-modal-overlay" :class="{'show': editor.show}">
+      <div class="center-modal-dialog material-editor-modal"
+        style="width: 1000px; max-width: 95vw; height: 80vh; max-height: 800px; display: flex; flex-direction: column;">
+        <div class="center-modal-header">
+          <h3>编辑素材图</h3>
+        </div>
+        <div class="center-modal-body material-editor-body">
+          <!-- 左侧预览区 -->
+          <div class="editor-preview-area" @mousedown="onPreviewAreaMouseDown" @wheel="onPreviewAreaWheel">
+            <div class="editor-preview-wrapper" ref="editorPreviewContent"
+              :style="{ width: editor.baseImageWidth + 'px', height: editor.baseImageHeight + 'px', transform: 'translate(' + editor.offsetX + 'px, ' + editor.offsetY + 'px) scale(' + editor.scale + ')' }">
+
+              <!-- 内容容器，确保html2canvas截图正确 -->
+              <div class="editor-preview-content"
+                :style="{ width: editor.baseImageWidth + 'px', height: editor.baseImageHeight + 'px' }">
+
+                <!-- 底图层 -->
+                <div v-if="editor.showImage && editor.baseImage" class="editor-image-wrapper"
+                  :class="{ 'active': editor.activeElement === 'image' }" :style="{ 
+                    transform: 'translate(' + editor.imageOffsetX + 'px, ' + editor.imageOffsetY + 'px) scale(' + editor.imageScale + ')',
+                    pointerEvents: 'auto',
+                    outlineWidth: editor.activeElement === 'image' ? (2 / (editor.scale * editor.imageScale)) + 'px' : '0'
+                  }" @mousedown="onImageMouseDown" @wheel="onImageWheel">
+                  <img :src="editor.baseImage" class="editor-base-image" draggable="false" />
+                  <!-- 底图激活状态标签（反向缩放保持固定尺寸） -->
+                  <div v-if="editor.activeElement === 'image'" class="editor-layer-tag editor-layer-tag--image" :style="{ 
+                      transform: 'scale(' + (1 / (editor.scale * editor.imageScale)) + ')',
+                      top: (-24 / (editor.scale * editor.imageScale)) + 'px'
+                    }">底图</div>
+                </div>
+
+                <!-- 文字层 Canvas -->
+                <div v-if="editor.showText" class="editor-canvas-wrapper"
+                  :class="{ 'active': editor.activeElement === 'text' }" :style="{ 
+                    pointerEvents: 'auto',
+                    outlineWidth: editor.activeElement === 'text' ? (2 / editor.scale) + 'px' : '0'
+                  }" @mousedown="onTextMouseDown" @wheel="onTextWheel">
+                  <canvas ref="editorTextCanvas" class="editor-text-canvas" :width="editor.baseImageWidth"
+                    :height="editor.baseImageHeight"></canvas>
+                  <!-- 文字层激活状态标签（反向缩放保持固定尺寸） -->
+                  <div v-if="editor.activeElement === 'text'" class="editor-layer-tag editor-layer-tag--text" :style="{ 
+                      transform: 'scale(' + (1 / editor.scale) + ')',
+                      top: (-24 / editor.scale) + 'px'
+                    }">文案</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 底部按钮组 -->
+            <div class="editor-bottom-actions">
+              <!-- 左侧按钮组 -->
+              <div class="editor-bottom-left">
+                <!-- 1:1/适应高度切换按钮 -->
+                <button class="editor-view-btn" :class="{'is-contain': editor.viewMode === 'one-to-one'}"
+                  @click="toggleEditorViewMode" :title="editor.viewMode === 'fit-height' ? '1:1显示' : '适应高度'"></button>
+                <!-- 缩放百分比 -->
+                <div class="editor-scale-percentage">{{ Math.round(editor.scale * 100) }}%</div>
+              </div>
+
+              <!-- 右侧按钮组 -->
+              <div class="editor-bottom-right">
+                <input type="file" ref="editorFileInput" accept="image/png,image/jpeg" style="display: none"
+                  @change="onEditorFileChange">
+                <button class="btn-large-primary" @click="triggerEditorUpload">上传图片</button>
+                <!-- 恢复原图按钮 -->
+                <button v-if="editor.showRestoreBtn" class="btn-large-primary btn-editor-recover"
+                  @click="restoreOriginalMaterial" title="恢复原图" :disabled="editor.loading">
+                  <div class="icon-editor-recover"></div>
+                </button>
+                <button class="btn-large-primary btn-ai-generate tooltip" data-user-type="ai-generate">
+                  <i class="sprite-icon sprite-AI-img btn-icon-ai"></i>
+                  <span class="tooltip-text">开发中...</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 右侧控制区 -->
+          <div class="editor-controls-area">
+            <div class="editor-control-group">
+              <div class="svga-config-item">
+                <div class="svga-config-label">显示素材图</div>
+                <div class="svga-mute-toggle" :class="{active: editor.showImage}"
+                  @click="editor.showImage = !editor.showImage">
+                  <div class="svga-mute-toggle-handle"></div>
+                </div>
+              </div>
+              <div class="svga-config-item">
+                <div class="svga-config-label">显示文案</div>
+                <div class="svga-mute-toggle" :class="{active: editor.showText}"
+                  @click="editor.showText = !editor.showText">
+                  <div class="svga-mute-toggle-handle"></div>
+                </div>
+              </div>
+            </div>
+
+            <div v-if="editor.showText" class="editor-text-controls">
+              <div class="editor-control-label-with-buttons">
+                <div class="editor-control-label">文案内容：</div>
+                <div class="text-align-buttons">
+                  <button class="text-align-btn text-align-left" :class="{'active': editor.textAlign === 'left'}"
+                    @click="setTextAlign('left')" title="左对齐">
+                  </button>
+                  <button class="text-align-btn text-align-center" :class="{'active': editor.textAlign === 'center'}"
+                    @click="setTextAlign('center')" title="居中对齐">
+                  </button>
+                  <button class="text-align-btn text-align-right" :class="{'active': editor.textAlign === 'right'}"
+                    @click="setTextAlign('right')" title="右对齐">
+                  </button>
+                </div>
+              </div>
+              <div class="input-wrapper input-wrapper--lg input-wrapper--textarea">
+                <textarea class="base-input textarea-input textarea-input--sm" v-model="editor.textContent"
+                  placeholder="请输入文案"></textarea>
+              </div>
+
+              <div class="editor-control-label editor-control-label--mt">文字样式 (CSS)：</div>
+              <div class="input-wrapper input-wrapper--lg input-wrapper--textarea input-wrapper--textarea-lg">
+                <textarea class="base-input textarea-input textarea-input--lg" v-model="editor.textStyle"
+                  placeholder="例如：color: red; font-size: 20px;"></textarea>
+              </div>
+              <div class="editor-hint">默认样式白字黑边。支持输入标准CSS样式。</div>
+            </div>
+          </div>
+        </div>
+        <div class="center-modal-footer">
+          <button class="btn-large-primary" @click="closeMaterialEditor" :disabled="editor.loading">取消</button>
+          <button class="btn-large-secondary" @click="saveMaterialEdit" :disabled="editor.loading">
+            {{ editor.loading ? '生成中...' : '保存' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- More Drawer -->
+    <!-- Overlay removed: user wants non-blocking sidebar -->
+    <!-- <div class="more-drawer-overlay" :class="{ 'visible': showMoreDrawer }" @click="showMoreDrawer = false"></div> -->
+    <div class="more-drawer" :class="{ 'visible': showMoreDrawer }">
+      <div class="drawer-header">
+        <div class="drawer-header-left">
+          <img :src="isDarkMode ? 'assets/img/logo05_dark.png' : 'assets/img/logo05.png'" alt="Logo"
+            class="drawer-logo">
+          <div class="drawer-slogan">动画格式预览与转换工具</div>
+        </div>
+        <div class="drawer-close-btn" @click="showMoreDrawer = false">
+          <img :src="isDarkMode ? 'assets/img/home_more_dark.png' : 'assets/img/home_more.png'" alt="Close"
+            style="width: 24px; height: 24px; transform: rotate(180deg);">
+        </div>
+      </div>
+      <div class="drawer-content">
+        <a href="sth_auto.html" class="drawer-btn" data-user-type="material-self-service">
+          <span>素材自助</span>
+          <img :src="isDarkMode ? 'assets/img/go_dark.png' : 'assets/img/go.png'" class="drawer-btn-icon" alt="Go">
+        </a>
+        <a href="gadgets/png_compression.html" class="drawer-btn">
+          <span>PNG压缩工具</span>
+          <img :src="isDarkMode ? 'assets/img/go_dark.png' : 'assets/img/go.png'" class="drawer-btn-icon" alt="Go">
+        </a>
+        <a href="gadgets/fix_garbled_text.html" class="drawer-btn">
+          <span>修复中文乱码工具</span>
+          <img :src="isDarkMode ? 'assets/img/go_dark.png' : 'assets/img/go.png'" class="drawer-btn-icon" alt="Go">
+        </a>
+        <div class="drawer-btn disabled" data-user-type="celebrity-gift-video">
+          <span>名人礼物视频版</span>
+          <img :src="isDarkMode ? 'assets/img/go_dark.png' : 'assets/img/go.png'" class="drawer-btn-icon" alt="Go">
+        </div>
+        <div class="drawer-btn disabled" data-user-type="avatar-generator">
+          <span>Avatar小图标生成</span>
+          <img :src="isDarkMode ? 'assets/img/go_dark.png' : 'assets/img/go.png'" class="drawer-btn-icon" alt="Go">
+        </div>
+
+      </div>
+      <div class="drawer-links">
+        <a href="https://saysth.design/2019/06/04/svga01-0/" class="drawer-link-item">SVGA动画文件是什么？</a>
+        <a href="javascript:void(0)" class="drawer-link-item">动画相关链接2</a>
+      </div>
+      <div class="drawer-footer">
+        <a href="https://saysth.design/" target="_blank" class="drawer-avatar">
+          <img src="./assets/img/toux.png" alt="Avatar">
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- FFmpeg音视频处理服务 -->
+  <script src="assets/js/service/ffmpeg/ffmpeg-service.js"></script>
+
+  <!-- MP4转换器模块 (已废弃，功能迁移至 ffmpeg-service.js)
+  <script src="assets/js/mp4-converter.js"></script>
+  -->
+
+  <!-- 双通道图像合成器模块 -->
+  <script src="assets/js/service/dual-channel/dual-channel-composer.js"></script>
+
+  <!-- SVGA构建器模块 -->
+  <script src="assets/js/service/svga/svga-builder.js"></script>
+
+  <!-- GIF导出器模块 -->
+  <script src="assets/js/service/gif/gif-exporter.js"></script>
+
+  <!-- 文件验证器模块 -->
+  <script src="assets/js/utils/file-validator.js"></script>
+
+  <!-- 工具函数库模块 -->
+  <script src="assets/js/utils/utils.js"></script>
+  <script src="assets/js/controllers/input-controller.js"></script>
+
+  <!-- 组件库 -->
+  <script src="assets/js/components/index.js"></script>
+  <script src="assets/js/components/material-panel.js"></script>
+  <script src="assets/js/components/gif-panel.js"></script>
+  <script src="assets/js/components/standard-mp4-panel.js"></script>
+  <script src="assets/js/components/dual-channel-panel.js"></script>
+  <script src="assets/js/components/to-svga-panel.js"></script>
+  <script src="assets/js/components/chromakey-panel.js"></script>
+
+  <!-- 播放控制器模块 -->
+  <script src="assets/js/controllers/player-controller.js?v=14"></script>
+
+  <!-- 视图控制器模块 -->
+  <script src="assets/js/controllers/viewport-controller.js"></script>
+
+  <!-- 面板管理 Mixin -->
+  <script src="assets/js/mixins/panel-mixin.js"></script>
+
+  <!-- 素材编辑器模块（拆分版） -->
+  <script src="assets/js/core/material-state.js"></script>
+  <script src="assets/js/core/material-operations.js"></script>
+  <script src="assets/js/core/material-interactions.js"></script>
+  <script src="assets/js/core/material-editor.js"></script>
+
+  <!-- 定义组件模板 -->
+  <script type="text/x-template" id="tpl-gif-panel">
+    <div class="side-panel side-panel--right svga-panel gif-panel" :class="{'show': visible}">
+      <div class="side-panel-container">
+        <!-- 标题区 -->
+        <div class="side-panel-header">
+          <h3 class="side-panel-title">转成GIF动图</h3>
+          <div class="side-panel-divider"></div>
+        </div>
+
+        <!-- 当前文件信息 -->
+        <div class="svga-info-section">
+          <div class="svga-info-row">当前尺寸：{{ sourceInfo.sizeWH }} 帧率：{{ sourceInfo.fps }}FPS 时长：{{
+            (sourceInfo.duration || 0).toFixed(2) }}s</div>
+          <div class="svga-compress-hint">注意：GIF文件体积较大，建议控制尺寸和帧率。超过10M的GIF可能加载较慢。</div>
+        </div>
+
+        <!-- 配置区域 -->
+        <div class="svga-config-section" :class="{disabled: isExporting}">
+          <!-- 尺寸 -->
+          <div class="svga-config-item">
+            <div class="svga-config-label">尺寸：</div>
+            <div class="svga-size-container">
+              <div class="input-wrapper input-wrapper--lg svga-size-input-wrapper">
+                <input type="number" class="base-input" v-model.number="config.width" @input="onWidthChange"
+                  :disabled="isExporting" min="1" max="1920" />
+              </div>
+              <div class="svga-size-lock">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    d="M4.66667 7.33333V5.33333C4.66667 3.86057 5.86057 2.66667 7.33333 2.66667H8.66667C10.1394 2.66667 11.3333 3.86057 11.3333 5.33333V7.33333M5.33333 7.33333H10.6667C11.403 7.33333 12 7.93029 12 8.66667V12C12 12.7364 11.403 13.3333 10.6667 13.3333H5.33333C4.59695 13.3333 4 12.7364 4 12V8.66667C4 7.93029 4.59695 7.33333 5.33333 7.33333Z"
+                    stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </div>
+              <div class="input-wrapper input-wrapper--lg svga-size-input-wrapper">
+                <input type="number" class="base-input" v-model.number="config.height" @input="onHeightChange"
+                  :disabled="isExporting" min="1" max="1920" />
+              </div>
+            </div>
+          </div>
+
+          <!-- 帧率 -->
+          <div class="svga-config-item">
+            <div class="svga-config-label">帧率：</div>
+            <div class="svga-value-container">
+              <div class="input-wrapper input-wrapper--lg svga-value-input-wrapper">
+                <input type="number" class="base-input" v-model.number="config.fps" :disabled="isExporting"
+                  min="1" max="60" />
+              </div>
+              <div class="input-unit">FPS</div>
+            </div>
+          </div>
+
+          <!-- 质量 -->
+          <div class="svga-config-item">
+            <div class="svga-config-label">质量：</div>
+            <div class="svga-value-container">
+              <div class="input-wrapper input-wrapper--lg svga-value-input-wrapper">
+                <input type="number" class="base-input" v-model.number="config.quality" :disabled="isExporting"
+                  min="1" max="30" />
+              </div>
+              <div class="input-unit input-unit--hint">越小越好</div>
+            </div>
+          </div>
+
+          <!-- 透明底开关 -->
+          <div class="svga-config-item">
+            <div class="svga-config-label">透明底</div>
+            <div class="svga-mute-toggle" :class="{active: config.transparent, disabled: isExporting}"
+              @click="!isExporting && (config.transparent = !config.transparent)">
+              <div class="svga-mute-toggle-handle"></div>
+            </div>
+          </div>
+
+          <!-- 杂色边开关（仅在透明底打开时显示） -->
+          <div class="svga-config-item" v-if="config.transparent">
+            <div class="svga-config-label">杂色边</div>
+            <div class="svga-mute-toggle" :class="{active: config.dither, disabled: isExporting}"
+              @click="!isExporting && (config.dither = !config.dither)">
+              <div class="svga-mute-toggle-handle"></div>
+            </div>
+          </div>
+
+          <!-- 杂色边颜色选择器（仅在杂色边打开时显示） -->
+          <div class="svga-config-item" v-if="config.transparent && config.dither">
+            <div class="svga-config-label">杂色颜色：</div>
+            <div class="gif-color-picker">
+              <input type="color" v-model="config.ditherColor" :disabled="isExporting" class="gif-color-input" />
+              <span class="gif-color-value">{{ config.ditherColor }}</span>
+            </div>
+          </div>
+        
+
+        <!-- 导出进度 -->
+        <div class="export-progress" v-if="isExporting">
+          <div class="progress-info">
+            <span class="progress-status">
+              <span class="spinner" v-if="exportStage !== 'done'"></span>
+              {{ exportMessage }}
+            </span>
+            <span class="progress-percent">{{ Math.round(exportProgress * 100) }}%</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" :style="{ width: (exportProgress * 100) + '%' }"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="side-panel-footer">
+        <button v-if="!isExporting" class="material-btn-back" @click="close" title="返回">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M12 16L6 10L12 4" stroke="#333333" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+          <span>取消</span>
+        </button>
+        <button v-else class="material-btn-back svga-btn-cancel" @click="$emit('cancel')" title="取消导出">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M5 5L15 15M15 5L5 15" stroke="#ff4444" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+          <span>取消</span>
+        </button>
+
+        <button class="btn-large-secondary" :class="{'svga-btn-converting': isExporting}"
+          :disabled="isExporting || disabled" @click="startExport">
+          <template v-if="isExporting">
+            <span class="svga-progress-text">{{ exportProgress }}%</span>
+            <span class="svga-stage-text">{{ exportMessage }}</span>
+          </template>
+          <template v-else>
+            开始转GIF
+          </template>
+        </button>
+      </div>
+      </div>
+    </div>
+  </script>
+  <script type="text/x-template" id="tpl-material-panel">
+    <div class="side-panel side-panel--right material-panel" :class="{'show': visible}">
+      <div class="side-panel-container">
+        <!-- 顶部统计信息 -->
+        <div class="material-panel-stats">
+          <div class="stats-header">素材图管理</div>
+          <div class="stats-divider"></div>
+          <div class="stats-content">
+            <div class="stats-title">图像资源：{{ list.length }} 个 内存占用：{{ svgaFileInfo.memoryText }}</div>
+            <div class="stats-help">你可以替换、下载素材图片，然后导出新的SVGA。<br>替换后的图片将自动缩放填充至原图尺寸，保持比例居中显示。</div>
+          </div>
+        </div>
+
+        <!-- 搜索框 -->
+        <div class="material-search">
+          <input type="text" class="material-search-input" placeholder="搜索素材名称..." v-model="searchQuery" />
+        </div>
+
+        <!-- 素材列表 -->
+        <div class="material-panel-scroll">
+          <div v-if="filteredList.length === 0" class="material-empty">
+            {{ searchQuery ? '未找到匹配的素材' : '未检测到素材图片' }}
+          </div>
+          <div v-else class="material-list">
+            <div v-for="(item, index) in filteredList" :key="item.imageKey" class="material-item">
+              <div class="material-thumb" :style="{ backgroundColor: thumbBgColor }">
+                <img :src="replacedImages[item.imageKey] || item.previewUrl" v-if="item.previewUrl" />
+              </div>
+              <div class="material-info">
+                <div class="material-name-row">
+                  <div class="material-name" :title="item.imageKey">{{ item.imageKey }}</div>
+                  <button class="material-btn-copy" @click="copyName(item.imageKey)" title="复制名称">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <rect x="4" y="4" width="8" height="8" rx="1" stroke="#666666" stroke-width="1.2" fill="none" />
+                      <rect x="2" y="2" width="8" height="8" rx="1" stroke="#666666" stroke-width="1.2"
+                        fill="#ffffff" />
+                    </svg>
+                  </button>
+                </div>
+                <div class="material-meta">内存占用：{{ item.fileSizeText }}</div>
+                <div class="material-meta">尺寸：{{ item.sizeText }}</div>
+              </div>
+              <div class="material-actions">
+                <button class="material-btn-replace" @click="triggerReplace(item)">
+                  <span>替换此图</span>
+                </button>
+                <button class="material-btn-edit" @click="triggerEdit(item)" title="编辑素材图">
+                  <div v-if="materialEditStates[item.imageKey]" class="edit-dot"></div>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                      d="M11 4H4C3.44772 4 3 4.44772 3 5V20C3 20.5523 3.44772 21 4 21H19C19.5523 21 20 20.5523 20 20V13"
+                      stroke="#333333" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                    <path
+                      d="M18.5 2.50001C18.8978 2.10219 19.4374 1.87869 20 1.87869C20.5626 1.87869 21.1022 2.10219 21.5 2.50001C21.8978 2.89784 22.1213 3.4374 22.1213 4.00001C22.1213 4.56262 21.8978 5.10219 21.5 5.50001L12 15L8 16L9 12L18.5 2.50001Z"
+                      stroke="#333333" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                </button>
+                <button v-if="item.isReplaced" class="material-btn-close" @click="triggerRestore(item)" title="恢复原图">
+                </button>
+                <button class="material-btn-new" @click="triggerDownload(item)" title="下载此图片">
+                  <svg width="20" height="20" viewBox="0 0 25 25" fill="none">
+                    <path d="M12 3V15M12 15L8 11M12 15L16 11" stroke="#333333" stroke-width="1.5" stroke-linecap="round"
+                      stroke-linejoin="round" />
+                    <path d="M4 17V19C4 20.1046 4.89543 21 6 21H18C19.1046 21 20 20.1046 20 19V17" stroke="#333333"
+                      stroke-width="1.5" stroke-linecap="round" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 底部操作按钮 -->
+        <div class="material-panel-footer">
+          <button class="material-btn-back" @click="close" title="关闭">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M12 16L6 10L12 4" stroke="#333333" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" />
+            </svg>
+            <span>取消</span>
+          </button>
+          <!-- 压缩并导出SVGA按钮 -->
+          <button class="btn-large-secondary" @click="triggerCompress"
+            :disabled="isCompressing || list.length === 0">
+            <template v-if="isCompressing">压缩中 {{ compressProgress }}%</template>
+            <template v-else>
+              压缩并导出新SVGA
+              <span v-if="hasCompressed" style="color: #4CAF50; margin-left: 4px;">✓</span>
+            </template>
+          </button>
+        </div>
+      </div>
+    </div>
+  </script>
+
+  <!-- 用户配置管理器模块 -->
+  <script src="assets/js/service/config-manager.js"></script>
+
+  <!-- 任务管理器模块 -->
+  <script src="assets/js/service/task-manager.js"></script>
+
+  <!-- 应用主逻辑 -->
+  <script src="assets/js/core/app.js?v=1.16"></script>
+</body>
+
+</html>

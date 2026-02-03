@@ -99,16 +99,47 @@
 
 ---
 
+## 技术栈
+
+- **前端框架**：Vue 2.7.15
+- **构建工具**：Vite 5.0.0
+- **开发语言**：JavaScript
+- **样式管理**：原生 CSS
+- **核心库**：
+  - `svgaplayerweb`：SVGA 动画解析与播放
+  - `lottie-web`：Lottie 动画渲染
+  - `konva`：Canvas 操作和图形处理
+  - `gif.js`：GIF 编码
+  - `@ffmpeg/ffmpeg`：浏览器端视频编码
+  - `jszip`：ZIP 文件处理
+  - `pako`：压缩库
+  - `protobufjs`：Protocol Buffers 解析
+- **构建优化**：
+  - Terser：JavaScript 压缩
+  - clean-css：CSS 压缩
+  - 多页应用配置
+
+---
+
 ## 技术特点
 
 - **架构**：
   - 纯前端实现，基于 Vue 2
-  - 单页应用结构，核心逻辑集中在 `docs/assets/js/app.js`
-- **核心依赖（通过 CDN 引入）**：
-  - `svga-web`：SVGA 动画解析与播放
+  - 单页应用结构，核心逻辑集中在 `src/assets/js/core/app.js`
+  - 采用 Vite 作为构建工具，优化开发体验和构建性能
+- **构建系统**：
+  - 使用 Vite 5 进行项目构建和开发服务器
+  - 支持代码压缩（Terser）和 CSS 压缩（clean-css）
+  - 多页应用配置，支持主页面和小工具页面
+- **核心依赖**：
+  - `svgaplayerweb`：SVGA 动画解析与播放
   - `gif.js`：GIF 编码（配合 `gif.worker.js` Web Worker）
   - `@ffmpeg/ffmpeg`（ffmpeg.wasm）：在浏览器中进行 MP4 编码
-  - `lottie-web`：Lottie 动画渲染（模块进行中）
+  - `lottie-web`：Lottie 动画渲染
+  - `konva`：Canvas 操作和图形处理
+  - `jszip`：ZIP 文件处理
+  - `pako`：压缩库
+  - `protobufjs`：Protocol Buffers 解析
 - **运行方式**：
   - 所有计算和文件处理均在浏览器本地完成，不上传到服务器
   - 适合对隐私与素材安全有要求的设计与开发场景
@@ -132,5 +163,10 @@
   - **模式策略表**：重构 `switchMode`，使用配置映射表 (`modeStrategies`) 替代硬编码 `if-else`，提升可维护性。
   - **资源管理器**：引入 `ResourceManager`，统一接管 `ObjectURL` 生命周期，按组自动追踪与释放，彻底解决内存泄漏与时序问题。
   - **音频稳定性**：修复 `GlobalAudioManager` 初始化竞态条件，确保在快速操作下音频控制（静音/暂停）依然可靠。
+- **阶段13：构建系统优化** —— 已完成
+  - **Vite 构建化**：引入 Vite 5 作为构建工具，优化开发体验和构建性能
+  - **多页应用配置**：支持主页面和小工具页面的构建
+  - **代码压缩**：集成 Terser 和 clean-css 进行代码和 CSS 压缩
+  - **静态资源管理**：优化静态资源的复制和压缩流程
 
 详细路线图与技术细节见仓库中的 `ROADMAP.md`、`TECH-RESEARCH.md`。

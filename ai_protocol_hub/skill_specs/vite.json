@@ -1,0 +1,85 @@
+{
+  "name": "vite",
+  "display_name": "Vite构建工具",
+  "version": "2026.1.31",
+  "description": "Vite构建工具配置、插件API、SSR和Vite 8 Rolldown迁移。用于Vite项目、vite.config.ts、Vite插件或使用Vite构建库/SSR应用。",
+  "author": "Anthony Fu",
+  "created_at": "[2026-02-04 00:20:14]",
+  "updated_at": "[2026-02-04 00:20:14]",
+  "tags": ["vite", "构建工具", "前端", "Rolldown", "SSR"],
+  "skills": [
+    {
+      "id": "vite-config",
+      "name": "Vite配置",
+      "description": "vite.config.ts配置、defineConfig、条件配置、loadEnv",
+      "examples": [
+        "如何配置vite.config.ts",
+        "Vite的条件配置使用",
+        "如何使用loadEnv加载环境变量"
+      ],
+      "reference": "core-config"
+    },
+    {
+      "id": "vite-features",
+      "name": "Vite核心特性",
+      "description": "import.meta.glob、资源查询(?raw, ?url)、import.meta.env、HMR API",
+      "examples": [
+        "如何使用import.meta.glob批量导入",
+        "Vite的资源查询使用方法",
+        "如何使用import.meta.env访问环境变量"
+      ],
+      "reference": "core-features"
+    },
+    {
+      "id": "vite-plugin-api",
+      "name": "Vite插件API",
+      "description": "Vite特定钩子、虚拟模块、插件排序",
+      "examples": [
+        "如何创建Vite插件",
+        "Vite插件钩子的使用",
+        "Vite插件的排序规则"
+      ],
+      "reference": "core-plugin-api"
+    },
+    {
+      "id": "vite-build-ssr",
+      "name": "Vite构建与SSR",
+      "description": "库模式、SSR中间件模式、ssrLoadModule、JavaScript API",
+      "examples": [
+        "如何使用Vite的库模式",
+        "Vite的SSR中间件配置",
+        "如何使用ssrLoadModule"
+      ],
+      "reference": "build-and-ssr"
+    },
+    {
+      "id": "vite-environment-api",
+      "name": "Vite环境API",
+      "description": "Vite 6+多环境支持、自定义运行时",
+      "examples": [
+        "如何配置Vite的多环境",
+        "Vite的自定义运行时使用",
+        "Vite 6+环境API的新特性"
+      ],
+      "reference": "environment-api"
+    },
+    {
+      "id": "vite-rolldown-migration",
+      "name": "Vite Rolldown迁移",
+      "description": "Vite 8变更：Rolldown bundler、Oxc transformer、配置迁移",
+      "examples": [
+        "如何从旧版本迁移到Vite 8",
+        "Vite 8的Rolldown配置",
+        "Vite 8的Oxc transformer使用"
+      ],
+      "reference": "rolldown-migration"
+    }
+  ],
+  "resources": {
+    "official": "https://vite.dev",
+    "github": "https://github.com/vitejs/vite",
+    "docs": "https://vite.dev/docs",
+    "source": "https://github.com/antfu/skills"
+  },
+  "keywords": ["vite", "构建工具", "前端", "Rolldown", "SSR", "插件", "配置"]
+}

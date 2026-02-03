@@ -1,0 +1,531 @@
+/* 自动生成的雪碧图样式 - 请勿手动编辑 */
+/* 生成时间: 2026-02-02 13:14:39 */
+
+/* 雪碧图基础样式 */
+.sprite-icon {
+  background-image: url('../img/controls-sprite.png');
+  background-repeat: no-repeat;
+  display: inline-block;
+}
+
+/* HELP 图标 */
+.sprite-help {
+  background-position: 0px 0px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-help-hover {
+  background-position: -80px 0px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-help-dark {
+  background-position: -160px 0px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-help-hover-dark {
+  background-position: -240px 0px;
+  width: 80px;
+  height: 80px;
+}
+
+/* PLAY 图标 */
+.sprite-play-Default {
+  background-position: -320px 0px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-play-hover {
+  background-position: -400px 0px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-play-press {
+  background-position: -480px 0px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-play-Default-dark {
+  background-position: -560px 0px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-play-hover-dark {
+  background-position: -640px 0px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-play-press-dark {
+  background-position: -720px 0px;
+  width: 80px;
+  height: 80px;
+}
+
+/* STOP 图标 */
+.sprite-stop-Default {
+  background-position: 0px -80px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-stop-hover {
+  background-position: -80px -80px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-stop-press {
+  background-position: -160px -80px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-stop-Default-dark {
+  background-position: -240px -80px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-stop-hover-dark {
+  background-position: -320px -80px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-stop-press-dark {
+  background-position: -400px -80px;
+  width: 80px;
+  height: 80px;
+}
+
+/* MUTE 图标 */
+.sprite-mute-Default {
+  background-position: -480px -80px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-mute-hover {
+  background-position: -560px -80px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-mute-press {
+  background-position: -640px -80px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-mute-on-Default {
+  background-position: -720px -80px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-mute-on-hover {
+  background-position: 0px -160px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-mute-on-press {
+  background-position: -80px -160px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-mute-disabled {
+  background-position: -160px -160px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-mute-Default-dark {
+  background-position: -240px -160px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-mute-hover-dark {
+  background-position: -320px -160px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-mute-press-dark {
+  background-position: -400px -160px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-mute-on-Default-dark {
+  background-position: -480px -160px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-mute-on-hover-dark {
+  background-position: -560px -160px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-mute-on-press-dark {
+  background-position: -640px -160px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-mute-disabled-dark {
+  background-position: -720px -160px;
+  width: 80px;
+  height: 80px;
+}
+
+/* ZOOM 图标 */
+.sprite-zoom-in {
+  background-position: 0px -240px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-zoom-in-hover {
+  background-position: -80px -240px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-zoom-out {
+  background-position: -160px -240px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-zoom-out-hover {
+  background-position: -240px -240px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-zoom-in-dark {
+  background-position: -320px -240px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-zoom-in-hover-dark {
+  background-position: -400px -240px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-zoom-out-dark {
+  background-position: -480px -240px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-zoom-out-hover-dark {
+  background-position: -560px -240px;
+  width: 80px;
+  height: 80px;
+}
+
+/* ONE2ONE 图标 */
+.sprite-one2one {
+  background-position: -640px -240px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-one2one-hover {
+  background-position: -720px -240px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-one2one-dark {
+  background-position: 0px -320px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-one2one-hover-dark {
+  background-position: -80px -320px;
+  width: 80px;
+  height: 80px;
+}
+
+/* CONTAIN 图标 */
+.sprite-contain {
+  background-position: -160px -320px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-contain-hover {
+  background-position: -240px -320px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-contain-dark {
+  background-position: -320px -320px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-contain-hover-dark {
+  background-position: -400px -320px;
+  width: 80px;
+  height: 80px;
+}
+
+/* RECOVER 图标 */
+.sprite-recover {
+  background-position: -480px -320px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-recover-dark {
+  background-position: -560px -320px;
+  width: 80px;
+  height: 80px;
+}
+
+/* CLOSE 图标 */
+.sprite-close {
+  background-position: -640px -320px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-close-dark {
+  background-position: -720px -320px;
+  width: 80px;
+  height: 80px;
+}
+
+/* BACK 图标 */
+.sprite-back {
+  background-position: 0px -400px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-back-dark {
+  background-position: -80px -400px;
+  width: 80px;
+  height: 80px;
+}
+
+/* MINIMIZE 图标 */
+.sprite-minimize {
+  background-position: -160px -400px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-minimize-hover {
+  background-position: -240px -400px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-minimize-dark {
+  background-position: -320px -400px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-minimize-hover-dark {
+  background-position: -400px -400px;
+  width: 80px;
+  height: 80px;
+}
+
+/* MAXIMIZE 图标 */
+.sprite-maximize {
+  background-position: -480px -400px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-maximize-hover {
+  background-position: -560px -400px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-maximize-dark {
+  background-position: -640px -400px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-maximize-hover-dark {
+  background-position: -720px -400px;
+  width: 80px;
+  height: 80px;
+}
+
+/* MINI_PLAY 图标 */
+.sprite-mini-play {
+  background-position: 0px -480px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-mini-play-hover {
+  background-position: -80px -480px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-mini-play-dark {
+  background-position: -160px -480px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-mini-play-hover-dark {
+  background-position: -240px -480px;
+  width: 80px;
+  height: 80px;
+}
+
+/* MINI_STOP 图标 */
+.sprite-mini-stop {
+  background-position: -320px -480px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-mini-stop-hover {
+  background-position: -400px -480px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-mini-stop-dark {
+  background-position: -480px -480px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-mini-stop-hover-dark {
+  background-position: -560px -480px;
+  width: 80px;
+  height: 80px;
+}
+
+/* MINI_MUTE 图标 */
+.sprite-mini-mute {
+  background-position: -640px -480px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-mini-mute-hover {
+  background-position: -720px -480px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-mini-mute-dark {
+  background-position: 0px -560px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-mini-mute-hover-dark {
+  background-position: -80px -560px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-mini-mute-disabled {
+  background-position: -160px -560px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-mini-mute-disabled-dark {
+  background-position: -240px -560px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-mini-mute-on {
+  background-position: -320px -560px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-mini-mute-on-hover {
+  background-position: -400px -560px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-mini-mute-on-dark {
+  background-position: -480px -560px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-mini-mute-on-hover-dark {
+  background-position: -560px -560px;
+  width: 80px;
+  height: 80px;
+}
+
+/* AI_IMG 图标 */
+.sprite-AI-img {
+  background-position: -640px -560px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-AI-img-hover {
+  background-position: -720px -560px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-AI-img-dark {
+  background-position: 0px -640px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-AI-img-hover-dark {
+  background-position: -80px -640px;
+  width: 80px;
+  height: 80px;
+}
+
+/* OPEN_FILE 图标 */
+.sprite-open-file {
+  background-position: -160px -640px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-open-file-dark {
+  background-position: -240px -640px;
+  width: 80px;
+  height: 80px;
+}
+
+/* TEXT-ALIGN-BTN 图标 */
+.sprite-text-center {
+  background-position: -320px -640px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-text-center-dark {
+  background-position: -400px -640px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-text-left {
+  background-position: -480px -640px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-text-left-dark {
+  background-position: -560px -640px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-text-right {
+  background-position: -640px -640px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-text-right-dark {
+  background-position: -720px -640px;
+  width: 80px;
+  height: 80px;
+}
+
+/* USER 图标 */
+.sprite-user {
+  background-position: 0px -720px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-user-dark {
+  background-position: -80px -720px;
+  width: 80px;
+  height: 80px;
+}
+
+/* DOWNLOAD 图标 */
+.sprite-download {
+  background-position: -160px -720px;
+  width: 80px;
+  height: 80px;
+}
+.sprite-download-dark {
+  background-position: -240px -720px;
+  width: 80px;
+  height: 80px;
+}
+
+/* 使用示例：
+ * 播放按钮:
+ * .play-btn {
+ *   background-image: url('../img/controls-sprite.png');
+ *   background-position: -0px -0px;  // play_Default.png的位置
+ *   width: 28px;
+ *   height: 28px;
+ * }
+ * 
+ * 或者使用 sprite-play-Default 类名
+ */

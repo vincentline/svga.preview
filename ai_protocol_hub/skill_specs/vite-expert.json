@@ -1,0 +1,96 @@
+{
+  "name": "vite-expert",
+  "display_name": "Vite专家",
+  "version": "1.0.0",
+  "description": "擅长使用Vite构建工具，提供Vite配置、项目搭建、性能优化等专业支持",
+  "author": "AI-Protocol-Hub",
+  "created_at": "[2026-02-04 12:00:00]",
+  "updated_at": "[2026-02-04 12:00:00]",
+  "tags": ["vite", "前端构建", "性能优化", "项目配置"],
+  "skills": [
+    {
+      "id": "vite-setup",
+      "name": "Vite项目搭建",
+      "description": "使用Vite快速搭建前端项目，支持各种框架",
+      "examples": [
+        "使用Vite创建一个React项目",
+        "使用Vite创建一个Vue3项目",
+        "使用Vite创建一个TypeScript项目"
+      ],
+      "reference": "https://vite.dev/docs"
+    },
+    {
+      "id": "vite-config",
+      "name": "Vite配置优化",
+      "description": "提供Vite配置的最佳实践和性能优化建议",
+      "examples": [
+        "如何配置Vite的别名路径",
+        "Vite的构建选项如何优化",
+        "Vite的开发服务器配置"
+      ],
+      "reference": "https://vite.dev/docs/config"
+    },
+    {
+      "id": "vite-plugins",
+      "name": "Vite插件推荐",
+      "description": "推荐和配置优质的Vite插件",
+      "examples": [
+        "推荐一些有用的Vite插件",
+        "如何配置Vite的热更新",
+        "Vite的CSS预处理配置"
+      ],
+      "reference": "https://github.com/vitejs/awesome-vite"
+    },
+    {
+      "id": "vite-multienv",
+      "name": "Vite多环境配置",
+      "description": "配置Vite的多环境构建和部署",
+      "examples": [
+        "如何配置Vite的开发、测试、生产环境",
+        "Vite的环境变量使用",
+        "Vite的构建输出配置"
+      ],
+      "reference": "https://vite.dev/docs/guide/env-and-mode"
+    },
+    {
+      "id": "vite-electron",
+      "name": "Vite + Electron",
+      "description": "使用Vite构建Electron桌面应用",
+      "examples": [
+        "如何创建Vite + Electron项目",
+        "Vite和Electron的集成配置",
+        "Electron + Vite的热更新配置"
+      ],
+      "reference": "https://github.com/electron-vite/electron-vite"
+    },
+    {
+      "id": "vite-performance",
+      "name": "Vite性能优化",
+      "description": "优化Vite项目的构建和运行性能",
+      "examples": [
+        "如何优化Vite的构建速度",
+        "Vite项目的代码分割策略",
+        "Vite的预构建配置"
+      ],
+      "reference": "https://vite.dev/docs/guide/build"
+    },
+    {
+      "id": "vite-debug",
+      "name": "Vite问题排查",
+      "description": "排查和解决Vite使用过程中的常见问题",
+      "examples": [
+        "Vite启动失败怎么办",
+        "Vite热更新不生效如何解决",
+        "Vite构建错误排查"
+      ],
+      "reference": "https://github.com/vitejs/vite/issues"
+    }
+  ],
+  "resources": {
+    "official": "https://vite.dev",
+    "github": "https://github.com/vitejs/vite",
+    "awesome": "https://github.com/vitejs/awesome-vite",
+    "docs": "https://vite.dev/docs"
+  },
+  "keywords": ["vite", "前端构建", "webpack替代", "性能优化", "开发工具"]
+}
