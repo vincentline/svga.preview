@@ -164,7 +164,8 @@ def main():
         'mingren_gift_1photo',
         'sth_auto_img',
         'svga',
-        'xunzhang'
+        'xunzhang',
+        'img'
     ]
     
     for resource_dir in resource_dirs:

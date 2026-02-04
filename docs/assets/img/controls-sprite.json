@@ -1,0 +1,566 @@
+{
+  "help.png": {
+    "x": 0,
+    "y": 0,
+    "width": 80,
+    "height": 80
+  },
+  "help_hover.png": {
+    "x": -80,
+    "y": 0,
+    "width": 80,
+    "height": 80
+  },
+  "help_dark.png": {
+    "x": -160,
+    "y": 0,
+    "width": 80,
+    "height": 80
+  },
+  "help_hover_dark.png": {
+    "x": -240,
+    "y": 0,
+    "width": 80,
+    "height": 80
+  },
+  "play_Default.png": {
+    "x": -320,
+    "y": 0,
+    "width": 80,
+    "height": 80
+  },
+  "play_hover.png": {
+    "x": -400,
+    "y": 0,
+    "width": 80,
+    "height": 80
+  },
+  "play_press.png": {
+    "x": -480,
+    "y": 0,
+    "width": 80,
+    "height": 80
+  },
+  "play_Default_dark.png": {
+    "x": -560,
+    "y": 0,
+    "width": 80,
+    "height": 80
+  },
+  "play_hover_dark.png": {
+    "x": -640,
+    "y": 0,
+    "width": 80,
+    "height": 80
+  },
+  "play_press_dark.png": {
+    "x": -720,
+    "y": 0,
+    "width": 80,
+    "height": 80
+  },
+  "stop_Default.png": {
+    "x": 0,
+    "y": -80,
+    "width": 80,
+    "height": 80
+  },
+  "stop_hover.png": {
+    "x": -80,
+    "y": -80,
+    "width": 80,
+    "height": 80
+  },
+  "stop_press.png": {
+    "x": -160,
+    "y": -80,
+    "width": 80,
+    "height": 80
+  },
+  "stop_Default_dark.png": {
+    "x": -240,
+    "y": -80,
+    "width": 80,
+    "height": 80
+  },
+  "stop_hover_dark.png": {
+    "x": -320,
+    "y": -80,
+    "width": 80,
+    "height": 80
+  },
+  "stop_press_dark.png": {
+    "x": -400,
+    "y": -80,
+    "width": 80,
+    "height": 80
+  },
+  "mute_Default.png": {
+    "x": -480,
+    "y": -80,
+    "width": 80,
+    "height": 80
+  },
+  "mute_hover.png": {
+    "x": -560,
+    "y": -80,
+    "width": 80,
+    "height": 80
+  },
+  "mute_press.png": {
+    "x": -640,
+    "y": -80,
+    "width": 80,
+    "height": 80
+  },
+  "mute_on_Default.png": {
+    "x": -720,
+    "y": -80,
+    "width": 80,
+    "height": 80
+  },
+  "mute_on_hover.png": {
+    "x": 0,
+    "y": -160,
+    "width": 80,
+    "height": 80
+  },
+  "mute_on_press.png": {
+    "x": -80,
+    "y": -160,
+    "width": 80,
+    "height": 80
+  },
+  "mute_disabled.png": {
+    "x": -160,
+    "y": -160,
+    "width": 80,
+    "height": 80
+  },
+  "mute_Default_dark.png": {
+    "x": -240,
+    "y": -160,
+    "width": 80,
+    "height": 80
+  },
+  "mute_hover_dark.png": {
+    "x": -320,
+    "y": -160,
+    "width": 80,
+    "height": 80
+  },
+  "mute_press_dark.png": {
+    "x": -400,
+    "y": -160,
+    "width": 80,
+    "height": 80
+  },
+  "mute_on_Default_dark.png": {
+    "x": -480,
+    "y": -160,
+    "width": 80,
+    "height": 80
+  },
+  "mute_on_hover_dark.png": {
+    "x": -560,
+    "y": -160,
+    "width": 80,
+    "height": 80
+  },
+  "mute_on_press_dark.png": {
+    "x": -640,
+    "y": -160,
+    "width": 80,
+    "height": 80
+  },
+  "mute_disabled_dark.png": {
+    "x": -720,
+    "y": -160,
+    "width": 80,
+    "height": 80
+  },
+  "zoom_in.png": {
+    "x": 0,
+    "y": -240,
+    "width": 80,
+    "height": 80
+  },
+  "zoom_in_hover.png": {
+    "x": -80,
+    "y": -240,
+    "width": 80,
+    "height": 80
+  },
+  "zoom_out.png": {
+    "x": -160,
+    "y": -240,
+    "width": 80,
+    "height": 80
+  },
+  "zoom_out_hover.png": {
+    "x": -240,
+    "y": -240,
+    "width": 80,
+    "height": 80
+  },
+  "zoom_in_dark.png": {
+    "x": -320,
+    "y": -240,
+    "width": 80,
+    "height": 80
+  },
+  "zoom_in_hover_dark.png": {
+    "x": -400,
+    "y": -240,
+    "width": 80,
+    "height": 80
+  },
+  "zoom_out_dark.png": {
+    "x": -480,
+    "y": -240,
+    "width": 80,
+    "height": 80
+  },
+  "zoom_out_hover_dark.png": {
+    "x": -560,
+    "y": -240,
+    "width": 80,
+    "height": 80
+  },
+  "one2one.png": {
+    "x": -640,
+    "y": -240,
+    "width": 80,
+    "height": 80
+  },
+  "one2one_hover.png": {
+    "x": -720,
+    "y": -240,
+    "width": 80,
+    "height": 80
+  },
+  "one2one_dark.png": {
+    "x": 0,
+    "y": -320,
+    "width": 80,
+    "height": 80
+  },
+  "one2one_hover_dark.png": {
+    "x": -80,
+    "y": -320,
+    "width": 80,
+    "height": 80
+  },
+  "contain.png": {
+    "x": -160,
+    "y": -320,
+    "width": 80,
+    "height": 80
+  },
+  "contain_hover.png": {
+    "x": -240,
+    "y": -320,
+    "width": 80,
+    "height": 80
+  },
+  "contain_dark.png": {
+    "x": -320,
+    "y": -320,
+    "width": 80,
+    "height": 80
+  },
+  "contain_hover_dark.png": {
+    "x": -400,
+    "y": -320,
+    "width": 80,
+    "height": 80
+  },
+  "recover.png": {
+    "x": -480,
+    "y": -320,
+    "width": 80,
+    "height": 80
+  },
+  "recover_dark.png": {
+    "x": -560,
+    "y": -320,
+    "width": 80,
+    "height": 80
+  },
+  "close.png": {
+    "x": -640,
+    "y": -320,
+    "width": 80,
+    "height": 80
+  },
+  "close_dark.png": {
+    "x": -720,
+    "y": -320,
+    "width": 80,
+    "height": 80
+  },
+  "back.png": {
+    "x": 0,
+    "y": -400,
+    "width": 80,
+    "height": 80
+  },
+  "back_dark.png": {
+    "x": -80,
+    "y": -400,
+    "width": 80,
+    "height": 80
+  },
+  "minimize.png": {
+    "x": -160,
+    "y": -400,
+    "width": 80,
+    "height": 80
+  },
+  "minimize_hover.png": {
+    "x": -240,
+    "y": -400,
+    "width": 80,
+    "height": 80
+  },
+  "minimize_dark.png": {
+    "x": -320,
+    "y": -400,
+    "width": 80,
+    "height": 80
+  },
+  "minimize_hover_dark.png": {
+    "x": -400,
+    "y": -400,
+    "width": 80,
+    "height": 80
+  },
+  "maximize.png": {
+    "x": -480,
+    "y": -400,
+    "width": 80,
+    "height": 80
+  },
+  "maximize_hover.png": {
+    "x": -560,
+    "y": -400,
+    "width": 80,
+    "height": 80
+  },
+  "maximize_dark.png": {
+    "x": -640,
+    "y": -400,
+    "width": 80,
+    "height": 80
+  },
+  "maximize_hover_dark.png": {
+    "x": -720,
+    "y": -400,
+    "width": 80,
+    "height": 80
+  },
+  "mini_play.png": {
+    "x": 0,
+    "y": -480,
+    "width": 80,
+    "height": 80
+  },
+  "mini_play_hover.png": {
+    "x": -80,
+    "y": -480,
+    "width": 80,
+    "height": 80
+  },
+  "mini_play_dark.png": {
+    "x": -160,
+    "y": -480,
+    "width": 80,
+    "height": 80
+  },
+  "mini_play_hover_dark.png": {
+    "x": -240,
+    "y": -480,
+    "width": 80,
+    "height": 80
+  },
+  "mini_stop.png": {
+    "x": -320,
+    "y": -480,
+    "width": 80,
+    "height": 80
+  },
+  "mini_stop_hover.png": {
+    "x": -400,
+    "y": -480,
+    "width": 80,
+    "height": 80
+  },
+  "mini_stop_dark.png": {
+    "x": -480,
+    "y": -480,
+    "width": 80,
+    "height": 80
+  },
+  "mini_stop_hover_dark.png": {
+    "x": -560,
+    "y": -480,
+    "width": 80,
+    "height": 80
+  },
+  "mini_mute.png": {
+    "x": -640,
+    "y": -480,
+    "width": 80,
+    "height": 80
+  },
+  "mini_mute_hover.png": {
+    "x": -720,
+    "y": -480,
+    "width": 80,
+    "height": 80
+  },
+  "mini_mute_dark.png": {
+    "x": 0,
+    "y": -560,
+    "width": 80,
+    "height": 80
+  },
+  "mini_mute_hover_dark.png": {
+    "x": -80,
+    "y": -560,
+    "width": 80,
+    "height": 80
+  },
+  "mini_mute_disabled.png": {
+    "x": -160,
+    "y": -560,
+    "width": 80,
+    "height": 80
+  },
+  "mini_mute_disabled_dark.png": {
+    "x": -240,
+    "y": -560,
+    "width": 80,
+    "height": 80
+  },
+  "mini_mute_on.png": {
+    "x": -320,
+    "y": -560,
+    "width": 80,
+    "height": 80
+  },
+  "mini_mute_on_hover.png": {
+    "x": -400,
+    "y": -560,
+    "width": 80,
+    "height": 80
+  },
+  "mini_mute_on_dark.png": {
+    "x": -480,
+    "y": -560,
+    "width": 80,
+    "height": 80
+  },
+  "mini_mute_on_hover_dark.png": {
+    "x": -560,
+    "y": -560,
+    "width": 80,
+    "height": 80
+  },
+  "AI_img.png": {
+    "x": -640,
+    "y": -560,
+    "width": 80,
+    "height": 80
+  },
+  "AI_img_hover.png": {
+    "x": -720,
+    "y": -560,
+    "width": 80,
+    "height": 80
+  },
+  "AI_img_dark.png": {
+    "x": 0,
+    "y": -640,
+    "width": 80,
+    "height": 80
+  },
+  "AI_img_hover_dark.png": {
+    "x": -80,
+    "y": -640,
+    "width": 80,
+    "height": 80
+  },
+  "open_file.png": {
+    "x": -160,
+    "y": -640,
+    "width": 80,
+    "height": 80
+  },
+  "open_file_dark.png": {
+    "x": -240,
+    "y": -640,
+    "width": 80,
+    "height": 80
+  },
+  "text_center.png": {
+    "x": -320,
+    "y": -640,
+    "width": 80,
+    "height": 80
+  },
+  "text_center_dark.png": {
+    "x": -400,
+    "y": -640,
+    "width": 80,
+    "height": 80
+  },
+  "text_left.png": {
+    "x": -480,
+    "y": -640,
+    "width": 80,
+    "height": 80
+  },
+  "text_left_dark.png": {
+    "x": -560,
+    "y": -640,
+    "width": 80,
+    "height": 80
+  },
+  "text_right.png": {
+    "x": -640,
+    "y": -640,
+    "width": 80,
+    "height": 80
+  },
+  "text_right_dark.png": {
+    "x": -720,
+    "y": -640,
+    "width": 80,
+    "height": 80
+  },
+  "user.png": {
+    "x": 0,
+    "y": -720,
+    "width": 80,
+    "height": 80
+  },
+  "user_dark.png": {
+    "x": -80,
+    "y": -720,
+    "width": 80,
+    "height": 80
+  },
+  "download.png": {
+    "x": -160,
+    "y": -720,
+    "width": 80,
+    "height": 80
+  },
+  "download_dark.png": {
+    "x": -240,
+    "y": -720,
+    "width": 80,
+    "height": 80
+  }
+}
