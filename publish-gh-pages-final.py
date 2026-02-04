@@ -207,7 +207,8 @@ def publish_to_gh_pages():
     try:
         # 克隆仓库到临时目录
         print_with_encoding("[进度] 克隆仓库到临时目录...")
-        clone_result = run_command(f'git clone "file://{os.getcwd()}" "{temp_dir}"')
+        # 使用 --no-single-branch 选项克隆所有分支
+        clone_result = run_command(f'git clone --no-single-branch "file://{os.getcwd()}" "{temp_dir}"')
         if clone_result and clone_result.returncode != 0:
             print_with_encoding("错误：克隆仓库失败")
             return False
@@ -217,20 +218,33 @@ def publish_to_gh_pages():
         
         # 切换到 gh-pages 分支
         print_with_encoding("[进度] 切换到 gh-pages 分支...")
-        gh_pages_exists = run_command('git show-ref --verify --quiet refs/heads/gh-pages')
         
-        if gh_pages_exists and gh_pages_exists.returncode != 0:
+        # 先检查远程 gh-pages 分支是否存在
+        remote_gh_pages_exists = run_command('git show-ref --verify --quiet refs/remotes/origin/gh-pages')
+        
+        # 再检查本地 gh-pages 分支是否存在
+        local_gh_pages_exists = run_command('git show-ref --verify --quiet refs/heads/gh-pages')
+        
+        if local_gh_pages_exists and local_gh_pages_exists.returncode == 0:
+            # 如果本地 gh-pages 分支存在，直接切换
+            print_with_encoding("[进度] 本地 gh-pages 分支存在，切换到该分支...")
+            checkout_result = run_command('git checkout gh-pages')
+            if checkout_result and checkout_result.returncode != 0:
+                print_with_encoding("错误：切换到 gh-pages 分支失败")
+                return False
+        elif remote_gh_pages_exists and remote_gh_pages_exists.returncode == 0:
+            # 如果远程 gh-pages 分支存在但本地不存在，从远程创建本地分支
+            print_with_encoding("[进度] 远程 gh-pages 分支存在，从远程创建本地分支...")
+            checkout_result = run_command('git checkout -b gh-pages origin/gh-pages')
+            if checkout_result and checkout_result.returncode != 0:
+                print_with_encoding("错误：从远程创建并切换到 gh-pages 分支失败")
+                return False
+        else:
             # 如果 gh-pages 分支不存在，创建一个新的
             print_with_encoding("[进度] gh-pages 分支不存在，创建新分支...")
             run_command('git checkout --orphan gh-pages')
             run_command('git reset --hard')
             run_command('git commit --allow-empty -m "Initial commit for gh-pages"')
-        else:
-            # 如果 gh-pages 分支存在，切换到该分支
-            checkout_result = run_command('git checkout gh-pages')
-            if checkout_result and checkout_result.returncode != 0:
-                print_with_encoding("错误：切换到 gh-pages 分支失败")
-                return False
         
         # 清空 gh-pages 分支的内容
         print_with_encoding("[进度] 清空 gh-pages 分支的内容...")
