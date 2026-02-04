@@ -18,6 +18,9 @@
 - 更新简述：如新增功能、修复问题、优化性能等，简单描述
 
 ## 更新记录
+[2026-02-04 19:42:49] 【修改文件】 : src/assets/js/service/site-config-loader.js - 修改本地开发模式配置加载逻辑，尝试加载本地 site-config.json 文件，确保未登录用户侧边栏按钮被正确隐藏
+[2026-02-04 19:17:41] 【修改文件】 : src/assets/js/controllers/user-type-controller.js - 实现响应式登录状态管理，添加观察者模式和登录状态轮询检测机制，扩展元素控制 API
+[2026-02-04 19:17:41] 【修改文件】 : src/assets/js/core/app.js - 移除手动调用 UserTypeController.refresh() 的代码，使用自动登录状态轮询检测
 [2026-02-04 09:10:45] 【修改文件】 : src/assets/js/service/dual-channel/dual-channel-composer.js - 修复双通道合成器Web Worker加载问题，实现内联代码方式加载Worker，解决内存配额问题，添加分批处理机制
 [2026-02-04 03:40:21] 【新增文件】 : copy-static.py - 新增 Python 版静态资源复制和压缩脚本
 [2026-02-04 03:40:21] 【修改文件】 : package.json - 更新 copy-static 脚本为 Python 版本

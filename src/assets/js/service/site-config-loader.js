@@ -78,14 +78,38 @@
                 return this.config;
             }
 
-            // 检测本地环境，直接使用默认配置，避免 CORS 问题
+            // 检测本地环境
             // 兼容 file:// 协议（hostname 为空）
             const isLocalhost = ['localhost', '127.0.0.1', '0.0.0.0', ''].includes(window.location.hostname);
             if (isLocalhost) {
-                console.log('[SiteConfig] 本地环境，使用默认配置');
-                this.config = DEFAULT_CONFIG;
-                this.loaded = true;
-                return DEFAULT_CONFIG;
+                try {
+                    // 本地开发模式：尝试加载本地的 site-config.json
+                    console.log('[SiteConfig] 本地环境，尝试加载本地配置');
+                    const localConfigUrl = '/site-config.json';
+                    const response = await fetch(localConfigUrl);
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const config = await response.json();
+                    
+                    // 验证配置格式
+                    if (this.validateConfig(config)) {
+                        this.config = config;
+                        this.loaded = true;
+                        console.log('[SiteConfig] 本地配置加载成功:', config);
+                        return config;
+                    } else {
+                        throw new Error('Invalid local config format');
+                    }
+                } catch (error) {
+                    // 本地配置加载失败：使用默认配置兜底
+                    console.warn('[SiteConfig] 本地配置加载失败，使用默认配置:', error.message);
+                    this.config = DEFAULT_CONFIG;
+                    this.loaded = true;
+                    return DEFAULT_CONFIG;
+                }
             }
 
             try {

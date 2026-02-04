@@ -578,13 +578,6 @@ function initApp() {
           console.log('登录状态更新:', loggedIn);
           this.isLoggedIn = loggedIn;
           this.userInfo = window.authUtils.getUserInfo();
-          
-          // 刷新用户类型配置，控制侧边栏按钮的显示/隐藏
-          if (window.MeeWoo && window.MeeWoo.Controllers && window.MeeWoo.Controllers.UserTypeController) {
-            setTimeout(() => {
-              window.MeeWoo.Controllers.UserTypeController.refresh();
-            }, 0);
-          }
         }
       },
 

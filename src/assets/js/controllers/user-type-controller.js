@@ -35,11 +35,16 @@
      * 职责：
      * - 根据用户登录状态和类型控制页面元素的显示/隐藏
      * - 为需要控制的元素添加 data-user-type 属性
+     * - 实现登录状态的响应式管理
      */
     class UserTypeController {
         constructor() {
             this.initialized = false;
             this.elements = new Map(); // 存储需要控制的元素：key = type, value = DOM元素
+            this.observers = []; // 观察者列表，用于监听登录状态变化
+            this.lastLoginStatus = null; // 上一次的登录状态，用于检测变化
+            this.pollingInterval = null; // 轮询检测登录状态变化
+            this.customRules = new Map(); // 自定义元素控制规则
         }
 
         /**
@@ -195,6 +200,165 @@
             // 重新应用用户类型配置
             this.applyUserTypeConfig();
         }
+
+        /**
+         * 启动登录状态轮询检测
+         * 定期检查登录状态是否变化，变化时自动刷新
+         */
+        startLoginStatusPolling() {
+            // 清除现有轮询
+            if (this.pollingInterval) {
+                clearInterval(this.pollingInterval);
+            }
+            
+            // 每500ms检查一次登录状态
+            this.pollingInterval = setInterval(() => {
+                const currentLoginStatus = window.authUtils && window.authUtils.isLoggedIn();
+                if (currentLoginStatus !== this.lastLoginStatus) {
+                    this.lastLoginStatus = currentLoginStatus;
+                    this.refresh();
+                    this.notifyObservers();
+                }
+            }, 500);
+        }
+
+        /**
+         * 停止登录状态轮询检测
+         */
+        stopLoginStatusPolling() {
+            if (this.pollingInterval) {
+                clearInterval(this.pollingInterval);
+                this.pollingInterval = null;
+            }
+        }
+
+        /**
+         * 添加观察者
+         * @param {Function} callback - 登录状态变化时的回调函数
+         */
+        addObserver(callback) {
+            if (typeof callback === 'function' && !this.observers.includes(callback)) {
+                this.observers.push(callback);
+            }
+        }
+
+        /**
+         * 移除观察者
+         * @param {Function} callback - 要移除的回调函数
+         */
+        removeObserver(callback) {
+            const index = this.observers.indexOf(callback);
+            if (index > -1) {
+                this.observers.splice(index, 1);
+            }
+        }
+
+        /**
+         * 通知所有观察者登录状态变化
+         */
+        notifyObservers() {
+            const isLoggedIn = window.authUtils && window.authUtils.isLoggedIn();
+            const userType = this.getUserType();
+            this.observers.forEach(callback => {
+                try {
+                    callback(isLoggedIn, userType);
+                } catch (error) {
+                    console.error('Observer callback error:', error);
+                }
+            });
+        }
+
+        /**
+         * 注册需要控制的元素
+         * @param {HTMLElement|string} element - DOM元素或选择器
+         * @param {string} type - 元素类型，对应配置中的hideButtons
+         */
+        registerElement(element, type) {
+            if (typeof element === 'string') {
+                element = document.querySelector(element);
+            }
+            
+            if (element && type) {
+                element.setAttribute('data-user-type', type);
+                this.refresh();
+            }
+        }
+
+        /**
+         * 批量注册需要控制的元素
+         * @param {Array<{element: HTMLElement|string, type: string}>} elements - 元素配置数组
+         */
+        registerElements(elements) {
+            elements.forEach(item => {
+                this.registerElement(item.element, item.type);
+            });
+        }
+
+        /**
+         * 检查元素是否应该显示
+         * @param {string} type - 元素类型
+         * @returns {boolean} 是否应该显示
+         */
+        shouldShowElement(type) {
+            // 先检查自定义规则
+            if (this.customRules && this.customRules.has(type)) {
+                const rule = this.customRules.get(type);
+                try {
+                    return rule();
+                } catch (error) {
+                    console.error('Custom rule error:', error);
+                }
+            }
+
+            // 再使用默认规则
+            const userType = this.getUserType();
+            let userTypeConfig = {};
+            
+            if (window.MeeWoo && window.MeeWoo.Core && window.MeeWoo.Core.SiteConfig) {
+                userTypeConfig = window.MeeWoo.Core.SiteConfig.getUserTypeConfig();
+            }
+
+            const { hideButtons = [] } = userTypeConfig;
+            return !hideButtons.includes(type);
+        }
+
+        /**
+         * 获取当前登录状态
+         * @returns {boolean} 是否登录
+         */
+        isLoggedIn() {
+            return window.authUtils && window.authUtils.isLoggedIn();
+        }
+
+        /**
+         * 获取当前用户类型
+         * @returns {string} 用户类型
+         */
+        getCurrentUserType() {
+            return this.getUserType();
+        }
+
+        /**
+         * 添加自定义元素控制规则
+         * @param {string} elementType - 元素类型
+         * @param {Function} rule - 控制规则函数，返回 boolean 表示是否显示
+         */
+        addCustomRule(elementType, rule) {
+            if (!this.customRules) {
+                this.customRules = new Map();
+            }
+            this.customRules.set(elementType, rule);
+        }
+
+        /**
+         * 移除自定义元素控制规则
+         * @param {string} elementType - 元素类型
+         */
+        removeCustomRule(elementType) {
+            if (this.customRules) {
+                this.customRules.delete(elementType);
+            }
+        }
     }
 
     // 创建全局实例：window.MeeWoo.Controllers.UserTypeController
@@ -203,11 +367,19 @@
     // 页面加载完成后自动初始化用户类型控制
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
-            window.MeeWoo.Controllers.UserTypeController.init();
+            const userTypeController = window.MeeWoo.Controllers.UserTypeController;
+            userTypeController.init().then(() => {
+                // 启动登录状态轮询检测
+                userTypeController.startLoginStatusPolling();
+            });
         });
     } else {
         // DOM已加载完成，立即初始化
-        window.MeeWoo.Controllers.UserTypeController.init();
+        const userTypeController = window.MeeWoo.Controllers.UserTypeController;
+        userTypeController.init().then(() => {
+            // 启动登录状态轮询检测
+            userTypeController.startLoginStatusPolling();
+        });
     }
 
 })(window);
