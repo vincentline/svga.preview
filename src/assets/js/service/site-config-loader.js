@@ -218,16 +218,6 @@
          * @returns {string} 用户类型 (public/internal)
          */
         getUserType() {
-            // 从URL参数中获取用户类型
-            const urlParams = new URLSearchParams(window.location.search);
-            const userType = urlParams.get('type');
-            
-            // 验证用户类型是否有效
-            const validTypes = ['public', 'internal'];
-            if (userType && validTypes.includes(userType)) {
-                return userType;
-            }
-            
             // 默认使用配置中的默认用户类型
             const userTypeConfig = this.getFeature('userType');
             return userTypeConfig ? userTypeConfig.default || 'public' : 'public';

@@ -120,13 +120,17 @@
             // 获取当前用户类型
             const userType = this.getUserType();
             
-            // 使用正确的 SiteConfig 实例路径获取配置
-            let userTypeConfig = {};
+            // 获取用户类型配置
+            let hideButtons = [];
             if (window.MeeWoo && window.MeeWoo.Core && window.MeeWoo.Core.SiteConfig) {
-                userTypeConfig = window.MeeWoo.Core.SiteConfig.getUserTypeConfig();
+                const siteConfig = window.MeeWoo.Core.SiteConfig;
+                const userTypeFeature = siteConfig.getFeature('userType');
+                
+                if (userTypeFeature && userTypeFeature.controls) {
+                    const userConfig = userTypeFeature.controls[userType] || userTypeFeature.controls.public;
+                    hideButtons = userConfig.hideButtons || [];
+                }
             }
-
-            const { hideButtons = [] } = userTypeConfig;
 
             // 隐藏需要隐藏的按钮
             hideButtons.forEach(type => {
@@ -312,13 +316,18 @@
 
             // 再使用默认规则
             const userType = this.getUserType();
-            let userTypeConfig = {};
+            let hideButtons = [];
             
             if (window.MeeWoo && window.MeeWoo.Core && window.MeeWoo.Core.SiteConfig) {
-                userTypeConfig = window.MeeWoo.Core.SiteConfig.getUserTypeConfig();
+                const siteConfig = window.MeeWoo.Core.SiteConfig;
+                const userTypeFeature = siteConfig.getFeature('userType');
+                
+                if (userTypeFeature && userTypeFeature.controls) {
+                    const userConfig = userTypeFeature.controls[userType] || userTypeFeature.controls.public;
+                    hideButtons = userConfig.hideButtons || [];
+                }
             }
 
-            const { hideButtons = [] } = userTypeConfig;
             return !hideButtons.includes(type);
         }
 

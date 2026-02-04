@@ -108,7 +108,16 @@
             let userTypeConfig = {};
             if (window.MeeWoo && window.MeeWoo.Core && window.MeeWoo.Core.SiteConfig) {
                 adConfig = window.MeeWoo.Core.SiteConfig.getFeature('advertisement');
-                userTypeConfig = window.MeeWoo.Core.SiteConfig.getUserTypeConfig();
+                
+                // 根据登录状态获取用户类型
+                const isLoggedIn = window.authUtils && window.authUtils.isLoggedIn();
+                const userType = isLoggedIn ? 'internal' : 'public';
+                
+                // 获取用户类型配置
+                const userTypeFeature = window.MeeWoo.Core.SiteConfig.getFeature('userType');
+                if (userTypeFeature && userTypeFeature.controls) {
+                    userTypeConfig = userTypeFeature.controls[userType] || userTypeFeature.controls.public || {};
+                }
             }
 
             if (!adConfig) {
