@@ -115,6 +115,11 @@ MeeWoo 是一个 SVGA 动画预览与转换工具，支持多种动画格式的�
 | `src/assets/js/service/config-manager.js` | 配置管理器，管理应用配置 | 配置管理、配置加载、应用配置 |
 | `src/assets/js/service/dual-channel/` | 双通道 MP4 相关服务 | 双通道、MP4 服务、视频处理 |
 | `src/assets/js/service/dual-channel/dual-channel-composer.js` | 双通道合成器，用于合成双通道视频（内置Worker代码） | 双通道、视频合成、内联Worker |
+| `src/assets/js/service/dual-channel/index.js` | 双通道服务索引文件，统一导出所有双通道相关服务模块 | 索引文件、模块导出、服务管理 |
+| `src/assets/js/service/dual-channel/memory-pool.js` | 内存池管理器，用于减少内存分配和优化性能 | 内存管理、性能优化、内存池 |
+| `src/assets/js/service/dual-channel/worker-pool.js` | Worker池管理器，用于优化并发处理性能 | 并发处理、性能优化、Worker池 |
+| `src/assets/js/service/dual-channel/wasm/dual-channel-core.c` | WebAssembly核心算法，实现双通道图像合成的像素处理 | WebAssembly、核心算法、像素处理 |
+| `src/assets/js/service/dual-channel/wasm/wasm-loader.js` | WebAssembly模块加载器，负责加载和管理WebAssembly模块 | WebAssembly、模块加载、内存管理 |
 | `src/assets/js/service/ffmpeg/` | FFmpeg 相关服务，用于视频转换 | FFmpeg、视频转换、服务模块 |
 | `src/assets/js/service/ffmpeg/ffmpeg-service.js` | FFmpeg 服务，提供视频转换功能 | FFmpeg、视频转换 |
 | `src/assets/js/service/gif/` | GIF 导出相关服务 | GIF 导出、服务模块、动画处理 |
@@ -228,6 +233,6 @@ MeeWoo 是一个 SVGA 动画预览与转换工具，支持多种动画格式的�
 
 ## 版本信息
 
-- 索引版本：1.1.2
-- 最后更新：[2026-02-02 14:30:00]
+- 索引版本：1.1.3
+- 最后更新：[2026-02-05 15:00:00]
 - 适用项目版本：v1.0.0

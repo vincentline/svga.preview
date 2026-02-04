@@ -34,6 +34,81 @@
  * 4. SIMD指令优化：使用SIMD指令并行处理多个像素
  */
 
+// 内存池管理（Worker内部）
+class MemoryPool {
+  constructor() {
+    this.pools = new Map();
+    this.maxPoolSize = 50;
+    this.minBufferSize = 1024;
+    this.maxBufferSize = 1024 * 1024 * 50; // 50MB
+  }
+
+  getBuffer(size) {
+    if (size <= 0 || size > this.maxBufferSize) {
+      return new Uint8ClampedArray(size);
+    }
+
+    const roundedSize = this._roundUpToPowerOfTwo(size);
+    const key = `Uint8ClampedArray_${roundedSize}`;
+
+    if (this.pools.has(key) && this.pools.get(key).length > 0) {
+      const pool = this.pools.get(key);
+      return pool.pop();
+    }
+
+    return new Uint8ClampedArray(roundedSize);
+  }
+
+  recycleBuffer(buffer) {
+    if (!buffer || !buffer.buffer) {
+      return;
+    }
+
+    const size = buffer.length;
+    if (size <= 0 || size > this.maxBufferSize) {
+      return;
+    }
+
+    const roundedSize = this._roundUpToPowerOfTwo(size);
+    const key = `Uint8ClampedArray_${roundedSize}`;
+
+    if (!this.pools.has(key)) {
+      this.pools.set(key, []);
+    }
+
+    const pool = this.pools.get(key);
+    if (pool.length < this.maxPoolSize) {
+      // 重置缓冲区
+      buffer.fill(0);
+      pool.push(buffer);
+    }
+  }
+
+  clear() {
+    this.pools.forEach(pool => {
+      pool.length = 0;
+    });
+    this.pools.clear();
+  }
+
+  _roundUpToPowerOfTwo(size) {
+    if (size <= this.minBufferSize) {
+      return this.minBufferSize;
+    }
+    size--;
+    size |= size >> 1;
+    size |= size >> 2;
+    size |= size >> 4;
+    size |= size >> 8;
+    size |= size >> 16;
+    size++;
+    return size;
+  }
+}
+
+// 全局内存池实例
+const memoryPool = new MemoryPool();
+
 // 分块大小配置
 const BLOCK_SIZE = 128; // 128x128像素的块
 
@@ -71,6 +146,14 @@ self.onmessage = function(e) {
           });
         });
         break;
+      case 'clearMemory':
+        console.log('Clearing memory pool');
+        memoryPool.clear();
+        self.postMessage({
+          id: task.id,
+          type: 'success'
+        });
+        break;
       default:
         throw new Error('Unknown task type: ' + task.type);
     }
@@ -103,9 +186,9 @@ async function handleComposeFrame(task) {
   
   console.log('Dual channel image size:', dualWidth, 'x', dualHeight, 'data size:', dualDataSize);
   
-  // 内存优化：预分配内存缓冲区
-  var dualData = new Uint8ClampedArray(dualDataSize);
-  var blackBgData = new Uint8ClampedArray(dualDataSize);
+  // 内存优化：使用内存池分配缓冲区
+  var dualData = memoryPool.getBuffer(dualDataSize);
+  var blackBgData = memoryPool.getBuffer(dualDataSize);
   
   console.log('Memory allocated successfully');
   
@@ -213,9 +296,9 @@ async function handleComposeFrames(task) {
       const frameIndex = batchStart + index;
       console.log('Processing frame', frameIndex + 1, 'of', frameCount);
       
-      // 内存优化：预分配内存缓冲区
-      var dualData = new Uint8ClampedArray(dualDataSize);
-      var blackBgData = new Uint8ClampedArray(dualDataSize);
+      // 内存优化：使用内存池分配缓冲区
+      var dualData = memoryPool.getBuffer(dualDataSize);
+      var blackBgData = memoryPool.getBuffer(dualDataSize);
       
       console.log('Memory allocated for frame', frameIndex);
       
