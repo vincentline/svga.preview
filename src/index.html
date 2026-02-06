@@ -592,18 +592,20 @@
                         </button>
                       </div>
                       <div class="footer-actions">
-                        <button class="btn-large-primary tooltip">
-                          <span class="tooltip-text">功能开发中...</span>
-                          转序列帧
+                        <button class="btn-large-primary" :class="{'tooltip': !svga.hasFile}" :disabled="!svga.hasFile"
+                          @click="openFramesPanel">
+                          <span v-if="!svga.hasFile" class="tooltip-text">请先拖入 SVGA 文件</span>
+                          {{ isExportingFrames ? '导出中 ' + framesExportProgress + '%' : '转序列帧' }}
                         </button>
                         <button class="btn-large-primary" :class="{'tooltip': !svga.hasFile}" :disabled="!svga.hasFile"
                           @click="openGifPanel">
                           <span v-if="!svga.hasFile" class="tooltip-text">请先拖入 SVGA 文件</span>
                           {{ isExportingGIF ? '导出中 ' + gifExportProgress + '%' : '转GIF' }}
                         </button>
-                        <button class="btn-large-primary tooltip">
-                          <span class="tooltip-text">功能开发中...</span>
-                          转webp
+                        <button class="btn-large-primary" :class="{'tooltip': !svga.hasFile}" :disabled="!svga.hasFile"
+                          @click="openWebpPanel">
+                          <span v-if="!svga.hasFile" class="tooltip-text">请先拖入 SVGA 文件</span>
+                          {{ isExportingWebp ? '导出中 ' + webpExportProgress + '%' : '转webp' }}
                         </button>
                         <button class="btn-large-secondary" :class="{'tooltip': !svga.hasFile}"
                           :disabled="!svga.hasFile" @click="openStandardMp4Panel('svga')">
@@ -630,18 +632,20 @@
                         </button>
                       </div>
                       <div class="footer-actions">
-                        <button class="btn-large-primary tooltip">
-                          <span class="tooltip-text">功能开发中...</span>
-                          转序列帧
+                        <button class="btn-large-primary" :class="{'tooltip': !yyeva.hasFile}" :disabled="!yyeva.hasFile"
+                          @click="openFramesPanel">
+                          <span v-if="!yyeva.hasFile" class="tooltip-text">请先拖入 MP4 文件</span>
+                          {{ isExportingFrames ? '导出中 ' + framesExportProgress + '%' : '转序列帧' }}
                         </button>
                         <button class="btn-large-primary" :class="{'tooltip': !yyeva.hasFile}"
                           :disabled="!yyeva.hasFile" @click="openGifPanel">
                           <span v-if="!yyeva.hasFile" class="tooltip-text">请先拖入 MP4 文件</span>
                           {{ isExportingGIF ? '导出中 ' + gifExportProgress + '%' : '转GIF' }}
                         </button>
-                        <button class="btn-large-primary tooltip">
-                          <span class="tooltip-text">功能开发中...</span>
-                          转webp
+                        <button class="btn-large-primary" :class="{'tooltip': !yyeva.hasFile}" :disabled="!yyeva.hasFile"
+                          @click="openWebpPanel">
+                          <span v-if="!yyeva.hasFile" class="tooltip-text">请先拖入 MP4 文件</span>
+                          {{ isExportingWebp ? '导出中 ' + webpExportProgress + '%' : '转webp' }}
                         </button>
                         <button class="btn-large-secondary" :class="{'tooltip': !yyeva.hasFile}"
                           :disabled="!yyeva.hasFile" @click="openStandardMp4Panel('yyeva')">
@@ -682,18 +686,20 @@
                         </button>
                       </div>
                       <div class="footer-actions">
-                        <button class="btn-large-primary tooltip">
-                          <span class="tooltip-text">功能开发中...</span>
-                          转序列帧
+                        <button class="btn-large-primary" :class="{'tooltip': !mp4.hasFile}" :disabled="!mp4.hasFile"
+                          @click="openFramesPanel">
+                          <span v-if="!mp4.hasFile" class="tooltip-text">请先拖入 MP4 文件</span>
+                          {{ isExportingFrames ? '导出中 ' + framesExportProgress + '%' : '转序列帧' }}
                         </button>
                         <button class="btn-large-primary" :class="{'tooltip': !mp4.hasFile}" :disabled="!mp4.hasFile"
                           @click="openGifPanel">
                           <span v-if="!mp4.hasFile" class="tooltip-text">请先拖入 MP4 文件</span>
                           {{ isExportingGIF ? '导出中 ' + gifExportProgress + '%' : '转GIF' }}
                         </button>
-                        <button class="btn-large-primary tooltip">
-                          <span class="tooltip-text">功能开发中...</span>
-                          转webp
+                        <button class="btn-large-primary" :class="{'tooltip': !mp4.hasFile}" :disabled="!mp4.hasFile"
+                          @click="openWebpPanel">
+                          <span v-if="!mp4.hasFile" class="tooltip-text">请先拖入 MP4 文件</span>
+                          {{ isExportingWebp ? '导出中 ' + webpExportProgress + '%' : '转webp' }}
                         </button>
                         <button class="btn-large-primary" :class="{'tooltip': !mp4.hasFile}" :disabled="!mp4.hasFile"
                           @click="openMp4ToSvgaPanel">
@@ -720,18 +726,20 @@
                         </button>
                       </div>
                       <div class="footer-actions">
-                        <button class="btn-large-primary tooltip">
-                          <span class="tooltip-text">功能开发中...</span>
-                          转序列帧
+                        <button class="btn-large-primary" :class="{'tooltip': !lottie.hasFile}" :disabled="!lottie.hasFile"
+                          @click="openFramesPanel">
+                          <span v-if="!lottie.hasFile" class="tooltip-text">请先拖入 Lottie 文件</span>
+                          {{ isExportingFrames ? '导出中 ' + framesExportProgress + '%' : '转序列帧' }}
                         </button>
                         <button class="btn-large-primary" :class="{'tooltip': !lottie.hasFile}"
                           :disabled="!lottie.hasFile" @click="openGifPanel">
                           <span v-if="!lottie.hasFile" class="tooltip-text">请先拖入 Lottie 文件</span>
                           {{ isExportingGIF ? '导出中 ' + gifExportProgress + '%' : '转GIF' }}
                         </button>
-                        <button class="btn-large-primary tooltip">
-                          <span class="tooltip-text">功能开发中...</span>
-                          转webp
+                        <button class="btn-large-primary" :class="{'tooltip': !lottie.hasFile}" :disabled="!lottie.hasFile"
+                          @click="openWebpPanel">
+                          <span v-if="!lottie.hasFile" class="tooltip-text">请先拖入 Lottie 文件</span>
+                          {{ isExportingWebp ? '导出中 ' + webpExportProgress + '%' : '转webp' }}
                         </button>
                         <button class="btn-large-secondary" :class="{'tooltip': !lottie.hasFile}"
                           :disabled="!lottie.hasFile" @click="openLottieToSvgaPanel">
@@ -866,6 +874,18 @@
       :export-progress="gifExportProgress" :export-stage="gifExportStage" :export-message="gifExportMessage"
       :disabled="isGlobalTaskRunning" @close="closeGifPanel" @cancel="cancelGifExport" @export="handleGifExport"
       @config-change="handleGifConfigChange"></gif-panel>
+
+    <!-- 序列帧导出弹窗（所有模式通用右侧弹窗） -->
+    <frames-panel :visible="activeRightPanel === 'frames'" :source-info="getFramesSourceInfo()" :initial-config="framesConfig"
+      :is-exporting="isExportingFrames" :export-progress="framesExportProgress" :export-stage="framesExportStage"
+      :export-message="framesExportMessage" :disabled="isGlobalTaskRunning" @close="closeFramesPanel"
+      @cancel="cancelFramesExport" @export="handleFramesExport" @config-change="handleFramesConfigChange"></frames-panel>
+
+    <!-- webp导出弹窗（所有模式通用右侧弹窗） -->
+    <webp-panel :visible="activeRightPanel === 'webp'" :source-info="getWebpSourceInfo()" :initial-config="webpConfig"
+      :is-exporting="isExportingWebp" :export-progress="webpExportProgress" :export-message="webpExportMessage"
+      :disabled="isGlobalTaskRunning" @close="closeWebpPanel" @cancel="cancelWebpExport" @export="handleWebpExport"
+      @config-change="handleWebpConfigChange"></webp-panel>
 
     <!-- 素材压缩弹窗（使用通用居中弹窗样式） -->
     <div class="center-modal-overlay" :class="{'show': showCompressModal && currentModule === 'svga'}">
@@ -1239,6 +1259,9 @@
   <!-- GIF导出器模块 -->
   <script src="assets/js/service/gif/gif-exporter.js"></script>
 
+  <!-- 序列帧导出器模块 -->
+  <script src="assets/js/service/frames/frames-exporter.js"></script>
+
   <!-- 文件验证器模块 -->
   <script src="assets/js/utils/file-validator.js"></script>
 
@@ -1250,6 +1273,8 @@
   <script src="assets/js/components/index.js"></script>
   <script src="assets/js/components/material-panel.js"></script>
   <script src="assets/js/components/gif-panel.js"></script>
+  <script src="assets/js/components/frames-panel.js"></script>
+  <script src="assets/js/components/webp-panel.js"></script>
   <script src="assets/js/components/standard-mp4-panel.js"></script>
   <script src="assets/js/components/dual-channel-panel.js"></script>
   <script src="assets/js/components/to-svga-panel.js"></script>
@@ -1295,7 +1320,7 @@
             <div class="svga-size-container">
               <div class="input-wrapper input-wrapper--lg svga-size-input-wrapper">
                 <input type="number" class="base-input" v-model.number="config.width" @input="onWidthChange"
-                  :disabled="isExporting" min="1" max="1920" />
+                  :disabled="isExporting" min="1" max="3000" />
               </div>
               <div class="svga-size-lock">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1306,7 +1331,7 @@
               </div>
               <div class="input-wrapper input-wrapper--lg svga-size-input-wrapper">
                 <input type="number" class="base-input" v-model.number="config.height" @input="onHeightChange"
-                  :disabled="isExporting" min="1" max="1920" />
+                  :disabled="isExporting" min="1" max="3000" />
               </div>
             </div>
           </div>
@@ -1316,9 +1341,9 @@
             <div class="svga-config-label">帧率：</div>
             <div class="svga-value-container">
               <div class="input-wrapper input-wrapper--lg svga-value-input-wrapper">
-                <input type="number" class="base-input" v-model.number="config.fps" :disabled="isExporting"
-                  min="1" max="60" />
-              </div>
+                            <input type="number" class="base-input" v-model.number="config.fps"
+                              :disabled="isExporting" min="1" max="60" />
+                          </div>
               <div class="input-unit">FPS</div>
             </div>
           </div>
@@ -1405,9 +1430,218 @@
           </template>
         </button>
       </div>
+    </div>
+  </script>
+  <script type="text/x-template" id="tpl-frames-panel">
+    <div class="side-panel side-panel--right svga-panel frames-panel" :class="{'show': visible}">
+      <div class="side-panel-container">
+        <!-- 标题区 -->
+        <div class="side-panel-header">
+          <h3 class="side-panel-title">转为序列帧</h3>
+          <div class="side-panel-divider"></div>
+        </div>
+
+        <!-- 当前文件信息 -->
+        <div class="svga-info-section">
+          <div class="svga-info-row">当前尺寸：{{ sourceInfo.sizeWH }} 帧率：{{ sourceInfo.fps }}FPS 时长：{{
+            (sourceInfo.duration || 0).toFixed(2) }}s</div>
+          <div class="svga-compress-hint">注意：序列帧文件会打包为ZIP下载，建议控制尺寸和帧率以减少文件体积。</div>
+        </div>
+
+        <!-- 配置区域 -->
+        <div class="svga-config-section" :class="{disabled: isExporting}">
+          <!-- 尺寸 -->
+          <div class="svga-config-item">
+            <div class="svga-config-label">尺寸：</div>
+            <div class="svga-size-container">
+              <div class="input-wrapper input-wrapper--lg svga-size-input-wrapper">
+                <input type="number" class="base-input" v-model.number="config.width" @input="onWidthChange"
+                  :disabled="isExporting" min="1" max="3000" />
+              </div>
+              <div class="svga-size-lock">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    d="M4.66667 7.33333V5.33333C4.66667 3.86057 5.86057 2.66667 7.33333 2.66667H8.66667C10.1394 2.66667 11.3333 3.86057 11.3333 5.33333V7.33333M5.33333 7.33333H10.6667C11.403 7.33333 12 7.93029 12 8.66667V12C12 12.7364 11.403 13.3333 10.6667 13.3333H5.33333C4.59695 13.3333 4 12.7364 4 12V8.66667C4 7.93029 4.59695 7.33333 5.33333 7.33333Z"
+                    stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </div>
+              <div class="input-wrapper input-wrapper--lg svga-size-input-wrapper">
+                <input type="number" class="base-input" v-model.number="config.height" @input="onHeightChange"
+                  :disabled="isExporting" min="1" max="3000" />
+              </div>
+            </div>
+          </div>
+
+          <!-- 帧率 -->
+          <div class="svga-config-item">
+            <div class="svga-config-label">帧率：</div>
+            <div class="svga-value-container">
+              <div class="input-wrapper input-wrapper--lg svga-value-input-wrapper">
+                <input type="number" class="base-input" v-model.number="config.fps" @input="onFpsChange"
+                  :disabled="isExporting" min="1" max="60" />
+              </div>
+              <div class="input-unit">FPS</div>
+            </div>
+          </div>
+
+          <!-- 质量 -->
+          <div class="svga-config-item">
+            <div class="svga-config-label">PNG压缩质量：</div>
+            <div class="svga-value-container">
+              <div class="input-wrapper input-wrapper--lg svga-value-input-wrapper">
+                <input type="number" class="base-input" v-model.number="config.quality" @input="onQualityChange"
+                  :disabled="isExporting" min="10" max="100" />
+              </div>
+              <div class="input-unit input-unit--hint">10% - 100%</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 导出进度 -->
+        <div class="export-progress" v-if="isExporting">
+          <div class="progress-info">
+            <span class="progress-status">
+              <span class="spinner" v-if="exportStage !== 'done'"></span>
+              {{ exportMessage }}
+            </span>
+            <span class="progress-percent">{{ Math.round(exportProgress * 100) }}%</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" :style="{ width: (exportProgress * 100) + '%' }"></div>
+          </div>
+        </div>
+
+        <!-- 底部按钮 -->
+        <div class="side-panel-footer">
+          <button v-if="!isExporting" class="material-btn-back" @click="close" title="返回">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M12 16L6 10L12 4" stroke="#333333" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" />
+            </svg>
+            <span>取消</span>
+          </button>
+          <button v-else class="material-btn-back svga-btn-cancel" @click="$emit('cancel')" title="取消导出">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M5 5L15 15M15 5L5 15" stroke="#ff4444" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" />
+            </svg>
+            <span>取消</span>
+          </button>
+
+          <button class="btn-large-secondary" :class="{'svga-btn-converting': isExporting}"
+            :disabled="isExporting || disabled" @click="startExport">
+            <template v-if="isExporting">
+              <span class="svga-progress-text">{{ exportProgress }}%</span>
+              <span class="svga-stage-text">{{ exportMessage }}</span>
+            </template>
+            <template v-else>
+              开始转换
+            </template>
+          </button>
+        </div>
       </div>
     </div>
   </script>
+
+  <script type="text/x-template" id="tpl-webp-panel">
+    <div class="side-panel side-panel--right svga-panel webp-panel" :class="{'show': visible}">
+      <div class="side-panel-container">
+        <!-- 标题区 -->
+        <div class="side-panel-header">
+          <h3 class="side-panel-title">转为webp</h3>
+          <div class="side-panel-divider"></div>
+        </div>
+
+        <!-- 当前文件信息 -->
+        <div class="svga-info-section">
+          <div class="svga-info-row">当前尺寸：{{ sourceInfo.sizeWH }} 帧率：{{ sourceInfo.fps }}FPS 时长：{{
+            (sourceInfo.duration || 0).toFixed(2) }}s</div>
+          <div class="svga-compress-hint">注意：webp格式支持动画，建议控制尺寸和帧率以减少文件体积。</div>
+        </div>
+
+        <!-- 配置区域 -->
+        <div class="svga-config-section" :class="{disabled: isExporting}">
+          <!-- 尺寸 -->
+          <div class="svga-config-item">
+            <div class="svga-config-label">尺寸：</div>
+            <div class="svga-size-container">
+              <div class="input-wrapper input-wrapper--lg svga-size-input-wrapper">
+                <input type="number" class="base-input" v-model.number="config.width" @input="onWidthChange"
+                  :disabled="isExporting" min="1" max="3000" />
+              </div>
+              <div class="svga-size-lock">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    d="M4.66667 7.33333V5.33333C4.66667 3.86057 5.86057 2.66667 7.33333 2.66667H8.66667C10.1394 2.66667 11.3333 3.86057 11.3333 5.33333V7.33333M5.33333 7.33333H10.6667C11.403 7.33333 12 7.93029 12 8.66667V12C12 12.7364 11.403 13.3333 10.6667 13.3333H5.33333C4.59695 13.3333 4 12.7364 4 12V8.66667C4 7.93029 4.59695 7.33333 5.33333 7.33333Z"
+                    stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </div>
+              <div class="input-wrapper input-wrapper--lg svga-size-input-wrapper">
+                <input type="number" class="base-input" v-model.number="config.height" @input="onHeightChange"
+                  :disabled="isExporting" min="1" max="3000" />
+              </div>
+            </div>
+          </div>
+
+          <!-- 帧率 -->
+          <div class="svga-config-item">
+            <div class="svga-config-label">帧率：</div>
+            <div class="svga-value-container">
+              <div class="input-wrapper input-wrapper--lg svga-value-input-wrapper">
+                <input type="number" class="base-input" v-model.number="config.fps" @input="onFpsChange"
+                  :disabled="isExporting" min="1" max="60" />
+              </div>
+              <div class="input-unit">FPS</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 导出进度 -->
+        <div class="export-progress" v-if="isExporting">
+          <div class="progress-info">
+            <span class="progress-status">
+              <span class="spinner" v-if="exportStage !== 'done'"></span>
+              {{ exportMessage }}
+            </span>
+            <span class="progress-percent">{{ Math.round(exportProgress * 100) }}%</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" :style="{ width: (exportProgress * 100) + '%' }"></div>
+          </div>
+        </div>
+
+        <!-- 底部按钮 -->
+        <div class="side-panel-footer">
+          <button v-if="!isExporting" class="material-btn-back" @click="close" title="返回">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M12 16L6 10L12 4" stroke="#333333" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" />
+            </svg>
+            <span>取消</span>
+          </button>
+          <button v-else class="material-btn-back svga-btn-cancel" @click="$emit('cancel')" title="取消导出">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M5 5L15 15M15 5L5 15" stroke="#ff4444" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" />
+            </svg>
+            <span>取消</span>
+          </button>
+
+          <button class="btn-large-secondary" :class="{'svga-btn-converting': isExporting}"
+            :disabled="isExporting || disabled" @click="startExport">
+            <template v-if="isExporting">
+              <span class="svga-progress-text">{{ exportProgress }}%</span>
+              <span class="svga-stage-text">{{ exportMessage }}</span>
+            </template>
+            <template v-else>
+              导出webp
+            </template>
+          </button>
+        </div>
+      </div>
+    </div>
+  </script>
+
   <script type="text/x-template" id="tpl-material-panel">
     <div class="side-panel side-panel--right material-panel" :class="{'show': visible}">
       <div class="side-panel-container">
@@ -1502,6 +1736,9 @@
       </div>
     </div>
   </script>
+
+  <!-- 组件模块 -->
+  <script src="assets/js/components/frames-panel.js"></script>
 
   <!-- 用户配置管理器模块 -->
   <script src="assets/js/service/config-manager.js"></script>

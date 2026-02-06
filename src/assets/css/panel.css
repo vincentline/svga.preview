@@ -171,22 +171,32 @@ body.dark-mode .side-panel-divider {
   width: 400px;
 }
 
-/* 11. 双通道MP4面板特有样式 */
+/* 11. 序列帧导出面板特有样式 */
+.svga-panel.frames-panel {
+  width: 400px;
+}
+
+/* 16. webp面板特有样式 */
+.webp-panel {
+  width: 400px;
+}
+
+/* 12. 双通道MP4面板特有样式 */
 .dual-channel-panel {
   width: 400px;
 }
 
-/* 12. 标准MP4面板特有样式 */
+/* 13. 标准MP4面板特有样式 */
 .standard-mp4-panel {
   width: 400px;
 }
 
-/* 13. 转SVGA面板特有样式 */
+/* 14. 转SVGA面板特有样式 */
 .to-svga-panel {
   width: 400px;
 }
 
-/* 14. 统一输入框宽度样式 */
+/* 15. 统一输入框宽度样式 */
 .svga-size-input-wrapper,
 .svga-value-input-wrapper,
 .mp4-size-input-wrapper,

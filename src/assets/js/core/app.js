@@ -134,6 +134,8 @@ function initApp() {
       // 注册所有组件
       'material-panel': SP.Components.MaterialPanel,
       'gif-panel': SP.Components.GifPanel,
+      'frames-panel': SP.Components.FramesPanel,
+      'webp-panel': SP.Components.WebpPanel,
       'standard-mp4-panel': SP.Components.StandardMp4Panel,
       'dual-channel-panel': SP.Components.DualChannelPanel,
       'to-svga-panel': SP.Components.ToSvgaPanel,
@@ -307,6 +309,39 @@ function initApp() {
         gifExportStage: '',   // 'loading' | 'capturing' | 'encoding' | 'done'
         gifExportMessage: '',
         gifExportCancelled: false,
+
+        // 序列帧导出状态和配置
+        framesConfig: {
+          width: 0,
+          height: 0,
+          fps: 24,
+          quality: 80,       // 10-100，PNG压缩质量
+          transparent: false
+        },
+        isExportingFrames: false,
+        framesExportProgress: 0,
+        framesExportStage: '',
+        framesExportMessage: '',
+        framesExportCancelled: false,
+
+        // webp导出状态和配置
+        webpConfig: {
+          width: 0,
+          height: 0,
+          fps: 24
+        },
+        webpSourceInfo: {
+          name: '',
+          sizeWH: '',
+          duration: 0,
+          fileSize: '',
+          fps: 24,
+          typeLabel: ''
+        },
+        isExportingWebp: false,
+        webpExportProgress: 0,
+        webpExportMessage: '',
+        webpExportCancelled: false,
 
         // Lottie 导出状态
         isExportingLottie: false,
@@ -4723,6 +4758,14 @@ function initApp() {
       },
 
       /**
+       * 处理序列帧配置变化（从组件接收）
+       */
+      handleFramesConfigChange: function (newConfig) {
+        // 更新本地配置
+        this.framesConfig = Object.assign({}, this.framesConfig, newConfig);
+      },
+
+      /**
        * 处理GIF导出请求（从组件接收）
        */
       handleGifExport: function (config) {
@@ -4741,6 +4784,417 @@ function initApp() {
         this.gifExportProgress = 0;
         this.gifExportStage = '';
         this.gifExportMessage = '';
+      },
+
+      /**
+       * 打开序列帧导出弹窗
+       */
+      openFramesPanel: function () {
+        console.log('[调试] openFramesPanel被调用');
+        console.log('[调试] currentModule:', this.currentModule);
+        console.log('[调试] svga.hasFile:', this.svga.hasFile);
+        // 检查当前模式是否有文件
+        var hasFile = false;
+        if (this.currentModule === 'svga') hasFile = this.svga.hasFile;
+        else if (this.currentModule === 'yyeva') hasFile = this.yyeva.hasFile;
+        else if (this.currentModule === 'mp4') hasFile = this.mp4.hasFile;
+        else if (this.currentModule === 'lottie') hasFile = this.lottie.hasFile;
+        else if (this.currentModule === 'frames') hasFile = this.frames.hasFile;
+
+        console.log('[调试] hasFile:', hasFile);
+
+        if (!hasFile) {
+          alert('请先加载文件');
+          return;
+        }
+
+        // 使用统一的弹窗管理
+        console.log('[调试] 调用openRightPanel("frames")');
+        this.openRightPanel('frames');
+
+        // 预加载JSZip库
+        this.loadLibrary('jszip', true).catch(function (e) {
+          console.warn('Library preload failed:', e);
+          // 静默失败，将在需要时重新加载
+        });
+      },
+
+      /**
+       * 关闭序列帧导出弹窗
+       */
+      closeFramesPanel: function () {
+        this.activeRightPanel = null;
+      },
+
+      /**
+       * 处理序列帧导出请求（从组件接收）
+       */
+      handleFramesExport: function (config) {
+        // 更新配置
+        this.framesConfig = Object.assign({}, this.framesConfig, config);
+        // 开始导出
+        this.startFramesExport();
+      },
+
+      /**
+       * 取消序列帧导出
+       */
+      cancelFramesExport: function () {
+        this.framesExportCancelled = true;
+        this.isExportingFrames = false;
+        this.framesExportProgress = 0;
+        this.framesExportStage = '';
+        this.framesExportMessage = '';
+      },
+
+      /**
+       * 打开webp导出弹窗
+       */
+      openWebpPanel: function () {
+        // 检查当前模式是否有文件
+        var hasFile = false;
+        if (this.currentModule === 'svga') hasFile = this.svga.hasFile;
+        else if (this.currentModule === 'yyeva') hasFile = this.yyeva.hasFile;
+        else if (this.currentModule === 'mp4') hasFile = this.mp4.hasFile;
+        else if (this.currentModule === 'lottie') hasFile = this.lottie.hasFile;
+        else if (this.currentModule === 'frames') hasFile = this.frames.hasFile;
+
+        if (!hasFile) {
+          alert('请先加载文件');
+          return;
+        }
+
+        // 检查当前是否已经打开了webp面板
+        if (this.activeRightPanel === 'webp') {
+          // 如果已经打开，则关闭面板
+          this.closeWebpPanel();
+          return;
+        }
+
+        // 使用Vue.nextTick确保activeRightPanel的更新生效
+        var _this = this;
+        this.activeRightPanel = null;
+        this.$nextTick(function() {
+          // 使用统一的弹窗管理
+          _this.openRightPanel('webp');
+        });
+      },
+
+      /**
+       * 关闭webp导出弹窗
+       */
+      closeWebpPanel: function () {
+        this.activeRightPanel = null;
+      },
+
+      /**
+       * 处理webp配置变化（从组件接收）
+       */
+      handleWebpConfigChange: function (newConfig) {
+        // 更新本地配置
+        this.webpConfig = Object.assign({}, this.webpConfig, newConfig);
+      },
+
+      /**
+       * 处理webp导出请求（从组件接收）
+       */
+      handleWebpExport: function (config) {
+        // 更新配置
+        this.webpConfig = Object.assign({}, this.webpConfig, config);
+        // 开始导出
+        this.startWebpExport();
+      },
+
+      /**
+       * 开始webp导出
+       */
+      startWebpExport: function () {
+        var _this = this;
+
+        // 重置状态
+        this.isExportingWebp = true;
+        this.webpExportProgress = 0;
+        this.webpExportMessage = '准备导出...';
+        this.webpExportCancelled = false;
+
+        // 执行导出
+        this.runWebpExport().catch(function (error) {
+          console.error('WebP导出失败:', error);
+          _this.webpExportMessage = '导出失败: ' + (error.message || '未知错误');
+          _this.isExportingWebp = false;
+        });
+      },
+
+      /**
+       * 捕获帧数据
+       */
+      captureFrames: async function (width, height, fps) {
+        var _this = this;
+        var sourceInfo = this.getWebpSourceInfo();
+        var duration = sourceInfo.duration;
+        var totalFrames = Math.ceil(duration * fps);
+        var frames = [];
+
+        // 暂停播放
+        var wasPlaying = this.isPlaying;
+        await this.pauseForExport();
+
+        try {
+          for (var i = 0; i < totalFrames; i++) {
+            if (_this.webpExportCancelled) {
+              throw new Error('导出已取消');
+            }
+
+            // 计算当前帧的时间
+            var time = i / fps;
+
+            // 跳转到对应时间
+            await _this.seekToTime(time);
+
+            // 获取当前帧的画布
+            var canvas = _this.getCurrentFrameCanvas();
+            if (!canvas) {
+              throw new Error('无法获取画布元素');
+            }
+
+            // 创建新的canvas并调整尺寸
+            var resizedCanvas = document.createElement('canvas');
+            resizedCanvas.width = width;
+            resizedCanvas.height = height;
+            var ctx = resizedCanvas.getContext('2d');
+
+            // 绘制并调整尺寸
+            ctx.drawImage(canvas, 0, 0, width, height);
+
+            // 转换为Image对象
+            var img = new Image();
+            img.src = resizedCanvas.toDataURL('image/png');
+
+            // 等待图片加载完成
+            await new Promise(function (resolve) {
+              img.onload = resolve;
+            });
+
+            frames.push(img);
+
+            // 更新进度
+            _this.webpExportProgress = 0.3 * (i / totalFrames);
+          }
+
+          return frames;
+        } finally {
+          // 恢复播放状态
+          if (wasPlaying) {
+            _this.resumeAfterExport();
+          }
+        }
+      },
+
+      /**
+       * 执行webp导出
+       */
+      runWebpExport: async function () {
+        var _this = this;
+        var config = this.webpConfig;
+
+        try {
+          _this.webpExportMessage = '捕获帧数据...';
+
+          // 获取帧数据
+          var frames = await this.captureFrames(config.width, config.height, config.fps);
+          if (_this.webpExportCancelled) throw new Error('导出已取消');
+
+          _this.webpExportProgress = 0.3;
+          _this.webpExportMessage = '转换为WebP格式...';
+
+          // 使用Canvas API导出为WebP
+          if (frames.length > 0) {
+            // 创建canvas元素
+            var canvas = document.createElement('canvas');
+            canvas.width = config.width;
+            canvas.height = config.height;
+            var ctx = canvas.getContext('2d');
+
+            // 绘制第一帧
+            ctx.drawImage(frames[0], 0, 0, config.width, config.height);
+
+            // 转换为WebP
+            var webpDataUrl = canvas.toDataURL('image/webp', 0.9);
+
+            _this.webpExportProgress = 0.8;
+            _this.webpExportMessage = '生成下载文件...';
+
+            // 创建下载链接
+            var link = document.createElement('a');
+            link.href = webpDataUrl;
+            link.download = 'export.webp';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            // 释放帧数据
+            frames.forEach(function (frame) {
+              URL.revokeObjectURL(frame.src);
+            });
+          }
+
+          _this.webpExportProgress = 1;
+          _this.webpExportMessage = '导出完成';
+          
+          // 延迟关闭
+          setTimeout(function () {
+            _this.isExportingWebp = false;
+            _this.activeRightPanel = null;
+          }, 1000);
+
+        } catch (error) {
+          console.error('WebP导出错误:', error);
+          _this.webpExportMessage = '导出失败: ' + (error.message || '未知错误');
+          _this.isExportingWebp = false;
+          throw error;
+        }
+      },
+
+      /**
+       * 取消webp导出
+       */
+      cancelWebpExport: function () {
+        this.webpExportCancelled = true;
+        this.isExportingWebp = false;
+        this.webpExportProgress = 0;
+        this.webpExportMessage = '';
+      },
+
+      /**
+       * 获取webp源信息
+       */
+      getWebpSourceInfo: function () {
+        var width = 0, height = 0, fps = 24, duration = 0, totalFrames = 0;
+
+        if (this.currentModule === 'svga' && this.svga.hasFile) {
+          var sizeWH = this.svga.fileInfo.sizeWH;
+          if (sizeWH) {
+            var parts = sizeWH.split(' × ');
+            if (parts.length === 2) {
+              width = parseInt(parts[0]);
+              height = parseInt(parts[1]);
+            }
+          }
+          fps = this.svga.fileInfo.fps || 20;
+          totalFrames = this.totalFrames || 0;
+          duration = totalFrames / fps;
+        } else if (this.currentModule === 'yyeva' && this.yyeva.hasFile) {
+          width = this.yyeva.displayWidth || Math.floor(this.yyeva.originalWidth / 2);
+          height = this.yyeva.displayHeight || this.yyeva.originalHeight;
+          fps = parseFloat(this.yyeva.fileInfo.fps) || 30;
+          duration = this.yyevaVideo ? this.yyevaVideo.duration : 0;
+          totalFrames = Math.ceil(duration * fps);
+        } else if (this.currentModule === 'mp4' && this.mp4.hasFile) {
+          width = this.mp4.originalWidth;
+          height = this.mp4.originalHeight;
+          fps = parseFloat(this.mp4.fileInfo.fps) || 30;
+          duration = this.mp4Video ? this.mp4Video.duration : 0;
+
+          // 支持变速：如果启用了变速，使用变速后的时长
+          if (this.speedRemapConfig.enabled && this.speedRemapConfig.keyframes && this.speedRemapConfig.keyframes.length >= 2) {
+            var frameMap = this.buildFrameMap();
+            if (frameMap && frameMap.length > 0) {
+              totalFrames = frameMap.length;
+              duration = totalFrames / fps;
+            } else {
+              totalFrames = Math.ceil(duration * fps);
+            }
+          } else {
+            totalFrames = Math.ceil(duration * fps);
+          }
+        } else if (this.currentModule === 'lottie' && this.lottie.hasFile) {
+          width = this.lottie.originalWidth;
+          height = this.lottie.originalHeight;
+          fps = this.lottie.frameRate || 30;
+          totalFrames = this.totalFrames || 0;
+          duration = totalFrames / fps;
+        } else if (this.currentModule === 'frames' && this.frames.hasFile) {
+          width = this.frames.originalWidth;
+          height = this.frames.originalHeight;
+          fps = this.frames.fileInfo.fps || 25;
+          totalFrames = this.totalFrames || 0;
+          duration = totalFrames / fps;
+        }
+
+        return {
+          width: width,
+          height: height,
+          fps: fps,
+          duration: duration,
+          totalFrames: totalFrames,
+          sizeWH: width + ' × ' + height
+        };
+      },
+
+      /**
+       * 获取序列帧源信息
+       */
+      getFramesSourceInfo: function () {
+        var width = 0, height = 0, fps = 24, duration = 0, totalFrames = 0;
+
+        if (this.currentModule === 'svga' && this.svga.hasFile) {
+          var sizeWH = this.svga.fileInfo.sizeWH;
+          if (sizeWH) {
+            var parts = sizeWH.split(' × ');
+            if (parts.length === 2) {
+              width = parseInt(parts[0]);
+              height = parseInt(parts[1]);
+            }
+          }
+          fps = this.svga.fileInfo.fps || 20;
+          totalFrames = this.totalFrames || 0;
+          duration = totalFrames / fps;
+        } else if (this.currentModule === 'yyeva' && this.yyeva.hasFile) {
+          width = this.yyeva.displayWidth || Math.floor(this.yyeva.originalWidth / 2);
+          height = this.yyeva.displayHeight || this.yyeva.originalHeight;
+          fps = parseFloat(this.yyeva.fileInfo.fps) || 30;
+          duration = this.yyevaVideo ? this.yyevaVideo.duration : 0;
+          totalFrames = Math.ceil(duration * fps);
+        } else if (this.currentModule === 'mp4' && this.mp4.hasFile) {
+          width = this.mp4.originalWidth;
+          height = this.mp4.originalHeight;
+          fps = parseFloat(this.mp4.fileInfo.fps) || 30;
+          duration = this.mp4Video ? this.mp4Video.duration : 0;
+
+          // 支持变速：如果启用了变速，使用变速后的时长
+          if (this.speedRemapConfig.enabled && this.speedRemapConfig.keyframes && this.speedRemapConfig.keyframes.length >= 2) {
+            var frameMap = this.buildFrameMap();
+            if (frameMap && frameMap.length > 0) {
+              totalFrames = frameMap.length;
+              duration = totalFrames / fps;
+            } else {
+              totalFrames = Math.ceil(duration * fps);
+            }
+          } else {
+            totalFrames = Math.ceil(duration * fps);
+          }
+        } else if (this.currentModule === 'lottie' && this.lottie.hasFile) {
+          width = this.lottie.originalWidth;
+          height = this.lottie.originalHeight;
+          fps = this.lottie.frameRate || 30;
+          totalFrames = this.totalFrames || 0;
+          duration = totalFrames / fps;
+        } else if (this.currentModule === 'frames' && this.frames.hasFile) {
+          width = this.frames.originalWidth;
+          height = this.frames.originalHeight;
+          fps = this.frames.fileInfo.fps || 25;
+          totalFrames = this.totalFrames || 0;
+          duration = totalFrames / fps;
+        }
+
+        return {
+          width: width,
+          height: height,
+          fps: fps,
+          duration: duration,
+          totalFrames: totalFrames,
+          sizeWH: width + ' × ' + height
+        };
       },
 
       /**
@@ -4890,6 +5344,118 @@ function initApp() {
           this.gifExportProgress = 0;
           this.gifExportStage = '';
           this.gifExportMessage = '';
+        }
+      },
+
+      /**
+       * 开始导出序列帧（统一入口）
+       */
+      startFramesExport: async function () {
+        var _this = this;
+
+        // 检查是否有其他正在进行的任务
+        if (!this.confirmIfHasOngoingTasks('导出序列帧', 'task')) {
+          return;
+        }
+
+        // 使用新的统一确认函数
+        var sourceInfo = this.getFramesSourceInfo();
+        if (!this.confirmExportLimits(sourceInfo, '序列帧')) {
+          return;
+        }
+
+        try {
+          // 加载JSZip库
+          await this.loadLibrary('jszip', true);
+        } catch (err) {
+          alert('序列帧导出库加载失败，请检查网络');
+          return;
+        }
+
+        this.isExportingFrames = true;
+        this.framesExportProgress = 0;
+        this.framesExportCancelled = false;
+        this.framesExportStage = 'capturing';
+        this.framesExportMessage = '捕获帧...';
+
+        var taskId = null;
+        if (this.taskManager) {
+          taskId = this.taskManager.register('导出序列帧', function () {
+            _this.isExportingFrames = false;
+            _this.framesExportProgress = 0;
+            _this.framesExportCancelled = true;
+          });
+        }
+
+        try {
+          // 根据当前模式调用对应的导出函数
+          await this.runFramesExport();
+        } catch (err) {
+          if (err.message !== '用户取消') {
+            alert('序列帧导出失败: ' + err.message);
+          }
+        } finally {
+          if (this.taskManager && taskId) {
+            this.taskManager.finish(taskId);
+          }
+          this.isExportingFrames = false;
+          this.framesExportProgress = 0;
+          this.framesExportStage = '';
+          this.framesExportMessage = '';
+        }
+      },
+
+      /**
+       * 通用序列帧导出内核（使用FramesExporter模块）
+       */
+      runFramesExport: async function () {
+        var _this = this;
+        var config = this.framesConfig;
+        var sourceInfo = this.getFramesSourceInfo();
+        var fps = config.fps;
+        var duration = sourceInfo.duration;
+
+        // 暂停播放
+        var wasPlaying = this.isPlaying;
+        await this.pauseForExport();
+
+        try {
+          // 创建FramesExporter实例
+          var exporter = new MeeWoo.Service.FramesExporter();
+
+          // 获取画布元素
+          var canvas = this.getCurrentFrameCanvas();
+          if (!canvas) {
+            throw new Error('无法获取画布元素');
+          }
+
+          // 导出序列帧
+          await new Promise(function (resolve, reject) {
+            exporter.exportFrames(
+              config,
+              canvas,
+              duration,
+              function (progress, message) {
+                _this.framesExportProgress = progress;
+                _this.framesExportMessage = message;
+              },
+              function (error) {
+                reject(new Error(error));
+              },
+              function () {
+                resolve();
+              }
+            );
+          });
+
+          alert('序列帧导出成功！');
+          _this.closeFramesPanel();
+
+        } finally {
+          // 恢复播放状态
+          if (wasPlaying) {
+            this.resumeAfterExport();
+          }
         }
       },
 

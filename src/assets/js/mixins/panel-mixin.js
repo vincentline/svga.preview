@@ -107,6 +107,12 @@
         } else if (this.activeRightPanel === 'gif' && this.isExportingGIF) {
           if (!confirm('正在导出GIF中，确定要取消吗？')) return;
           this.cancelGifExport();
+        } else if (this.activeRightPanel === 'frames' && this.isExportingFrames) {
+          if (!confirm('正在导出序列帧中，确定要取消吗？')) return;
+          this.cancelFramesExport();
+        } else if (this.activeRightPanel === 'webp' && this.isExportingWebp) {
+          if (!confirm('正在导出WebP中，确定要取消吗？')) return;
+          this.cancelWebpExport();
         } else if (this.showStandardMp4Panel && this.isConvertingStandardMp4) {
           if (!confirm('正在转换中，确定要取消吗？')) return;
           this.cancelStandardMp4Conversion();
@@ -130,6 +136,7 @@
        * @param {String} panelName - 面板名称或旧的状态变量名
        */
       openRightPanel: function (panelName) {
+        console.log('[调试] openRightPanel被调用，panelName:', panelName);
         let targetPanel = null;
         let isStandardMp4 = false;
 
@@ -138,6 +145,10 @@
           isStandardMp4 = true;
         } else if (panelName === 'gif') {
           targetPanel = 'gif';
+        } else if (panelName === 'frames') {
+          targetPanel = 'frames';
+        } else if (panelName === 'webp') {
+          targetPanel = 'webp';
         } else if (panelName === 'to-svga') {
           targetPanel = 'to-svga';
         } else if (panelName === 'dual-channel') {
@@ -150,36 +161,52 @@
           targetPanel = 'dual-channel';
         } else if (panelName === 'showGifPanel') {
           targetPanel = 'gif';
+        } else if (panelName === 'showFramesPanel') {
+          targetPanel = 'frames';
+        } else if (panelName === 'showWebpPanel') {
+          targetPanel = 'webp';
         } else {
           // 默认行为
           console.warn('Unknown panel name:', panelName);
           return;
         }
 
+        console.log('[调试] 确定目标面板类型，targetPanel:', targetPanel, 'isStandardMp4:', isStandardMp4);
+        console.log('[调试] 当前activeRightPanel:', this.activeRightPanel);
+
         // 切换逻辑
         if (isStandardMp4) {
           // 处理标准MP4面板
+          console.log('[调试] 处理标准MP4面板，当前showStandardMp4Panel:', this.showStandardMp4Panel);
           if (this.showStandardMp4Panel) {
             // 如果当前就是标准MP4面板且处于显示状态，则关闭
+            console.log('[调试] 关闭标准MP4面板');
             this.showStandardMp4Panel = false;
             this.activeRightPanel = null;
           } else {
             // 否则关闭其他所有面板，打开标准MP4面板
+            console.log('[调试] 打开标准MP4面板');
             this.activeRightPanel = null;
             this.showStandardMp4Panel = true;
           }
         } else {
           // 处理其他面板
+          console.log('[调试] 处理其他面板，当前activeRightPanel:', this.activeRightPanel, 'targetPanel:', targetPanel);
           if (this.activeRightPanel === targetPanel) {
             // 如果当前就是目标面板且处于显示状态，则关闭所有面板
+            console.log('[调试] 关闭所有面板');
             this.activeRightPanel = null;
             this.showStandardMp4Panel = false;
           } else {
             // 否则关闭其他所有面板，打开目标面板
+            console.log('[调试] 打开目标面板:', targetPanel);
             this.showStandardMp4Panel = false;
             this.activeRightPanel = targetPanel;
+            console.log('[调试] 设置后activeRightPanel:', this.activeRightPanel);
           }
         }
+        console.log('[调试] openRightPanel方法执行完毕');
+        console.log('[调试] 最终activeRightPanel:', this.activeRightPanel);
       },
 
       // ==================== 统一：To SVGA (MP4/Lottie/Frames) ====================
