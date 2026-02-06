@@ -165,11 +165,12 @@ if (typeof window === 'undefined') {
         });
     };
 
-    // 立即注册Service Worker，无需等待页面完全加载
-    // 这样可以更快地激活Service Worker，减少用户等待时间
-    if (document.readyState === 'loading') {
-      window.addEventListener('DOMContentLoaded', registerSW);
+    // 确保在文档完全加载后再注册Service Worker
+    // 避免文档状态不正确导致的注册失败
+    if (document.readyState === 'loading' || document.readyState === 'interactive') {
+      window.addEventListener('load', registerSW);
     } else {
+      // 文档已经完全加载，直接注册
       registerSW();
     }
   })();
