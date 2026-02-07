@@ -5,7 +5,7 @@ description: 用于Python编程相关任务，包括编码规范、项目管理�
 version: 2026.2.07
 author: AI-Protocol-Hub
 created_at: "2026-02-07 10:00:00"
-updated_at: "2026-02-07 10:00:00"
+updated_at: "2026-02-07 19:30:00"
 tags:
   - python
   - 编程
@@ -139,6 +139,28 @@ expertise_level: intermediate
 - 添加详细的文档和注释
 - 使用类型注解
 - 定期进行代码审查
+
+### 5. Git脚本编写问题
+**原因**：跨平台兼容性问题，特别是Windows和Unix系统的命令行行为差异
+**解决方案**：
+- **跨平台命令格式**：根据操作系统类型使用不同的命令格式
+  ```python
+  if os.name == 'nt':
+      # Windows命令行使用双引号
+      commit_result = run_command(f'git commit -m "{commit_msg}"')
+  else:
+      # 非Windows系统使用单引号
+      commit_result = run_command(f"git commit -m '{commit_msg}'")
+  ```
+- **远程仓库配置**：使用真实的远程仓库URL而非本地文件路径
+  ```python
+  remote_url = run_command('git config --get remote.origin.url')
+  if remote_url and remote_url.stdout.strip():
+      real_remote_url = remote_url.stdout.strip()
+  ```
+- **分支检测**：添加`git fetch origin`获取最新远程分支信息
+- **详细日志**：添加详细的执行日志，便于问题定位
+- **错误处理**：实现健壮的异常捕获和错误处理机制
 
 ## 工具推荐
 
