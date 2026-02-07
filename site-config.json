@@ -5,29 +5,39 @@
   "_how_to_config": {
     "开启广告位": "1. 修改 features.advertisement.enabled 为 true",
     "关闭广告位": "1. 修改 features.advertisement.enabled 为 false",
-    "修改后必做": "2. 修改 version（如 1.0.0 → 1.0.1），版本号递增即可",
+    "修改后必做": "2. 修改 version（如 2.0.0 → 2.0.1），版本号递增即可",
     "广告位位置": "position 可选值: right-float（右侧浮层）、bottom-float（底部浮层）、inline-top（顶部内嵌）",
-    "用户类型控制": "通过URL参数 ?type=internal 访问内部版本"
+    "用户层级控制": "基于登录状态自动判断用户层级，无需URL参数",
+    "如何添加新的控制项": "在对应用户层级中添加需要控制的功能，标记为true",
+    "层级继承规则": "高级层级继承低级层级的配置，仅配置差异部分"
   },
   
-  "version": "1.1.19",
+  "version": "2.0.20",
   
   "features": {
     "advertisement": {
       "enabled": true,
       "position": "right-float"
     },
-    "userType": {
-      "default": "public",
-      "controls": {
-        "public": {
-          "hideButtons": ["material-self-service", "celebrity-gift-video", "avatar-generator", "ai-generate"],
-          "showAdvertisement": true
-        },
-        "internal": {
-          "hideButtons": [],
-          "showAdvertisement": false
-        }
+    "userLevels": {
+      "_comment": "用户层级配置，从低到高：anonymous → loggedIn → admin",
+      
+      "anonymous": {
+        "_comment": "未登录用户（默认层级）",
+        "hideButtons": ["material-self-service", "celebrity-gift-video", "avatar-generator"],
+        "showAdvertisement": true
+      },
+      
+      "loggedIn": {
+        "_comment": "登录普通用户（继承anonymous配置，仅配置差异部分）",
+        "showButtons": ["material-self-service", "celebrity-gift-video", "avatar-generator"],
+        "showAdvertisement": false
+      },
+      
+      "admin": {
+        "_comment": "登录管理员（继承loggedIn配置，仅配置差异部分）",
+        "showButtons": [],
+        "showAllButtons": true
       }
     }
   }

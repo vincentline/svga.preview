@@ -214,40 +214,14 @@
         }
 
         /**
-         * 获取当前用户类型
-         * @returns {string} 用户类型 (public/internal)
+         * 获取用户层级配置
+         * @returns {Object} 用户层级配置
          * 
-         * 注意：忽略 URL 参数，只根据配置中的默认值
-         * 用户类型的实际判断由 user-type-controller.js 基于登录状态处理
+         * 注意：用户类型的实际判断由 user-type-controller.js 基于登录状态处理
+         * 此方法仅用于获取配置数据
          */
-        getUserType() {
-            // 默认使用配置中的默认用户类型，忽略 URL 参数
-            // 用户类型的实际判断由 user-type-controller.js 基于登录状态处理
-            const userTypeConfig = this.getFeature('userType');
-            return userTypeConfig ? userTypeConfig.default || 'public' : 'public';
-        }
-
-        /**
-         * 获取用户类型对应的控制配置
-         * @returns {Object} 用户类型控制配置
-         */
-        getUserTypeConfig() {
-            const userType = this.getUserType();
-            const userTypeConfig = this.getFeature('userType');
-            
-            if (userTypeConfig && userTypeConfig.controls) {
-                return userTypeConfig.controls[userType] || userTypeConfig.controls.public || {};
-            }
-            
-            return {};
-        }
-
-        /**
-         * 检查是否为内部用户
-         * @returns {boolean} 是否为内部用户
-         */
-        isInternalUser() {
-            return this.getUserType() === 'internal';
+        getUserLevelsConfig() {
+            return this.getFeature('userLevels') || {};
         }
 
         /**

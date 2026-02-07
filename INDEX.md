@@ -68,7 +68,7 @@ MeeWoo 是一个 SVGA 动画预览与转换工具，支持多种动画格式的�
 
 | 文件路径 | 功能描述 | 关键词 |
 |---------|---------|--------|
-| `src/assets/js/core/app.js` | 应用核心逻辑，包含 SVGA 播放器初始化和管理，以及双通道MP4转SVGA的性能优化实现（extractYyevaFramesOptimized方法） | 应用核心、SVGA 播放器、初始化、双通道MP4转SVGA、性能优化、extractYyevaFramesOptimized |
+| `src/assets/js/core/app.js` | 应用核心逻辑，包含 SVGA 播放器初始化和管理 | 应用核心、SVGA 播放器、初始化 |
 | `src/assets/js/core/material-editor.js` | 素材编辑器，支持 SVGA 素材的编辑功能 | 素材编辑、素材管理、编辑器 |
 | `src/assets/js/core/material-interactions.js` | 素材交互逻辑，包含素材的交互操作 | 素材交互、交互操作 |
 | `src/assets/js/core/material-operations.js` | 素材操作逻辑，包含素材替换、保存等功能 | 素材操作、替换逻辑、保存逻辑 |
@@ -91,8 +91,6 @@ MeeWoo 是一个 SVGA 动画预览与转换工具，支持多种动画格式的�
 | `src/assets/js/components/material-panel.js` | 素材管理面板组件 | 素材管理、面板组件、素材替换 |
 | `src/assets/js/components/standard-mp4-panel.js` | 标准 MP4 转换面板 | 标准 MP4、转换面板、视频转换 |
 | `src/assets/js/components/to-svga-panel.js` | 转 SVGA 面板组件 | SVGA 转换、面板组件、格式转换 |
-| `src/assets/js/components/webp-panel.js` | WebP 导出面板组件 | WebP 导出、面板组件、动画转换 |
-| `src/assets/js/components/frames-panel.js` | 序列帧导出面板组件 | 序列帧导出、面板组件、动画转换 |
 
 ### 4. 混合模块 (src/assets/js/mixins/)
 
@@ -117,11 +115,6 @@ MeeWoo 是一个 SVGA 动画预览与转换工具，支持多种动画格式的�
 | `src/assets/js/service/config-manager.js` | 配置管理器，管理应用配置 | 配置管理、配置加载、应用配置 |
 | `src/assets/js/service/dual-channel/` | 双通道 MP4 相关服务 | 双通道、MP4 服务、视频处理 |
 | `src/assets/js/service/dual-channel/dual-channel-composer.js` | 双通道合成器，用于合成双通道视频（内置Worker代码） | 双通道、视频合成、内联Worker |
-| `src/assets/js/service/dual-channel/index.js` | 双通道服务索引文件，统一导出所有双通道相关服务模块 | 索引文件、模块导出、服务管理 |
-| `src/assets/js/service/dual-channel/memory-pool.js` | 内存池管理器，用于减少内存分配和优化性能 | 内存管理、性能优化、内存池 |
-| `src/assets/js/service/dual-channel/worker-pool.js` | Worker池管理器，用于优化并发处理性能 | 并发处理、性能优化、Worker池 |
-| `src/assets/js/service/dual-channel/wasm/dual-channel-core.c` | WebAssembly核心算法，实现双通道图像合成的像素处理 | WebAssembly、核心算法、像素处理 |
-| `src/assets/js/service/dual-channel/wasm/wasm-loader.js` | WebAssembly模块加载器，负责加载和管理WebAssembly模块 | WebAssembly、模块加载、内存管理 |
 | `src/assets/js/service/ffmpeg/` | FFmpeg 相关服务，用于视频转换 | FFmpeg、视频转换、服务模块 |
 | `src/assets/js/service/ffmpeg/ffmpeg-service.js` | FFmpeg 服务，提供视频转换功能 | FFmpeg、视频转换 |
 | `src/assets/js/service/gif/` | GIF 导出相关服务 | GIF 导出、服务模块、动画处理 |
@@ -235,6 +228,6 @@ MeeWoo 是一个 SVGA 动画预览与转换工具，支持多种动画格式的�
 
 ## 版本信息
 
-- 索引版本：1.1.6
-- 最后更新：[2026-02-06 17:14:37]
+- 索引版本：1.1.2
+- 最后更新：[2026-02-02 14:30:00]
 - 适用项目版本：v1.0.0

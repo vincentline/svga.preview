@@ -111,13 +111,35 @@
                 
                 // 根据登录状态获取用户类型
                 const isLoggedIn = window.authUtils && window.authUtils.isLoggedIn();
-                const userType = isLoggedIn ? 'internal' : 'public';
-                
-                // 获取用户类型配置
-                const userTypeFeature = window.MeeWoo.Core.SiteConfig.getFeature('userType');
-                if (userTypeFeature && userTypeFeature.controls) {
-                    userTypeConfig = userTypeFeature.controls[userType] || userTypeFeature.controls.public || {};
+                let userType = 'anonymous'; // 默认未登录
+                if (isLoggedIn) {
+                    userType = 'loggedIn'; // 登录普通用户
+                    // 这里可以根据实际的用户权限判断逻辑来确定是否为管理员
+                    // 示例：const userInfo = window.authUtils.getUserInfo();
+                    // userType = userInfo && userInfo.isAdmin ? 'admin' : 'loggedIn';
                 }
+                
+                // 获取用户层级配置
+                const userLevelsConfig = window.MeeWoo.Core.SiteConfig.getFeature('userLevels') || {};
+                
+                // 应用层级继承，合并配置
+                // 基础配置（anonymous）
+                const anonymousConfig = userLevelsConfig.anonymous || {};
+                let mergedConfig = { ...anonymousConfig };
+                
+                // 如果是 loggedIn 或 admin，继承并覆盖
+                if (userType === 'loggedIn' || userType === 'admin') {
+                    const loggedInConfig = userLevelsConfig.loggedIn || {};
+                    mergedConfig = { ...mergedConfig, ...loggedInConfig };
+                }
+                
+                // 如果是 admin，继承并覆盖
+                if (userType === 'admin') {
+                    const adminConfig = userLevelsConfig.admin || {};
+                    mergedConfig = { ...mergedConfig, ...adminConfig };
+                }
+                
+                userTypeConfig = mergedConfig;
             }
 
             if (!adConfig) {
