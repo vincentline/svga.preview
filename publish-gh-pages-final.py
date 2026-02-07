@@ -267,20 +267,42 @@ def publish_to_gh_pages():
         main_docs_path = os.path.join(project_root, 'docs')
         print_with_encoding(f"[进度] 源 docs 目录: {main_docs_path}")
         
-        def copy_directory(src, dst):
-            if not os.path.exists(dst):
-                os.makedirs(dst)
-            
-            for item in os.listdir(src):
-                src_item = os.path.join(src, item)
-                dst_item = os.path.join(dst, item)
-                
-                if os.path.isdir(src_item):
-                    copy_directory(src_item, dst_item)
-                else:
-                    shutil.copy2(src_item, dst_item)
+        # 检查docs目录是否存在
+        if not os.path.exists(main_docs_path):
+            print_with_encoding("错误：docs目录不存在")
+            return False
         
-        copy_directory(main_docs_path, '.')
+        # 检查docs目录内容
+        print_with_encoding("[进度] 检查docs目录内容...")
+        docs_contents = os.listdir(main_docs_path)
+        print_with_encoding(f"[进度] docs目录包含 {len(docs_contents)} 个文件/目录")
+        for item in docs_contents[:10]:  # 只显示前10个
+            print_with_encoding(f"[进度] - {item}")
+        if len(docs_contents) > 10:
+            print_with_encoding(f"[进度] ... 等{len(docs_contents) - 10}个文件/目录")
+        
+        # 复制docs目录内容
+        print_with_encoding("[进度] 复制docs目录内容...")
+        for item in docs_contents:
+            src_item = os.path.join(main_docs_path, item)
+            dst_item = os.path.join('.', item)
+            
+            if os.path.isdir(src_item):
+                shutil.copytree(src_item, dst_item)
+            else:
+                shutil.copy2(src_item, dst_item)
+            print_with_encoding(f"[进度] 复制: {item}")
+        
+        # 检查复制后的内容
+        print_with_encoding("[进度] 检查复制后的内容...")
+        copied_contents = os.listdir('.')
+        # 排除.git等特殊文件
+        copied_contents = [item for item in copied_contents if item not in files_to_keep]
+        print_with_encoding(f"[进度] 复制后包含 {len(copied_contents)} 个文件/目录")
+        for item in copied_contents[:10]:  # 只显示前10个
+            print_with_encoding(f"[进度] - {item}")
+        if len(copied_contents) > 10:
+            print_with_encoding(f"[进度] ... 等{len(copied_contents) - 10}个文件/目录")
         
         # 添加所有文件并提交
         print_with_encoding("[进度] 添加所有文件并提交...")
@@ -288,8 +310,18 @@ def publish_to_gh_pages():
         
         commit_msg = f"Deploy docs to gh-pages: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
         commit_result = run_command(f"git commit -m '{commit_msg}'")
-        if commit_result and commit_result.returncode != 0:
-            print_with_encoding("警告：没有需要提交的更改")
+        
+        # 检查提交结果
+        if commit_result:
+            if commit_result.returncode != 0:
+                print_with_encoding("警告：没有需要提交的更改")
+                # 即使没有更改，也强制推送空内容
+                print_with_encoding("[进度] 强制推送空内容到远程 gh-pages 分支...")
+            else:
+                print_with_encoding("成功提交更改")
+        else:
+            print_with_encoding("错误：提交更改失败")
+            return False
         
         # 强制推送到远程 gh-pages 分支
         print_with_encoding("[进度] 强制推送到远程 gh-pages 分支...")
