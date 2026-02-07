@@ -327,7 +327,13 @@ def publish_to_gh_pages():
             print_with_encoding(status_result.stdout)
         
         commit_msg = f"Deploy docs to gh-pages: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
-        commit_result = run_command(f"git commit -m '{commit_msg}'")
+        # 使用双引号包围提交消息，更适合Windows命令行
+        if os.name == 'nt':
+            # Windows命令行使用双引号
+            commit_result = run_command(f'git commit -m "{commit_msg}"')
+        else:
+            # 非Windows系统使用单引号
+            commit_result = run_command(f"git commit -m '{commit_msg}'")
         
         # 检查提交结果
         if commit_result:
