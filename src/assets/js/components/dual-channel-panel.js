@@ -163,7 +163,7 @@
    * - 通过事件向父组件传递用户操作，由 panel-mixin.js 处理后续逻辑
    */
   window.MeeWoo.Components.DualChannelPanel = {
-    template: template,
+    template: '#tpl-dual-channel-panel',
     props: {
       visible: {
         type: Boolean,

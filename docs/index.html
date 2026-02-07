@@ -45,7 +45,7 @@
   <!-- COI Service Worker for SharedArrayBuffer support on GitHub Pages -->
   <script src="coi-serviceworker.js?v=9"></script>
 
-  <!-- 外部样式表（优先加载） -->
+  
 
   <!-- 库加载管理器（优先加载，独立模块） -->
   <script src="assets/js/service/library-loader.js"></script>
@@ -1002,10 +1002,6 @@
       </div>
     </div>
 
-    <!-- 统一 转SVGA 弹窗 (MP4/Lottie/Frames -> SVGA) 已移动到底部 -->
-
-    <!-- 统一 转双通道MP4 弹窗 (SVGA/MP4/Lottie/Frames -> Dual Channel MP4) 已移动到底部 -->
-
     <!-- 绿幕抠图弹窗（普通MP4模式左侧弹窗） -->
     <chromakey-panel :visible="showChromaKeyPanel && currentModule === 'mp4'" :source-info="mp4.fileInfo"
       :enabled="chromaKeyEnabled" :similarity.sync="chromaKeySimilarity" :smoothness.sync="chromaKeySmoothness"
@@ -1243,10 +1239,6 @@
 
   <!-- FFmpeg音视频处理服务 -->
   <script src="assets/js/service/ffmpeg/ffmpeg-service.js"></script>
-
-  <!-- MP4转换器模块 (已废弃，功能迁移至 ffmpeg-service.js)
-  <script src="assets/js/mp4-converter.js"></script>
-  -->
 
   <!-- 双通道图像合成器模块 -->
   <script src="assets/js/service/dual-channel/dual-channel-composer.js"></script>

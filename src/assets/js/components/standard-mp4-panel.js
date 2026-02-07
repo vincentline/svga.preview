@@ -132,7 +132,7 @@
    * 普通 MP4 转换面板组件
    */
   window.MeeWoo.Components.StandardMp4Panel = {
-    template: template,
+    template: '#tpl-standard-mp4-panel',
     props: {
       visible: {
         type: Boolean,
