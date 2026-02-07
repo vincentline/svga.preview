@@ -78,7 +78,7 @@ expertise_level: intermediate
 ## 最佳实践
 
 ### 编码规范
-- 使用4空格缩进
+- 使用2空格缩进
 - 每行不超过79字符
 - 使用蛇形命名法（snake_case）
 - 为公共API添加文档字符串
