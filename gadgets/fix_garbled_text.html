@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>乱码修复专家 - 智能编码恢复工具</title>
+    <link rel="icon" type="image/png" href="../favicon.png">
+    <link rel="stylesheet" href="../assets/css/styles.css">
+    <style>
+        /* 工具特定样式补充 */
+        body {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .tool-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            gap: 20px;
+            max-width: 1600px;
+            margin: 0 auto;
+            width: 100%;
+            height: 100%;
+        }
+
+        .workspace {
+            flex: 1;
+            display: flex;
+            gap: 20px;
+            min-height: 0;
+            /* 允许 Flex 子项滚动 */
+        }
+
+        .panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #fff;
+            border-radius: 12px;
+            border: 1px solid #e6e6e6;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s;
+        }
+
+        body.dark-mode .panel {
+            background: #2a2a2a;
+            border-color: #404040;
+        }
+
+        .panel-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #fafafa;
+        }
+
+        body.dark-mode .panel-header {
+            background: #333;
+            border-color: #404040;
+        }
+
+        .panel-title {
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        body.dark-mode .panel-title {
+            color: #e0e0e0;
+        }
+
+        .panel-content {
+            flex: 1;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .editor-textarea {
+            flex: 1;
+            width: 100%;
+            height: 100%;
+            border: none;
+            padding: 16px;
+            resize: none;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            outline: none;
+            background: transparent;
+            color: #333;
+        }
+
+        body.dark-mode .editor-textarea {
+            color: #ccc;
+        }
+
+        .file-upload-zone {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 2px dashed #e6e6e6;
+            margin: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #fcfcfc;
+        }
+
+        body.dark-mode .file-upload-zone {
+            background: #252525;
+            border-color: #404040;
+        }
+
+        .file-upload-zone:hover,
+        .file-upload-zone.drag-over {
+            border-color: #409eff;
+            background: rgba(64, 158, 255, 0.05);
+        }
+
+        .status-bar {
+            height: 32px;
+            background: #f5f5f5;
+            border-top: 1px solid #e6e6e6;
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            font-size: 12px;
+            color: #666;
+            justify-content: space-between;
+        }
+
+        body.dark-mode .status-bar {
+            background: #333;
+            border-color: #404040;
+            color: #999;
+        }
+
+        .mode-tabs {
+            display: flex;
+            gap: 4px;
+            padding: 4px;
+            background: #f0f0f0;
+            border-radius: 6px;
+        }
+
+        body.dark-mode .mode-tabs {
+            background: #1a1a1a;
+        }
+
+        .mode-tab {
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            color: #666;
+            transition: all 0.2s;
+        }
+
+        .mode-tab.active {
+            background: #fff;
+            color: #409eff;
+            font-weight: 600;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        body.dark-mode .mode-tab.active {
+            background: #404040;
+            color: #409eff;
+        }
+
+        .diff-highlight {
+            background-color: rgba(255, 255, 0, 0.2);
+        }
+
+        body.dark-mode .diff-highlight {
+            background-color: rgba(255, 255, 0, 0.1);
+        }
+
+        /* 修复成功的高亮 */
+        .highlight-success {
+            color: #67c23a;
+            font-weight: bold;
+        }
+
+        /* 修复信息提示 */
+        .fix-info-tag {
+            display: inline-block;
+            padding: 2px 6px;
+            background: #e1f3d8;
+            color: #67c23a;
+            border-radius: 4px;
+            font-size: 11px;
+            margin-left: 8px;
+        }
+
+        body.dark-mode .fix-info-tag {
+            background: #1e3518;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- 顶部导航 -->
+    <div class="header-navbar">
+        <a href="../index.html?type=internal" style="display:flex;align-items:center;text-decoration:none;color:inherit;">
+            <img class="header-logo" src="../assets/img/logo.png" alt="Logo">
+            <span class="header-navbar-title">乱码修复专家</span>
+        </a>
+        <div style="display:flex; gap:10px; align-items:center;">
+            <button class="theme-toggle" id="themeToggle" title="切换主题">
+                <svg viewBox="0 0 24 24">
+                    <path
+                        d="M12 21a9 9 0 0 1 0-18 9 9 0 0 1 0 18zm0-2a7 7 0 1 0 0-14 7 7 0 0 0 0 14zm-5-7a5 5 0 1 1 10 0 5 5 0 0 1-10 0z" />
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- 主界面 -->
+    <div class="tool-container" style="margin-top: 56px;">
+
+        <!-- 顶部控制栏 -->
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div class="mode-tabs">
+                <div class="mode-tab active" onclick="app.switchMode('text')">📝 文本粘贴模式</div>
+                <div class="mode-tab" onclick="app.switchMode('file')">📂 文件修复模式</div>
+            </div>
+
+            <div style="display:flex; gap:10px; align-items:center;">
+                <span class="input-unit input-unit--hint">尝试解码方案：</span>
+                <div class="mp4-select-wrapper" id="encodingSelect" style="width: 160px; height: 32px;">
+                    <select class="base-input" style="text-align:left; padding-left:10px;"
+                        onchange="app.forceEncoding(this.value)">
+                        <option value="auto">✨ 自动检测 (Auto)</option>
+                        <option value="gbk">GBK / GB18030</option>
+                        <option value="big5">Big5 (繁体)</option>
+                        <option value="shift_jis">Shift-JIS (日文)</option>
+                        <option value="euc-kr">EUC-KR (韩文)</option>
+                        <option value="windows-1252">Windows-1252 (西欧)</option>
+                        <option value="utf-8">UTF-8</option>
+                    </select>
+                </div>
+                <button class="btn-primary" onclick="app.clear()">清空</button>
+            </div>
+        </div>
+
+        <div class="workspace">
+            <!-- 左侧：输入面板 -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-title">输入 (乱码源)</span>
+                    <span class="input-unit input-unit--hint" id="inputStats">0 字符</span>
+                </div>
+                <div class="panel-content" id="textInputArea">
+                    <textarea class="editor-textarea" id="sourceInput"
+                        placeholder="请在此粘贴乱码文本...&#10;例如：/* 绌虹姸鎬侊細瀹藉害300px... */"></textarea>
+                </div>
+                <div class="panel-content" id="fileInputArea" style="display:none;">
+                    <div class="file-upload-zone" id="dropZone">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        <p style="margin-top:16px; color:#666;">点击或拖拽文件到这里</p>
+                        <p style="font-size:12px; color:#999; margin-top:8px;">支持 .txt, .csv, .html, .srt 等文本文件</p>
+                        <input type="file" id="fileInput" style="display:none">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧：输出面板 -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-title">
+                        修复结果预览
+                        <span id="fixBadge" class="fix-info-tag"
+                            style="display:none; opacity:0; transition:opacity 0.3s;">已修复</span>
+                    </span>
+                    <div style="display:flex; gap:8px;">
+                        <button class="btn-secondary" style="height:24px; font-size:12px;"
+                            onclick="app.copyResult()">复制结果</button>
+                        <button class="btn-primary" style="height:24px; font-size:12px;"
+                            onclick="app.downloadResult()">下载文件</button>
+                    </div>
+                </div>
+                <div class="panel-content">
+                    <textarea class="editor-textarea" id="resultOutput" readonly
+                        placeholder="修复后的内容将显示在这里..."></textarea>
+                </div>
+                <div class="status-bar">
+                    <span id="detectedEncoding">检测结果：等待输入...</span>
+                    <span id="confidenceLevel"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 引用独立 JS 模块 -->
+    <script src="./common_chars.js"></script>
+    <!-- 引入自定义修复逻辑 -->
+    <script src="./fix_garbled_logic.js"></script>
+
+    <!-- UI 交互逻辑 -->
+    <script>
+        const app = {
+            mode: 'text', // 'text' | 'file'
+            fileBuffer: null,
+            fileName: 'fixed_result.txt',
+
+            init() {
+                // 初始化算法模块
+                if (window.GarbledFixer) {
+                    window.GarbledFixer.init();
+                }
+
+                // 绑定输入事件
+                document.getElementById('sourceInput').addEventListener('input', (e) => this.handleTextInput(e.target.value));
+
+                // 绑定文件拖拽
+                const dropZone = document.getElementById('dropZone');
+                dropZone.addEventListener('click', () => document.getElementById('fileInput').click());
+                document.getElementById('fileInput').addEventListener('change', (e) => this.handleFileSelect(e.target.files[0]));
+
+                dropZone.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    dropZone.classList.add('drag-over');
+                });
+                dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+                dropZone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    dropZone.classList.remove('drag-over');
+                    if (e.dataTransfer.files.length) this.handleFileSelect(e.dataTransfer.files[0]);
+                });
+
+                // 主题切换
+                document.getElementById('themeToggle').addEventListener('click', () => {
+                    document.body.classList.toggle('dark-mode');
+                });
+            },
+
+            switchMode(newMode) {
+                this.mode = newMode;
+                document.querySelectorAll('.mode-tab').forEach(el => el.classList.remove('active'));
+                event.target.classList.add('active');
+
+                if (newMode === 'text') {
+                    document.getElementById('textInputArea').style.display = 'flex';
+                    document.getElementById('fileInputArea').style.display = 'none';
+                    this.handleTextInput(document.getElementById('sourceInput').value);
+                } else {
+                    document.getElementById('textInputArea').style.display = 'none';
+                    document.getElementById('fileInputArea').style.display = 'flex';
+                    if (this.fileBuffer) {
+                        this.processFile();
+                    } else {
+                        document.getElementById('resultOutput').value = '';
+                    }
+                }
+            },
+
+            async handleTextInput(text) {
+                document.getElementById('inputStats').innerText = `${text.length} 字符`;
+                if (!text) {
+                    document.getElementById('resultOutput').value = '';
+                    this.updateStatus('等待输入...', '');
+                    return;
+                }
+
+                const forcedEnc = document.getElementById('encodingSelect').value;
+                // 调用独立的逻辑模块
+                const result = await GarbledFixer.fixText(text, forcedEnc);
+
+                document.getElementById('resultOutput').value = result.text;
+                this.updateStatus(result.encoding, result.score);
+            },
+
+            handleFileSelect(file) {
+                if (!file) return;
+                this.fileName = file.name;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    this.fileBuffer = e.target.result;
+                    document.querySelector('#dropZone p').innerText = `已加载: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+                    this.processFile();
+                };
+                reader.readAsArrayBuffer(file); // 关键：读取原始二进制
+            },
+
+            async processFile() {
+                if (!this.fileBuffer) return;
+                const forcedEnc = document.getElementById('encodingSelect').value;
+                const result = await GarbledFixer.fixFileBuffer(this.fileBuffer, forcedEnc);
+
+                document.getElementById('resultOutput').value = result.text;
+                this.updateStatus(result.encoding, result.score);
+            },
+
+            forceEncoding(val) {
+                if (this.mode === 'text') {
+                    this.handleTextInput(document.getElementById('sourceInput').value);
+                } else {
+                    this.processFile();
+                }
+            },
+
+            updateStatus(encoding, score) {
+                let text = '';
+                const badge = document.getElementById('fixBadge');
+
+                if (encoding === 'original' || encoding === 'utf-8' || !encoding) {
+                    text = '未检测到明显乱码 或 原文即正常';
+                    badge.style.opacity = '0';
+                } else if (encoding === 'hybrid-auto') {
+                    text = '已应用混合修复 (智能分块)';
+                    badge.style.opacity = '1';
+                    badge.innerText = '混合修复';
+                } else {
+                    text = `已使用 ${encoding.toUpperCase()} 解码修复`;
+                    badge.style.opacity = '1';
+                    badge.innerText = encoding.toUpperCase();
+                }
+
+                if (score !== undefined) {
+                    // document.getElementById('confidenceLevel').innerText = `置信度: ${Math.round(score)}`;
+                }
+                document.getElementById('detectedEncoding').innerText = text;
+            },
+
+            clear() {
+                document.getElementById('sourceInput').value = '';
+                document.getElementById('resultOutput').value = '';
+                this.fileBuffer = null;
+                document.querySelector('#dropZone p').innerText = '点击或拖拽文件到这里';
+                document.getElementById('fileInput').value = '';
+                this.updateStatus('', 0);
+            },
+
+            copyResult() {
+                const text = document.getElementById('resultOutput').value;
+                if (!text) return;
+                navigator.clipboard.writeText(text).then(() => {
+                    const btn = event.target;
+                    const oldText = btn.innerText;
+                    btn.innerText = '已复制!';
+                    setTimeout(() => btn.innerText = oldText, 2000);
+                });
+            },
+
+            downloadResult() {
+                const text = document.getElementById('resultOutput').value;
+                if (!text) return;
+                const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'fixed_' + this.fileName;
+                a.click();
+                URL.revokeObjectURL(url);
+            }
+        };
+
+        // 初始化
+        app.init();
+    </script>
+</body>
+
+</html>
