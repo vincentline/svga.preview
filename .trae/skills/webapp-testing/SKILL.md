@@ -10,6 +10,7 @@ To test local web applications, write native Python Playwright scripts.
 
 **Helper Scripts Available**:
 - `scripts/with_server.py` - Manages server lifecycle (supports multiple servers)
+- `scripts/capture_errors.py` - Starts enhanced error capture with automatic server management
 
 **Always run scripts with `--help` first** to see usage. DO NOT read the source until you try running the script first and find that a customized solution is abslutely necessary. These scripts can be very large and thus pollute your context window. They exist to be called directly as black-box scripts rather than ingested into your context window.
 
@@ -94,3 +95,4 @@ with sync_playwright() as p:
   - `element_discovery.py` - Discovering buttons, links, and inputs on a page
   - `static_html_automation.py` - Using file:// URLs for local HTML
   - `console_logging.py` - Capturing console logs during automation
+  - `enhanced_error_capture.py` - Enhanced browser error capture with real-time display and detailed logging
