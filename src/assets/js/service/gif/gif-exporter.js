@@ -21,15 +21,14 @@
 (function(global) {
     'use strict';
 
-    // Ensure namespace// 初始化命名空间
+    // Ensure namespace
+// 初始化命名空间
     window.MeeWoo = window.MeeWoo || {};
     window.MeeWoo.Exporters = window.MeeWoo.Exporters || {};
 
     const GIFExporter = {
         // GIF编码器实例
         encoder: null,
-        // [修复] 显式指定 worker 脚本路径，防止 gif.js 加载错误的默认路径
-        workerScript: './assets/js/service/gif/gif.worker.js',
 
     /**
      * 导出GIF
@@ -44,9 +43,10 @@
       if (!config.getFrame) throw new Error('缺少 getFrame 回调');
       if (!config.totalFrames || config.totalFrames <= 0) throw new Error('帧数无效');
 
+      // 使用弹窗设置的尺寸、帧率和帧数
       var width = config.width || 300;
       var height = config.height || 300;
-      var fps = Math.max(1, Math.min(60, config.fps || 30));
+      var fps = config.fps || 30;
       var totalFrames = config.totalFrames;
       var frameDelay = Math.round(1000 / fps);
       var transparent = config.transparent || false;
@@ -57,8 +57,17 @@
       // 但gif.js内部实现是：1是最佳质量（不降采样），30是最差质量（最大降采样）
       // 为了符合用户直觉（数值越大质量越好），我们需要反转这个值
       // 映射关系：用户输入 1(低) -> gif.js 30(差)；用户输入 30(高) -> gif.js 1(好)
-      var userQuality = Math.max(1, Math.min(30, config.quality || 10));
+      var userQuality = Math.max(1, Math.min(15, config.quality || 15)); // 限制质量值到15
       var quality = 31 - userQuality;
+      
+      // 仅保留关键参数日志
+      console.log('[GIF Exporter] Export parameters:', {
+        width: width,
+        height: height,
+        fps: fps,
+        totalFrames: totalFrames,
+        transparent: transparent
+      });
 
       // 回调函数
       var onProgress = config.onProgress || function () { };
@@ -77,16 +86,22 @@
 
       // 创建GIF编码器
       var gifOptions = {
-        workers: 2,
-        quality: quality,  // 1-30，数字越小质量越高
+        workers: 1,  // 减少worker数量，避免可能的并发问题
+        workerScript: window.location.origin + '/assets/js/service/gif/gif.worker.js',  // 使用绝对路径确保正确加载
+        quality: quality,  // 使用计算后的质量值
         width: width,
         height: height,
         repeat: 0,  // 0 = 无限循环
-        workerScript: this.workerScript // 传递正确的路径
+        background: '#ffffff'  // 默认背景色
       };
 
       if (transparent) {
-        gifOptions.transparent = 0x00000000;
+        gifOptions.transparent = 0x000000; // 使用RGB格式的透明颜色，GIF只支持RGB格式
+      } else {
+        // 不透明模式：使用背景色
+        var bgColor = config.backgroundColor || '#ffffff';
+        if (bgColor === 'transparent') bgColor = '#ffffff';
+        gifOptions.background = bgColor;
       }
 
       var gif = new GIF(gifOptions);
@@ -99,7 +114,11 @@
         });
 
         gif.on('finished', function (blob) {
-          resolve(blob);
+          if (!blob || typeof blob !== 'object' || !blob.size) {
+            reject(new Error('GIF编码器生成的blob无效'));
+          } else {
+            resolve(blob);
+          }
         });
 
         gif.on('abort', function () {
@@ -136,28 +155,29 @@
           }
 
           // 绘制源帧
-          if (transparent) {
-            outputCtx.globalCompositeOperation = 'source-over';
-          }
+          outputCtx.globalCompositeOperation = 'source-over';
           outputCtx.drawImage(sourceCanvas, 0, 0, width, height);
 
           // 透明模式：处理半透明像素
           if (transparent) {
             if (dither && ditherColor) {
               // 杂色边模式：半透明像素与背景色混合
-              this._processDither(outputCtx, width, height, ditherColor);
+              _this._processDither(outputCtx, width, height, ditherColor);
             } else {
               // 非杂色边模式：半透明像素设为完全透明（避免黑色杂边）
-              this._processAlphaThreshold(outputCtx, width, height);
+              _this._processAlphaThreshold(outputCtx, width, height);
             }
           }
 
-          // 添加帧
-          var frameOptions = { copy: true, delay: frameDelay };
+          // 处理完透明后，手动获取处理后的 ImageData
+          var processedImageData = outputCtx.getImageData(0, 0, width, height);
+
+          // 直接使用 ImageData 而不是 canvas，确保传递处理后的数据
+          var frameOptions = { delay: frameDelay };
           if (transparent) {
             frameOptions.transparent = true;
           }
-          gif.addFrame(outputCanvas, frameOptions);
+          gif.addFrame(processedImageData, frameOptions);
 
           // 更新进度：捕获阶段0%-50%
           var progress = Math.floor((i / totalFrames) * 50);
@@ -166,11 +186,31 @@
 
         // 开始编码
         onProgress(50, 'encoding', '编码中...');
-        gif.render();
+        
+        // 记录编码开始时间
+        var startTime = Date.now();
+        
+        try {
+          gif.render();
+        } catch (renderError) {
+          throw renderError;
+        }
 
-        // 等待编码完成
-        var blob = await encodingPromise;
-
+        // 添加超时机制，避免编码过程无限卡住
+        var timeoutPromise = new Promise(function (reject) {
+          setTimeout(function () {
+            reject(new Error('GIF编码超时，可能是由于GIF.js库问题或文件过大导致'));
+          }, 60000); // 60秒超时
+        });
+        
+        // 等待编码完成或超时
+        var blob = await Promise.race([encodingPromise, timeoutPromise]);
+        
+        // 检查blob是否有效
+        if (!blob || typeof blob !== 'object' || !blob.size) {
+          throw new Error('生成的GIF blob无效');
+        }
+        
         // 触发完成回调
         onComplete(blob, blob.size);
 
@@ -195,7 +235,7 @@
       var ditherG = parseInt(hexColor.substr(2, 2), 16);
       var ditherB = parseInt(hexColor.substr(4, 2), 16);
 
-      // Alpha混合：半透明像素与杂色边颜色混合
+      // Alpha混合：半透明像素与背景色混合
       for (var j = 0; j < data.length; j += 4) {
         var alpha = data[j + 3] / 255;
         if (alpha > 0 && alpha < 1) {

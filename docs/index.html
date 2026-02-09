@@ -45,7 +45,7 @@
   <!-- COI Service Worker for SharedArrayBuffer support on GitHub Pages -->
   <script src="coi-serviceworker.js?v=9"></script>
 
-  
+  <!-- 外部样式表（优先加载） -->
 
   <!-- 库加载管理器（优先加载，独立模块） -->
   <script src="assets/js/service/library-loader.js"></script>
@@ -91,7 +91,7 @@
   <!-- Protobuf、Pako - 导出SVGA时加载 -->
   <!-- FFmpeg - 转MP4时加载 -->
   <link rel="stylesheet" crossorigin href="/assets/index-lmn7u5fP.css">
-  <link rel="stylesheet" crossorigin href="/assets/styles-CshAYy14.css">
+  <link rel="stylesheet" crossorigin href="/assets/styles-DSudpaKl.css">
 </head>
 
 <body>
@@ -866,6 +866,13 @@
       @cancel="cancelDualChannelConversion" @convert="handleDualChannelConvert">
     </dual-channel-panel>
 
+    <!-- 普通MP4转换弹窗 -->
+    <standard-mp4-panel :visible="showStandardMp4Panel" :source-info="standardMp4SourceInfo"
+      :initial-config="standardMp4Config" :is-converting="isConvertingStandardMp4" :progress="standardMp4Progress"
+      :message="standardMp4Message" :disabled="isGlobalTaskRunning" :current-module="currentModule"
+      @close="closeStandardMp4Panel" @cancel="cancelStandardMp4Conversion" @convert="startStandardMp4Conversion">
+    </standard-mp4-panel>
+
     <!-- GIF导出弹窗（所有模式通用右侧弹窗） -->
     <gif-panel :visible="activeRightPanel === 'gif'" :source-info="getGifSourceInfo()" :initial-config="gifConfig"
       :bg-color-key="bgColorKey" :current-bg-color="currentBgColor" :is-exporting="isExportingGIF"
@@ -881,9 +888,9 @@
 
     <!-- webp导出弹窗（所有模式通用右侧弹窗） -->
     <webp-panel :visible="activeRightPanel === 'webp'" :source-info="getWebpSourceInfo()" :initial-config="webpConfig"
-      :is-exporting="isExportingWebp" :export-progress="webpExportProgress" :export-message="webpExportMessage"
-      :disabled="isGlobalTaskRunning" @close="closeWebpPanel" @cancel="cancelWebpExport" @export="handleWebpExport"
-      @config-change="handleWebpConfigChange"></webp-panel>
+      :is-exporting="isExportingWebp" :export-progress="webpExportProgress" :export-stage="''"
+      :export-message="webpExportMessage" :disabled="isGlobalTaskRunning" @close="closeWebpPanel" @cancel="cancelWebpExport"
+      @export="handleWebpExport" @config-change="handleWebpConfigChange"></webp-panel>
 
     <!-- 素材压缩弹窗（使用通用居中弹窗样式） -->
     <div class="center-modal-overlay" :class="{'show': showCompressModal && currentModule === 'svga'}">
@@ -1015,13 +1022,6 @@
     <!-- 隐藏的文件输入框，用于打开文件...（支持SVGA、Lottie、MP4、序列帧） -->
     <input type="file" ref="changePreviewFileInput" accept=".svga,.json,.lottie,.mp4,.png,.jpg,.jpeg" multiple
       style="display: none;" @change="handleChangePreviewFile" />
-
-    <!-- 普通MP4转换弹窗 -->
-    <standard-mp4-panel :visible="showStandardMp4Panel" :source-info="standardMp4SourceInfo"
-      :initial-config="standardMp4Config" :is-converting="isConvertingStandardMp4" :progress="standardMp4Progress"
-      :message="standardMp4Message" :disabled="isGlobalTaskRunning" :current-module="currentModule"
-      @close="closeStandardMp4Panel" @cancel="cancelStandardMp4Conversion" @convert="startStandardMp4Conversion">
-    </standard-mp4-panel>
 
     <!-- 序列帧帧率设置弹窗（复用通用居中弹窗样式） -->
     <div class="center-modal-overlay" :class="{'show': showFramesFpsDialog}">
@@ -1248,6 +1248,9 @@
 
   <!-- GIF导出器模块 -->
   <script src="assets/js/service/gif/gif-exporter.js"></script>
+
+  <!-- WebP导出器模块 -->
+  <script src="assets/js/service/webp/webp-exporter.js"></script>
 
   <!-- 序列帧导出器模块 -->
   <script src="assets/js/service/frames/frames-exporter.js"></script>
@@ -1532,7 +1535,6 @@
       </div>
     </div>
   </script>
-
   <script type="text/x-template" id="tpl-webp-panel">
     <div class="side-panel side-panel--right svga-panel webp-panel" :class="{'show': visible}">
       <div class="side-panel-container">
@@ -1632,6 +1634,233 @@
     </div>
   </script>
 
+  <!-- 定义dual-channel-panel模板 -->
+  <script type="text/x-template" id="tpl-dual-channel-panel">
+    <div class="side-panel side-panel--right dual-channel-panel" :class="{'show': visible}">
+      <div class="side-panel-container">
+        <!-- 标题区 -->
+        <div class="side-panel-header">
+          <h3 class="side-panel-title">转换为双通道MP4格式</h3>
+          <div class="side-panel-divider"></div>
+        </div>
+
+        <!-- 信息区 -->
+        <div class="mp4-info-section">
+          <div class="mp4-info-row">{{ sourceInfo.typeLabel }}尺寸：{{ sourceInfo.sizeWH }} 时长：{{ sourceInfo.duration }}</div>
+          <div class="mp4-compress-hint">注意：第一次转换需要加载FFmpeg（25M），请耐心等待<br>压缩质量调越低，文件就越小，画面越糊。</div>
+        </div>
+
+        <!-- 配置区域 -->
+        <div class="mp4-config-section" :class="{disabled: isConverting}">
+          <!-- 遮罩位置 -->
+          <div class="mp4-config-item">
+            <div class="mp4-config-label">遮罩位置：</div>
+            <div class="mp4-select-wrapper" :class="{open: showChannelModeDropdown, disabled: isConverting}"
+              @click="!isConverting && toggleChannelModeDropdown()">
+              <div class="mp4-select-text">
+                {{ config.channelMode === 'color-left-alpha-right' ? '左彩右灰' : '左灰右彩' }}
+              </div>
+              <div class="mp4-select-icon">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                    stroke-linejoin="round" />
+                </svg>
+              </div>
+              <!-- 下拉菜单 -->
+              <div class="mp4-select-dropdown">
+                <div class="mp4-select-option" :class="{selected: config.channelMode === 'color-left-alpha-right'}"
+                  @click.stop="selectChannelMode('color-left-alpha-right')">
+                  左彩右灰（左侧彩色通道，右侧Alpha通道）
+                </div>
+                <div class="mp4-select-option" :class="{selected: config.channelMode === 'alpha-left-color-right'}"
+                  @click.stop="selectChannelMode('alpha-left-color-right')">
+                  左灰右彩（左侧Alpha通道，右侧彩色通道）
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 尺寸 -->
+          <div class="mp4-config-item">
+            <div class="mp4-config-label">尺寸：</div>
+            <div class="mp4-size-container">
+              <div class="input-wrapper input-wrapper--lg mp4-size-input-wrapper">
+                <input type="number" class="base-input" v-model.number="config.width" @input="onWidthChange"
+                  :disabled="isConverting" min="0" max="3000" />
+              </div>
+              <div class="mp4-size-lock">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    d="M4.66667 7.33333V5.33333C4.66667 3.86057 5.86057 2.66667 7.33333 2.66667H8.66667C10.1394 2.66667 11.3333 3.86057 11.3333 5.33333V7.33333M5.33333 7.33333H10.6667C11.403 7.33333 12 7.93029 12 8.66667V12C12 12.7364 11.403 13.3333 10.6667 13.3333H5.33333C4.59695 13.3333 4 12.7364 4 12V8.66667C4 7.93029 4.59695 7.33333 5.33333 7.33333Z"
+                    stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </div>
+              <div class="input-wrapper input-wrapper--lg mp4-size-input-wrapper">
+                <input type="number" class="base-input" v-model.number="config.height" @input="onHeightChange"
+                  :disabled="isConverting" min="0" max="3000" />
+              </div>
+            </div>
+          </div>
+
+          <!-- 压缩到质量 -->
+          <div class="mp4-config-item">
+            <div class="mp4-config-label">压缩到质量：</div>
+            <div class="mp4-value-container">
+              <div class="input-wrapper input-wrapper--lg mp4-value-input-wrapper">
+                <input type="number" class="base-input" v-model.number="config.quality" :disabled="isConverting"
+                  min="1" max="100" />
+              </div>
+              <div class="input-unit">%</div>
+            </div>
+          </div>
+
+          <!-- 帧率修改 -->
+          <div class="mp4-config-item">
+            <div class="mp4-config-label">帧率修改：</div>
+            <div class="mp4-value-container">
+              <div class="input-wrapper input-wrapper--lg mp4-value-input-wrapper">
+                <input type="number" class="base-input" v-model.number="config.fps" :disabled="isConverting"
+                  min="1" max="120" />
+              </div>
+              <div class="input-unit">FPS</div>
+            </div>
+          </div>
+
+          <!-- 静音 -->
+          <div class="mp4-config-item">
+            <div class="mp4-config-label">静音</div>
+            <div class="mp4-mute-toggle" :class="{active: config.muted, disabled: isConverting}"
+              @click="!isConverting && (config.muted = !config.muted)">
+              <div class="mp4-mute-toggle-handle"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 底部按钮 -->
+        <div class="side-panel-footer">
+          <!-- 返回按钮（转换中变为取消按钮） -->
+          <button v-if="!isConverting" class="material-btn-back" @click="close" title="返回">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M12 16L6 10L12 4" stroke="#333333" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" />
+            </svg>
+            <span>取消</span>
+          </button>
+          <button v-else class="material-btn-back mp4-btn-cancel" @click="cancel" title="取消转换">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M5 5L15 15M15 5L5 15" stroke="#ff4444" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" />
+            </svg>
+            <span>取消</span>
+          </button>
+
+          <!-- 转换按钮 -->
+          <button class="btn-large-secondary" :class="{mp4-btn-converting: isConverting}"
+            :data-progress="progress" :disabled="disabled" @click="start">
+            <template v-if="isConverting">
+              <span class="mp4-progress-text">{{ progress }}%</span>
+              <span class="mp4-stage-text">{{ message }}</span>
+            </template>
+            <template v-else>
+              开始转换双通道MP4
+            </template>
+          </button>
+        </div>
+      </div>
+    </div>
+  </script>
+
+  <!-- 定义standard-mp4-panel模板 -->
+  <script type="text/x-template" id="tpl-standard-mp4-panel">
+    <div class="side-panel side-panel--right standard-mp4-panel" :class="{'show': visible}">
+      <div class="side-panel-container">
+        <div class="side-panel-header">
+          <h3 class="side-panel-title">转换为普通MP4格式</h3>
+          <div class="side-panel-divider"></div>
+        </div>
+        <div class="mp4-info-section">
+          <div class="mp4-info-row">
+            {{ sourceInfo.typeLabel }}尺寸：{{ sourceInfo.sizeWH }} 时长：{{ sourceInfo.duration }}
+          </div>
+          <div class="mp4-compress-hint">注意：第一次转换需要加载FFmpeg（25M），请耐心等待<br>压缩质量调越低，文件就越小，画面越糊。</div>
+        </div>
+        <div class="mp4-config-section" :class="{disabled: isConverting}">
+          <div class="mp4-config-item">
+            <div class="mp4-config-label">尺寸：</div>
+            <div class="mp4-size-container">
+              <div class="input-wrapper input-wrapper--lg mp4-size-input-wrapper">
+                <input type="number" class="base-input" v-model.number="config.width"
+                  @input="onWidthChange" :disabled="isConverting" min="1" max="3000" />
+              </div>
+              <div class="mp4-size-lock">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    d="M4.66667 7.33333V5.33333C4.66667 3.86057 5.86057 2.66667 7.33333 2.66667H8.66667C10.1394 2.66667 11.3333 3.86057 11.3333 5.33333V7.33333M5.33333 7.33333H10.6667C11.403 7.33333 12 7.93029 12 8.66667V12C12 12.7364 11.403 13.3333 10.6667 13.3333H5.33333C4.59695 13.3333 4 12.7364 4 12V8.66667C4 7.93029 4.59695 7.33333 5.33333 7.33333Z"
+                    stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </div>
+              <div class="input-wrapper input-wrapper--lg mp4-size-input-wrapper">
+                <input type="number" class="base-input" v-model.number="config.height"
+                  @input="onHeightChange" :disabled="isConverting" min="1" max="3000" />
+              </div>
+            </div>
+          </div>
+          <div class="mp4-config-item">
+            <div class="mp4-config-label">压缩到质量：</div>
+            <div class="mp4-value-container">
+              <div class="input-wrapper input-wrapper--lg mp4-value-input-wrapper">
+                <input type="number" class="base-input" v-model.number="config.quality"
+                  :disabled="isConverting" min="1" max="100" />
+              </div>
+              <div class="input-unit">%</div>
+            </div>
+          </div>
+          <div class="mp4-config-item">
+            <div class="mp4-config-label">帧率修改：</div>
+            <div class="mp4-value-container">
+              <div class="input-wrapper input-wrapper--lg mp4-value-input-wrapper">
+                <input type="number" class="base-input" v-model.number="config.fps"
+                  :disabled="isConverting" min="1" max="120" />
+              </div>
+              <div class="input-unit">FPS</div>
+            </div>
+          </div>
+          <div class="mp4-config-item" v-if="currentModule !== 'lottie'">
+            <div class="mp4-config-label">静音</div>
+            <div class="mp4-mute-toggle" :class="{active: config.muted, disabled: isConverting}"
+              @click="!isConverting && (config.muted = !config.muted)">
+              <div class="mp4-mute-toggle-handle"></div>
+            </div>
+          </div>
+        </div>
+        <div class="side-panel-footer">
+          <button v-if="!isConverting" class="material-btn-back" @click="close" title="返回">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M12 16L6 10L12 4" stroke="#333333" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" />
+            </svg>
+            <span>取消</span>
+          </button>
+          <button v-else class="material-btn-back mp4-btn-cancel" @click="cancel" title="取消转换">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M5 5L15 15M15 5L5 15" stroke="#ff4444" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" />
+            </svg>
+            <span>取消</span>
+          </button>
+          <button class="btn-large-secondary" :class="{mp4-btn-converting: isConverting}"
+            :data-progress="progress" :disabled="disabled" @click="start">
+            <template v-if="isConverting">
+              <span class="mp4-progress-text">{{ progress }}%</span>
+              <span class="mp4-stage-text">{{ message }}</span>
+            </template>
+            <template v-else>开始转换MP4</template>
+          </button>
+        </div>
+      </div>
+    </div>
+  </script>
+
   <script type="text/x-template" id="tpl-material-panel">
     <div class="side-panel side-panel--right material-panel" :class="{'show': visible}">
       <div class="side-panel-container">
@@ -1705,7 +1934,7 @@
         </div>
 
         <!-- 底部操作按钮 -->
-        <div class="material-panel-footer">
+        <div class="side-panel-footer">
           <button class="material-btn-back" @click="close" title="关闭">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
               <path d="M12 16L6 10L12 4" stroke="#333333" stroke-width="2" stroke-linecap="round"

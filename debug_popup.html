@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>弹窗调试页面</title>
+    <style>
+        /* 简化的弹窗样式，用于调试 */
+        .side-panel {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 400px;
+            height: 85%;
+            background: #fff;
+            border-left: 1px solid #e6e6e6;
+            box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+            transition: right 0.3s ease;
+            z-index: 1000;
+            padding: 20px;
+        }
+        
+        .side-panel.show {
+            right: 0;
+        }
+        
+        .button {
+            padding: 10px 20px;
+            background: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        
+        .button:hover {
+            background: #0069d9;
+        }
+    </style>
+</head>
+<body>
+    <h1>弹窗调试页面</h1>
+    
+    <!-- 测试按钮 -->
+    <button class="button" onclick="togglePopup('dual-channel')">显示/隐藏双通道MP4弹窗</button>
+    <button class="button" onclick="togglePopup('standard-mp4')">显示/隐藏标准MP4弹窗</button>
+    
+    <!-- 测试弹窗 -->
+    <div id="dual-channel-popup" class="side-panel">
+        <h2>转换为双通道MP4格式</h2>
+        <p>这是一个测试弹窗，用于调试弹窗显示问题。</p>
+        <button class="button" onclick="togglePopup('dual-channel')">关闭</button>
+    </div>
+    
+    <div id="standard-mp4-popup" class="side-panel">
+        <h2>转换为标准MP4格式</h2>
+        <p>这是一个测试弹窗，用于调试弹窗显示问题。</p>
+        <button class="button" onclick="togglePopup('standard-mp4')">关闭</button>
+    </div>
+    
+    <script>
+        // 简化的弹窗切换函数
+        function togglePopup(popupId) {
+            const popup = document.getElementById(popupId + '-popup');
+            if (popup) {
+                popup.classList.toggle('show');
+                console.log(popupId + ' popup toggled:', popup.classList.contains('show'));
+            }
+        }
+        
+        // 测试弹窗显示
+        console.log('弹窗调试页面加载完成');
+        console.log('dual-channel-popup:', document.getElementById('dual-channel-popup'));
+        console.log('standard-mp4-popup:', document.getElementById('standard-mp4-popup'));
+    </script>
+</body>
+</html>

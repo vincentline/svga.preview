@@ -32,6 +32,10 @@
         type: Number,
         default: 0
       },
+      exportStage: {
+        type: String,
+        default: ''
+      },
       exportMessage: {
         type: String,
         default: ''

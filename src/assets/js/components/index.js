@@ -12,7 +12,12 @@
 // 组件列表：
 // 1. material-panel.js - 素材替换面板
 // 2. gif-panel.js - GIF 导出面板
-// 3. svga-to-mp4-panel.js - SVGA 转双通道 MP4 面板
+// 3. frames-panel.js - 序列帧导出面板
+// 4. webp-panel.js - WebP 导出面板
+// 5. standard-mp4-panel.js - 标准 MP4 转换面板
+// 6. dual-channel-panel.js - 双通道 MP4 转换面板
+// 7. to-svga-panel.js - 转 SVGA 面板
+// 8. chromakey-panel.js - 绿幕抠图面板
 
 // 确保命名空间存在
 // 按照项目规范，使用 MeeWoo 作为项目级命名空间

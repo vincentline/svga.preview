@@ -94,7 +94,13 @@ export default defineConfig({
       directory: resolve(__dirname, 'src'),
       watch: true,
       // 启用目录浏览
-      serveIndex: true
+      serveIndex: true,
+      // 添加CORS头，允许worker脚本加载
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Cross-Origin-Embedder-Policy': 'require-corp',
+        'Cross-Origin-Opener-Policy': 'same-origin'
+      }
     }
   },
   // 插件

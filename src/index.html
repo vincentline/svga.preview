@@ -890,9 +890,9 @@
 
     <!-- webp导出弹窗（所有模式通用右侧弹窗） -->
     <webp-panel :visible="activeRightPanel === 'webp'" :source-info="getWebpSourceInfo()" :initial-config="webpConfig"
-      :is-exporting="isExportingWebp" :export-progress="webpExportProgress" :export-message="webpExportMessage"
-      :disabled="isGlobalTaskRunning" @close="closeWebpPanel" @cancel="cancelWebpExport" @export="handleWebpExport"
-      @config-change="handleWebpConfigChange"></webp-panel>
+      :is-exporting="isExportingWebp" :export-progress="webpExportProgress" :export-stage="''"
+      :export-message="webpExportMessage" :disabled="isGlobalTaskRunning" @close="closeWebpPanel" @cancel="cancelWebpExport"
+      @export="handleWebpExport" @config-change="handleWebpConfigChange"></webp-panel>
 
     <!-- 素材压缩弹窗（使用通用居中弹窗样式） -->
     <div class="center-modal-overlay" :class="{'show': showCompressModal && currentModule === 'svga'}">
@@ -1251,6 +1251,9 @@
   <!-- GIF导出器模块 -->
   <script src="assets/js/service/gif/gif-exporter.js"></script>
 
+  <!-- WebP导出器模块 -->
+  <script src="assets/js/service/webp/webp-exporter.js"></script>
+
   <!-- 序列帧导出器模块 -->
   <script src="assets/js/service/frames/frames-exporter.js"></script>
 
@@ -1263,12 +1266,13 @@
 
   <!-- 组件库 -->
   <script src="assets/js/components/index.js"></script>
+  <script src="assets/js/components/standard-mp4-panel.js"></script>
+  <script src="assets/js/components/dual-channel-panel.js"></script>
   <script src="assets/js/components/material-panel.js"></script>
   <script src="assets/js/components/gif-panel.js"></script>
   <script src="assets/js/components/frames-panel.js"></script>
   <script src="assets/js/components/webp-panel.js"></script>
-  <script src="assets/js/components/standard-mp4-panel.js"></script>
-  <script src="assets/js/components/dual-channel-panel.js"></script>
+  
   <script src="assets/js/components/to-svga-panel.js"></script>
   <script src="assets/js/components/chromakey-panel.js"></script>
 

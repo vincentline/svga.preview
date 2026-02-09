@@ -237,52 +237,52 @@
         // 根据当前模块设置源信息
         if (this.currentModule === 'mp4') {
           sourceInfo.name = this.mp4.fileInfo.name;
-          sourceInfo.sizeWH = this.mp4.fileInfo.width + 'x' + this.mp4.fileInfo.height;
-          sourceInfo.duration = this.utils.formatTime(this.mp4.fileInfo.duration);
-          sourceInfo.fileSize = this.utils.formatSize(this.mp4.fileInfo.size);
+          sourceInfo.sizeWH = this.mp4.fileInfo.sizeWH;
+          sourceInfo.duration = this.mp4.fileInfo.duration;
+          sourceInfo.fileSize = this.utils.formatBytes(this.mp4.fileInfo.size);
           sourceInfo.fps = 30; // MP4默认
           sourceInfo.typeLabel = 'MP4';
 
-          config.width = this.mp4.fileInfo.width;
-          config.height = this.mp4.fileInfo.height;
-          config.aspectRatio = this.mp4.fileInfo.width / this.mp4.fileInfo.height;
+          config.width = this.mp4.originalWidth;
+          config.height = this.mp4.originalHeight;
+          config.aspectRatio = this.mp4.originalWidth / this.mp4.originalHeight;
         } else if (this.currentModule === 'lottie') {
           sourceInfo.name = this.lottie.fileInfo.name;
-          sourceInfo.sizeWH = this.lottie.fileInfo.width + 'x' + this.lottie.fileInfo.height;
-          sourceInfo.duration = this.utils.formatTime(this.lottie.fileInfo.duration);
-          sourceInfo.fileSize = this.utils.formatSize(this.lottie.fileInfo.size);
+          sourceInfo.sizeWH = this.lottie.fileInfo.sizeWH;
+          sourceInfo.duration = this.lottie.fileInfo.duration;
+          sourceInfo.fileSize = this.utils.formatBytes(this.lottie.fileInfo.size);
           sourceInfo.fps = this.lottie.fileInfo.fps || 30;
           sourceInfo.typeLabel = 'Lottie';
 
-          config.width = this.lottie.fileInfo.width;
-          config.height = this.lottie.fileInfo.height;
+          config.width = this.lottie.originalWidth;
+          config.height = this.lottie.originalHeight;
           config.fps = this.lottie.fileInfo.fps || 30;
-          config.aspectRatio = this.lottie.fileInfo.width / this.lottie.fileInfo.height;
+          config.aspectRatio = this.lottie.originalWidth / this.lottie.originalHeight;
         } else if (this.currentModule === 'frames') {
           sourceInfo.name = this.frames.fileInfo.name;
-          sourceInfo.sizeWH = this.frames.fileInfo.width + 'x' + this.frames.fileInfo.height;
-          sourceInfo.duration = this.utils.formatTime(this.frames.fileInfo.duration);
-          sourceInfo.fileSize = this.utils.formatSize(this.frames.fileInfo.size);
+          sourceInfo.sizeWH = this.frames.fileInfo.sizeWH;
+          sourceInfo.duration = this.frames.fileInfo.duration;
+          sourceInfo.fileSize = this.utils.formatBytes(this.frames.fileInfo.size);
           sourceInfo.fps = this.frames.fileInfo.fps || 25;
           sourceInfo.typeLabel = '序列帧';
 
-          config.width = this.frames.fileInfo.width;
-          config.height = this.frames.fileInfo.height;
+          config.width = this.frames.originalWidth;
+          config.height = this.frames.originalHeight;
           config.fps = this.frames.fileInfo.fps || 25;
-          config.aspectRatio = this.frames.fileInfo.width / this.frames.fileInfo.height;
+          config.aspectRatio = this.frames.originalWidth / this.frames.originalHeight;
         } else if (this.currentModule === 'yyeva') {
           // 双通道转SVGA也合并进来
           sourceInfo.name = this.yyeva.fileInfo.name;
-          sourceInfo.sizeWH = this.yyeva.fileInfo.width + 'x' + this.yyeva.fileInfo.height;
-          sourceInfo.duration = this.utils.formatTime(this.yyeva.fileInfo.duration);
-          sourceInfo.fileSize = this.utils.formatSize(this.yyeva.fileInfo.size);
+          sourceInfo.sizeWH = this.yyeva.fileInfo.sizeWH;
+          sourceInfo.duration = this.yyeva.fileInfo.duration;
+          sourceInfo.fileSize = this.utils.formatBytes(this.yyeva.fileInfo.size);
           sourceInfo.fps = this.yyeva.fileInfo.fps || 30;
           sourceInfo.typeLabel = '双通道MP4';
 
-          config.width = this.yyeva.fileInfo.width;
-          config.height = this.yyeva.fileInfo.height;
+          config.width = this.yyeva.displayWidth;
+          config.height = this.yyeva.displayHeight;
           config.fps = this.yyeva.fileInfo.fps || 30;
-          config.aspectRatio = this.yyeva.fileInfo.width / this.yyeva.fileInfo.height;
+          config.aspectRatio = this.yyeva.displayWidth / this.yyeva.displayHeight;
         }
 
         this.toSvgaSourceInfo = sourceInfo;
@@ -363,52 +363,52 @@
 
         if (this.currentModule === 'svga') {
           sourceInfo.name = this.svga.fileInfo.name;
-          sourceInfo.sizeWH = this.svga.fileInfo.width + 'x' + this.svga.fileInfo.height;
-          sourceInfo.duration = this.utils.formatTime(this.svga.fileInfo.duration);
-          sourceInfo.fileSize = this.utils.formatSize(this.svga.fileInfo.size);
+          sourceInfo.sizeWH = this.svga.fileInfo.sizeWH;
+          sourceInfo.duration = this.svga.fileInfo.duration;
+          sourceInfo.fileSize = this.utils.formatBytes(this.svga.fileInfo.size);
           sourceInfo.fps = this.svga.fileInfo.fps || 30;
           sourceInfo.typeLabel = 'SVGA';
 
-          config.width = this.svga.fileInfo.width;
-          config.height = this.svga.fileInfo.height;
+          config.width = this.svga.originalWidth;
+          config.height = this.svga.originalHeight;
           config.fps = this.svga.fileInfo.fps || 30;
-          config.aspectRatio = this.svga.fileInfo.width / this.svga.fileInfo.height;
+          config.aspectRatio = this.svga.originalWidth / this.svga.originalHeight;
         } else if (this.currentModule === 'mp4') {
           sourceInfo.name = this.mp4.fileInfo.name;
-          sourceInfo.sizeWH = this.mp4.fileInfo.width + 'x' + this.mp4.fileInfo.height;
-          sourceInfo.duration = this.utils.formatTime(this.mp4.fileInfo.duration);
-          sourceInfo.fileSize = this.utils.formatSize(this.mp4.fileInfo.size);
+          sourceInfo.sizeWH = this.mp4.fileInfo.sizeWH;
+          sourceInfo.duration = this.mp4.fileInfo.duration;
+          sourceInfo.fileSize = this.utils.formatBytes(this.mp4.fileInfo.size);
           sourceInfo.fps = 30;
           sourceInfo.typeLabel = 'MP4';
 
-          config.width = this.mp4.fileInfo.width;
-          config.height = this.mp4.fileInfo.height;
-          config.aspectRatio = this.mp4.fileInfo.width / this.mp4.fileInfo.height;
+          config.width = this.mp4.originalWidth;
+          config.height = this.mp4.originalHeight;
+          config.aspectRatio = this.mp4.originalWidth / this.mp4.originalHeight;
         } else if (this.currentModule === 'lottie') {
           sourceInfo.name = this.lottie.fileInfo.name;
-          sourceInfo.sizeWH = this.lottie.fileInfo.width + 'x' + this.lottie.fileInfo.height;
-          sourceInfo.duration = this.utils.formatTime(this.lottie.fileInfo.duration);
-          sourceInfo.fileSize = this.utils.formatSize(this.lottie.fileInfo.size);
+          sourceInfo.sizeWH = this.lottie.fileInfo.sizeWH;
+          sourceInfo.duration = this.lottie.fileInfo.duration;
+          sourceInfo.fileSize = this.utils.formatBytes(this.lottie.fileInfo.size);
           sourceInfo.fps = this.lottie.fileInfo.fps || 30;
           sourceInfo.typeLabel = 'Lottie';
 
-          config.width = this.lottie.fileInfo.width;
-          config.height = this.lottie.fileInfo.height;
+          config.width = this.lottie.originalWidth;
+          config.height = this.lottie.originalHeight;
           config.fps = this.lottie.fileInfo.fps || 30;
-          config.aspectRatio = this.lottie.fileInfo.width / this.lottie.fileInfo.height;
+          config.aspectRatio = this.lottie.originalWidth / this.lottie.originalHeight;
           config.muted = true; // Lottie无声
         } else if (this.currentModule === 'frames') {
           sourceInfo.name = this.frames.fileInfo.name;
-          sourceInfo.sizeWH = this.frames.fileInfo.width + 'x' + this.frames.fileInfo.height;
-          sourceInfo.duration = this.utils.formatTime(this.frames.fileInfo.duration);
-          sourceInfo.fileSize = this.utils.formatSize(this.frames.fileInfo.size);
+          sourceInfo.sizeWH = this.frames.fileInfo.sizeWH;
+          sourceInfo.duration = this.frames.fileInfo.duration;
+          sourceInfo.fileSize = this.utils.formatBytes(this.frames.fileInfo.size);
           sourceInfo.fps = this.frames.fileInfo.fps || 25;
           sourceInfo.typeLabel = '序列帧';
 
-          config.width = this.frames.fileInfo.width;
-          config.height = this.frames.fileInfo.height;
+          config.width = this.frames.originalWidth;
+          config.height = this.frames.originalHeight;
           config.fps = this.frames.fileInfo.fps || 25;
-          config.aspectRatio = this.frames.fileInfo.width / this.frames.fileInfo.height;
+          config.aspectRatio = this.frames.originalWidth / this.frames.originalHeight;
           config.muted = true; // 序列帧无声
         }
 

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试双通道MP4面板</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    <style>
+        /* 简化的面板样式 */
+        .side-panel {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 400px;
+            height: 100vh;
+            background: #fff;
+            border-left: 1px solid #e6e6e6;
+            transition: right 0.3s ease;
+            z-index: 1000;
+        }
+        .side-panel.show {
+            right: 0;
+        }
+        .side-panel-container {
+            padding: 20px;
+            height: 100%;
+        }
+        .test-controls {
+            position: relative;
+            z-index: 1001;
+            padding: 20px;
+            background: #f0f0f0;
+            margin-bottom: 20px;
+        }
+        button {
+            margin: 5px;
+            padding: 10px 20px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-controls">
+        <h2>测试双通道MP4面板</h2>
+        <button @click="activeRightPanel = 'dual-channel'">打开双通道MP4面板</button>
+        <button @click="activeRightPanel = null">关闭面板</button>
+        <p>当前activeRightPanel: {{ activeRightPanel }}</p>
+        <p>面板是否可见: {{ activeRightPanel === 'dual-channel' }}</p>
+    </div>
+
+    <div id="app">
+        <!-- 双通道MP4面板 -->
+        <dual-channel-panel :visible="activeRightPanel === 'dual-channel'" :source-info="dualChannelSourceInfo"
+          :initial-config="dualChannelConfig" :is-converting="isConvertingToDualChannel" :progress="dualChannelProgress"
+          :message="dualChannelMessage" :disabled="isGlobalTaskRunning" @close="activeRightPanel = null"
+          @cancel="cancelDualChannelConversion" @convert="handleDualChannelConvert">
+        </dual-channel-panel>
+    </div>
+
+    <!-- 面板模板 -->
+    <script type="text/x-template" id="tpl-dual-channel-panel">
+        <div class="side-panel side-panel--right dual-channel-panel" :class="{'show': visible}">
+            <div class="side-panel-container">
+                <h3>转换为双通道MP4格式</h3>
+                <p>面板可见性: {{ visible }}</p>
+                <p>源文件信息: {{ JSON.stringify(sourceInfo) }}</p>
+                <p>初始配置: {{ JSON.stringify(initialConfig) }}</p>
+                <p>是否正在转换: {{ isConverting }}</p>
+                <p>转换进度: {{ progress }}%</p>
+                <p>转换状态消息: {{ message }}</p>
+                <p>是否禁用: {{ disabled }}</p>
+                <button @click="close">关闭</button>
+                <button @click="startConvert">开始转换</button>
+            </div>
+        </div>
+    </script>
+
+    <script>
+        // 注册双通道MP4面板组件
+        Vue.component('dual-channel-panel', {
+            name: 'DualChannelPanel',
+            template: '#tpl-dual-channel-panel',
+            props: {
+                visible: { type: Boolean, default: false },
+                sourceInfo: { type: Object, default: function () { return {}; } },
+                initialConfig: { type: Object, default: function () { return null; } },
+                isConverting: { type: Boolean, default: false },
+                progress: { type: Number, default: 0 },
+                message: { type: String, default: '' },
+                disabled: { type: Boolean, default: false }
+            },
+            mounted: function () {
+                console.log('DualChannelPanel组件已挂载', this.visible);
+            },
+            watch: {
+                visible: function (newVal) {
+                    console.log('DualChannelPanel visible变化:', newVal);
+                    if (newVal) {
+                        this.initParams();
+                        console.log('DualChannelPanel初始化参数完成');
+                    }
+                }
+            },
+            methods: {
+                initParams: function () {
+                    console.log('初始化参数:', this.sourceInfo, this.initialConfig);
+                },
+                close: function () {
+                    console.log('关闭面板');
+                    this.$emit('close');
+                },
+                startConvert: function () {
+                    console.log('开始转换');
+                    this.$emit('convert', { test: 'config' });
+                }
+            }
+        });
+
+        // 创建Vue实例
+        new Vue({
+            el: '#app',
+            data: {
+                activeRightPanel: null,
+                dualChannelSourceInfo: {
+                    typeLabel: 'SVGA',
+                    sizeWH: '300x300',
+                    duration: '1.0s'
+                },
+                dualChannelConfig: {
+                    channelMode: 'color-left-alpha-right',
+                    width: 300,
+                    height: 300,
+                    fps: 30,
+                    quality: 80,
+                    muted: false
+                },
+                isConvertingToDualChannel: false,
+                dualChannelProgress: 0,
+                dualChannelMessage: '',
+                isGlobalTaskRunning: false
+            },
+            methods: {
+                cancelDualChannelConversion: function () {
+                    console.log('取消转换');
+                },
+                handleDualChannelConvert: function (config) {
+                    console.log('处理转换:', config);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
