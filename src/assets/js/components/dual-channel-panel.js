@@ -55,9 +55,7 @@
       // 是否禁用
       disabled: { type: Boolean, default: false }
     },
-    mounted: function () {
-      console.log('DualChannelPanel组件已挂载', this.visible);
-    },
+
     data: function () {
       return {
         // 内部配置对象
@@ -76,14 +74,37 @@
     watch: {
       // 面板打开时初始化参数
       visible: function (newVal) {
-        console.log('DualChannelPanel visible变化:', newVal);
         if (newVal) {
           this.initParams();
-          console.log('DualChannelPanel初始化参数完成');
+          // 强制显示面板
+          var self = this;
+          this.$nextTick(function () {
+            self.forceShowPanel();
+          });
         }
       }
     },
     methods: {
+      /**
+       * 强制显示面板
+       */
+      forceShowPanel: function () {
+        // 只查找双通道MP4面板
+        var panelElement = document.querySelector('.dual-channel-panel');
+        
+        if (panelElement) {
+          // 确保面板元素被正确渲染
+          panelElement.style.display = 'flex';
+          panelElement.style.visibility = 'visible';
+          panelElement.style.opacity = '1';
+          panelElement.style.right = '0';
+          // 确保show类被添加
+          if (!panelElement.classList.contains('show')) {
+            panelElement.classList.add('show');
+          }
+        }
+      },
+      
       /**
        * 初始化转换参数
        */

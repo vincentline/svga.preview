@@ -136,7 +136,6 @@
        * @param {String} panelName - 面板名称或旧的状态变量名
        */
       openRightPanel: function (panelName) {
-        console.log('[调试] openRightPanel被调用，panelName:', panelName);
         let targetPanel = null;
         let isStandardMp4 = false;
 
@@ -171,42 +170,30 @@
           return;
         }
 
-        console.log('[调试] 确定目标面板类型，targetPanel:', targetPanel, 'isStandardMp4:', isStandardMp4);
-        console.log('[调试] 当前activeRightPanel:', this.activeRightPanel);
-
         // 切换逻辑
         if (isStandardMp4) {
           // 处理标准MP4面板
-          console.log('[调试] 处理标准MP4面板，当前showStandardMp4Panel:', this.showStandardMp4Panel);
           if (this.showStandardMp4Panel) {
             // 如果当前就是标准MP4面板且处于显示状态，则关闭
-            console.log('[调试] 关闭标准MP4面板');
             this.showStandardMp4Panel = false;
             this.activeRightPanel = null;
           } else {
             // 否则关闭其他所有面板，打开标准MP4面板
-            console.log('[调试] 打开标准MP4面板');
             this.activeRightPanel = null;
             this.showStandardMp4Panel = true;
           }
         } else {
           // 处理其他面板
-          console.log('[调试] 处理其他面板，当前activeRightPanel:', this.activeRightPanel, 'targetPanel:', targetPanel);
           if (this.activeRightPanel === targetPanel) {
             // 如果当前就是目标面板且处于显示状态，则关闭所有面板
-            console.log('[调试] 关闭所有面板');
             this.activeRightPanel = null;
             this.showStandardMp4Panel = false;
           } else {
             // 否则关闭其他所有面板，打开目标面板
-            console.log('[调试] 打开目标面板:', targetPanel);
             this.showStandardMp4Panel = false;
             this.activeRightPanel = targetPanel;
-            console.log('[调试] 设置后activeRightPanel:', this.activeRightPanel);
           }
         }
-        console.log('[调试] openRightPanel方法执行完毕');
-        console.log('[调试] 最终activeRightPanel:', this.activeRightPanel);
       },
 
       // ==================== 统一：To SVGA (MP4/Lottie/Frames) ====================
@@ -215,8 +202,6 @@
        * 打开转 SVGA 面板 (统一入口)
        */
       openToSvgaPanel: function () {
-        console.log('[调试] 打开转SVGA弹窗，当前模块:', this.currentModule);
-        
         var sourceInfo = {
           name: '',
           sizeWH: '',
@@ -290,12 +275,10 @@
         this.activeRightPanel = 'to-svga';
         
         // 插队加载ffmpeg
-        console.log('[调试] 插队加载ffmpeg库');
         if (this.loadLibrary) {
           this.loadLibrary(['ffmpeg'], true).then(function() {
-            console.log('[调试] ffmpeg加载成功');
           }).catch(function(error) {
-            console.error('[调试] ffmpeg加载失败:', error);
+            console.error('ffmpeg加载失败:', error);
           });
         }
       },
