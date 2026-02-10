@@ -61,6 +61,8 @@
         dualChannelMessage: '',
         dualChannelCancelled: false,
 
+
+
         // ==================== 统一 转 SVGA (新) ====================
         toSvgaConfig: {
           width: 0,
@@ -84,12 +86,7 @@
         toSvgaMessage: '',
         toSvgaCancelled: false,
 
-        // ==================== 其他面板状态 (补充默认值，避免undefined) ====================
-        showStandardMp4Panel: false,
-        isExportingGIF: false,
-        isExportingFrames: false,
-        isExportingWebp: false,
-        isConvertingStandardMp4: false
+
       };
     },
 
@@ -252,53 +249,53 @@
 
         // 根据当前模块设置源信息
         if (this.currentModule === 'mp4') {
-          sourceInfo.name = this.mp4.fileInfo.name || '';
-          sourceInfo.sizeWH = this.mp4.fileInfo.sizeWH || '';
-          sourceInfo.duration = this.mp4.fileInfo.duration || '';
-          sourceInfo.fileSize = this.utils ? this.utils.formatBytes(this.mp4.fileInfo.size) : '';
+          sourceInfo.name = this.mp4.fileInfo.name;
+          sourceInfo.sizeWH = this.mp4.fileInfo.sizeWH;
+          sourceInfo.duration = this.mp4.fileInfo.duration;
+          sourceInfo.fileSize = this.utils.formatBytes(this.mp4.fileInfo.size);
           sourceInfo.fps = 30; // MP4默认
           sourceInfo.typeLabel = 'MP4';
 
-          config.width = this.mp4.originalWidth || 300;
-          config.height = this.mp4.originalHeight || 300;
-          config.aspectRatio = (this.mp4.originalWidth / this.mp4.originalHeight) || 1;
+          config.width = this.mp4.originalWidth;
+          config.height = this.mp4.originalHeight;
+          config.aspectRatio = this.mp4.originalWidth / this.mp4.originalHeight;
         } else if (this.currentModule === 'lottie') {
-          sourceInfo.name = this.lottie.fileInfo.name || '';
-          sourceInfo.sizeWH = this.lottie.fileInfo.sizeWH || '';
-          sourceInfo.duration = this.lottie.fileInfo.duration || '';
-          sourceInfo.fileSize = this.utils ? this.utils.formatBytes(this.lottie.fileInfo.size) : '';
+          sourceInfo.name = this.lottie.fileInfo.name;
+          sourceInfo.sizeWH = this.lottie.fileInfo.sizeWH;
+          sourceInfo.duration = this.lottie.fileInfo.duration;
+          sourceInfo.fileSize = this.utils.formatBytes(this.lottie.fileInfo.size);
           sourceInfo.fps = this.lottie.fileInfo.fps || 30;
           sourceInfo.typeLabel = 'Lottie';
 
-          config.width = this.lottie.originalWidth || 300;
-          config.height = this.lottie.originalHeight || 300;
+          config.width = this.lottie.originalWidth;
+          config.height = this.lottie.originalHeight;
           config.fps = this.lottie.fileInfo.fps || 30;
-          config.aspectRatio = (this.lottie.originalWidth / this.lottie.originalHeight) || 1;
+          config.aspectRatio = this.lottie.originalWidth / this.lottie.originalHeight;
         } else if (this.currentModule === 'frames') {
-          sourceInfo.name = this.frames.fileInfo.name || '';
-          sourceInfo.sizeWH = this.frames.fileInfo.sizeWH || '';
-          sourceInfo.duration = this.frames.fileInfo.duration || '';
-          sourceInfo.fileSize = this.utils ? this.utils.formatBytes(this.frames.fileInfo.size) : '';
+          sourceInfo.name = this.frames.fileInfo.name;
+          sourceInfo.sizeWH = this.frames.fileInfo.sizeWH;
+          sourceInfo.duration = this.frames.fileInfo.duration;
+          sourceInfo.fileSize = this.utils.formatBytes(this.frames.fileInfo.size);
           sourceInfo.fps = this.frames.fileInfo.fps || 25;
           sourceInfo.typeLabel = '序列帧';
 
-          config.width = this.frames.originalWidth || 300;
-          config.height = this.frames.originalHeight || 300;
+          config.width = this.frames.originalWidth;
+          config.height = this.frames.originalHeight;
           config.fps = this.frames.fileInfo.fps || 25;
-          config.aspectRatio = (this.frames.originalWidth / this.frames.originalHeight) || 1;
+          config.aspectRatio = this.frames.originalWidth / this.frames.originalHeight;
         } else if (this.currentModule === 'yyeva') {
           // 双通道转SVGA也合并进来
-          sourceInfo.name = this.yyeva.fileInfo.name || '';
-          sourceInfo.sizeWH = this.yyeva.fileInfo.sizeWH || '';
-          sourceInfo.duration = this.yyeva.fileInfo.duration || '';
-          sourceInfo.fileSize = this.utils ? this.utils.formatBytes(this.yyeva.fileInfo.size) : '';
+          sourceInfo.name = this.yyeva.fileInfo.name;
+          sourceInfo.sizeWH = this.yyeva.fileInfo.sizeWH;
+          sourceInfo.duration = this.yyeva.fileInfo.duration;
+          sourceInfo.fileSize = this.utils.formatBytes(this.yyeva.fileInfo.size);
           sourceInfo.fps = this.yyeva.fileInfo.fps || 30;
           sourceInfo.typeLabel = '双通道MP4';
 
-          config.width = this.yyeva.displayWidth || 300;
-          config.height = this.yyeva.displayHeight || 300;
+          config.width = this.yyeva.displayWidth;
+          config.height = this.yyeva.displayHeight;
           config.fps = this.yyeva.fileInfo.fps || 30;
-          config.aspectRatio = (this.yyeva.displayWidth / this.yyeva.displayHeight) || 1;
+          config.aspectRatio = this.yyeva.displayWidth / this.yyeva.displayHeight;
         }
 
         this.toSvgaSourceInfo = sourceInfo;
@@ -318,6 +315,7 @@
        * 统一处理 转SVGA 逻辑
        */
       handleToSvgaConvert: function (config) {
+        // 更新配置
         this.toSvgaConfig = config;
 
         // 根据模块分发
@@ -331,7 +329,7 @@
           // 注意：双通道转SVGA原有逻辑叫 startSVGAConversion
           // 这里我们为了统一，需要适配一下
           // 临时兼容：更新旧配置对象，以便 startSVGAConversion 能读到
-          this.yyevaToSvgaConfig = Object.assign({}, this.yyevaToSvgaConfig || {}, config);
+          this.yyevaToSvgaConfig = Object.assign({}, this.yyevaToSvgaConfig, config);
           this.startSVGAConversion(config);
         }
       },
@@ -353,7 +351,7 @@
       // ==================== 统一：To Dual Channel (SVGA/MP4/Lottie/Frames) ====================
 
       /**
-       * 打开转双通道面板 (统一入口) - 最终修复版
+       * 打开转双通道面板 (统一入口)
        */
       openDualChannelPanel: function () {
         console.log('openDualChannelPanel方法被调用');
@@ -375,148 +373,83 @@
           aspectRatio: 1
         };
 
-        // 根据当前模块设置源信息（增加容错，避免undefined）
         if (this.currentModule === 'svga') {
-          sourceInfo.name = this.svga.fileInfo.name || '';
-          sourceInfo.sizeWH = this.svga.fileInfo.sizeWH || '';
-          sourceInfo.duration = this.svga.fileInfo.duration || '';
-          sourceInfo.fileSize = this.utils ? this.utils.formatBytes(this.svga.fileInfo.size) : '';
+          sourceInfo.name = this.svga.fileInfo.name;
+          sourceInfo.sizeWH = this.svga.fileInfo.sizeWH;
+          sourceInfo.duration = this.svga.fileInfo.duration;
+          sourceInfo.fileSize = this.utils.formatBytes(this.svga.fileInfo.size);
           sourceInfo.fps = this.svga.fileInfo.fps || 30;
           sourceInfo.typeLabel = 'SVGA';
 
-          config.width = this.svga.originalWidth || 300;
-          config.height = this.svga.originalHeight || 300;
+          config.width = this.svga.originalWidth;
+          config.height = this.svga.originalHeight;
           config.fps = this.svga.fileInfo.fps || 30;
-          config.aspectRatio = (this.svga.originalWidth / this.svga.originalHeight) || 1;
+          config.aspectRatio = this.svga.originalWidth / this.svga.originalHeight;
         } else if (this.currentModule === 'mp4') {
-          sourceInfo.name = this.mp4.fileInfo.name || '';
-          sourceInfo.sizeWH = this.mp4.fileInfo.sizeWH || '';
-          sourceInfo.duration = this.mp4.fileInfo.duration || '';
-          sourceInfo.fileSize = this.utils ? this.utils.formatBytes(this.mp4.fileInfo.size) : '';
+          sourceInfo.name = this.mp4.fileInfo.name;
+          sourceInfo.sizeWH = this.mp4.fileInfo.sizeWH;
+          sourceInfo.duration = this.mp4.fileInfo.duration;
+          sourceInfo.fileSize = this.utils.formatBytes(this.mp4.fileInfo.size);
           sourceInfo.fps = 30;
           sourceInfo.typeLabel = 'MP4';
 
-          config.width = this.mp4.originalWidth || 300;
-          config.height = this.mp4.originalHeight || 300;
-          config.aspectRatio = (this.mp4.originalWidth / this.mp4.originalHeight) || 1;
+          config.width = this.mp4.originalWidth;
+          config.height = this.mp4.originalHeight;
+          config.aspectRatio = this.mp4.originalWidth / this.mp4.originalHeight;
         } else if (this.currentModule === 'lottie') {
-          sourceInfo.name = this.lottie.fileInfo.name || '';
-          sourceInfo.sizeWH = this.lottie.fileInfo.sizeWH || '';
-          sourceInfo.duration = this.lottie.fileInfo.duration || '';
-          sourceInfo.fileSize = this.utils ? this.utils.formatBytes(this.lottie.fileInfo.size) : '';
+          sourceInfo.name = this.lottie.fileInfo.name;
+          sourceInfo.sizeWH = this.lottie.fileInfo.sizeWH;
+          sourceInfo.duration = this.lottie.fileInfo.duration;
+          sourceInfo.fileSize = this.utils.formatBytes(this.lottie.fileInfo.size);
           sourceInfo.fps = this.lottie.fileInfo.fps || 30;
           sourceInfo.typeLabel = 'Lottie';
 
-          config.width = this.lottie.originalWidth || 300;
-          config.height = this.lottie.originalHeight || 300;
+          config.width = this.lottie.originalWidth;
+          config.height = this.lottie.originalHeight;
           config.fps = this.lottie.fileInfo.fps || 30;
-          config.aspectRatio = (this.lottie.originalWidth / this.lottie.originalHeight) || 1;
+          config.aspectRatio = this.lottie.originalWidth / this.lottie.originalHeight;
           config.muted = true; // Lottie无声
         } else if (this.currentModule === 'frames') {
-          sourceInfo.name = this.frames.fileInfo.name || '';
-          sourceInfo.sizeWH = this.frames.fileInfo.sizeWH || '';
-          sourceInfo.duration = this.frames.fileInfo.duration || '';
-          sourceInfo.fileSize = this.utils ? this.utils.formatBytes(this.frames.fileInfo.size) : '';
+          sourceInfo.name = this.frames.fileInfo.name;
+          sourceInfo.sizeWH = this.frames.fileInfo.sizeWH;
+          sourceInfo.duration = this.frames.fileInfo.duration;
+          sourceInfo.fileSize = this.utils.formatBytes(this.frames.fileInfo.size);
           sourceInfo.fps = this.frames.fileInfo.fps || 25;
           sourceInfo.typeLabel = '序列帧';
 
-          config.width = this.frames.originalWidth || 300;
-          config.height = this.frames.originalHeight || 300;
+          config.width = this.frames.originalWidth;
+          config.height = this.frames.originalHeight;
           config.fps = this.frames.fileInfo.fps || 25;
-          config.aspectRatio = (this.frames.originalWidth / this.frames.originalHeight) || 1;
+          config.aspectRatio = this.frames.originalWidth / this.frames.originalHeight;
           config.muted = true; // 序列帧无声
         }
 
-        console.log('设置双通道MP4源信息和配置:', sourceInfo, config);
+        console.log('设置双通道MP4源信息和配置');
         this.dualChannelSourceInfo = sourceInfo;
         this.dualChannelConfig = config;
         
         console.log('关闭其他面板并打开双通道MP4面板');
         // 关闭其他面板
         this.showStandardMp4Panel = false;
+        // 先设置为null，然后再设置为dual-channel，触发Vue的响应式更新
+        this.activeRightPanel = null;
         
-        // 核心修复：直接设置activeRightPanel，避免先设null导致的更新丢失
-        this.activeRightPanel = 'dual-channel';
-        console.log('直接设置activeRightPanel为dual-channel，当前值:', this.activeRightPanel);
-
-        // ==================== 核心修复：插入组件标签 + 挂载Vue组件 ====================
-        // 1. 检查并插入dual-channel-panel标签（解决标签不存在的根源问题）
-        // 关键修改：强制插入到主页面body（兼容iframe/子页面场景）
-        const mainBody = window.top?.document?.body || document.body; // 优先主页面body
-        if (!mainBody.querySelector('dual-channel-panel')) {
-          const panelTag = document.createElement('dual-channel-panel');
-          // 传递props
-          panelTag.setAttribute('visible', 'true');
-          panelTag.setAttribute('source-info', JSON.stringify(this.dualChannelSourceInfo));
-  panelTag.setAttribute('initial-config', JSON.stringify(this.dualChannelConfig));
-  // 加唯一ID，方便定位
-  panelTag.id = 'dual-channel-panel-root';
-  // 插入到主页面body（而非子iframe）
-  mainBody.appendChild(panelTag);
-  console.log('✅ 已插入dual-channel-panel标签到主页面DOM，ID：dual-channel-panel-root');
-}
-        
-        // 加载ffmpeg（和转SVGA面板保持一致）
-        if (this.loadLibrary) {
-          console.log('加载ffmpeg库');
-          this.loadLibrary(['ffmpeg'], true).then(function() {
-            console.log('ffmpeg加载成功');
-          }).catch(function(error) {
-            console.error('ffmpeg加载失败:', error);
-          });
-        }
-        
-        // 使用Vue.nextTick确保面板渲染完成并强制更新
+        // 使用Vue.nextTick确保DOM更新后再设置activeRightPanel
         var self = this;
-        this.$nextTick(function() {
-          console.log('Vue.nextTick执行，强制更新组件');
+        Vue.nextTick(function() {
+          console.log('Vue.nextTick执行，设置activeRightPanel为dual-channel');
+          self.activeRightPanel = 'dual-channel';
+          console.log('设置后activeRightPanel:', self.activeRightPanel);
           
-          // 2. 手动挂载Vue组件到插入的标签（确保模板渲染）
-          if (window.Vue && window.MeeWoo?.Components?.DualChannelPanel) {
-            try {
-              new Vue({
-                extends: window.MeeWoo.Components.DualChannelPanel,
-                propsData: {
-                  visible: true,
-                  sourceInfo: self.dualChannelSourceInfo,
-                  initialConfig: self.dualChannelConfig,
-                  isConverting: self.isConvertingToDualChannel,
-                  progress: self.dualChannelProgress,
-                  message: self.dualChannelMessage,
-                  disabled: false
-                },
-                methods: {
-                  close: () => self.closeRightPanel(),
-                  cancel: () => self.cancelDualChannelConversion(),
-                  start: () => self.handleDualChannelConvert(self.dualChannelConfig)
-                }
-              }).$mount('dual-channel-panel');
-              console.log('✅ 双通道组件挂载成功');
-            } catch (e) {
-              console.warn('⚠️ 组件挂载兜底:', e);
+          // 再次使用Vue.nextTick确保面板元素已经渲染
+          Vue.nextTick(function() {
+            console.log('再次执行Vue.nextTick，尝试强制显示面板');
+            // 尝试获取Vue实例并强制更新
+            if (self.$forceUpdate) {
+              console.log('调用$forceUpdate强制更新组件');
+              self.$forceUpdate();
             }
-          }
-
-          if (self.$forceUpdate) {
-            self.$forceUpdate();
-          }
-          
-          // 3. 精准显示双通道面板（只操作唯一类名，避免干扰其他面板）
-          setTimeout(() => {
-            // 先隐藏所有右侧面板
-            document.querySelectorAll('.side-panel--right').forEach(p => p.classList.remove('show'));
-            // 只显示双通道面板
-            const dualPanel = document.querySelector('.dual-channel-panel-root') || document.querySelector('dual-channel-panel > div');
-            if (dualPanel) {
-              dualPanel.classList.add('show');
-              dualPanel.style.transform = 'translateX(0) !important';
-              dualPanel.style.display = 'flex !important';
-              dualPanel.style.zIndex = '9999 !important';
-              console.log('✅ 双通道面板样式已强制显示');
-            }
-          }, 100);
-          
-          console.log('最终activeRightPanel:', self.activeRightPanel);
+          });
         });
       },
 
@@ -525,27 +458,19 @@
        */
       handleDualChannelConvert: function (config) {
         this.dualChannelConfig = config;
-        console.log('开始处理双通道转换，配置:', config);
 
-        // 标记转换状态
-        this.isConvertingToDualChannel = true;
-        this.dualChannelProgress = 0;
-        this.dualChannelMessage = '准备转换...';
-        this.dualChannelCancelled = false;
-
-        // 根据模块分发（增加容错，避免undefined）
         if (this.currentModule === 'svga') {
           // 兼容旧逻辑：startMP4Conversion 使用 svgaToDualChannelConfig
-          this.svgaToDualChannelConfig = Object.assign({}, this.svgaToDualChannelConfig || {}, config);
+          this.svgaToDualChannelConfig = Object.assign({}, this.svgaToDualChannelConfig, config);
           this.startMP4Conversion(config);
         } else if (this.currentModule === 'mp4') {
-          this.mp4ToDualChannelConfig = Object.assign({}, this.mp4ToDualChannelConfig || {}, config);
+          this.mp4ToDualChannelConfig = Object.assign({}, this.mp4ToDualChannelConfig, config);
           this.startMp4ToDualChannelConversion(config);
         } else if (this.currentModule === 'lottie') {
-          this.lottieToDualChannelConfig = Object.assign({}, this.lottieToDualChannelConfig || {}, config);
+          this.lottieToDualChannelConfig = Object.assign({}, this.lottieToDualChannelConfig, config);
           this.startLottieToDualChannelConversion(config);
         } else if (this.currentModule === 'frames') {
-          this.imagesToDualChannelConfig = Object.assign({}, this.imagesToDualChannelConfig || {}, config);
+          this.imagesToDualChannelConfig = Object.assign({}, this.imagesToDualChannelConfig, config);
           this.startFramesToDualChannelConversion(config);
         }
       },
@@ -556,7 +481,6 @@
       cancelDualChannelConversion: function () {
         this.dualChannelCancelled = true;
         this.dualChannelMessage = '正在取消...';
-        this.isConvertingToDualChannel = false;
 
         // 兼容旧标志位
         this.mp4ConvertCancelled = true; // SVGA/MP4/Lottie 都用这个
@@ -582,7 +506,7 @@
       openSVGAPanel: function () { this.openToSvgaPanel(); },
 
       // 注意：openMP4Panel 原来是打开“SVGA转双通道”，现在统一到 dual-channel-panel
-      openMP4Panel: function () { this.openDualChannelPanel(); }
+      openMP4Panel: function () { this.openDualChannelPanel(); },
     }
   };
 })(window);

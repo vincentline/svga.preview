@@ -43,6 +43,19 @@
       if (!config.getFrame) throw new Error('缺少 getFrame 回调');
       if (!config.totalFrames || config.totalFrames <= 0) throw new Error('帧数无效');
 
+      // 确保GIF.js库已加载
+      if (typeof GIF === 'undefined') {
+        if (window.MeeWoo && window.MeeWoo.Core && window.MeeWoo.Core.libraryLoader) {
+          try {
+            await window.MeeWoo.Core.libraryLoader.load('gif', true);
+          } catch (error) {
+            throw new Error('GIF.js库加载失败: ' + error.message);
+          }
+        } else {
+          throw new Error('库加载器不可用');
+        }
+      }
+
       // 使用弹窗设置的尺寸、帧率和帧数
       var width = config.width || 300;
       var height = config.height || 300;
@@ -57,17 +70,8 @@
       // 但gif.js内部实现是：1是最佳质量（不降采样），30是最差质量（最大降采样）
       // 为了符合用户直觉（数值越大质量越好），我们需要反转这个值
       // 映射关系：用户输入 1(低) -> gif.js 30(差)；用户输入 30(高) -> gif.js 1(好)
-      var userQuality = Math.max(1, Math.min(15, config.quality || 15)); // 限制质量值到15
+      var userQuality = Math.max(1, Math.min(30, config.quality || 10)); // 使用默认值10，限制在1-30之间
       var quality = 31 - userQuality;
-      
-      // 仅保留关键参数日志
-      console.log('[GIF Exporter] Export parameters:', {
-        width: width,
-        height: height,
-        fps: fps,
-        totalFrames: totalFrames,
-        transparent: transparent
-      });
 
       // 回调函数
       var onProgress = config.onProgress || function () { };
@@ -86,9 +90,9 @@
 
       // 创建GIF编码器
       var gifOptions = {
-        workers: 1,  // 减少worker数量，避免可能的并发问题
-        workerScript: window.location.origin + '/assets/js/service/gif/gif.worker.js',  // 使用绝对路径确保正确加载
-        quality: quality,  // 使用计算后的质量值
+        workers: 2,  // 增加worker数量，提高编码速度
+        workerScript: 'assets/js/service/gif/gif.worker.js',  // 移除前导斜杠，使用相对路径
+        quality: Math.min(quality, 20),  // 限制最大质量，提高编码速度
         width: width,
         height: height,
         repeat: 0,  // 0 = 无限循环
@@ -141,7 +145,9 @@
 
           // 获取当前帧
           var sourceCanvas = await config.getFrame(i);
-          if (!sourceCanvas) throw new Error('无法获取帧 ' + i);
+          if (!sourceCanvas) {
+            throw new Error('无法获取帧 ' + i);
+          }
 
           // 清空输出画布
           outputCtx.clearRect(0, 0, width, height);
@@ -172,6 +178,11 @@
           // 处理完透明后，手动获取处理后的 ImageData
           var processedImageData = outputCtx.getImageData(0, 0, width, height);
 
+          // 验证图像数据是否有效
+          if (!processedImageData || !processedImageData.data || processedImageData.data.length === 0) {
+            throw new Error('处理后的图像数据无效');
+          }
+
           // 直接使用 ImageData 而不是 canvas，确保传递处理后的数据
           var frameOptions = { delay: frameDelay };
           if (transparent) {
@@ -187,20 +198,17 @@
         // 开始编码
         onProgress(50, 'encoding', '编码中...');
         
-        // 记录编码开始时间
-        var startTime = Date.now();
-        
         try {
           gif.render();
         } catch (renderError) {
-          throw renderError;
+          throw new Error('编码启动失败: ' + renderError.message);
         }
 
         // 添加超时机制，避免编码过程无限卡住
         var timeoutPromise = new Promise(function (reject) {
           setTimeout(function () {
             reject(new Error('GIF编码超时，可能是由于GIF.js库问题或文件过大导致'));
-          }, 60000); // 60秒超时
+          }, 120000); // 120秒超时，给编码过程更多时间
         });
         
         // 等待编码完成或超时

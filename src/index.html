@@ -1264,6 +1264,18 @@
   <script src="assets/js/utils/utils.js"></script>
   <script src="assets/js/controllers/input-controller.js"></script>
 
+  <!-- 组件库 -->
+  <script src="assets/js/components/index.js"></script>
+  <script src="assets/js/components/standard-mp4-panel.js"></script>
+  <script src="assets/js/components/dual-channel-panel.js"></script>
+  <script src="assets/js/components/material-panel.js"></script>
+  <script src="assets/js/components/gif-panel.js"></script>
+  <script src="assets/js/components/frames-panel.js"></script>
+  <script src="assets/js/components/webp-panel.js"></script>
+  
+  <script src="assets/js/components/to-svga-panel.js"></script>
+  <script src="assets/js/components/chromakey-panel.js"></script>
+
   <!-- 定义组件模板 -->
   <script type="text/x-template" id="tpl-gif-panel">
     <div class="side-panel side-panel--right svga-panel gif-panel" :class="{'show': visible}">
@@ -1612,7 +1624,7 @@
 
   <!-- 定义dual-channel-panel模板 -->
   <script type="text/x-template" id="tpl-dual-channel-panel">
-    <div class="side-panel side-panel--right dual-channel-panel" :class="{'show': visible}">
+    <div class="side-panel side-panel--right dual-channel-panel dual-channel-panel-root" :class="{'show': visible}"  style="transition: transform 0.3s ease;">
       <div class="side-panel-container">
         <!-- 标题区 -->
         <div class="side-panel-header">
@@ -1931,18 +1943,6 @@
       </div>
     </div>
   </script>
-
-  <!-- 组件库 -->
-  <script src="assets/js/components/index.js"></script>
-  <script src="assets/js/components/standard-mp4-panel.js"></script>
-  <script src="assets/js/components/dual-channel-panel.js"></script>
-  <script src="assets/js/components/material-panel.js"></script>
-  <script src="assets/js/components/gif-panel.js"></script>
-  <script src="assets/js/components/frames-panel.js"></script>
-  <script src="assets/js/components/webp-panel.js"></script>
-  
-  <script src="assets/js/components/to-svga-panel.js"></script>
-  <script src="assets/js/components/chromakey-panel.js"></script>
 
   <!-- 播放控制器模块 -->
   <script src="assets/js/controllers/player-controller.js?v=14"></script>

@@ -1,8 +1,8 @@
 # GIF导出功能技术文档
 
-> **文档版本**: v1.1  
+> **文档版本**: v1.2  
 > **创建日期**: 2025-12-26  
-> **更新日期**: 2026-02-08  
+> **更新日期**: 2026-02-10  
 > **文档状态**: ✅ 已更新
 
 ---
@@ -71,15 +71,27 @@ var ctx = canvas.getContext('2d', { willReadFrequently: true });
 
 ### 2.3 Worker路径配置
 
-**关键要点**: 使用绝对路径加载Worker，避免跨域问题
+**关键要点**: 使用相对路径加载Worker，提高代码可移植性
 
 ```javascript
-// ✅ 正确：使用绝对路径
-workerScript: window.location.origin + '/src/assets/js/service/gif/gif.worker.js'
+// ✅ 正确：使用相对路径（推荐）
+workerScript: 'assets/js/service/gif/gif.worker.js'
 
-// ❌ 错误：相对路径可能导致跨域问题
-workerScript: 'assets/js/gif.worker.js'
+// ✅ 正确：使用绝对路径（备选方案）
+workerScript: window.location.origin + '/assets/js/service/gif/gif.worker.js'
+
+// ❌ 错误：带前导斜杠的路径可能导致加载失败
+workerScript: '/assets/js/service/gif/gif.worker.js'
+
+// ❌ 错误：包含src目录的路径在生产环境可能无效
+workerScript: window.location.origin + '/src/assets/js/service/gif/gif.worker.js'
 ```
+
+**最佳实践**:
+- 使用相对路径加载Worker，提高代码可移植性和兼容性
+- 添加Worker路径可访问性检查，确保路径正确
+- 考虑构建工具（如Vite）的路径解析规则
+- 在部署前验证Worker路径是否可访问
 
 ---
 
@@ -90,17 +102,23 @@ workerScript: 'assets/js/gif.worker.js'
 ```javascript
 // GIF编码器配置
 var gifOptions = {
-  workers: 1,  // 减少worker数量，避免并发问题
-  quality: quality,  // 计算后的质量值
+  workers: 2,  // 增加worker数量，提高编码速度
+  quality: Math.min(quality, 20),  // 限制最大质量，提高编码速度
   width: config.width,
   height: config.height,
-  workerScript: window.location.origin + '/src/assets/js/service/gif/gif.worker.js',
-  repeat: 0  // 0 = 无限循环
+  workerScript: 'assets/js/service/gif/gif.worker.js',  // 使用相对路径
+  repeat: 0,  // 0 = 无限循环
+  background: '#ffffff'  // 默认背景色
 };
 
 // 透明模式：设置透明色索引（使用RGB格式）
 if (config.transparent) {
   gifOptions.transparent = 0x000000;  // GIF只支持RGB格式
+} else {
+  // 不透明模式：使用背景色
+  var bgColor = config.backgroundColor || '#ffffff';
+  if (bgColor === 'transparent') bgColor = '#ffffff';
+  gifOptions.background = bgColor;
 }
 
 var gif = new GIF(gifOptions);
@@ -484,12 +502,15 @@ gif.addFrame(processedImageData, frameOptions);
 
 ### 7.5 Worker加载失败
 
-**原因**: 使用相对路径加载Worker导致跨域问题
+**原因**: 使用带前导斜杠的路径或错误的路径格式导致加载失败
 
 **解决方案**:
 ```javascript
-// 使用绝对路径加载Worker
-workerScript: window.location.origin + '/src/assets/js/service/gif/gif.worker.js'
+// 使用相对路径加载Worker（推荐）
+workerScript: 'assets/js/service/gif/gif.worker.js'
+
+// 或使用绝对路径（备选方案）
+workerScript: window.location.origin + '/assets/js/service/gif/gif.worker.js'
 ```
 
 
@@ -532,6 +553,7 @@ workerScript: window.location.origin + '/src/assets/js/service/gif/gif.worker.js
 **根本原因**：
 - 使用 `copy: true` 选项时，gif.js 会重新获取 canvas 数据，绕过之前的透明处理
 - 传递给 Worker 的图像数据没有包含正确的透明信息
+- Canvas 未启用 alpha 通道
 
 **解决方案**：
 - 不使用 `copy: true` 选项，直接传递处理后的 ImageData
@@ -552,7 +574,60 @@ if (transparent) {
 gif.addFrame(processedImageData, frameOptions);
 ```
 
-### 8.2 常见错误与解决方案
+### 8.2 编码卡住问题
+
+**问题现象**：
+- GIF导出时编码过程卡住，无响应
+- 编码超时，无法完成导出
+- 只完成帧捕获，编码阶段无进展
+
+**根本原因**：
+- 脚本加载顺序问题：组件库在模板定义后加载
+- Worker 路径配置错误：使用带前导斜杠的路径
+- 依赖管理问题：GIF.js 库未正确加载
+- 编码性能问题：单个 Worker 处理大量帧
+
+**解决方案**：
+1. **调整脚本加载顺序**：将组件库脚本移动到组件模板定义之前
+2. **优化 Worker 路径**：使用相对路径，提高可移植性
+3. **增强依赖管理**：添加 GIF.js 库加载检查，使用库加载器动态加载
+4. **优化编码性能**：
+   - 增加 Worker 数量（如从 1 个增加到 2 个）
+   - 限制最大质量值，提高编码速度
+   - 增加编码超时时间（如从 60 秒增加到 120 秒）
+
+**实现代码**：
+
+```javascript
+// 确保 GIF.js 库已加载
+if (typeof GIF === 'undefined') {
+  console.log('[GIF Exporter] 正在加载 GIF.js 库...');
+  if (window.MeeWoo && window.MeeWoo.Core && window.MeeWoo.Core.libraryLoader) {
+    try {
+      await window.MeeWoo.Core.libraryLoader.load('gif', true);
+      console.log('[GIF Exporter] GIF.js 库加载成功');
+    } catch (error) {
+      console.error('[GIF Exporter] GIF.js 库加载失败:', error);
+      throw new Error('GIF.js 库加载失败: ' + error.message);
+    }
+  } else {
+    throw new Error('库加载器不可用');
+  }
+}
+
+// 优化 Worker 路径和编码参数
+var gifOptions = {
+  workers: 2,  // 增加 Worker 数量
+  workerScript: 'assets/js/service/gif/gif.worker.js',  // 使用相对路径
+  quality: Math.min(quality, 20),  // 限制最大质量
+  width: width,
+  height: height,
+  repeat: 0,
+  background: '#ffffff'
+};
+```
+
+### 8.3 常见错误与解决方案
 
 | 错误现象 | 可能原因 | 解决方案 |
 |---------|---------|--------|
@@ -560,17 +635,29 @@ gif.addFrame(processedImageData, frameOptions);
 | 黑底而非透明 | Canvas 未启用 alpha 通道 | 确保所有 canvas 启用 alpha 通道 |
 | 杂边颜色不正确 | 颜色解析错误或混合算法问题 | 验证颜色解析逻辑和混合公式 |
 | 导出不完整 | 超时或内存不足 | 减少帧率或尺寸，增加超时时间 |
+| 脚本初始化失败 | 脚本加载顺序错误 | 将组件库脚本移动到模板定义之前 |
+| 依赖缺失 | GIF.js 库未加载 | 添加库加载检查和动态加载机制 |
 
-### 8.3 最佳实践
+### 8.4 最佳实践
 
-1. **透明处理**：始终使用 `ImageData` 直接传递处理后的数据
-2. **Canvas 配置**：所有相关 canvas 都启用 alpha 通道
-3. **Worker 路径**：使用绝对路径加载 Worker，避免跨域问题
-4. **质量控制**：根据实际需要调整质量值，平衡文件大小和质量
-5. **错误处理**：添加完整的错误处理和超时机制
+1. **透明处理**：始终使用 `ImageData` 直接传递处理后的数据，确保透明效果正确
+2. **Canvas 配置**：所有相关 canvas 都启用 alpha 通道，避免透明区域变黑
+3. **Worker 路径**：使用相对路径加载 Worker (`assets/js/service/gif/gif.worker.js`)，提高代码可移植性
+4. **依赖管理**：在执行导出前检查并加载必要的库，使用库加载器动态加载 GIF.js
+5. **质量控制**：限制质量值范围 (1-30)，并根据用户直觉反转值（数值越大质量越好）
+6. **错误处理**：添加完整的错误处理和超时机制，验证生成的 blob 对象有效性
+7. **脚本加载**：确保组件库在模板定义之前加载，避免初始化问题
+8. **性能优化**：
+   - 增加 Worker 数量（如从 1 个增加到 2 个）提高编码速度
+   - 限制最大质量值（如不超过 20）减少编码时间
+   - 增加编码超时时间（如从 60 秒增加到 120 秒）
+9. **路径检查**：添加 Worker 路径可访问性检查，确保路径正确
+10. **数据验证**：验证处理后的图像数据有效性，避免传递无效数据给编码器
+11. **用户体验**：提供清晰的进度反馈和取消选项，增强用户体验
 
 ---
 
 **文档更新日志**:
 - 2025-12-26: v1.0 创建文档，记录透明GIF导出和杂色边处理关键技术
 - 2026-02-08: v1.1 更新文档，添加故障排除经验，修正文件路径和实现细节
+- 2026-02-10: v1.2 更新文档，修正Worker路径配置推荐，添加新的故障排除经验和最佳实践

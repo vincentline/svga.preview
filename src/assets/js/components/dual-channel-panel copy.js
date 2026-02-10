@@ -73,55 +73,50 @@
     },
     watch: {
       // 面板打开时初始化参数
-      visible: {
-        immediate: true, // 新增：初始时也检查visible状态
-        handler: function (newVal) {
-          if (newVal) {
-            this.initParams();
-            // 强制显示面板（移到nextTick里，等模板渲染）
-            this.$nextTick(() => {
-              this.forceShowPanel();
-            });
-          }
+      visible: function (newVal) {
+        if (newVal) {
+          this.initParams();
+          // 强制显示面板
+          var self = this;
+          this.$nextTick(function () {
+            self.forceShowPanel();
+          });
         }
       }
     },
     methods: {
       /**
-       * 强制显示面板（修复版：等模板渲染完成，增加重试次数）
+       * 强制显示面板
        */
       forceShowPanel: function (retryCount) {
         retryCount = retryCount || 0;
-        // 增加重试次数到30次（3秒），适配模板渲染延迟
-        if (retryCount > 30) {
+        // 限制重试次数，避免无限递归
+        if (retryCount > 10) {
           console.log('尝试显示面板失败，已达到最大重试次数');
           return;
         }
         
-        // 先等Vue的nextTick（确保模板渲染）
-        this.$nextTick(() => {
-          // 只查找双通道MP4面板
-          var panelElement = document.querySelector('.dual-channel-panel');
-          
-          if (panelElement) {
-            // 确保面板元素被正确渲染（复用项目原有样式类）
-            panelElement.style.display = ''; // 清空手动样式，用项目CSS
-            panelElement.style.visibility = 'visible';
-            panelElement.style.opacity = '1';
-            panelElement.style.right = '0';
-            panelElement.style.zIndex = '1000';
-            // 确保show类被添加（和其他面板一致）
-            if (!panelElement.classList.contains('show')) {
-              panelElement.classList.add('show');
-            }
-          } else {
-            // 添加重试机制
-            var self = this;
-            setTimeout(function() {
-              self.forceShowPanel(retryCount + 1);
-            }, 100);
+        // 只查找双通道MP4面板
+        var panelElement = document.querySelector('.dual-channel-panel');
+        
+        if (panelElement) {
+          // 确保面板元素被正确渲染
+          panelElement.style.display = 'flex';
+          panelElement.style.visibility = 'visible';
+          panelElement.style.opacity = '1';
+          panelElement.style.right = '0';
+          panelElement.style.zIndex = '1000';
+          // 确保show类被添加
+          if (!panelElement.classList.contains('show')) {
+            panelElement.classList.add('show');
           }
-        });
+        } else {
+          // 添加重试机制
+          var self = this;
+          setTimeout(function() {
+            self.forceShowPanel(retryCount + 1);
+          }, 100);
+        }
       },
       
       /**
@@ -245,21 +240,5 @@
       }
     }
   };
-
-  // ===================== 关键新增：注册Vue组件 =====================
-  // 确保Vue加载完成后注册组件（适配Vue2）
-  function registerDualChannelPanel() {
-    if (window.Vue) {
-      // 注册组件，让Vue识别<dual-channel-panel>标签
-      Vue.component('dual-channel-panel', global.MeeWoo.Components.DualChannelPanel);
-      console.log('✅ 双通道MP4面板组件已成功注册到Vue！');
-    } else {
-      // 如果Vue还没加载，延迟500ms重试
-      setTimeout(registerDualChannelPanel, 600);
-    }
-  }
-
-  // 执行注册
-  registerDualChannelPanel();
 
 })(window);

@@ -56,11 +56,6 @@
       panels.forEach(panel => {
         // 监听关闭动画结束事件
         panel.addEventListener('transitionend', (e) => {
-          if (e.propertyName === 'opacity') {
-            // 当关闭动画结束时，重置位置
-            this.resetPanelPosition(panel);
-          }
-
           if (e.propertyName === 'opacity' && panel.classList.contains('closing')) {
             // 原地消失动画结束后，添加fly-out类开始飞出去动画
             panel.classList.add('fly-out');
@@ -79,7 +74,12 @@
             // 动画结束后移除类名，准备下次打开
             setTimeout(() => {
               panel.classList.remove('closing', 'fly-out');
+              // 确保位置被重置
+              this.resetPanelPosition(panel);
             }, 100);
+          } else if (e.propertyName === 'opacity') {
+            // 当其他opacity动画结束时，重置位置
+            this.resetPanelPosition(panel);
           }
         });
 

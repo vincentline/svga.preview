@@ -5662,7 +5662,7 @@ function initApp() {
 
         try {
           // 使用GIFExporter模块导出
-          var blob = await Exporters.GifExporter.export({
+          var blob = await MeeWoo.Exporters.GifExporter.export({
             width: config.width,
             height: config.height,
             fps: fps,
@@ -5718,9 +5718,9 @@ function initApp() {
 
           // 下载文件
           var fileName = this.getGifFileName();
-          Exporters.GifExporter.download(blob, fileName);
+          MeeWoo.Exporters.GifExporter.download(blob, fileName);
 
-          alert('GIF 导出成功！大小: ' + Exporters.GifExporter.formatBytes(blob.size));
+          alert('GIF 导出成功！大小: ' + MeeWoo.Exporters.GifExporter.formatBytes(blob.size));
 
         } finally {
           // 恢复播放状态
@@ -6875,9 +6875,11 @@ function initApp() {
         }
 
         // 使用统一的右侧弹窗管理
+        console.log('打开双通道MP4面板');
         var _this = this;
         Vue.nextTick(function () {
-          _this.openRightPanel('showSvgaToDualChannelPanel');
+          console.log('调用openDualChannelPanel方法');
+          _this.openDualChannelPanel();
         });
 
         // 预加载FFmpeg库（高优先级插队）
@@ -6945,7 +6947,9 @@ function initApp() {
           // 静默失败，使用默认配置
         }
 
-        this.openRightPanel('showMp4ToDualChannelPanel');
+        // 调用统一的openDualChannelPanel方法
+        console.log('调用openDualChannelPanel方法');
+        this.openDualChannelPanel();
 
         // 预加载FFmpeg (高优先级插队)
         Services.FFmpegService.init({ highPriority: true }).catch(function (e) {
@@ -10582,6 +10586,10 @@ function initApp() {
       this.resourceManager = Core.resourceManager;
       this.playerController = null;
 
+      // 重新获取最新的命名空间引用，确保file-validator.js和input-controller.js已经加载
+      var SP = window.MeeWoo || {};
+      var Services = SP.Services;
+
       // 初始化文件验证器和工具库
       this.fileValidator = new Services.FileValidator(this.libraryLoader);
       this.utils = SP.Utils;
@@ -10810,6 +10818,10 @@ function initApp() {
         }
         this.inputController = null;
       }
+
+      // 重新获取最新的命名空间引用，确保input-controller.js已经加载
+      var SP = window.MeeWoo || {};
+      var Controllers = SP.Controllers;
 
       // 初始化输入控制器（处理文件拖拽）
       var inputController = new Controllers.InputController({
