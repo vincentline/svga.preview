@@ -124,6 +124,22 @@
         // 关闭所有类型的右侧面板
         this.activeRightPanel = null;
         this.showStandardMp4Panel = false;
+        
+        /*
+        // 移除手动创建的双通道面板元素
+        setTimeout(function() {
+          var panelElements = document.querySelectorAll('.dual-channel-panel, .dual-channel-panel-root');
+          panelElements.forEach(function(element) {
+            element.classList.remove('show');
+            // 300ms后完全移除元素
+            setTimeout(function() {
+              if (element.parentNode) {
+                element.parentNode.removeChild(element);
+              }
+            }, 300);
+          });
+        }, 0);
+        */
       },
 
       /**
@@ -139,46 +155,33 @@
        * @param {String} panelName - 面板名称或旧的状态变量名
        */
       openRightPanel: function (panelName) {
-        console.log('openRightPanel方法被调用，panelName:', panelName);
         let targetPanel = null;
         let isStandardMp4 = false;
 
         // 确定目标面板类型
         if (panelName === 'showStandardMp4Panel') {
-          console.log('目标面板是标准MP4面板');
           isStandardMp4 = true;
         } else if (panelName === 'gif') {
-          console.log('目标面板是GIF面板');
           targetPanel = 'gif';
         } else if (panelName === 'frames') {
-          console.log('目标面板是Frames面板');
           targetPanel = 'frames';
         } else if (panelName === 'webp') {
-          console.log('目标面板是WebP面板');
           targetPanel = 'webp';
         } else if (panelName === 'to-svga') {
-          console.log('目标面板是To SVGA面板');
           targetPanel = 'to-svga';
         } else if (panelName === 'dual-channel') {
-          console.log('目标面板是双通道MP4面板');
           targetPanel = 'dual-channel';
         } else if (panelName === 'material') {
-          console.log('目标面板是素材面板');
           targetPanel = 'material';
         } else if (panelName === 'showMp4ToSvgaPanel' || panelName === 'showLottieToSvgaPanel' || panelName === 'showFramesToSvgaPanel' || panelName === 'showImagesToSvgaPanel' || panelName === 'showYyevaToSvgaPanel') {
-          console.log('目标面板是转SVGA面板');
           targetPanel = 'to-svga';
         } else if (panelName === 'showMp4ToDualChannelPanel' || panelName === 'showLottieToDualChannelPanel' || panelName === 'showFramesToDualChannelPanel' || panelName === 'showImagesToDualChannelPanel' || panelName === 'showSvgaToDualChannelPanel') {
-          console.log('目标面板是转双通道MP4面板');
           targetPanel = 'dual-channel';
         } else if (panelName === 'showGifPanel') {
-          console.log('目标面板是GIF面板');
           targetPanel = 'gif';
         } else if (panelName === 'showFramesPanel') {
-          console.log('目标面板是Frames面板');
           targetPanel = 'frames';
         } else if (panelName === 'showWebpPanel') {
-          console.log('目标面板是WebP面板');
           targetPanel = 'webp';
         } else {
           // 默认行为
@@ -187,44 +190,29 @@
         }
 
         // 切换逻辑
-        console.log('开始切换面板逻辑，isStandardMp4:', isStandardMp4, 'targetPanel:', targetPanel);
-        console.log('当前activeRightPanel:', this.activeRightPanel);
-        console.log('当前showStandardMp4Panel:', this.showStandardMp4Panel);
-        
         if (isStandardMp4) {
           // 处理标准MP4面板
-          console.log('处理标准MP4面板');
           if (this.showStandardMp4Panel) {
             // 如果当前就是标准MP4面板且处于显示状态，则关闭
-            console.log('当前是标准MP4面板且处于显示状态，关闭它');
             this.showStandardMp4Panel = false;
             this.activeRightPanel = null;
           } else {
             // 否则关闭其他所有面板，打开标准MP4面板
-            console.log('当前不是标准MP4面板，关闭其他面板并打开它');
             this.activeRightPanel = null;
             this.showStandardMp4Panel = true;
           }
         } else {
           // 处理其他面板
-          console.log('处理其他面板，目标面板:', targetPanel);
           if (this.activeRightPanel === targetPanel) {
             // 如果当前就是目标面板且处于显示状态，则关闭所有面板
-            console.log('当前就是目标面板且处于显示状态，关闭所有面板');
             this.activeRightPanel = null;
             this.showStandardMp4Panel = false;
           } else {
             // 否则关闭其他所有面板，打开目标面板
-            console.log('当前不是目标面板，关闭其他面板并打开它');
             this.showStandardMp4Panel = false;
             this.activeRightPanel = targetPanel;
           }
         }
-        
-        console.log('切换后activeRightPanel:', this.activeRightPanel);
-        console.log('切换后showStandardMp4Panel:', this.showStandardMp4Panel);
-        console.log('openRightPanel方法执行完毕');
-        console.log('最终activeRightPanel:', this.activeRightPanel);
       },
 
       // ==================== 统一：To SVGA (MP4/Lottie/Frames) ====================
@@ -356,7 +344,7 @@
        * 打开转双通道面板 (统一入口) - 最终修复版
        */
       openDualChannelPanel: function () {
-        console.log('openDualChannelPanel方法被调用');
+        console.log('=== 打开双通道MP4面板：开始 ===');
         var sourceInfo = {
           name: '',
           sizeWH: '',
@@ -375,149 +363,199 @@
           aspectRatio: 1
         };
 
-        // 根据当前模块设置源信息（增加容错，避免undefined）
+        // 根据当前模块设置源信息（增加更强大的容错处理）
         if (this.currentModule === 'svga') {
-          sourceInfo.name = this.svga.fileInfo.name || '';
-          sourceInfo.sizeWH = this.svga.fileInfo.sizeWH || '';
-          sourceInfo.duration = this.svga.fileInfo.duration || '';
-          sourceInfo.fileSize = this.utils ? this.utils.formatBytes(this.svga.fileInfo.size) : '';
-          sourceInfo.fps = this.svga.fileInfo.fps || 30;
+          // 安全获取svga相关属性
+          var svga = this.svga || {};
+          var fileInfo = svga.fileInfo || {};
+          sourceInfo.name = fileInfo.name || '';
+          sourceInfo.sizeWH = fileInfo.sizeWH || '';
+          sourceInfo.duration = fileInfo.duration || '';
+          sourceInfo.fileSize = this.utils && fileInfo.size ? this.utils.formatBytes(fileInfo.size) : '';
+          sourceInfo.fps = fileInfo.fps || 30;
           sourceInfo.typeLabel = 'SVGA';
 
-          config.width = this.svga.originalWidth || 300;
-          config.height = this.svga.originalHeight || 300;
-          config.fps = this.svga.fileInfo.fps || 30;
-          config.aspectRatio = (this.svga.originalWidth / this.svga.originalHeight) || 1;
+          config.width = svga.originalWidth || 300;
+          config.height = svga.originalHeight || 300;
+          config.fps = fileInfo.fps || 30;
+          config.aspectRatio = svga.originalWidth && svga.originalHeight ? (svga.originalWidth / svga.originalHeight) : 1;
         } else if (this.currentModule === 'mp4') {
-          sourceInfo.name = this.mp4.fileInfo.name || '';
-          sourceInfo.sizeWH = this.mp4.fileInfo.sizeWH || '';
-          sourceInfo.duration = this.mp4.fileInfo.duration || '';
-          sourceInfo.fileSize = this.utils ? this.utils.formatBytes(this.mp4.fileInfo.size) : '';
+          // 安全获取mp4相关属性
+          var mp4 = this.mp4 || {};
+          var fileInfo = mp4.fileInfo || {};
+          sourceInfo.name = fileInfo.name || '';
+          sourceInfo.sizeWH = fileInfo.sizeWH || '';
+          sourceInfo.duration = fileInfo.duration || '';
+          sourceInfo.fileSize = this.utils && fileInfo.size ? this.utils.formatBytes(fileInfo.size) : '';
           sourceInfo.fps = 30;
           sourceInfo.typeLabel = 'MP4';
 
-          config.width = this.mp4.originalWidth || 300;
-          config.height = this.mp4.originalHeight || 300;
-          config.aspectRatio = (this.mp4.originalWidth / this.mp4.originalHeight) || 1;
+          config.width = mp4.originalWidth || 300;
+          config.height = mp4.originalHeight || 300;
+          config.aspectRatio = mp4.originalWidth && mp4.originalHeight ? (mp4.originalWidth / mp4.originalHeight) : 1;
         } else if (this.currentModule === 'lottie') {
-          sourceInfo.name = this.lottie.fileInfo.name || '';
-          sourceInfo.sizeWH = this.lottie.fileInfo.sizeWH || '';
-          sourceInfo.duration = this.lottie.fileInfo.duration || '';
-          sourceInfo.fileSize = this.utils ? this.utils.formatBytes(this.lottie.fileInfo.size) : '';
-          sourceInfo.fps = this.lottie.fileInfo.fps || 30;
+          // 安全获取lottie相关属性
+          var lottie = this.lottie || {};
+          var fileInfo = lottie.fileInfo || {};
+          sourceInfo.name = fileInfo.name || '';
+          sourceInfo.sizeWH = fileInfo.sizeWH || '';
+          sourceInfo.duration = fileInfo.duration || '';
+          sourceInfo.fileSize = this.utils && fileInfo.size ? this.utils.formatBytes(fileInfo.size) : '';
+          sourceInfo.fps = fileInfo.fps || 30;
           sourceInfo.typeLabel = 'Lottie';
 
-          config.width = this.lottie.originalWidth || 300;
-          config.height = this.lottie.originalHeight || 300;
-          config.fps = this.lottie.fileInfo.fps || 30;
-          config.aspectRatio = (this.lottie.originalWidth / this.lottie.originalHeight) || 1;
+          config.width = lottie.originalWidth || 300;
+          config.height = lottie.originalHeight || 300;
+          config.fps = fileInfo.fps || 30;
+          config.aspectRatio = lottie.originalWidth && lottie.originalHeight ? (lottie.originalWidth / lottie.originalHeight) : 1;
           config.muted = true; // Lottie无声
         } else if (this.currentModule === 'frames') {
-          sourceInfo.name = this.frames.fileInfo.name || '';
-          sourceInfo.sizeWH = this.frames.fileInfo.sizeWH || '';
-          sourceInfo.duration = this.frames.fileInfo.duration || '';
-          sourceInfo.fileSize = this.utils ? this.utils.formatBytes(this.frames.fileInfo.size) : '';
-          sourceInfo.fps = this.frames.fileInfo.fps || 25;
+          // 安全获取frames相关属性
+          var frames = this.frames || {};
+          var fileInfo = frames.fileInfo || {};
+          sourceInfo.name = fileInfo.name || '';
+          sourceInfo.sizeWH = fileInfo.sizeWH || '';
+          sourceInfo.duration = fileInfo.duration || '';
+          sourceInfo.fileSize = this.utils && fileInfo.size ? this.utils.formatBytes(fileInfo.size) : '';
+          sourceInfo.fps = fileInfo.fps || 25;
           sourceInfo.typeLabel = '序列帧';
 
-          config.width = this.frames.originalWidth || 300;
-          config.height = this.frames.originalHeight || 300;
-          config.fps = this.frames.fileInfo.fps || 25;
-          config.aspectRatio = (this.frames.originalWidth / this.frames.originalHeight) || 1;
+          config.width = frames.originalWidth || 300;
+          config.height = frames.originalHeight || 300;
+          config.fps = fileInfo.fps || 25;
+          config.aspectRatio = frames.originalWidth && frames.originalHeight ? (frames.originalWidth / frames.originalHeight) : 1;
           config.muted = true; // 序列帧无声
         }
+
+        // 强制设置默认值，确保不会是undefined
+        sourceInfo.name = sourceInfo.name || '';
+        sourceInfo.sizeWH = sourceInfo.sizeWH || '';
+        sourceInfo.duration = sourceInfo.duration || '';
+        sourceInfo.fileSize = sourceInfo.fileSize || '';
+        sourceInfo.fps = sourceInfo.fps || 30;
+        sourceInfo.typeLabel = sourceInfo.typeLabel || '未知';
+
+        config.channelMode = config.channelMode || 'color-left-alpha-right';
+        config.width = config.width || 300;
+        config.height = config.height || 300;
+        config.quality = config.quality || 80;
+        config.fps = config.fps || 30;
+        config.muted = config.muted || false;
+        config.aspectRatio = config.aspectRatio || 1;
 
         console.log('设置双通道MP4源信息和配置:', sourceInfo, config);
         this.dualChannelSourceInfo = sourceInfo;
         this.dualChannelConfig = config;
         
-        console.log('关闭其他面板并打开双通道MP4面板');
         // 关闭其他面板
+        console.log('关闭其他面板并打开双通道MP4面板');
         this.showStandardMp4Panel = false;
         
-        // 核心修复：直接设置activeRightPanel，避免先设null导致的更新丢失
-        this.activeRightPanel = 'dual-channel';
+        // 核心修复：直接设置activeRightPanel
         console.log('直接设置activeRightPanel为dual-channel，当前值:', this.activeRightPanel);
+        this.activeRightPanel = 'dual-channel';
+        console.log('设置后activeRightPanel:', this.activeRightPanel);
 
-        // ==================== 核心修复：插入组件标签 + 挂载Vue组件 ====================
-        // 1. 检查并插入dual-channel-panel标签（解决标签不存在的根源问题）
-        // 关键修改：强制插入到主页面body（兼容iframe/子页面场景）
-        const mainBody = window.top?.document?.body || document.body; // 优先主页面body
-        if (!mainBody.querySelector('dual-channel-panel')) {
-          const panelTag = document.createElement('dual-channel-panel');
-          // 传递props
-          panelTag.setAttribute('visible', 'true');
-          panelTag.setAttribute('source-info', JSON.stringify(this.dualChannelSourceInfo));
-  panelTag.setAttribute('initial-config', JSON.stringify(this.dualChannelConfig));
-  // 加唯一ID，方便定位
-  panelTag.id = 'dual-channel-panel-root';
-  // 插入到主页面body（而非子iframe）
-  mainBody.appendChild(panelTag);
-  console.log('✅ 已插入dual-channel-panel标签到主页面DOM，ID：dual-channel-panel-root');
-}
-        
         // 加载ffmpeg（和转SVGA面板保持一致）
+        console.log('加载ffmpeg库');
         if (this.loadLibrary) {
-          console.log('加载ffmpeg库');
-          this.loadLibrary(['ffmpeg'], true).then(function() {
-            console.log('ffmpeg加载成功');
-          }).catch(function(error) {
+          this.loadLibrary(['ffmpeg'], true).catch(function(error) {
             console.error('ffmpeg加载失败:', error);
           });
         }
         
-        // 使用Vue.nextTick确保面板渲染完成并强制更新
+        // 增强版：确保面板渲染完成并强制更新
         var self = this;
-        this.$nextTick(function() {
-          console.log('Vue.nextTick执行，强制更新组件');
+        
+        /*
+        // 直接在DOM中查找并操作面板元素（不依赖Vue更新）
+        function findAndShowPanel() {
+          // 尝试多种选择器查找面板元素
+          var selectors = [
+            'dual-channel-panel',
+            '.dual-channel-panel',
+            '.dual-channel-panel-root',
+            'body > .dual-channel-panel',
+            'body > .dual-channel-panel-root'
+          ];
           
-          // 2. 手动挂载Vue组件到插入的标签（确保模板渲染）
-          if (window.Vue && window.MeeWoo?.Components?.DualChannelPanel) {
-            try {
-              new Vue({
-                extends: window.MeeWoo.Components.DualChannelPanel,
-                propsData: {
-                  visible: true,
-                  sourceInfo: self.dualChannelSourceInfo,
-                  initialConfig: self.dualChannelConfig,
-                  isConverting: self.isConvertingToDualChannel,
-                  progress: self.dualChannelProgress,
-                  message: self.dualChannelMessage,
-                  disabled: false
-                },
-                methods: {
-                  close: () => self.closeRightPanel(),
-                  cancel: () => self.cancelDualChannelConversion(),
-                  start: () => self.handleDualChannelConvert(self.dualChannelConfig)
-                }
-              }).$mount('dual-channel-panel');
-              console.log('✅ 双通道组件挂载成功');
-            } catch (e) {
-              console.warn('⚠️ 组件挂载兜底:', e);
+          var panelElement = null;
+          for (var i = 0; i < selectors.length; i++) {
+            var selector = selectors[i];
+            panelElement = document.querySelector(selector);
+            if (panelElement && panelElement.nodeType !== 8) {
+              console.log('找到双通道MP4面板元素（使用选择器）:', selector, panelElement);
+              break;
             }
           }
-
+          
+          if (panelElement) {
+            // 确保show类被添加
+            if (panelElement.classList && !panelElement.classList.contains('show')) {
+              panelElement.classList.add('show');
+              console.log('添加show类到双通道MP4面板元素');
+            }
+            
+            // 移除内联样式，使用CSS定义的样式
+            try {
+              if (panelElement.style) {
+                panelElement.style.cssText = '';
+                console.log('移除内联样式，使用CSS定义的样式');
+              }
+            } catch (error) {
+              console.error('移除内联样式时出错:', error);
+            }
+          } else {
+            console.error('未找到双通道MP4面板元素');
+          }
+        }
+        
+        // 立即尝试显示面板
+        findAndShowPanel();
+        */
+        
+        // 第一次nextTick：确保Vue响应状态变化
+        console.log('Vue.nextTick执行，强制更新组件');
+        this.$nextTick(function() {
+          // 强制Vue更新
           if (self.$forceUpdate) {
+            console.log('调用$forceUpdate强制更新组件');
             self.$forceUpdate();
           }
           
-          // 3. 精准显示双通道面板（只操作唯一类名，避免干扰其他面板）
-          setTimeout(() => {
-            // 先隐藏所有右侧面板
-            document.querySelectorAll('.side-panel--right').forEach(p => p.classList.remove('show'));
-            // 只显示双通道面板
-            const dualPanel = document.querySelector('.dual-channel-panel-root') || document.querySelector('dual-channel-panel > div');
-            if (dualPanel) {
-              dualPanel.classList.add('show');
-              dualPanel.style.transform = 'translateX(0) !important';
-              dualPanel.style.display = 'flex !important';
-              dualPanel.style.zIndex = '9999 !important';
-              console.log('✅ 双通道面板样式已强制显示');
-            }
-          }, 100);
+          /*
+          // 再次尝试显示面板
+          findAndShowPanel();
           
-          console.log('最终activeRightPanel:', self.activeRightPanel);
+          // 第二次nextTick：确保DOM更新完成
+          self.$nextTick(function() {
+            // 等待300ms让模板渲染
+            console.log('再次执行Vue.nextTick，等待300ms让模板渲染');
+            setTimeout(() => {
+              // 最后尝试显示面板
+              findAndShowPanel();
+              
+              // 新增：如果Vue渲染失败，使用全局方法手动创建和显示面板
+              setTimeout(() => {
+                var panelElement = document.querySelector('.dual-channel-panel') || 
+                                  document.querySelector('.dual-channel-panel-root');
+                if (!panelElement || panelElement.style.display === 'none' || panelElement.style.visibility === 'hidden') {
+                  console.error('Vue渲染失败，尝试使用全局方法手动创建和显示面板');
+                  // 使用全局方法手动显示面板
+                  if (window.MeeWoo && window.MeeWoo.Utils && window.MeeWoo.Utils.showDualChannelPanel) {
+                    console.log('使用全局方法手动显示面板');
+                    window.MeeWoo.Utils.showDualChannelPanel(self.dualChannelSourceInfo, self.dualChannelConfig);
+                  }
+                } else {
+                  console.log('Vue渲染成功，双通道MP4面板已显示');
+                }
+              }, 500);
+            }, 300);
+          });
+          */
         });
+        
+        console.log('=== 打开双通道MP4面板：完成 ===');
       },
 
       /**
@@ -525,7 +563,6 @@
        */
       handleDualChannelConvert: function (config) {
         this.dualChannelConfig = config;
-        console.log('开始处理双通道转换，配置:', config);
 
         // 标记转换状态
         this.isConvertingToDualChannel = true;
@@ -581,8 +618,20 @@
       // 注意：openSVGAPanel 原来是打开“双通道转SVGA”，现在也统一到 to-svga-panel
       openSVGAPanel: function () { this.openToSvgaPanel(); },
 
-      // 注意：openMP4Panel 原来是打开“SVGA转双通道”，现在统一到 dual-channel-panel
-      openMP4Panel: function () { this.openDualChannelPanel(); }
+      // 注意：openMP4Panel 原来是打开"SVGA转双通道"，现在统一到 dual-channel-panel
+      openMP4Panel: function () { this.openDualChannelPanel(); },
+      
+      // 添加SVGA转双通道MP4的方法重定向
+      openSvgaToDualChannelPanel: function () { this.openDualChannelPanel(); },
+      openYyevaToSvgaPanel: function () { this.openToSvgaPanel(); },
+      openLottieToDualChannelPanel: function () { this.openDualChannelPanel(); },
+      openFramesToDualChannelPanel: function () { this.openDualChannelPanel(); },
+      openStandardMp4Panel: function () { this.showStandardMp4Panel = true; this.activeRightPanel = null; },
+      closeStandardMp4Panel: function () { this.showStandardMp4Panel = false; },
+      openMaterialPanel: function () { this.activeRightPanel = 'material'; },
+      openFramesPanel: function () { this.activeRightPanel = 'frames'; },
+      openWebpPanel: function () { this.activeRightPanel = 'webp'; },
+      openChromaKeyPanel: function () { this.activeRightPanel = 'chromakey'; }
     }
   };
 })(window);

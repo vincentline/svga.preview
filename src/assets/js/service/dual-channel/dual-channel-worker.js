@@ -123,6 +123,11 @@ self.onmessage = function(e) {
   console.log('Worker received task:', task.type, 'Task ID:', task.id);
   
   try {
+    // 验证任务数据结构
+    if (!task || !task.id || !task.type) {
+      throw new Error('Invalid task structure: missing id or type');
+    }
+    
     switch(task.type) {
       case 'composeFrame':
         console.log('Processing composeFrame task');
@@ -136,7 +141,7 @@ self.onmessage = function(e) {
         });
         break;
       case 'composeFrames':
-        console.log('Processing composeFrames task, frame count:', task.data.frames.length);
+        console.log('Processing composeFrames task');
         handleComposeFrames(task).catch(function(error) {
           console.error('Error in handleComposeFrames:', error);
           self.postMessage({
@@ -160,7 +165,7 @@ self.onmessage = function(e) {
   } catch(error) {
     console.error('Error in message handler:', error);
     self.postMessage({
-      id: task.id,
+      id: task ? task.id : null,
       type: 'error',
       error: error.message
     });
@@ -171,46 +176,60 @@ self.onmessage = function(e) {
  * 处理单个帧的合成
  */
 async function handleComposeFrame(task) {
-  console.log('Starting handleComposeFrame, frame data length:', task.frame.data.length, 'width:', task.width, 'height:', task.height);
-  
-  var frameData = task.frame.data;
-  var width = task.width;
-  var height = task.height;
-  var mode = task.mode;
-  var isColorLeftAlphaRight = mode === 'color-left-alpha-right';
-  
-  // 计算双通道图像大小
-  var dualWidth = width * 2;
-  var dualHeight = height;
-  var dualDataSize = dualWidth * dualHeight * 4;
-  
-  console.log('Dual channel image size:', dualWidth, 'x', dualHeight, 'data size:', dualDataSize);
-  
-  // 内存优化：使用内存池分配缓冲区
-  var dualData = memoryPool.getBuffer(dualDataSize);
-  var blackBgData = memoryPool.getBuffer(dualDataSize);
-  
-  console.log('Memory allocated successfully');
-  
-  // 分块处理优化：将图像分成多个块并行处理
-  var blocks = [];
-  console.log('Generating blocks...');
-  for (var y = 0; y < height; y += BLOCK_SIZE) {
-    for (var x = 0; x < width; x += BLOCK_SIZE) {
-      blocks.push({
-        x: x,
-        y: y,
-        width: Math.min(BLOCK_SIZE, width - x),
-        height: Math.min(BLOCK_SIZE, height - y)
-      });
-    }
-  }
-  
-  console.log('Generated', blocks.length, 'blocks');
-  
-  // 并行处理所有块
-  console.log('Starting parallel processing of blocks...');
   try {
+    // 统一数据结构：兼容直接属性和嵌套的data属性
+    var frame = task.frame || (task.data ? task.data.frame : undefined);
+    var width = task.width || (task.data ? task.data.width : undefined);
+    var height = task.height || (task.data ? task.data.height : undefined);
+    var mode = task.mode || (task.data ? task.data.mode : undefined);
+    
+    // 验证数据
+    if (!frame || !frame.data) {
+      throw new Error('Missing frame data');
+    }
+    if (!width || !height) {
+      throw new Error('Missing width or height');
+    }
+    if (!mode) {
+      throw new Error('Missing mode');
+    }
+    
+    console.log('Starting handleComposeFrame, frame data length:', frame.data.length, 'width:', width, 'height:', height, 'mode:', mode);
+    
+    var frameData = frame.data;
+    var isColorLeftAlphaRight = mode === 'color-left-alpha-right';
+    
+    // 计算双通道图像大小
+    var dualWidth = width * 2;
+    var dualHeight = height;
+    var dualDataSize = dualWidth * dualHeight * 4;
+    
+    console.log('Dual channel image size:', dualWidth, 'x', dualHeight, 'data size:', dualDataSize);
+    
+    // 内存优化：使用内存池分配缓冲区
+    var dualData = memoryPool.getBuffer(dualDataSize);
+    var blackBgData = memoryPool.getBuffer(dualDataSize);
+    
+    console.log('Memory allocated successfully');
+    
+    // 分块处理优化：将图像分成多个块并行处理
+    var blocks = [];
+    console.log('Generating blocks...');
+    for (var y = 0; y < height; y += BLOCK_SIZE) {
+      for (var x = 0; x < width; x += BLOCK_SIZE) {
+        blocks.push({
+          x: x,
+          y: y,
+          width: Math.min(BLOCK_SIZE, width - x),
+          height: Math.min(BLOCK_SIZE, height - y)
+        });
+      }
+    }
+    
+    console.log('Generated', blocks.length, 'blocks');
+    
+    // 并行处理所有块
+    console.log('Starting parallel processing of blocks...');
     var processedBlocks = 0;
     var totalBlocks = blocks.length;
     
@@ -233,162 +252,181 @@ async function handleComposeFrame(task) {
       }
     }));
     console.log('Block processing completed');
+    
+    // 使用transferable objects传递数据，减少内存复制
+    console.log('Posting result back to main thread');
+    self.postMessage({
+      id: task.id,
+      type: 'result',
+      result: {
+        blackBgData: blackBgData,
+        dualData: dualData,
+        width: dualWidth,
+        height: dualHeight
+      }
+    }, [blackBgData.buffer, dualData.buffer]);
+    
+    console.log('Result posted successfully');
   } catch (error) {
-    console.error('Error during block processing:', error);
+    console.error('Error in handleComposeFrame:', error);
     throw error;
   }
-  
-  // 使用transferable objects传递数据，减少内存复制
-  console.log('Posting result back to main thread');
-  self.postMessage({
-    id: task.id,
-    type: 'result',
-    result: {
-      blackBgData: blackBgData,
-      dualData: dualData,
-      width: dualWidth,
-      height: dualHeight
-    }
-  }, [blackBgData.buffer, dualData.buffer]);
-  
-  console.log('Result posted successfully');
 }
 
 /**
  * 处理多个帧的合成
  */
 async function handleComposeFrames(task) {
-  console.log('Starting handleComposeFrames, frame count:', task.data.frames.length);
-  
-  var data = task.data;
-  var frames = data.frames;
-  var mode = data.mode;
-  var frameCount = frames.length;
-  
-  if (frameCount === 0) {
-    throw new Error('帧数组不能为空');
-  }
-  
-  console.log('First frame size:', frames[0].width, 'x', frames[0].height);
-  
-  var results = [];
-  var width = frames[0].width;
-  var height = frames[0].height;
-  var isColorLeftAlphaRight = mode === 'color-left-alpha-right';
-  var dualWidth = width * 2;
-  var dualDataSize = dualWidth * height * 4;
-  
-  console.log('Dual channel image size per frame:', dualWidth, 'x', height, 'data size:', dualDataSize);
-  
-  // 分批处理配置
-  const BATCH_SIZE = 20; // 每批处理20帧
-  console.log('Worker使用分批处理，每批', BATCH_SIZE, '帧');
-  
-  // 分批处理帧
-  for (let batchStart = 0; batchStart < frameCount; batchStart += BATCH_SIZE) {
-    const batchEnd = Math.min(batchStart + BATCH_SIZE, frameCount);
-    const batchFrames = frames.slice(batchStart, batchEnd);
-    const batchSize = batchFrames.length;
-    console.log('Worker处理批次:', batchStart, '-', batchEnd, '共', batchSize, '帧');
+  try {
+    // 统一数据结构：兼容直接属性和嵌套的data属性
+    var frames = task.frames || (task.data ? task.data.frames : undefined);
+    var mode = task.mode || (task.data ? task.data.mode : undefined);
     
-    // 并行处理当前批次
-    var framePromises = batchFrames.map(async function(frameData, index) {
-      const frameIndex = batchStart + index;
-      console.log('Processing frame', frameIndex + 1, 'of', frameCount);
+    // 验证数据
+    if (!frames) {
+      throw new Error('Missing frames data');
+    }
+    if (!mode) {
+      throw new Error('Missing mode');
+    }
+    
+    var frameCount = frames.length;
+    if (frameCount === 0) {
+      throw new Error('Empty frames array');
+    }
+    
+    console.log('Starting handleComposeFrames, frame count:', frameCount, 'mode:', mode);
+    
+    console.log('First frame size:', frames[0].width, 'x', frames[0].height);
+    
+    var results = [];
+    var width = frames[0].width;
+    var height = frames[0].height;
+    var isColorLeftAlphaRight = mode === 'color-left-alpha-right';
+    var dualWidth = width * 2;
+    var dualDataSize = dualWidth * height * 4;
+    
+    console.log('Dual channel image size per frame:', dualWidth, 'x', height, 'data size:', dualDataSize);
+    
+    // 分批处理配置
+    const BATCH_SIZE = 20; // 每批处理20帧
+    console.log('Worker使用分批处理，每批', BATCH_SIZE, '帧');
+    
+    // 分批处理帧
+    for (let batchStart = 0; batchStart < frameCount; batchStart += BATCH_SIZE) {
+      const batchEnd = Math.min(batchStart + BATCH_SIZE, frameCount);
+      const batchFrames = frames.slice(batchStart, batchEnd);
+      const batchSize = batchFrames.length;
+      console.log('Worker处理批次:', batchStart, '-', batchEnd, '共', batchSize, '帧');
       
-      // 内存优化：使用内存池分配缓冲区
-      var dualData = memoryPool.getBuffer(dualDataSize);
-      var blackBgData = memoryPool.getBuffer(dualDataSize);
+      // 并行处理当前批次
+      var framePromises = batchFrames.map(async function(frameData, index) {
+        const frameIndex = batchStart + index;
+        console.log('Processing frame', frameIndex + 1, 'of', frameCount);
+        
+        // 验证帧数据
+        if (!frameData || !frameData.data) {
+          console.error('Invalid frame data at index:', frameIndex);
+          return null;
+        }
+        
+        // 内存优化：使用内存池分配缓冲区
+        var dualData = memoryPool.getBuffer(dualDataSize);
+        var blackBgData = memoryPool.getBuffer(dualDataSize);
+        
+        console.log('Memory allocated for frame', frameIndex);
+        
+        // 分块处理优化：将图像分成多个块并行处理
+        var blocks = [];
+        for (var y = 0; y < height; y += BLOCK_SIZE) {
+          for (var x = 0; x < width; x += BLOCK_SIZE) {
+            blocks.push({
+              x: x,
+              y: y,
+              width: Math.min(BLOCK_SIZE, width - x),
+              height: Math.min(BLOCK_SIZE, height - y)
+            });
+          }
+        }
+        
+        console.log('Generated', blocks.length, 'blocks for frame', frameIndex);
+        
+        // 并行处理所有块
+        try {
+          await Promise.all(blocks.map(block => processBlock(
+            block, frameData.data, width, height, dualWidth, dualData, blackBgData, isColorLeftAlphaRight
+          )));
+          console.log('Frame', frameIndex, 'processing completed');
+        } catch (error) {
+          console.error('Error processing frame', frameIndex, ':', error);
+          // 返回空结果，让主线程处理
+          return null;
+        }
+        
+        return {
+          blackBgData: blackBgData,
+          width: dualWidth,
+          height: height
+        };
+      });
       
-      console.log('Memory allocated for frame', frameIndex);
-      
-      // 分块处理优化：将图像分成多个块并行处理
-      var blocks = [];
-      for (var y = 0; y < height; y += BLOCK_SIZE) {
-        for (var x = 0; x < width; x += BLOCK_SIZE) {
-          blocks.push({
-            x: x,
-            y: y,
-            width: Math.min(BLOCK_SIZE, width - x),
-            height: Math.min(BLOCK_SIZE, height - y)
+      // 等待当前批次处理完成
+      console.log('Waiting for batch frames to complete...');
+      try {
+        const batchResults = await Promise.all(framePromises);
+        
+        // 过滤掉空结果
+        const validResults = batchResults.filter(result => result !== null);
+        results.push(...validResults);
+        
+        console.log('Batch processed successfully, valid results:', validResults.length);
+        
+        // 报告批次进度
+        const processedFrames = Math.min(batchEnd, frameCount);
+        var progress = Math.round((processedFrames / frameCount) * 100);
+        
+        // 每5%的进度报告一次
+        if (progress % 5 === 0) {
+          self.postMessage({
+            id: task.id,
+            type: 'progress',
+            progress: progress
           });
         }
-      }
-      
-      console.log('Generated', blocks.length, 'blocks for frame', frameIndex);
-      
-      // 并行处理所有块
-      try {
-        await Promise.all(blocks.map(block => processBlock(
-          block, frameData.data, width, height, dualWidth, dualData, blackBgData, isColorLeftAlphaRight
-        )));
-        console.log('Frame', frameIndex, 'processing completed');
+        
+        // 强制垃圾回收
+        if (typeof gc === 'function') {
+          gc();
+        }
+        console.log('Batch completed, total results so far:', results.length);
       } catch (error) {
-        console.error('Error processing frame', frameIndex, ':', error);
-        // 返回空结果，让主线程处理
-        return null;
+        console.error('Error in batch processing:', error);
+        // 继续处理下一批
+        continue;
       }
-      
-      return {
-        blackBgData: blackBgData,
-        width: dualWidth,
-        height: height
-      };
+    }
+    
+    // 提取transferable objects
+    var transferables = [];
+    results.forEach(result => {
+      transferables.push(result.blackBgData.buffer);
     });
     
-    // 等待当前批次处理完成
-    console.log('Waiting for batch frames to complete...');
-    try {
-      const batchResults = await Promise.all(framePromises);
-      
-      // 过滤掉空结果
-      const validResults = batchResults.filter(result => result !== null);
-      results.push(...validResults);
-      
-      console.log('Batch processed successfully, valid results:', validResults.length);
-      
-      // 报告批次进度
-      const processedFrames = Math.min(batchEnd, frameCount);
-      var progress = Math.round((processedFrames / totalFrames) * 100);
-      
-      // 每5%的进度报告一次
-      if (progress % 5 === 0) {
-        self.postMessage({
-          id: task.id,
-          type: 'progress',
-          progress: progress
-        });
-      }
-      
-      // 强制垃圾回收
-      if (typeof gc === 'function') {
-        gc();
-      }
-      console.log('Batch completed, total results so far:', results.length);
-    } catch (error) {
-      console.error('Error in batch processing:', error);
-      // 继续处理下一批
-      continue;
-    }
+    console.log('Extracted transferable objects, count:', transferables.length);
+    
+    // 使用transferable objects传递数据，减少内存复制
+    console.log('Posting results back to main thread');
+    self.postMessage({
+      id: task.id,
+      type: 'result',
+      result: results
+    }, transferables);
+    
+    console.log('Results posted successfully, total frames processed:', results.length);
+  } catch (error) {
+    console.error('Error in handleComposeFrames:', error);
+    throw error;
   }
-  
-  // 提取transferable objects
-  var transferables = [];
-  results.forEach(result => {
-    transferables.push(result.blackBgData.buffer);
-  });
-  
-  console.log('Extracted transferable objects, count:', transferables.length);
-  
-  // 使用transferable objects传递数据，减少内存复制
-  console.log('Posting results back to main thread');
-  self.postMessage({
-    id: task.id,
-    type: 'result',
-    result: results
-  }, transferables);
-  
-  console.log('Results posted successfully, total frames processed:', results.length);
 }
 
 /**

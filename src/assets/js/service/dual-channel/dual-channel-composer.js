@@ -77,13 +77,69 @@
         modulePath: 'assets/js/service/dual-channel/wasm/dual-channel-core.wasm',  // WebAssembly模块路径
         fallbackToJS: true,             // 不支持WebAssembly时是否回退到JavaScript
         useSIMD: true                   // 是否使用SIMD指令
+      },
+      debug: {
+        enabled: false,                 // 是否启用调试模式
+        performanceMonitoring: true,    // 是否启用性能监控
+        detailedLogging: false,         // 是否启用详细日志
+        memoryProfiling: false,         // 是否启用内存分析
+        benchmarking: false             // 是否启用基准测试
       }
     },
+
+    /**
+     * 性能监控数据
+     */
+    _performanceData: {
+      tasks: [],
+      totalTime: 0,
+      workerTime: 0,
+      mainThreadTime: 0,
+      memoryUsage: [],
+      workerCount: 0,
+      taskCount: 0,
+      errorCount: 0
+    },
+
+    /**
+     * 任务ID计数器
+     */
+    _taskId: 0,
 
     /**
      * Web Worker实例
      */
     _worker: null,
+
+    /**
+     * Worker池实例
+     */
+    _workerPool: null,
+
+    /**
+     * 内存池实例
+     */
+    _memoryPool: null,
+
+    /**
+     * 内存池清理定时器
+     */
+    _memoryClearInterval: null,
+
+    /**
+     * WebAssembly加载器实例
+     */
+    _wasmLoader: null,
+
+    /**
+     * Web Worker实例
+     */
+    _worker: null,
+
+    /**
+     * Worker池实例
+     */
+    _workerPool: null,
 
     /**
      * 任务ID计数器
@@ -111,16 +167,236 @@
     _wasmLoader: null,
 
     /**
+     * 检测Web Worker支持
+     * @returns {boolean} 是否支持Web Worker
+     * @private
+     */
+    _isWorkerSupported: function() {
+        return typeof Worker !== 'undefined';
+    },
+
+    /**
+     * 开始性能计时
+     * @param {string} taskType - 任务类型
+     * @param {Object} taskData - 任务数据
+     * @returns {Object} - 计时对象
+     * @private
+     */
+    _startPerformanceTimer: function(taskType, taskData) {
+        if (!this.defaults.debug.performanceMonitoring) {
+            return null;
+        }
+
+        const startTime = performance.now();
+        const memorySnapshot = this._getMemoryUsage();
+
+        return {
+            taskType: taskType,
+            startTime: startTime,
+            startMemory: memorySnapshot,
+            taskData: JSON.parse(JSON.stringify(taskData)),
+            timestamp: new Date().toISOString()
+        };
+    },
+
+    /**
+     * 结束性能计时并记录数据
+     * @param {Object} timer - 计时对象
+     * @param {boolean} success - 是否成功
+     * @param {string} processingMethod - 处理方法（worker/main-thread）
+     * @private
+     */
+    _endPerformanceTimer: function(timer, success, processingMethod) {
+        if (!timer || !this.defaults.debug.performanceMonitoring) {
+            return;
+        }
+
+        const endTime = performance.now();
+        const endMemory = this._getMemoryUsage();
+        const duration = endTime - timer.startTime;
+
+        const taskData = {
+            id: ++this._performanceData.taskCount,
+            type: timer.taskType,
+            duration: duration,
+            startTime: timer.startTime,
+            endTime: endTime,
+            success: success,
+            processingMethod: processingMethod,
+            startMemory: timer.startMemory,
+            endMemory: endMemory,
+            memoryDelta: endMemory.totalJSHeapSize - timer.startMemory.totalJSHeapSize,
+            timestamp: timer.timestamp,
+            taskDetails: timer.taskData
+        };
+
+        this._performanceData.tasks.push(taskData);
+        this._performanceData.totalTime += duration;
+
+        if (processingMethod === 'worker') {
+            this._performanceData.workerTime += duration;
+        } else {
+            this._performanceData.mainThreadTime += duration;
+        }
+
+        if (!success) {
+            this._performanceData.errorCount++;
+        }
+
+        this._performanceData.memoryUsage.push(endMemory);
+
+        if (this.defaults.debug.detailedLogging) {
+            console.log(`[Performance] ${timer.taskType} - ${processingMethod} - ${duration.toFixed(2)}ms - ${success ? 'Success' : 'Error'}`);
+        }
+    },
+
+    /**
+     * 获取内存使用情况
+     * @returns {Object} - 内存使用数据
+     * @private
+     */
+    _getMemoryUsage: function() {
+        if (typeof performance !== 'undefined' && performance.memory) {
+            return {
+                totalJSHeapSize: performance.memory.totalJSHeapSize,
+                usedJSHeapSize: performance.memory.usedJSHeapSize,
+                jsHeapSizeLimit: performance.memory.jsHeapSizeLimit
+            };
+        }
+        return {
+            totalJSHeapSize: 0,
+            usedJSHeapSize: 0,
+            jsHeapSizeLimit: 0
+        };
+    },
+
+    /**
+     * 生成性能报告
+     * @returns {Object} - 性能报告
+     */
+    generatePerformanceReport: function() {
+        const tasks = this._performanceData.tasks;
+        const report = {
+            summary: {
+                totalTasks: tasks.length,
+                totalTime: this._performanceData.totalTime,
+                averageTaskTime: tasks.length > 0 ? this._performanceData.totalTime / tasks.length : 0,
+                workerTime: this._performanceData.workerTime,
+                mainThreadTime: this._performanceData.mainThreadTime,
+                errorCount: this._performanceData.errorCount,
+                successRate: tasks.length > 0 ? ((tasks.length - this._performanceData.errorCount) / tasks.length * 100).toFixed(2) + '%' : '0%'
+            },
+            taskBreakdown: {},
+            memoryUsage: {
+                peak: this._performanceData.memoryUsage.length > 0 ? 
+                    Math.max(...this._performanceData.memoryUsage.map(m => m.usedJSHeapSize)) : 0,
+                average: this._performanceData.memoryUsage.length > 0 ? 
+                    this._performanceData.memoryUsage.reduce((sum, m) => sum + m.usedJSHeapSize, 0) / this._performanceData.memoryUsage.length : 0
+            },
+            tasks: tasks.slice(-10) // 只返回最近10个任务的详细数据
+        };
+
+        // 按任务类型统计
+        tasks.forEach(task => {
+            if (!report.taskBreakdown[task.type]) {
+                report.taskBreakdown[task.type] = {
+                    count: 0,
+                    totalTime: 0,
+                    averageTime: 0,
+                    successCount: 0
+                };
+            }
+
+            report.taskBreakdown[task.type].count++;
+            report.taskBreakdown[task.type].totalTime += task.duration;
+            report.taskBreakdown[task.type].averageTime = report.taskBreakdown[task.type].totalTime / report.taskBreakdown[task.type].count;
+            if (task.success) {
+                report.taskBreakdown[task.type].successCount++;
+            }
+        });
+
+        return report;
+    },
+
+    /**
+     * 清除性能数据
+     */
+    clearPerformanceData: function() {
+        this._performanceData = {
+            tasks: [],
+            totalTime: 0,
+            workerTime: 0,
+            mainThreadTime: 0,
+            memoryUsage: [],
+            workerCount: 0,
+            taskCount: 0,
+            errorCount: 0
+        };
+    },
+
+    /**
+     * 输出调试日志
+     * @param {string} level - 日志级别
+     * @param {string} message - 日志消息
+     * @param {Object} data - 附加数据
+     * @private
+     */
+    _debugLog: function(level, message, data) {
+        if (!this.defaults.debug.enabled) {
+            return;
+        }
+
+        const logMethod = console[level] || console.log;
+        const timestamp = new Date().toISOString();
+
+        if (data && this.defaults.debug.detailedLogging) {
+            logMethod(`[${timestamp}] [${level.toUpperCase()}] ${message}`, data);
+        } else {
+            logMethod(`[${timestamp}] [${level.toUpperCase()}] ${message}`);
+        }
+    },
+
+    /**
      * 初始化Web Worker
      * @private
      */
     _initWorker: function() {
         if (!this._worker) {
             try {
+                // 检测Worker支持
+                if (!this._isWorkerSupported()) {
+                    throw new Error('当前浏览器不支持Web Worker');
+                }
+                
                 console.log('开始初始化Web Worker');
                 
-                // 直接内联Worker代码，避免路径问题（最可靠的方法）
-                const workerCode = `
+                // 尝试使用传统路径创建Worker
+                try {
+                    // 直接使用默认的workerPath，它是相对于HTML文件的路径
+                    const workerPath = this.defaults.workerPath;
+                    console.log('尝试加载外部Worker文件:', workerPath);
+                    
+                    // 创建Worker
+                    this._worker = new Worker(workerPath);
+                    console.log('Web Worker 外部文件加载成功');
+                } catch (error) {
+                    console.warn('Worker加载失败，尝试使用相对路径:', error.message);
+                    
+                    // 回退到相对路径
+                    const workerPath = './dual-channel-worker.js';
+                    console.log('尝试加载外部Worker文件（相对路径）:', workerPath);
+                    
+                    // 创建Worker
+                    this._worker = new Worker(workerPath);
+                    console.log('Web Worker 外部文件（相对路径）加载成功');
+                }
+            } catch (error) {
+                console.error('Worker外部文件加载失败:', error);
+                
+                // 回退到内联Worker代码
+                try {
+                    console.log('回退到内联Worker代码');
+                    const workerCode = `
 // 分块大小配置
 const BLOCK_SIZE = 128;
 
@@ -140,10 +416,9 @@ self.onmessage = function(e) {
           console.error('Error in handleComposeFrame:', error);
           self.postMessage({ id: task.id, type: 'error', error: error.message });
         });
-
         break;
       case 'composeFrames':
-        console.log('Processing composeFrames task, frame count:', task.data.frames.length);
+        console.log('Processing composeFrames task, frame count:', task.frames ? task.frames.length : (task.data ? task.data.frames.length : 0));
         handleComposeFrames(task).catch(function(error) {
           console.error('Error in handleComposeFrames:', error);
           self.postMessage({ id: task.id, type: 'error', error: error.message });
@@ -159,36 +434,32 @@ self.onmessage = function(e) {
 };
 
 async function handleComposeFrame(task) {
-  console.log('Starting handleComposeFrame, frame data length:', task.frame.data.length, 'width:', task.width, 'height:', task.height);
+  // 兼容两种数据结构：直接的属性或嵌套的data属性
+  var frame = task.frame || (task.data ? task.data.frame : undefined);
+  var width = task.width || (task.data ? task.data.width : undefined);
+  var height = task.height || (task.data ? task.data.height : undefined);
+  var mode = task.mode || (task.data ? task.data.mode : undefined);
   
-  var frameData = task.frame.data;
-  var width = task.width;
-  var height = task.height;
-  var mode = task.mode;
+  if (!frame || !frame.data) {
+    throw new Error('缺少frame数据');
+  }
+  
+  var frameData = frame.data;
   var isColorLeftAlphaRight = mode === 'color-left-alpha-right';
-  
   var dualWidth = width * 2;
   var dualHeight = height;
   var dualDataSize = dualWidth * dualHeight * 4;
   
-  console.log('Dual channel image size:', dualWidth, 'x', dualHeight, 'data size:', dualDataSize);
-  
   var dualData = new Uint8ClampedArray(dualDataSize);
   var blackBgData = new Uint8ClampedArray(dualDataSize);
   
-  console.log('Memory allocated successfully');
-  
   var blocks = [];
-  console.log('Generating blocks...');
   for (var y = 0; y < height; y += BLOCK_SIZE) {
     for (var x = 0; x < width; x += BLOCK_SIZE) {
       blocks.push({ x: x, y: y, width: Math.min(BLOCK_SIZE, width - x), height: Math.min(BLOCK_SIZE, height - y) });
     }
   }
   
-  console.log('Generated', blocks.length, 'blocks');
-  
-  console.log('Starting parallel processing of blocks...');
   try {
     var processedBlocks = 0;
     var totalBlocks = blocks.length;
@@ -203,30 +474,27 @@ async function handleComposeFrame(task) {
         self.postMessage({ id: task.id, type: 'progress', progress: progress });
       }
     }));
-    console.log('Block processing completed');
   } catch (error) {
     console.error('Error during block processing:', error);
     throw error;
   }
   
-  console.log('Posting result back to main thread');
   self.postMessage({ id: task.id, type: 'result', result: { blackBgData: blackBgData, dualData: dualData, width: dualWidth, height: dualHeight } }, [blackBgData.buffer, dualData.buffer]);
-  console.log('Result posted successfully');
 }
 
 async function handleComposeFrames(task) {
-  console.log('Starting handleComposeFrames, frame count:', task.data.frames.length);
+  // 兼容两种数据结构：直接的frames属性或嵌套的data.frames
+  var frames = task.frames || (task.data ? task.data.frames : undefined);
+  var mode = task.mode || (task.data ? task.data.mode : undefined);
   
-  var data = task.data;
-  var frames = data.frames;
-  var mode = data.mode;
+  if (!frames) {
+    throw new Error('缺少frames数据');
+  }
+  
   var frameCount = frames.length;
-  
   if (frameCount === 0) {
     throw new Error('帧数组不能为空');
   }
-  
-  console.log('First frame size:', frames[0].width, 'x', frames[0].height);
   
   var results = [];
   var width = frames[0].width;
@@ -235,25 +503,18 @@ async function handleComposeFrames(task) {
   var dualWidth = width * 2;
   var dualDataSize = dualWidth * height * 4;
   
-  console.log('Dual channel image size per frame:', dualWidth, 'x', height, 'data size:', dualDataSize);
-  
   const BATCH_SIZE = 20;
-  console.log('Worker使用分批处理，每批', BATCH_SIZE, '帧');
   
   for (let batchStart = 0; batchStart < frameCount; batchStart += BATCH_SIZE) {
     const batchEnd = Math.min(batchStart + BATCH_SIZE, frameCount);
     const batchFrames = frames.slice(batchStart, batchEnd);
     const batchSize = batchFrames.length;
-    console.log('Worker处理批次:', batchStart, '-', batchEnd, '共', batchSize, '帧');
     
     var framePromises = batchFrames.map(async function(frameData, index) {
       const frameIndex = batchStart + index;
-      console.log('Processing frame', frameIndex + 1, 'of', frameCount);
       
       var dualData = new Uint8ClampedArray(dualDataSize);
       var blackBgData = new Uint8ClampedArray(dualDataSize);
-      
-      console.log('Memory allocated for frame', frameIndex);
       
       var blocks = [];
       for (var y = 0; y < height; y += BLOCK_SIZE) {
@@ -262,11 +523,8 @@ async function handleComposeFrames(task) {
         }
       }
       
-      console.log('Generated', blocks.length, 'blocks for frame', frameIndex);
-      
       try {
         await Promise.all(blocks.map(block => processBlock(block, frameData.data, width, height, dualWidth, dualData, blackBgData, isColorLeftAlphaRight)));
-        console.log('Frame', frameIndex, 'processing completed');
       } catch (error) {
         console.error('Error processing frame', frameIndex, ':', error);
         return null;
@@ -275,14 +533,11 @@ async function handleComposeFrames(task) {
       return { blackBgData: blackBgData, width: dualWidth, height: height };
     });
     
-    console.log('Waiting for batch frames to complete...');
     try {
       const batchResults = await Promise.all(framePromises);
       
       const validResults = batchResults.filter(result => result !== null);
       results.push(...validResults);
-      
-      console.log('Batch processed successfully, valid results:', validResults.length);
       
       const processedFrames = Math.min(batchEnd, frameCount);
       var progress = Math.round((processedFrames / frameCount) * 100);
@@ -290,8 +545,6 @@ async function handleComposeFrames(task) {
       if (progress % 5 === 0) {
         self.postMessage({ id: task.id, type: 'progress', progress: progress });
       }
-      
-      console.log('Batch completed, total results so far:', results.length);
     } catch (error) {
       console.error('Error in batch processing:', error);
       continue;
@@ -303,12 +556,7 @@ async function handleComposeFrames(task) {
     transferables.push(result.blackBgData.buffer);
   });
   
-  console.log('Extracted transferable objects, count:', transferables.length);
-  
-  console.log('Posting results back to main thread');
   self.postMessage({ id: task.id, type: 'result', result: results }, transferables);
-  
-  console.log('Results posted successfully, total frames processed:', results.length);
 }
 
 function processBlock(block, frameData, width, height, dualWidth, dualData, blackBgData, isColorLeftAlphaRight) {
@@ -318,14 +566,10 @@ function processBlock(block, frameData, width, height, dualWidth, dualData, blac
     var blockWidth = block.width;
     var blockHeight = block.height;
     
-    console.log('Processing block:', startX, ',', startY, 'size:', blockWidth, 'x', blockHeight);
-    
     var inv255 = 1 / 255;
     
     try {
       processBlockWithoutSIMD(block, frameData, width, height, dualWidth, dualData, blackBgData, isColorLeftAlphaRight, inv255);
-      
-      console.log('Block processing completed:', startX, ',', startY);
       resolve();
     } catch (error) {
       console.error('Error processing block:', error, 'at position:', startX, ',', startY);
@@ -340,21 +584,15 @@ function processBlockWithoutSIMD(block, frameData, width, height, dualWidth, dua
   var blockWidth = block.width;
   var blockHeight = block.height;
   
-  console.log('Processing block without SIMD:', startX, ',', startY, 'size:', blockWidth, 'x', blockHeight);
-  
-  var pixelCount = 0;
   for (var y = startY; y < startY + blockHeight; y++) {
     for (var x = startX; x < startX + blockWidth; x++) {
       try {
         processSinglePixel(x, y, frameData, width, dualWidth, dualData, blackBgData, isColorLeftAlphaRight, inv255);
-        pixelCount++;
       } catch (error) {
         console.error('Error processing pixel at', x, ',', y, ':', error);
       }
     }
   }
-  
-  console.log('Block processing completed, total pixels:', pixelCount);
 }
 
 function processSinglePixel(x, y, frameData, width, dualWidth, dualData, blackBgData, isColorLeftAlphaRight, inv255) {
@@ -445,19 +683,19 @@ function processSinglePixel(x, y, frameData, width, dualWidth, dualData, blackBg
   }
   blackBgData[rightIdx + 3] = 255;
 }
-                `;
-                
-                // 创建Blob URL
-                const blob = new Blob([workerCode], { type: 'application/javascript' });
-                const blobUrl = URL.createObjectURL(blob);
-                console.log('创建Worker Blob URL成功:', blobUrl);
-                
-                // 创建Worker
-                this._worker = new Worker(blobUrl);
-                console.log('Web Worker 内联代码加载成功');
-            } catch (error) {
-                console.error('Worker内联代码加载失败:', error);
-                throw new Error('无法加载Web Worker: ' + error.message);
+                    `;
+                    
+                    // 创建Blob URL
+                    const blob = new Blob([workerCode], { type: 'application/javascript' });
+                    const blobUrl = URL.createObjectURL(blob);
+                    
+                    // 创建Worker
+                    this._worker = new Worker(blobUrl);
+                    console.log('Web Worker 内联代码加载成功');
+                } catch (inlineError) {
+                    console.error('Worker内联代码加载失败:', inlineError);
+                    throw new Error('无法加载Web Worker: ' + inlineError.message);
+                }
             }
         }
     },
@@ -538,7 +776,7 @@ function processSinglePixel(x, y, frameData, width, dualWidth, dualData, blackBg
     },
 
     /**
-     * 发送任务到Web Worker（已修改为在主线程模拟处理）
+     * 发送任务到Web Worker
      * @param {string} type - 任务类型
      * @param {Object} data - 任务数据
      * @param {Object} options - 选项
@@ -546,13 +784,171 @@ function processSinglePixel(x, y, frameData, width, dualWidth, dualData, blackBg
      * @returns {Promise<Object>} - 任务结果
      * @private
      */
-    _sendTask: async function(type, data, options) {
+    _sendTask: function(type, data, options) {
         options = options || {};
         const onProgress = options.onProgress || function() {};
         
+        // 开始性能计时
+        const timer = this._startPerformanceTimer(type, data);
+        
+        return new Promise((resolve, reject) => {
+            try {
+                // 检测Worker支持
+                if (!this._isWorkerSupported()) {
+                    this._debugLog('warn', '当前浏览器不支持Web Worker，回退到主线程处理');
+                    this._processInMainThread(type, data, options)
+                        .then(result => {
+                            this._endPerformanceTimer(timer, true, 'main-thread');
+                            resolve(result);
+                        })
+                        .catch(error => {
+                            this._endPerformanceTimer(timer, false, 'main-thread');
+                            reject(error);
+                        });
+                    return;
+                }
+                
+                // 尝试使用Worker池
+                if (this.defaults.workerPool.enabled && window.MeeWoo && window.MeeWoo.Services && window.MeeWoo.Services.WorkerPool) {
+                    this._debugLog('info', '使用Worker池发送任务', { type: type });
+                    
+                    // 初始化Worker池
+                    if (!this._workerPool) {
+                        this._workerPool = window.MeeWoo.Services.WorkerPool;
+                        this._debugLog('info', 'Worker池初始化成功');
+                    }
+                    
+                    // 提交任务到Worker池
+                    this._workerPool.submitTask(type, data, {
+                        onProgress: onProgress,
+                        priority: type === 'composeFrames' ? 8 : 5 // 批量任务优先级更高
+                    })
+                    .then(result => {
+                        this._endPerformanceTimer(timer, true, 'worker');
+                        resolve(result);
+                    })
+                    .catch(error => {
+                        this._endPerformanceTimer(timer, false, 'worker');
+                        reject(error);
+                    });
+                } else {
+                    // 回退到单个Worker
+                    this._debugLog('info', '回退到单个Worker发送任务', { type: type });
+                    
+                    // 确保Worker已初始化
+                    this._initWorker();
+                    
+                    // 生成任务ID
+                    const taskId = ++this._taskId;
+                    
+                    // 准备任务数据
+                    const taskData = {
+                        id: taskId,
+                        type: type,
+                        ...data
+                    };
+                    
+                    // 处理Worker消息
+                    const handleMessage = (e) => {
+                        const message = e.data;
+                        
+                        if (message.id === taskId) {
+                            switch (message.type) {
+                                case 'result':
+                                    this._debugLog('info', 'Web Worker任务完成', { type: type, taskId: taskId });
+                                    this._worker.removeEventListener('message', handleMessage);
+                                    this._worker.removeEventListener('error', handleError);
+                                    this._endPerformanceTimer(timer, true, 'worker');
+                                    resolve(message.result);
+                                    break;
+                                case 'progress':
+                                    onProgress(message.progress / 100);
+                                    break;
+                                case 'error':
+                                    this._debugLog('error', 'Web Worker任务错误', { error: message.error, taskId: taskId });
+                                    this._worker.removeEventListener('message', handleMessage);
+                                    this._worker.removeEventListener('error', handleError);
+                                    this._endPerformanceTimer(timer, false, 'worker');
+                                    reject(new Error('Worker处理失败: ' + message.error));
+                                    break;
+                            }
+                        }
+                    };
+                    
+                    // 处理Worker错误
+                    const handleError = (error) => {
+                        this._debugLog('error', 'Web Worker错误', { error: error.message });
+                        this._worker.removeEventListener('message', handleMessage);
+                        this._worker.removeEventListener('error', handleError);
+                        this._endPerformanceTimer(timer, false, 'worker');
+                        reject(new Error('Worker执行错误: ' + error.message));
+                    };
+                    
+                    // 添加事件监听器
+                    this._worker.addEventListener('message', handleMessage);
+                    this._worker.addEventListener('error', handleError);
+                    
+                    // 发送任务到Worker
+                    this._debugLog('info', '发送任务数据到Worker', { taskId: taskId, dataSize: JSON.stringify(data).length });
+                    this._worker.postMessage(taskData, this._getTransferables(taskData));
+                    this._debugLog('info', '任务发送成功', { taskId: taskId });
+                }
+            } catch (error) {
+                this._debugLog('error', '发送任务到Worker失败', { error: error.message });
+                // Worker失败时回退到主线程处理
+                this._processInMainThread(type, data, options)
+                    .then(result => {
+                        this._endPerformanceTimer(timer, true, 'main-thread');
+                        resolve(result);
+                    })
+                    .catch(err => {
+                        this._endPerformanceTimer(timer, false, 'main-thread');
+                        reject(err);
+                    });
+            }
+        });
+    },
+    
+    /**
+     * 获取可转移对象，优化数据传输
+     * @param {Object} data - 任务数据
+     * @returns {Array} - 可转移对象数组
+     * @private
+     */
+    _getTransferables: function(data) {
+        const transferables = [];
+        
+        // 查找并添加可转移对象
+        if (data.frame && data.frame.data) {
+            transferables.push(data.frame.data.buffer);
+        }
+        
+        if (data.frames) {
+            data.frames.forEach(frame => {
+                if (frame.data) {
+                    transferables.push(frame.data.buffer);
+                }
+            });
+        }
+        
+        return transferables;
+    },
+    
+    /**
+     * 在主线程处理任务（Worker失败时的回退方案）
+     * @param {string} type - 任务类型
+     * @param {Object} data - 任务数据
+     * @param {Object} options - 选项
+     * @returns {Promise<Object>} - 任务结果
+     * @private
+     */
+    _processInMainThread: async function(type, data, options) {
+        options = options || {};
+        const onProgress = options.onProgress || function() {};
+        
+        console.log('Worker失败，在主线程处理任务，类型:', type);
+        
         try {
-            console.log('在主线程模拟处理任务，类型:', type);
-            
             // 模拟进度
             onProgress(0.25);
             await new Promise(resolve => setTimeout(resolve, 200));
@@ -589,7 +985,7 @@ function processSinglePixel(x, y, frameData, width, dualWidth, dualData, blackBg
             
             return { success: true };
         } catch (error) {
-            console.error('处理任务失败:', error);
+            console.error('主线程处理任务失败:', error);
             throw new Error('处理任务失败: ' + error.message);
         }
     },
@@ -649,6 +1045,13 @@ function processSinglePixel(x, y, frameData, width, dualWidth, dualData, blackBg
       const width = frame.width;
       const height = frame.height;
       
+      this._debugLog('info', '开始单帧合成', {
+        width: width,
+        height: height,
+        mode: mode,
+        format: format
+      });
+      
       // 计算JPEG质量（自适应）
       let jpegQuality = quality;
       if (jpegQuality === undefined && format === 'jpeg') {
@@ -660,57 +1063,71 @@ function processSinglePixel(x, y, frameData, width, dualWidth, dualData, blackBg
         } else {
           jpegQuality = 0.6;
         }
+        this._debugLog('info', '计算自适应JPEG质量', {
+          totalPixels: totalPixels,
+          quality: jpegQuality
+        });
       }
 
-      // 使用Web Worker处理像素计算
-      const result = await this._sendTask('composeFrame', {
-        frame: frame,
-        mode: mode,
-        width: width,
-        height: height
-      }, {
-        onProgress: onProgress
-      });
+      try {
+        // 使用Web Worker处理像素计算
+        const result = await this._sendTask('composeFrame', {
+          frame: frame,
+          mode: mode,
+          width: width,
+          height: height
+        }, {
+          onProgress: onProgress
+        });
 
-      // 转换为ImageData
-      const dualCanvas = document.createElement('canvas');
-      dualCanvas.width = width * 2;
-      dualCanvas.height = height;
-      const dualCtx = dualCanvas.getContext('2d', { 
-        alpha: true,
-        willReadFrequently: true 
-      });
-      
-      const dualImageData = dualCtx.createImageData(width * 2, height);
-      dualImageData.data.set(result.dualData);
-      dualCtx.putImageData(dualImageData, 0, 0);
+        // 转换为ImageData
+        const dualCanvas = document.createElement('canvas');
+        dualCanvas.width = width * 2;
+        dualCanvas.height = height;
+        const dualCtx = dualCanvas.getContext('2d', { 
+          alpha: true,
+          willReadFrequently: true 
+        });
+        
+        const dualImageData = dualCtx.createImageData(width * 2, height);
+        dualImageData.data.set(result.dualData);
+        dualCtx.putImageData(dualImageData, 0, 0);
 
-      // 合成黑底并转换为目标格式
-      const blackBgCanvas = document.createElement('canvas');
-      blackBgCanvas.width = width * 2;
-      blackBgCanvas.height = height;
-      const blackBgCtx = blackBgCanvas.getContext('2d');
-      const blackBgImageData = blackBgCtx.createImageData(width * 2, height);
-      blackBgImageData.data.set(result.blackBgData);
-      blackBgCtx.putImageData(blackBgImageData, 0, 0);
+        // 合成黑底并转换为目标格式
+        const blackBgCanvas = document.createElement('canvas');
+        blackBgCanvas.width = width * 2;
+        blackBgCanvas.height = height;
+        const blackBgCtx = blackBgCanvas.getContext('2d');
+        const blackBgImageData = blackBgCtx.createImageData(width * 2, height);
+        blackBgImageData.data.set(result.blackBgData);
+        blackBgCtx.putImageData(blackBgImageData, 0, 0);
 
-      // 转换为目标格式
-      const blob = await new Promise(function(resolve) {
-        if (format === 'png') {
-          blackBgCanvas.toBlob(resolve, 'image/png');
-        } else {
-          blackBgCanvas.toBlob(resolve, 'image/jpeg', jpegQuality);
-        }
-      });
-      const buffer = await blob.arrayBuffer();
-      
-      // 清理Canvas资源
-      dualCanvas.width = 0;
-      dualCanvas.height = 0;
-      blackBgCanvas.width = 0;
-      blackBgCanvas.height = 0;
-      
-      return new Uint8Array(buffer);
+        // 转换为目标格式
+        const blob = await new Promise(function(resolve) {
+          if (format === 'png') {
+            blackBgCanvas.toBlob(resolve, 'image/png');
+          } else {
+            blackBgCanvas.toBlob(resolve, 'image/jpeg', jpegQuality);
+          }
+        });
+        const buffer = await blob.arrayBuffer();
+        
+        // 清理Canvas资源
+        dualCanvas.width = 0;
+        dualCanvas.height = 0;
+        blackBgCanvas.width = 0;
+        blackBgCanvas.height = 0;
+        
+        this._debugLog('info', '单帧合成完成', {
+          outputSize: buffer.byteLength,
+          format: format
+        });
+        
+        return new Uint8Array(buffer);
+      } catch (error) {
+        this._debugLog('error', '单帧合成失败', { error: error.message });
+        throw error;
+      }
     },
 
     /**
@@ -748,7 +1165,11 @@ function processSinglePixel(x, y, frameData, width, dualWidth, dualData, blackBg
       const onCancel = options.onCancel || function() { return false; };
       
       const frameCount = frames.length;
-      console.log('开始批量合成双通道图像，帧数:', frameCount, '格式:', format, '模式:', mode);
+      this._debugLog('info', '开始批量合成双通道图像', {
+        frameCount: frameCount,
+        format: format,
+        mode: mode
+      });
       
       if (frameCount === 0) {
         throw new Error('帧数组不能为空');
@@ -759,7 +1180,12 @@ function processSinglePixel(x, y, frameData, width, dualWidth, dualData, blackBg
       // 获取尺寸
       const width = frames[0].width;
       const height = frames[0].height;
-      console.log('图像尺寸:', width, 'x', height, '双通道尺寸:', width * 2, 'x', height);
+      this._debugLog('info', '图像尺寸信息', {
+        width: width,
+        height: height,
+        dualWidth: width * 2,
+        dualHeight: height
+      });
       
       // 计算JPEG质量（自适应）
       let jpegQuality = quality;
@@ -772,95 +1198,129 @@ function processSinglePixel(x, y, frameData, width, dualWidth, dualData, blackBg
         } else {
           jpegQuality = 0.6;
         }
-        console.log('自适应JPEG质量:', jpegQuality);
+        this._debugLog('info', '计算自适应JPEG质量', {
+          totalPixels: totalPixels,
+          quality: jpegQuality
+        });
       }
 
       // 分批处理配置
       const BATCH_SIZE = 50; // 每批处理50帧
-      console.log('使用分批处理，每批', BATCH_SIZE, '帧');
+      this._debugLog('info', '分批处理配置', {
+        batchSize: BATCH_SIZE,
+        totalBatches: Math.ceil(frameCount / BATCH_SIZE)
+      });
 
-      // 分批处理帧
-      for (let batchStart = 0; batchStart < frameCount; batchStart += BATCH_SIZE) {
-        if (onCancel()) {
-          throw new Error('用户取消');
-        }
-
-        const batchEnd = Math.min(batchStart + BATCH_SIZE, frameCount);
-        const batchFrames = frames.slice(batchStart, batchEnd);
-        const batchSize = batchFrames.length;
-        console.log('处理批次:', batchStart, '-', batchEnd, '共', batchSize, '帧');
-
-        // 使用Web Worker处理当前批次
-        console.log('开始使用Web Worker处理批次');
-        const batchResult = await this._sendTask('composeFrames', {
-          frames: batchFrames,
-          mode: mode,
-          width: width,
-          height: height,
-          frameCount: batchSize
-        }, {
-          onProgress: function(batchProgress) {
-            const overallProgress = (batchStart + batchProgress * batchSize) / frameCount;
-            onProgress(overallProgress);
-          }
-        });
-        console.log('Web Worker批次处理完成，返回结果数:', batchResult.length);
-
-        // 转换批次中的每一帧
-        for (let i = 0; i < batchSize; i++) {
+      try {
+        // 分批处理帧
+        for (let batchStart = 0; batchStart < frameCount; batchStart += BATCH_SIZE) {
           if (onCancel()) {
             throw new Error('用户取消');
           }
 
-          try {
-            // 创建临时Canvas
-            const blackBgCanvas = document.createElement('canvas');
-            blackBgCanvas.width = width * 2;
-            blackBgCanvas.height = height;
-            const blackBgCtx = blackBgCanvas.getContext('2d');
-            const blackBgImageData = blackBgCtx.createImageData(width * 2, height);
-            blackBgImageData.data.set(batchResult[i].blackBgData);
-            blackBgCtx.putImageData(blackBgImageData, 0, 0);
+          const batchEnd = Math.min(batchStart + BATCH_SIZE, frameCount);
+          const batchFrames = frames.slice(batchStart, batchEnd);
+          const batchSize = batchFrames.length;
+          this._debugLog('info', '处理批次', {
+            batchStart: batchStart,
+            batchEnd: batchEnd,
+            batchSize: batchSize,
+            batchIndex: Math.floor(batchStart / BATCH_SIZE) + 1
+          });
 
-            // 转换为目标格式
-            const blob = await new Promise(function(resolve) {
-              if (format === 'png') {
-                blackBgCanvas.toBlob(resolve, 'image/png');
-              } else {
-                blackBgCanvas.toBlob(resolve, 'image/jpeg', jpegQuality);
-              }
-            });
-            const buffer = await blob.arrayBuffer();
-            resultFrames.push(new Uint8Array(buffer));
-
-            // 清理Canvas资源
-            blackBgCanvas.width = 0;
-            blackBgCanvas.height = 0;
-
-            // 进度回调
-            const overallIndex = batchStart + i;
-            onProgress((overallIndex + 1) / frameCount);
-
-            // 让出线程
-            if ((overallIndex + 1) % 10 === 0) {
-              await new Promise(function(r) { setTimeout(r, 0); });
+          // 使用Web Worker处理当前批次
+          this._debugLog('info', '开始使用Web Worker处理批次');
+          const batchResult = await this._sendTask('composeFrames', {
+            frames: batchFrames,
+            mode: mode,
+            width: width,
+            height: height,
+            frameCount: batchSize
+          }, {
+            onProgress: function(batchProgress) {
+              const overallProgress = (batchStart + batchProgress * batchSize) / frameCount;
+              onProgress(overallProgress);
             }
-          } catch (error) {
-            console.error('处理帧', batchStart + i, '时出错:', error);
-            // 跳过出错的帧，继续处理
-            continue;
+          });
+          this._debugLog('info', 'Web Worker批次处理完成', {
+            returnedResults: batchResult.length
+          });
+
+          // 转换批次中的每一帧
+          for (let i = 0; i < batchSize; i++) {
+            if (onCancel()) {
+              throw new Error('用户取消');
+            }
+
+            try {
+              // 创建临时Canvas
+              const blackBgCanvas = document.createElement('canvas');
+              blackBgCanvas.width = width * 2;
+              blackBgCanvas.height = height;
+              const blackBgCtx = blackBgCanvas.getContext('2d');
+              const blackBgImageData = blackBgCtx.createImageData(width * 2, height);
+              blackBgImageData.data.set(batchResult[i].blackBgData);
+              blackBgCtx.putImageData(blackBgImageData, 0, 0);
+
+              // 转换为目标格式
+              const blob = await new Promise(function(resolve) {
+                if (format === 'png') {
+                  blackBgCanvas.toBlob(resolve, 'image/png');
+                } else {
+                  blackBgCanvas.toBlob(resolve, 'image/jpeg', jpegQuality);
+                }
+              });
+              const buffer = await blob.arrayBuffer();
+              resultFrames.push(new Uint8Array(buffer));
+
+              // 清理Canvas资源
+              blackBgCanvas.width = 0;
+              blackBgCanvas.height = 0;
+
+              // 进度回调
+              const overallIndex = batchStart + i;
+              onProgress((overallIndex + 1) / frameCount);
+
+              // 让出线程
+              if ((overallIndex + 1) % 10 === 0) {
+                await new Promise(function(r) { setTimeout(r, 0); });
+              }
+            } catch (error) {
+              this._debugLog('error', '处理帧时出错', {
+                frameIndex: batchStart + i,
+                error: error.message
+              });
+              // 跳过出错的帧，继续处理
+              continue;
+            }
           }
+
+          // 强制垃圾回收
+          if (typeof gc === 'function') {
+            gc();
+            this._debugLog('info', '执行垃圾回收');
+          }
+          this._debugLog('info', '批次处理完成', {
+            processedFrames: resultFrames.length,
+            totalFrames: frameCount
+          });
         }
 
-        // 强制垃圾回收
-        if (typeof gc === 'function') {
-          gc();
+        this._debugLog('info', '批量合成双通道图像完成', {
+          generatedFrames: resultFrames.length,
+          originalFrames: frameCount
+        });
+        
+        if (this.defaults.debug.performanceMonitoring) {
+          const report = this.generatePerformanceReport();
+          this._debugLog('info', '性能报告', report.summary);
         }
-        console.log('批次处理完成，已处理总帧数:', resultFrames.length);
+        
+        return resultFrames;
+      } catch (error) {
+        this._debugLog('error', '批量合成失败', { error: error.message });
+        throw error;
       }
-
-      console.log('批量合成双通道图像完成，生成帧数:', resultFrames.length);
-      return resultFrames;
     },
 
     /**
@@ -886,7 +1346,23 @@ function processSinglePixel(x, y, frameData, width, dualWidth, dualData, blackBg
       if (this._worker) {
         this._worker.terminate();
         this._worker = null;
+        this._debugLog('info', 'Worker销毁成功');
       }
+      
+      // 销毁Worker池
+      if (this._workerPool) {
+        try {
+          this._workerPool.shutdown();
+          this._debugLog('info', 'Worker池销毁成功');
+        } catch (error) {
+          this._debugLog('error', 'Worker池销毁失败', { error: error.message });
+        }
+        this._workerPool = null;
+      }
+      
+      // 清理性能数据
+      this.clearPerformanceData();
+      this._debugLog('info', '资源清理完成');
     }
   };
 

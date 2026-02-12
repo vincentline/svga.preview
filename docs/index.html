@@ -42,23 +42,16 @@
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="/assets/favicon-BQKJcyi4.png">
 
-  <!-- COI Service Worker for SharedArrayBuffer support on GitHub Pages -->
-  <script src="coi-serviceworker.js?v=9"></script>
+  <!-- COI Service Worker for SharedArrayBuffer support on GitHub Pages -->
 
   <!-- 外部样式表（优先加载） -->
 
-  <!-- 库加载管理器（优先加载，独立模块） -->
-  <script src="assets/js/service/library-loader.js"></script>
-  <!-- 资源管理器（管理 ObjectURL 生命周期） -->
-  <script src="assets/js/service/resource-manager.js"></script>
-  <!-- 图片压缩服务 -->
-  <script src="assets/js/service/image-compression-service.js"></script>
-  <!-- 侧边弹窗拖拽服务 -->
-  <script src="assets/js/service/panel-drag.js"></script>
-  <!-- 登录状态管理工具 -->
-  <script src="assets/js/utils/auth-utils.js"></script>
-  <!-- 图片处理API调用工具 -->
-  <script src="assets/js/utils/image-api.js"></script>
+  <!-- 库加载管理器（优先加载，独立模块） -->
+  <!-- 资源管理器（管理 ObjectURL 生命周期） -->
+  <!-- 图片压缩服务 -->
+  <!-- 侧边弹窗拖拽服务 -->
+  <!-- 登录状态管理工具 -->
+  <!-- 图片处理API调用工具 -->
   <script>
     // 立即加载核心库（Vue 和 SVGA Player）
     (function () {
@@ -73,14 +66,11 @@
     })();
   </script>
 
-  <!-- 站点配置加载器（用于广告位控制等功能） -->
-  <script src="assets/js/service/site-config-loader.js"></script>
+  <!-- 站点配置加载器（用于广告位控制等功能） -->
 
-  <!-- 广告位控制器 -->
-  <script src="assets/js/controllers/ad-controller.js"></script>
+  <!-- 广告位控制器 -->
 
-  <!-- 用户类型控制器 -->
-  <script src="assets/js/controllers/user-type-controller.js"></script>
+  <!-- 用户类型控制器 -->
 
   <!-- ===== 所有库统一由 library-loader.js 动态加载 ===== -->
   <!-- Vue.js - 核心框架，优先级最高 -->
@@ -90,6 +80,9 @@
   <!-- GIF.js - 导出GIF时加载 -->
   <!-- Protobuf、Pako - 导出SVGA时加载 -->
   <!-- FFmpeg - 转MP4时加载 -->
+  
+  
+  <script type="module" crossorigin src="/assets/index-t3SRmSmf.js"></script>
   <link rel="stylesheet" crossorigin href="/assets/index-lmn7u5fP.css">
   <link rel="stylesheet" crossorigin href="/assets/styles-DSudpaKl.css">
 </head>
@@ -1237,30 +1230,24 @@
     </div>
   </div>
 
-  <!-- FFmpeg音视频处理服务 -->
-  <script src="assets/js/service/ffmpeg/ffmpeg-service.js"></script>
+  <!-- FFmpeg音视频处理服务 -->
 
-  <!-- 双通道图像合成器模块 -->
-  <script src="assets/js/service/dual-channel/dual-channel-composer.js"></script>
+  <!-- 双通道图像合成器模块 -->
 
-  <!-- SVGA构建器模块 -->
-  <script src="assets/js/service/svga/svga-builder.js"></script>
+  <!-- SVGA构建器模块 -->
 
-  <!-- GIF导出器模块 -->
-  <script src="assets/js/service/gif/gif-exporter.js"></script>
+  <!-- GIF导出器模块 -->
 
-  <!-- WebP导出器模块 -->
-  <script src="assets/js/service/webp/webp-exporter.js"></script>
+  <!-- WebP导出器模块 -->
 
-  <!-- 序列帧导出器模块 -->
-  <script src="assets/js/service/frames/frames-exporter.js"></script>
+  <!-- 序列帧导出器模块 -->
 
-  <!-- 文件验证器模块 -->
-  <script src="assets/js/utils/file-validator.js"></script>
+  <!-- 文件验证器模块 -->
 
-  <!-- 工具函数库模块 -->
-  <script src="assets/js/utils/utils.js"></script>
-  <script src="assets/js/controllers/input-controller.js"></script>
+  <!-- 工具函数库模块 -->
+
+  <!-- 组件库 -->
+  
 
   <!-- 定义组件模板 -->
   <script type="text/x-template" id="tpl-gif-panel">
@@ -1610,7 +1597,7 @@
 
   <!-- 定义dual-channel-panel模板 -->
   <script type="text/x-template" id="tpl-dual-channel-panel">
-    <div class="side-panel side-panel--right dual-channel-panel" :class="{'show': visible}">
+    <div class="side-panel side-panel--right dual-channel-panel dual-channel-panel-root" :class="{'show': visible}"  style="transition: transform 0.3s ease;">
       <div class="side-panel-container">
         <!-- 标题区 -->
         <div class="side-panel-header">
@@ -1930,41 +1917,19 @@
     </div>
   </script>
 
-  <!-- 组件库 -->
-  <script src="assets/js/components/index.js"></script>
-  <script src="assets/js/components/standard-mp4-panel.js"></script>
-  <script src="assets/js/components/dual-channel-panel.js"></script>
-  <script src="assets/js/components/material-panel.js"></script>
-  <script src="assets/js/components/gif-panel.js"></script>
-  <script src="assets/js/components/frames-panel.js"></script>
-  <script src="assets/js/components/webp-panel.js"></script>
-  
-  <script src="assets/js/components/to-svga-panel.js"></script>
-  <script src="assets/js/components/chromakey-panel.js"></script>
+  <!-- 播放控制器模块 -->
 
-  <!-- 播放控制器模块 -->
-  <script src="assets/js/controllers/player-controller.js?v=14"></script>
+  <!-- 视图控制器模块 -->
 
-  <!-- 视图控制器模块 -->
-  <script src="assets/js/controllers/viewport-controller.js"></script>
+  <!-- 面板管理 Mixin -->
 
-  <!-- 面板管理 Mixin -->
-  <script src="assets/js/mixins/panel-mixin.js"></script>
+  <!-- 素材编辑器模块（拆分版） -->
 
-  <!-- 素材编辑器模块（拆分版） -->
-  <script src="assets/js/core/material-state.js"></script>
-  <script src="assets/js/core/material-operations.js"></script>
-  <script src="assets/js/core/material-interactions.js"></script>
-  <script src="assets/js/core/material-editor.js"></script>
+  <!-- 用户配置管理器模块 -->
 
-  <!-- 用户配置管理器模块 -->
-  <script src="assets/js/service/config-manager.js"></script>
+  <!-- 任务管理器模块 -->
 
-  <!-- 任务管理器模块 -->
-  <script src="assets/js/service/task-manager.js"></script>
-
-  <!-- 应用主逻辑 -->
-  <script src="assets/js/core/app.js?v=1.16"></script>
+  <!-- 应用主逻辑 -->
 </body>
 
 </html>

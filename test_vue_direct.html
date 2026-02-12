@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>测试Vue响应式系统和模板渲染</title>
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.7.15/dist/vue.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    .test-section {
+      margin: 20px 0;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    .success {
+      color: green;
+    }
+    .error {
+      color: red;
+    }
+    .dual-channel-panel {
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin: 10px 0;
+      background-color: #f9f9f9;
+    }
+  </style>
+</head>
+<body>
+  <h1>测试Vue响应式系统和模板渲染</h1>
+  
+  <div id="app">
+    <div class="test-section">
+      <h2>测试1：Vue实例创建</h2>
+      <p v-if="vueInstanceCreated" class="success">✓ Vue实例创建成功</p>
+      <p v-else class="error">✗ Vue实例创建失败</p>
+    </div>
+    
+    <div class="test-section">
+      <h2>测试2：组件注册</h2>
+      <p v-if="componentRegistered" class="success">✓ 双通道面板组件注册成功</p>
+      <p v-else class="error">✗ 双通道面板组件注册失败</p>
+    </div>
+    
+    <div class="test-section">
+      <h2>测试3：模板渲染</h2>
+      <p>当前activeRightPanel: {{ activeRightPanel }}</p>
+      <button @click="setActiveRightPanel('dual-channel')">设置为dual-channel</button>
+      <button @click="setActiveRightPanel(null)">设置为null</button>
+      
+      <!-- 测试双通道面板组件 -->
+      <dual-channel-panel :visible="activeRightPanel === 'dual-channel'" :source-info="dualChannelSourceInfo" :initial-config="dualChannelConfig"></dual-channel-panel>
+    </div>
+    
+    <div class="test-section">
+      <h2>测试4：DOM检查</h2>
+      <p>dual-channel-panel元素是否存在: <span v-if="hasDualChannelPanel" class="success">✓ 存在</span><span v-else class="error">✗ 不存在</span></p>
+      <button @click="checkDom">检查DOM</button>
+    </div>
+  </div>
+  
+  <!-- 双通道面板模板 -->
+  <script type="text/x-template" id="tpl-dual-channel-panel">
+    <div class="dual-channel-panel" v-if="visible">
+      <h3>转换为双通道MP4格式</h3>
+      <p>{{ sourceInfo.typeLabel }}尺寸：{{ sourceInfo.sizeWH }} 时长：{{ sourceInfo.duration }}</p>
+      <p>配置：宽={{ initialConfig.width }}, 高={{ initialConfig.height }}, 质量={{ initialConfig.quality }}, 帧率={{ initialConfig.fps }}</p>
+    </div>
+  </script>
+  
+  <script>
+    // 注册双通道面板组件
+    Vue.component('dual-channel-panel', {
+      name: 'DualChannelPanel',
+      template: '#tpl-dual-channel-panel',
+      props: {
+        visible: { type: Boolean, default: false },
+        sourceInfo: { type: Object, default: function () { return {}; } },
+        initialConfig: { type: Object, default: function () { return {}; } }
+      }
+    });
+    
+    // 创建Vue实例
+    var app = new Vue({
+      el: '#app',
+      data: {
+        vueInstanceCreated: false,
+        componentRegistered: false,
+        activeRightPanel: null,
+        dualChannelSourceInfo: {
+          name: 'test.svga',
+          sizeWH: '300x300',
+          duration: '3.0s',
+          fileSize: '100KB',
+          fps: 30,
+          typeLabel: 'SVGA'
+        },
+        dualChannelConfig: {
+          channelMode: 'color-left-alpha-right',
+          width: 300,
+          height: 300,
+          quality: 80,
+          fps: 30,
+          muted: false
+        },
+        hasDualChannelPanel: false
+      },
+      mounted: function() {
+        // 测试1：Vue实例创建
+        this.vueInstanceCreated = true;
+        
+        // 测试2：组件注册
+        this.componentRegistered = Vue.options.components['dual-channel-panel'] !== undefined;
+        
+        // 检查DOM
+        this.checkDom();
+        
+        console.log('=== 测试Vue响应式系统和模板渲染 ===');
+        console.log('Vue实例创建:', this.vueInstanceCreated);
+        console.log('组件注册:', this.componentRegistered);
+        console.log('初始activeRightPanel:', this.activeRightPanel);
+      },
+      methods: {
+        setActiveRightPanel: function(value) {
+          this.activeRightPanel = value;
+          console.log('设置activeRightPanel为:', value);
+          
+          // 等待Vue更新DOM
+          this.$nextTick(() => {
+            this.checkDom();
+          });
+        },
+        checkDom: function() {
+          // 检查DOM中是否存在dual-channel-panel元素
+          var panel = document.querySelector('.dual-channel-panel');
+          this.hasDualChannelPanel = panel !== null;
+          console.log('dual-channel-panel元素是否存在:', this.hasDualChannelPanel);
+          
+          if (panel) {
+            console.log('dual-channel-panel元素内容:', panel.innerHTML);
+          }
+        }
+      }
+    });
+    
+    // 暴露到全局，便于调试
+    window.testApp = app;
+  </script>
+</body>
+</html>

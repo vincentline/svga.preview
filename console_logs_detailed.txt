@@ -1,0 +1,20 @@
+[debug] [vite] connecting...
+[log] [SiteConfig] 本地环境，尝试加载本地配置
+[debug] [vite] connected.
+[log] [AdController] 本地环境，跳过广告加载
+[warning] [SiteConfig] 本地配置加载失败，使用默认配置: Unexpected token '<', "<!DOCTYPE "... is not valid JSON
+[log] [COI] Service Worker registered: http://localhost:4004/
+[log] [COI] New Service Worker activated, reloading...
+[log] [COI] Already cross-origin isolated
+[debug] [vite] connecting...
+[log] [SiteConfig] 本地环境，尝试加载本地配置
+[debug] [vite] connected.
+[log] [AdController] 本地环境，跳过广告加载
+[warning] [SiteConfig] 本地配置加载失败，使用默认配置: Unexpected token '<', "<!DOCTYPE "... is not valid JSON
+[log] StandardMp4Panel组件已挂载 false
+[log] [调试] webp-panel 组件已挂载，初始visible: false
+[log] [调试] webp-panel 组件DOM元素: JSHandle@node
+[log] 打开双通道MP4面板
+[log] 调用openDualChannelPanel方法
+[log] [调试] 使用固定FFmpeg Core Path: https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js
+[log] Selected FFmpeg Core Path: https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js

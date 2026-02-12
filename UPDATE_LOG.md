@@ -18,6 +18,10 @@
 - 更新简述：如新增功能、修复问题、优化性能等，简单描述
 
 ## 更新记录
+[2026-02-11 20:30:00] 【修改文件】 : src/assets/js/controllers/player-controller.js - 清理调试代码，移除所有不必要的console.log语句，保留错误处理信息
+[2026-02-10 16:48:29] 【修改文件】 : src/assets/js/components/dual-channel-panel.js - 清理调试日志，保留必要的错误信息
+[2026-02-10 16:48:29] 【修改文件】 : src/assets/js/mixins/panel-mixin.js - 清理调试日志，移除所有不必要的控制台输出
+[2026-02-10 16:48:29] 【修改文件】 : src/assets/js/core/app.js - 修复命名空间一致性问题，添加Components变量映射，更新组件注册代码
 [2026-02-06 17:14:37] 【修改文件】 : INDEX.md - 更新功能索引，添加webp-panel和frames-panel组件的索引，并更新版本信息
 [2026-02-06 17:14:37] 【修改文件】 : README.md - 更新功能概览，添加WebP导出功能的说明，包括SVGA模块和双通道MP4模块的WebP导出支持
 [2026-02-06 17:14:37] 【新增文件】 : .trae/documents/弹窗开发问题分析与总结.md - 新增弹窗开发问题分析与总结文档，记录webp面板开发过程中遇到的问题和解决方案

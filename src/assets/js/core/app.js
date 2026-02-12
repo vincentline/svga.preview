@@ -121,25 +121,34 @@ function initApp() {
   var Services = SP.Services;
   var Mixins = SP.Mixins;
   var Exporters = SP.Exporters;
+  
+  // 确保Components对象存在，不要覆盖已有的Components对象
+  if (!SP.Components) {
+    SP.Components = {};
+  }
+  var Components = SP.Components;
 
-  // 捕获全局错误
-  Vue.config.errorHandler = function (err, vm, info) {
-    console.error('[Vue Error] ' + err.toString(), info);
-    console.error(err);
-  };
+  // 等待Vue库加载完成
+  function waitForVue() {
+    if (typeof Vue !== 'undefined') {
+      // 捕获全局错误
+      Vue.config.errorHandler = function (err, vm, info) {
+        console.error('[Vue Error] ' + err.toString(), info);
+        console.error(err);
+      };
 
-  var vueInstance = new Vue({
+      var vueInstance = new Vue({
     el: '#app',
     components: {
       // 注册所有组件
-      'material-panel': SP.Components.MaterialPanel,
-      'gif-panel': SP.Components.GifPanel,
-      'frames-panel': SP.Components.FramesPanel,
-      'webp-panel': SP.Components.WebpPanel,
-      'standard-mp4-panel': SP.Components.StandardMp4Panel,
-      'dual-channel-panel': SP.Components.DualChannelPanel,
-      'to-svga-panel': SP.Components.ToSvgaPanel,
-      'chromakey-panel': SP.Components.ChromaKeyPanel
+      'material-panel': Components.MaterialPanel,
+      'gif-panel': Components.GifPanel,
+      'frames-panel': Components.FramesPanel,
+      'webp-panel': Components.WebpPanel,
+      'standard-mp4-panel': Components.StandardMp4Panel,
+      'dual-channel-panel': Components.DualChannelPanel,
+      'to-svga-panel': Components.ToSvgaPanel,
+      'chromakey-panel': Components.ChromaKeyPanel
     },
     mixins: [Mixins.MaterialEditor, Mixins.PanelMixin],
     data: function () {
@@ -10908,6 +10917,18 @@ function initApp() {
       }
     }
   });
+  
+  // 暴露Vue实例到全局，方便调试和测试
+  window.MeeWoo.app = vueInstance;
+  } else {
+    // Vue还没加载，延迟500ms重试
+    console.log('=== 注册Vue组件：Vue还没加载，延迟500ms重试 ===');
+    setTimeout(waitForVue, 500);
+  }
+}
+
+// 启动waitForVue函数
+waitForVue();
 }
 
 // 页面加载完成后立即启动

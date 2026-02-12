@@ -563,7 +563,7 @@
             var startTime = (audio.startTime || 0) / 1000; // ms 转 s
             var seekPos = Math.max(0, startTime + offset);
 
-            console.log('Sync Audio Playing:', audio.audioKey, 'Frame:', currentFrame, 'Seek:', seekPos);
+
 
             // 核心修复：Howler 2.x 的 seek 必须在 play 之后或者 load 之后生效
             // 且为了保证移动端兼容性，必须先 mute 再 play 再 seek 再 unmute (如果未静音)
@@ -662,7 +662,7 @@
         if (k.length > 3 && audioKey.length > 3) {
           if (k.indexOf(audioKey) !== -1 || audioKey.indexOf(k) !== -1) {
             data = audioDataMap[k];
-            console.log('Fuzzy match found:', k, 'for', audioKey);
+
             break;
           }
         }
@@ -684,7 +684,7 @@
 
     if (!src) return null;
 
-    console.log('Creating Howl instance for:', audioKey, 'Src length:', src.length);
+
 
     var howl = new Howl({
       src: [src],
@@ -696,7 +696,6 @@
       onload: function () {
         // 音频加载完成后，如果当前处于播放状态，尝试同步
         // 这可以解决音频加载延迟导致的首次播放无声问题
-        console.log('Audio Loaded:', audioKey);
       },
       onloaderror: function (id, err) {
         console.error('Howl Load Error:', err, 'for key:', audioKey);
@@ -973,7 +972,6 @@
     if (adapter && adapter instanceof SvgaPlayerAdapter) {
       // 如果是 SVGA 且暂停了，通知 adapter 暂停音频
       if (!isPlaying) {
-        console.log('PlayerController: Detected Pause, syncing audio stop.');
         // [CRITICAL] 必须强制停止所有音频，防止“余音绕梁”。详见 SVGA_AUDIO_IMPL.md #3.5
         adapter.pause();
       }

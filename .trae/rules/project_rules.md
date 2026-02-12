@@ -8,4 +8,6 @@
 4. 不同类型用户展示配置，查阅`.trae\documents\用户类型配置优化方案.md`[用户类型配置优化方案.md](../documents/用户类型配置优化方案.md)
 5. 设计规范，查阅`..\..\ai_protocol_hub\core_rules\UI-DESIGN-SYSTEM.md`[UI-DESIGN-SYSTEM.md](../../ai_protocol_hub/core_rules/UI-DESIGN-SYSTEM.md)
 6. 项目功能模块索引，查阅`..\..\INDEX.md`[INDEX.md](../../INDEX.md)
-7. 推理时请查看代码去验证自己的推理是否正确。
+7. 导出GIF功能，查阅`.trae\documents\GIF导出功能技术文档.md`[GIF导出功能技术文档.md](../documents/GIF导出功能技术文档.md)
+8. 导出双通道MP4功能，查阅`.trae\documents\双通道MP4导出功能技术文档.md`[双通道MP4导出功能技术文档.md](../documents/双通道MP4导出功能技术文档.md)
+9. 推理时请查看代码去验证自己的推理是否正确。

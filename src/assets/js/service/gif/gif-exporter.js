@@ -88,16 +88,70 @@
         alpha: true
       });
 
-      // 创建GIF编码器
-      var gifOptions = {
-        workers: 2,  // 增加worker数量，提高编码速度
-        workerScript: 'assets/js/service/gif/gif.worker.js',  // 移除前导斜杠，使用相对路径
-        quality: Math.min(quality, 20),  // 限制最大质量，提高编码速度
-        width: width,
-        height: height,
-        repeat: 0,  // 0 = 无限循环
-        background: '#ffffff'  // 默认背景色
-      };
+      // 检查浏览器是否支持Web Worker
+      if (typeof Worker === 'undefined') {
+        // 降级方案：使用单线程编码
+        console.warn('浏览器不支持Web Worker，将使用单线程编码，可能会较慢');
+        var gifOptions = {
+          workers: 0,  // 禁用Worker
+          quality: Math.min(quality, 15),  // 降低质量以提高单线程编码速度
+          width: width,
+          height: height,
+          repeat: 0,  // 0 = 无限循环
+          background: '#ffffff'  // 默认背景色
+        };
+      } else {
+        // 支持Web Worker：使用多线程编码
+        // 动态计算合适的Worker数量
+        // 考虑到系统资源和其他任务，只使用可用核心的一半
+        var availableCores = navigator.hardwareConcurrency || 2;
+        var workerCount = Math.max(1, Math.min(Math.floor(availableCores / 2), 4));
+        console.log('[GIF Exporter] 检测到', availableCores, '个CPU核心，将使用', workerCount, '个Worker');
+        
+        // 添加Worker错误处理和资源管理
+        var workers = [];
+        // 监听Worker创建和销毁
+        gif.on('workerCreated', function(worker) {
+          workers.push(worker);
+          console.log('[GIF Exporter] Worker创建，当前Worker数量:', workers.length);
+        });
+        
+        // 构建绝对路径，确保Worker脚本在任何环境下都能正确加载
+        var workerScriptPath;
+        if (typeof window !== 'undefined' && window.location) {
+          // 在浏览器环境中，使用绝对路径
+          // 使用更简单可靠的方法构建路径
+          var baseUrl = window.location.origin + window.location.pathname;
+          // 移除文件名，获取目录路径
+          baseUrl = baseUrl.substring(0, baseUrl.lastIndexOf('/') + 1);
+          // 确保路径正确指向gif.worker.js
+          workerScriptPath = baseUrl + 'src/assets/js/service/gif/gif.worker.js';
+        } else {
+          // 降级到相对路径
+          workerScriptPath = 'src/assets/js/service/gif/gif.worker.js';
+        }
+        
+        // 验证Worker脚本路径是否存在
+        try {
+          // 尝试通过fetch验证路径
+          var fetchPromise = fetch(workerScriptPath, { method: 'HEAD' });
+          fetchPromise.catch(function() {
+            console.warn('Worker脚本路径可能不正确:', workerScriptPath);
+          });
+        } catch (e) {
+          console.warn('无法验证Worker脚本路径:', e);
+        }
+        
+        var gifOptions = {
+          workers: workerCount,  // 根据设备CPU核心数动态调整
+          workerScript: workerScriptPath,  // 使用绝对路径
+          quality: Math.min(quality, 20),  // 限制最大质量，提高编码速度
+          width: width,
+          height: height,
+          repeat: 0,  // 0 = 无限循环
+          background: '#ffffff'  // 默认背景色
+        };
+      }
 
       if (transparent) {
         gifOptions.transparent = 0x000000; // 使用RGB格式的透明颜色，GIF只支持RGB格式
@@ -112,12 +166,16 @@
 
       // 编码完成Promise
       var encodingPromise = new Promise(function (resolve, reject) {
+        console.log('[GIF Exporter] 注册事件监听器...');
+        
         gif.on('progress', function (p) {
+          console.log('[GIF Exporter] 编码进度:', p);
           // 编码阶段：50%-100%
           onProgress(50 + Math.floor(p * 50), 'encoding', '编码中...');
         });
 
         gif.on('finished', function (blob) {
+          console.log('[GIF Exporter] 编码完成，blob:', blob);
           if (!blob || typeof blob !== 'object' || !blob.size) {
             reject(new Error('GIF编码器生成的blob无效'));
           } else {
@@ -126,11 +184,20 @@
         });
 
         gif.on('abort', function () {
+          console.log('[GIF Exporter] 编码被取消');
           reject(new Error('用户取消'));
         });
 
         gif.on('error', function (error) {
-          reject(new Error('GIF编码失败: ' + (error.message || error)));
+          console.error('[GIF Exporter] 编码错误:', error);
+          // 检查是否是Worker相关的错误
+          if (error.message && (error.message.includes('Worker') || error.message.includes('worker'))) {
+            console.warn('[GIF Exporter] Worker相关错误，建议禁用Worker重试');
+            // 直接拒绝，让调用者知道需要禁用Worker
+            reject(new Error('Worker相关错误: ' + (error.message || error) + '，请尝试禁用Worker重试'));
+          } else {
+            reject(new Error('GIF编码失败: ' + (error.message || error)));
+          }
         });
       });
 
@@ -199,8 +266,16 @@
         onProgress(50, 'encoding', '编码中...');
         
         try {
+          console.log('[GIF Exporter] 开始编码...');
+          console.log('[GIF Exporter] GIF实例:', gif);
+          console.log('[GIF Exporter] GIF选项:', gif.options);
+          console.log('[GIF Exporter] 帧数:', gif.frames.length);
+          
           gif.render();
+          
+          console.log('[GIF Exporter] 编码启动成功');
         } catch (renderError) {
+          console.error('[GIF Exporter] 编码启动失败:', renderError);
           throw new Error('编码启动失败: ' + renderError.message);
         }
 

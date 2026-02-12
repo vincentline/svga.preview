@@ -275,7 +275,8 @@ async function __wbg_init(input) {
 
     // 使用默认 URL 如果未提供输入
     if (typeof input === 'undefined') {
-        input = new URL('squoosh_oxipng_bg.wasm', import.meta.url);
+        // 使用相对路径加载WASM文件
+        input = 'squoosh_oxipng_bg.wasm';
     }
 
     // 获取 WebAssembly 导入对象
@@ -323,10 +324,7 @@ if (isRunningInCloudFlareWorkers || isRunningInNode) {
         };
     }
 
-    // 为 import.meta.url 提供默认值，确保在不支持的环境中可用
-    if (import.meta.url === undefined) {
-        import.meta.url = 'https://localhost';
-    }
+    // 移除对import.meta.url的检查，使用相对路径加载WASM文件
 
     // 为 self.location 提供默认值，确保在 Service Worker 环境中可用
     if (typeof self !== 'undefined' && self.location === undefined) {
