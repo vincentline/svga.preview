@@ -1,38 +1,14 @@
 /**
  * Dual Channel Worker - 双通道图像合成器 工作线程
- * 【注意】此文件为内部工作线程，不直接对外提供接口，外部应调用 dual-channel-composer.js
- * 
- * 【模块关系】
- * - 主模块：dual-channel-composer.js（外部调用入口）
- * - 工作线程：dual-channel-worker.js（内部使用，由主模块创建和管理）
- * 
- * 【数据流】
- * dual-channel-composer.js → 发送任务消息 → Web Worker (本文件) → 执行像素计算 → 返回结果消息 → dual-channel-composer.js
- * 
- * 【主要职责】
- * 1. 接收主模块发送的合成任务
- * 2. 处理计算密集型的像素操作：
- *    - 反预乘Alpha通道
- *    - 构建双通道图像数据（彩色通道+Alpha灰度通道）
- *    - 合成黑底图像数据
- * 3. 将处理结果返回给主模块
- * 
- * 【支持的任务类型】
- * - 'composeFrame': 单帧合成
- * - 'composeFrames': 多帧批量合成
- * 
- * 【技术说明】
- * - 运行在独立的Web Worker线程，不阻塞主线程UI
- * - 使用ArrayBuffer和TypedArray高效处理大量像素数据
- * - 支持JPEG和PNG格式的底层数据生成
- * - 与主模块通过消息传递进行通信
- * 
- * 【性能优化】
- * 1. 分块处理优化：将图像分成多个块并行处理
- * 2. 内存优化：减少内存分配和复制操作
- * 3. 算法优化：优化计算逻辑，减少不必要的操作
- * 4. SIMD指令优化：使用SIMD指令并行处理多个像素
  */
+
+console.log('[DualChannelWorker] Worker脚本开始加载...');
+
+try {
+  console.log('[DualChannelWorker] Worker脚本加载成功');
+} catch (e) {
+  console.error('[DualChannelWorker] Worker脚本加载错误:', e);
+}
 
 // 内存池管理（Worker内部）
 class MemoryPool {
@@ -127,8 +103,7 @@ self.onmessage = function(e) {
     hasData: !!task.data,
     hasFrames: !!(task.frames || (task.data && task.data.frames)),
     hasDirectFrames: !!task.frames,
-    hasNestedFrames: !!(task.data && task.data.frames),
-    dataSize: task.data ? JSON.stringify(task.data).length / 1024 / 1024 : 0
+    hasNestedFrames: !!(task.data && task.data.frames)
   });
   
   // 内存使用监控
@@ -412,11 +387,28 @@ async function handleComposeFrames(task) {
     
     console.log('Starting handleComposeFrames, frame count:', frameCount, 'mode:', mode);
     
-    console.log('First frame size:', frames[0].width, 'x', frames[0].height);
+    // 验证第一帧数据
+    if (!frames[0]) {
+      throw new Error('First frame is null or undefined');
+    }
     
-    var results = [];
     var width = frames[0].width;
     var height = frames[0].height;
+    
+    // 如果第一帧没有 width/height，尝试从 taskData 获取
+    if (!width || !height) {
+      width = taskData.width;
+      height = taskData.height;
+      console.log('Using width/height from taskData:', width, 'x', height);
+    }
+    
+    if (!width || !height) {
+      throw new Error('Cannot determine frame dimensions: width=' + width + ', height=' + height);
+    }
+    
+    console.log('Frame dimensions:', width, 'x', height);
+    
+    var results = [];
     var isColorLeftAlphaRight = mode === 'color-left-alpha-right';
     var dualWidth = width * 2;
     var dualDataSize = dualWidth * height * 4;
@@ -440,10 +432,31 @@ async function handleComposeFrames(task) {
         console.log('Processing frame', frameIndex + 1, 'of', frameCount);
         
         // 验证帧数据
-        if (!frameData || !frameData.data) {
-          console.error('Invalid frame data at index:', frameIndex);
+        if (!frameData) {
+          console.error('Frame data is null at index:', frameIndex);
           return null;
         }
+        
+        // 检查帧数据结构
+        if (!frameData.data) {
+          console.error('Frame data.data is missing at index:', frameIndex, 'frameData keys:', Object.keys(frameData));
+          return null;
+        }
+        
+        // 检查帧数据是否是 TypedArray
+        if (!ArrayBuffer.isView(frameData.data)) {
+          console.error('Frame data.data is not a TypedArray at index:', frameIndex, 'type:', typeof frameData.data);
+          return null;
+        }
+        
+        // 检查帧数据长度
+        var expectedLength = width * height * 4;
+        if (frameData.data.length !== expectedLength) {
+          console.error('Frame data length mismatch at index:', frameIndex, 'expected:', expectedLength, 'actual:', frameData.data.length);
+          return null;
+        }
+        
+        console.log('Frame', frameIndex, 'data validated, size:', frameData.data.length);
         
         // 内存优化：使用内存池分配缓冲区
         var dualData = memoryPool.getBuffer(dualDataSize);
@@ -581,155 +594,11 @@ function processBlock(block, frameData, width, height, dualWidth, dualData, blac
 
 /**
  * 使用SIMD指令处理图像块
+ * 注意：SIMD API已被废弃，此函数仅作为占位符
  */
 function processBlockWithSIMD(block, frameData, width, height, dualWidth, dualData, blackBgData, isColorLeftAlphaRight, inv255) {
-  // 安全检查：如果没有SIMD支持，直接返回
-  if (!hasSIMD) {
-    return;
-  }
-  
-  var startX = block.x;
-  var startY = block.y;
-  var blockWidth = block.width;
-  var blockHeight = block.height;
-  
-  // 预计算SIMD常量
-  var simd255 = SIMD.int32x4.splat(255);
-  var simd0 = SIMD.int32x4.splat(0);
-  var simdAlphaFactor = SIMD.float32x4.splat(255 * inv255);
-  
-  // 处理块内的每个像素（每次处理4个像素）
-  for (var y = startY; y < startY + blockHeight; y++) {
-    for (var x = startX; x < startX + blockWidth; x += 4) {
-      // 计算剩余像素数
-      var pixelsToProcess = Math.min(4, startX + blockWidth - x);
-      
-      if (pixelsToProcess === 4) {
-        // 处理4个像素
-        process4PixelsWithSIMD(x, y, frameData, width, dualWidth, dualData, blackBgData, isColorLeftAlphaRight, inv255, simd255, simd0, simdAlphaFactor);
-      } else {
-        // 处理剩余的1-3个像素
-        for (var i = 0; i < pixelsToProcess; i++) {
-          var currentX = x + i;
-          processSinglePixel(currentX, y, frameData, width, dualWidth, dualData, blackBgData, isColorLeftAlphaRight, inv255);
-        }
-      }
-    }
-  }
-}
-
-/**
- * 使用SIMD指令并行处理4个像素
- */
-function process4PixelsWithSIMD(x, y, frameData, width, dualWidth, dualData, blackBgData, isColorLeftAlphaRight, inv255, simd255, simd0, simdAlphaFactor) {
-  // 计算4个像素的索引
-  var pixelIndices = [
-    y * width + x,
-    y * width + x + 1,
-    y * width + x + 2,
-    y * width + x + 3
-  ];
-  
-  var frameIndices = pixelIndices.map(idx => idx * 4);
-  
-  // 加载4个像素的RGBA数据
-  var rValues = SIMD.int32x4(frameData[frameIndices[0]], frameData[frameIndices[1]], frameData[frameIndices[2]], frameData[frameIndices[3]]);
-  var gValues = SIMD.int32x4(frameData[frameIndices[0] + 1], frameData[frameIndices[1] + 1], frameData[frameIndices[2] + 1], frameData[frameIndices[3] + 1]);
-  var bValues = SIMD.int32x4(frameData[frameIndices[0] + 2], frameData[frameIndices[1] + 2], frameData[frameIndices[2] + 2], frameData[frameIndices[3] + 2]);
-  var aValues = SIMD.int32x4(frameData[frameIndices[0] + 3], frameData[frameIndices[1] + 3], frameData[frameIndices[2] + 3], frameData[frameIndices[3] + 3]);
-  
-  // 反预乘Alpha
-  var finalR = rValues;
-  var finalG = gValues;
-  var finalB = bValues;
-  
-  // 处理Alpha值不为255的情况
-  for (var i = 0; i < 4; i++) {
-    var alpha = frameData[frameIndices[i] + 3];
-    if (alpha > 0 && alpha < 255) {
-      var alphaFactor = 255 * inv255;
-      finalR = SIMD.int32x4.replaceLane(finalR, i, Math.min(255, Math.round(frameData[frameIndices[i]] * alphaFactor)));
-      finalG = SIMD.int32x4.replaceLane(finalG, i, Math.min(255, Math.round(frameData[frameIndices[i] + 1] * alphaFactor)));
-      finalB = SIMD.int32x4.replaceLane(finalB, i, Math.min(255, Math.round(frameData[frameIndices[i] + 2] * alphaFactor)));
-    } else if (alpha === 0) {
-      finalR = SIMD.int32x4.replaceLane(finalR, i, 0);
-      finalG = SIMD.int32x4.replaceLane(finalG, i, 0);
-      finalB = SIMD.int32x4.replaceLane(finalB, i, 0);
-    }
-  }
-  
-  // 处理每个像素
-  for (var i = 0; i < 4; i++) {
-    var currentX = x + i;
-    var pixelIndex = y * width + currentX;
-    var frameIdx = pixelIndex * 4;
-    
-    var r = SIMD.int32x4.extractLane(finalR, i);
-    var g = SIMD.int32x4.extractLane(finalG, i);
-    var b = SIMD.int32x4.extractLane(finalB, i);
-    var a = frameData[frameIdx + 3];
-    
-    // 计算位置
-    var leftIdx = (y * dualWidth + currentX) * 4;
-    var rightIdx = (y * dualWidth + currentX + width) * 4;
-
-    if (isColorLeftAlphaRight) {
-      dualData[leftIdx + 0] = r;
-      dualData[leftIdx + 1] = g;
-      dualData[leftIdx + 2] = b;
-      dualData[leftIdx + 3] = a;
-      dualData[rightIdx + 0] = a;
-      dualData[rightIdx + 1] = a;
-      dualData[rightIdx + 2] = a;
-      dualData[rightIdx + 3] = 255;
-    } else {
-      dualData[leftIdx + 0] = a;
-      dualData[leftIdx + 1] = a;
-      dualData[leftIdx + 2] = a;
-      dualData[leftIdx + 3] = 255;
-      dualData[rightIdx + 0] = r;
-      dualData[rightIdx + 1] = g;
-      dualData[rightIdx + 2] = b;
-      dualData[rightIdx + 3] = a;
-    }
-
-    // 合成黑底
-    // 左侧通道
-    var pixelAlphaLeft = dualData[leftIdx + 3];
-    if (pixelAlphaLeft === 255) {
-      blackBgData[leftIdx + 0] = dualData[leftIdx + 0];
-      blackBgData[leftIdx + 1] = dualData[leftIdx + 1];
-      blackBgData[leftIdx + 2] = dualData[leftIdx + 2];
-    } else if (pixelAlphaLeft === 0) {
-      blackBgData[leftIdx + 0] = 0;
-      blackBgData[leftIdx + 1] = 0;
-      blackBgData[leftIdx + 2] = 0;
-    } else {
-      var alphaFactorLeft = pixelAlphaLeft * inv255;
-      blackBgData[leftIdx + 0] = Math.round(dualData[leftIdx + 0] * alphaFactorLeft);
-      blackBgData[leftIdx + 1] = Math.round(dualData[leftIdx + 1] * alphaFactorLeft);
-      blackBgData[leftIdx + 2] = Math.round(dualData[leftIdx + 2] * alphaFactorLeft);
-    }
-    blackBgData[leftIdx + 3] = 255;
-
-    // 右侧通道
-    var pixelAlphaRight = dualData[rightIdx + 3];
-    if (pixelAlphaRight === 255) {
-      blackBgData[rightIdx + 0] = dualData[rightIdx + 0];
-      blackBgData[rightIdx + 1] = dualData[rightIdx + 1];
-      blackBgData[rightIdx + 2] = dualData[rightIdx + 2];
-    } else if (pixelAlphaRight === 0) {
-      blackBgData[rightIdx + 0] = 0;
-      blackBgData[rightIdx + 1] = 0;
-      blackBgData[rightIdx + 2] = 0;
-    } else {
-      var alphaFactorRight = pixelAlphaRight * inv255;
-      blackBgData[rightIdx + 0] = Math.round(dualData[rightIdx + 0] * alphaFactorRight);
-      blackBgData[rightIdx + 1] = Math.round(dualData[rightIdx + 1] * alphaFactorRight);
-      blackBgData[rightIdx + 2] = Math.round(dualData[rightIdx + 2] * alphaFactorRight);
-    }
-    blackBgData[rightIdx + 3] = 255;
-  }
+  // SIMD API已被废弃，直接使用普通处理方式
+  processBlockWithoutSIMD(block, frameData, width, height, dualWidth, dualData, blackBgData, isColorLeftAlphaRight, inv255);
 }
 
 /**
@@ -787,8 +656,7 @@ function processSinglePixel(x, y, frameData, width, dualWidth, dualData, blackBg
   var finalR = r, finalG = g, finalB = b;
   if (a > 0) {
     if (a < 255) {
-      // 算法优化：使用乘法代替除法
-      var alphaFactor = 255 * inv255;
+      var alphaFactor = 255 / a;
       finalR = Math.min(255, Math.round(r * alphaFactor));
       finalG = Math.min(255, Math.round(g * alphaFactor));
       finalB = Math.min(255, Math.round(b * alphaFactor));

@@ -1,35 +1,48 @@
-// SVGA像素处理服务
-// 用于管理Worker池和处理双通道MP4转SVGA过程中的像素级操作
-
 (function(global) {
   'use strict';
 
-  // Ensure namespace
   window.MeeWoo = window.MeeWoo || {};
   window.MeeWoo.Services = window.MeeWoo.Services || {};
 
   class SvgaPixelService {
     constructor() {
-      this.workerPool = null;
+      this.worker = null;
       this.isInitialized = false;
       this.workerPath = 'assets/js/service/svga/svga-pixel-worker.js';
+      this.taskId = 0;
+      this.pendingTasks = new Map();
     }
 
-    /**
-     * 初始化服务
-     */
     async init() {
       if (this.isInitialized) return;
 
       try {
-        // 检查是否已经有WorkerPool实例
-        if (window.MeeWoo.Services.WorkerPool) {
-          this.workerPool = window.MeeWoo.Services.WorkerPool;
-          console.log('Using existing WorkerPool instance');
-        } else {
-          // 动态加载WorkerPool
-          await this._loadWorkerPool();
-        }
+        this.worker = new Worker(this.workerPath);
+        
+        this.worker.onmessage = (e) => {
+          const message = e.data;
+          const task = this.pendingTasks.get(message.id);
+          
+          if (task) {
+            this.pendingTasks.delete(message.id);
+            
+            if (message.type === 'error') {
+              task.reject(new Error(message.error));
+            } else if (message.type === 'progress' && task.onProgress) {
+              task.onProgress(message.progress / 100);
+            } else if (message.type === 'result') {
+              task.resolve(message.result);
+            }
+          }
+        };
+        
+        this.worker.onerror = (error) => {
+          console.error('SvgaPixelService Worker error:', error);
+          for (const [id, task] of this.pendingTasks) {
+            task.reject(new Error('Worker error: ' + error.message));
+          }
+          this.pendingTasks.clear();
+        };
 
         this.isInitialized = true;
         console.log('SvgaPixelService initialized successfully');
@@ -39,137 +52,105 @@
       }
     }
 
-    /**
-     * 加载WorkerPool
-     * @private
-     */
-    async _loadWorkerPool() {
-      return new Promise((resolve, reject) => {
-        const script = document.createElement('script');
-        script.src = 'assets/js/service/dual-channel/worker-pool.js';
-        script.onload = () => {
-          if (window.MeeWoo.Services.WorkerPool) {
-            this.workerPool = window.MeeWoo.Services.WorkerPool;
-            resolve();
-          } else {
-            reject(new Error('WorkerPool not found after loading'));
-          }
-        };
-        script.onerror = () => {
-          reject(new Error('Failed to load worker-pool.js'));
-        };
-        document.head.appendChild(script);
-      });
-    }
-
-    /**
-     * 处理单个帧
-     * @param {Uint8ClampedArray} frameData - 帧数据
-     * @param {string} alphaPosition - Alpha通道位置 ('left' | 'right')
-     * @param {number} width - 原始宽度
-     * @param {number} height - 原始高度
-     * @param {number} scaledWidth - 缩放后宽度
-     * @param {number} scaledHeight - 缩放后高度
-     * @param {Object} options - 选项
-     * @returns {Promise<Object>} 处理结果
-     */
     async processFrame(frameData, alphaPosition, width, height, scaledWidth, scaledHeight, options = {}) {
       await this.init();
 
-      return this.workerPool.submitTask('processFrame', {
-        frameData: frameData,
-        alphaPosition: alphaPosition,
-        width: width,
-        height: height,
-        scaledWidth: scaledWidth,
-        scaledHeight: scaledHeight
-      }, {
-        onProgress: options.onProgress,
-        priority: options.priority || 5
+      return new Promise((resolve, reject) => {
+        const taskId = ++this.taskId;
+        
+        this.pendingTasks.set(taskId, {
+          resolve,
+          reject,
+          onProgress: options.onProgress
+        });
+
+        this.worker.postMessage({
+          id: taskId,
+          type: 'processFrame',
+          data: {
+            frameData: frameData,
+            alphaPosition: alphaPosition,
+            width: width,
+            height: height,
+            scaledWidth: scaledWidth,
+            scaledHeight: scaledHeight
+          }
+        }, frameData && frameData.buffer ? [frameData.buffer] : []);
       });
     }
 
-    /**
-     * 批量处理多个帧
-     * @param {Array<Uint8ClampedArray>} frames - 帧数据数组
-     * @param {string} alphaPosition - Alpha通道位置 ('left' | 'right')
-     * @param {number} width - 原始宽度
-     * @param {number} height - 原始高度
-     * @param {number} scaledWidth - 缩放后宽度
-     * @param {number} scaledHeight - 缩放后高度
-     * @param {Object} options - 选项
-     * @returns {Promise<Array<Object>>} 处理结果数组
-     */
     async processFrames(frames, alphaPosition, width, height, scaledWidth, scaledHeight, options = {}) {
       await this.init();
 
-      return this.workerPool.submitTask('processFrames', {
-        frames: frames,
-        alphaPosition: alphaPosition,
-        width: width,
-        height: height,
-        scaledWidth: scaledWidth,
-        scaledHeight: scaledHeight
-      }, {
-        onProgress: options.onProgress,
-        priority: options.priority || 5
+      return new Promise((resolve, reject) => {
+        const taskId = ++this.taskId;
+        
+        this.pendingTasks.set(taskId, {
+          resolve,
+          reject,
+          onProgress: options.onProgress
+        });
+
+        const transferables = [];
+        if (frames && Array.isArray(frames)) {
+          frames.forEach(frame => {
+            if (frame && frame.buffer) {
+              transferables.push(frame.buffer);
+            }
+          });
+        }
+
+        this.worker.postMessage({
+          id: taskId,
+          type: 'processFrames',
+          data: {
+            frames: frames,
+            alphaPosition: alphaPosition,
+            width: width,
+            height: height,
+            scaledWidth: scaledWidth,
+            scaledHeight: scaledHeight
+          }
+        }, transferables);
       });
     }
 
-    /**
-     * 清理内存
-     */
     async clearMemory() {
       await this.init();
 
-      return this.workerPool.submitTask('clearMemory', {});
+      return new Promise((resolve, reject) => {
+        const taskId = ++this.taskId;
+        
+        this.pendingTasks.set(taskId, { resolve, reject });
+
+        this.worker.postMessage({
+          id: taskId,
+          type: 'clearMemory',
+          data: {}
+        });
+      });
     }
 
-    /**
-     * 获取服务状态
-     * @returns {Object} 状态信息
-     */
     getStatus() {
-      if (!this.workerPool) {
-        return {
-          initialized: this.isInitialized,
-          workerPool: null
-        };
-      }
-
       return {
         initialized: this.isInitialized,
-        workerPool: this.workerPool.getStatus()
+        pendingTasks: this.pendingTasks.size
       };
     }
 
-    /**
-     * 获取统计信息
-     * @returns {Object} 统计信息
-     */
-    getStats() {
-      if (!this.workerPool) {
-        return null;
+    destroy() {
+      if (this.worker) {
+        this.worker.terminate();
+        this.worker = null;
       }
-
-      return this.workerPool.getStats();
-    }
-
-    /**
-     * 重置统计信息
-     */
-    resetStats() {
-      if (this.workerPool) {
-        this.workerPool.resetStats();
-      }
+      this.pendingTasks.clear();
+      this.isInitialized = false;
     }
   }
 
-  // 导出单例
   const svgaPixelService = new SvgaPixelService();
   window.MeeWoo.Services.SvgaPixelService = svgaPixelService;
 
-  // 全局访问
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = SvgaPixelService;
   } else {

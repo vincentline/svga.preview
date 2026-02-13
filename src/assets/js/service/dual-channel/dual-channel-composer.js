@@ -42,10 +42,8 @@
   if (typeof require === 'function') {
     try {
       require('./memory-pool.js');
-      require('./worker-pool.js');
       require('./wasm/wasm-loader.js');
     } catch (e) {
-      // 模块加载失败，忽略
     }
   }
 
@@ -60,17 +58,9 @@
       format: 'jpeg',                   // 默认输出格式
       workerPath: 'assets/js/service/dual-channel/dual-channel-worker.js',  // Web Worker路径
       memoryPool: {
-        enabled: true,                  // 是否启用内存池
-        maxPoolSize: 100,               // 每个池的最大对象数
-        clearInterval: 60000            // 内存池清理间隔（毫秒）
-      },
-      workerPool: {
-        enabled: true,                  // 是否启用Worker池
-        minWorkers: 1,                  // 最小Worker数
-        maxWorkers: navigator.hardwareConcurrency || 4,  // 最大Worker数
-        maxTasksPerWorker: 10,          // 每个Worker最大任务数
-        taskTimeout: 60000,             // 任务超时时间（毫秒）
-        idleTimeout: 30000              // 空闲Worker超时时间（毫秒）
+        enabled: true,
+        maxPoolSize: 100,
+        clearInterval: 60000
       },
       wasm: {
         enabled: true,                  // 是否启用WebAssembly
@@ -111,55 +101,13 @@
      */
     _worker: null,
 
-    /**
-     * Worker池实例
-     */
-    _workerPool: null,
-
-    /**
-     * 内存池实例
-     */
     _memoryPool: null,
 
-    /**
-     * 内存池清理定时器
-     */
     _memoryClearInterval: null,
 
-    /**
-     * WebAssembly加载器实例
-     */
     _wasmLoader: null,
 
-    /**
-     * Web Worker实例
-     */
-    _worker: null,
-
-    /**
-     * Worker池实例
-     */
-    _workerPool: null,
-
-    /**
-     * 任务ID计数器
-     */
     _taskId: 0,
-
-    /**
-     * 内存池实例
-     */
-    _memoryPool: null,
-
-    /**
-     * 内存池清理定时器
-     */
-    _memoryClearInterval: null,
-
-    /**
-     * Worker池实例
-     */
-    _workerPool: null,
 
     /**
      * WebAssembly加载器实例
@@ -388,61 +336,43 @@
      * @private
      */
     _initWorker: function() {
+        if (this._workerInitFailed) {
+            return false;
+        }
+        
         if (!this._worker) {
             try {
-                // 检测Worker支持
                 if (!this._isWorkerSupported()) {
                     throw new Error('当前浏览器不支持Web Worker');
                 }
                 
-                this._debugLog('info', '开始初始化Web Worker');
+                console.log('[DualChannelComposer] 开始初始化Web Worker');
                 
-                // 尝试使用传统路径创建Worker
-                try {
-                    // 直接使用默认的workerPath，它是相对于HTML文件的路径
-                    const workerPath = this.defaults.workerPath;
-                    this._debugLog('info', '尝试使用配置路径创建Worker', { path: workerPath });
-                    
-                    // 创建Worker
-                    this._worker = new Worker(workerPath);
-                    this._debugLog('info', 'Worker创建成功（使用配置路径）');
-                } catch (error) {
-                    this._debugLog('warn', '使用配置路径失败，尝试相对路径', { error: error.message });
-                    // 回退到相对路径
-                    const workerPath = './dual-channel-worker.js';
-                    
-                    // 创建Worker
-                    this._worker = new Worker(workerPath);
-                    this._debugLog('info', 'Worker创建成功（使用相对路径）');
-                }
-            } catch (error) {
-                this._debugLog('error', '使用外部文件创建Worker失败', { error: error.message });
-                // 注释掉内联Worker代码，统一使用外部 dual-channel-worker.js 文件
-                // 如果外部Worker加载失败，将在 _sendTask 中自动回退到主线程处理
-                /* 内联Worker代码已注释 - 2025-02-13
-                 * 原因：
-                 * 1. 避免维护两份worker实现代码，防止逻辑不一致
-                 * 2. 外部worker文件功能更完整（有内存池、详细日志等）
-                 * 3. 调试和维护更方便
-                 * 4. Worker加载失败时会自动回退到主线程处理（_processInMainThread）
-                 * 
-                 * 如需恢复内联Worker，请参考git历史记录
-                 */
-                throw new Error('无法加载外部Web Worker文件: ' + error.message);
-            }
-            
-            // 添加Worker错误监听
-            if (this._worker) {
+                const workerPath = this.defaults.workerPath;
+                console.log('[DualChannelComposer] Worker路径:', workerPath);
+                
+                this._worker = new Worker(workerPath);
+                console.log('[DualChannelComposer] Worker创建成功');
+                
                 this._worker.onerror = (error) => {
-                    this._debugLog('error', 'Worker全局错误', {
+                    console.error('[DualChannelComposer] Worker全局错误:', {
                         message: error.message,
                         filename: error.filename,
-                        lineno: error.lineno
+                        lineno: error.lineno,
+                        colno: error.colno
                     });
                 };
-                this._debugLog('info', 'Worker初始化完成');
+                
+                console.log('[DualChannelComposer] Worker初始化完成');
+                return true;
+            } catch (error) {
+                console.error('[DualChannelComposer] Worker初始化失败:', error.message);
+                this._workerInitFailed = true;
+                this._worker = null;
+                return false;
             }
         }
+        return true;
     },
 
     /**
@@ -484,20 +414,6 @@
         }
     },
 
-    /**
-     * 初始化Worker池
-     * @private
-     */
-    _initWorkerPool: function() {
-        if (this.defaults.workerPool.enabled && window.MeeWoo && window.MeeWoo.Services && window.MeeWoo.Services.WorkerPool) {
-            this._workerPool = window.MeeWoo.Services.WorkerPool;
-        }
-    },
-
-    /**
-     * 初始化WebAssembly
-     * @private
-     */
     _initWasm: async function() {
         if (this.defaults.wasm.enabled && window.MeeWoo && window.MeeWoo.Services && window.MeeWoo.Services.WasmLoader) {
             this._wasmLoader = window.MeeWoo.Services.WasmLoader;
@@ -568,9 +484,8 @@
         
         return new Promise((resolve, reject) => {
             try {
-                // 检测Worker支持
                 if (!this._isWorkerSupported()) {
-                    this._debugLog('warn', '当前浏览器不支持Web Worker，回退到主线程处理');
+                    console.log('[DualChannelComposer] 不支持Web Worker，使用主线程处理');
                     this._processInMainThread(type, data, options)
                         .then(result => {
                             this._endPerformanceTimer(timer, true, 'main-thread');
@@ -583,167 +498,90 @@
                     return;
                 }
                 
-                // 尝试使用Worker池
-                if (this.defaults.workerPool.enabled && window.MeeWoo && window.MeeWoo.Services && window.MeeWoo.Services.WorkerPool) {
-                    this._debugLog('info', '使用Worker池发送任务', { type: type });
+                const workerReady = this._initWorker();
+                if (!workerReady) {
+                    console.log('[DualChannelComposer] Worker初始化失败，使用主线程处理');
+                    this._processInMainThread(type, data, options)
+                        .then(result => {
+                            this._endPerformanceTimer(timer, true, 'main-thread');
+                            resolve(result);
+                        })
+                        .catch(error => {
+                            this._endPerformanceTimer(timer, false, 'main-thread');
+                            reject(error);
+                        });
+                    return;
+                }
+                
+                console.log('[DualChannelComposer] 使用Worker发送任务:', type);
                     
-                    // 初始化Worker池
-                    if (!this._workerPool) {
-                        this._workerPool = window.MeeWoo.Services.WorkerPool;
-                        this._debugLog('info', 'Worker池初始化成功');
-                    }
+                const taskId = ++this._taskId;
                     
-                    // 提交任务到Worker池
-                    this._workerPool.submitTask(type, data, {
-                        onProgress: onProgress,
-                        priority: type === 'composeFrames' ? 8 : 5 // 批量任务优先级更高
-                    })
-                    .then(result => {
-                        this._endPerformanceTimer(timer, true, 'worker');
-                        resolve(result);
-                    })
-                    .catch(error => {
-                        this._endPerformanceTimer(timer, false, 'worker');
-                        reject(error);
-                    });
-                } else {
-                    // 回退到单个Worker
-                    this._debugLog('info', '回退到单个Worker发送任务', { type: type });
+                const taskData = {
+                    id: taskId,
+                    type: type,
+                    data: data
+                };
                     
-                    // 确保Worker已初始化
-                    this._initWorker();
-                    
-                    // 生成任务ID
-                    const taskId = ++this._taskId;
-                    
-                    // 准备任务数据（注意：不要使用展开运算符，保持data结构）
-                    const taskData = {
-                        id: taskId,
-                        type: type,
-                        data: data  // 保持data作为嵌套属性，以便 Worker 可以访问 task.data.frames
-                    };
-                    
-                    // 处理Worker消息
-                    const handleMessage = (e) => {
-                        const message = e.data;
+                const handleMessage = (e) => {
+                    const message = e.data;
                         
-                        if (message.id === taskId) {
-                            switch (message.type) {
-                                case 'result':
-                                    this._debugLog('info', 'Web Worker任务完成', { type: type, taskId: taskId });
-                                    this._worker.removeEventListener('message', handleMessage);
-                                    this._worker.removeEventListener('error', handleError);
-                                    this._endPerformanceTimer(timer, true, 'worker');
-                                    resolve(message.result);
-                                    break;
-                                case 'progress':
-                                    onProgress(message.progress / 100);
-                                    break;
-
-                                    // 【测试代码】处理第30帧测试数据并触发下载
-                                    this._debugLog('info', '收到第30帧测试数据', message.data);
-                                    console.log('========== 主线程收到第30帧测试数据 ==========');
-                                    console.log('测试信息:', message.data.testInfo);
-                                    console.log('测试结果:', message.data.testResult);
-                                    console.log('状态:', message.data.status);
-                                    console.log('消息:', message.data.message);
-                                    
-                                    // 如果有图像数据，触发下载
-                                    if (message.data.imageData && message.data.imageData.data) {
-                                        try {
-                                            const imageData = message.data.imageData;
-                                            console.log('准备下载第30帧，尺寸:', imageData.width, 'x', imageData.height);
-                                            
-                                            // 创建Canvas并绘制图像
-                                            const canvas = document.createElement('canvas');
-                                            canvas.width = imageData.width;
-                                            canvas.height = imageData.height;
-                                            const ctx = canvas.getContext('2d');
-                                            
-                                            // 创建ImageData对象
-                                            const imgData = new ImageData(
-                                                new Uint8ClampedArray(imageData.data),
-                                                imageData.width,
-                                                imageData.height
-                                            );
-                                            
-                                            // 绘制到Canvas
-                                            ctx.putImageData(imgData, 0, 0);
-                                            
-                                            // 转换为Blob并下载
-                                            canvas.toBlob(function(blob) {
-                                                const url = URL.createObjectURL(blob);
-                                                const a = document.createElement('a');
-                                                a.href = url;
-                                                a.download = 'frame30_dual_channel_test.png';
-                                                document.body.appendChild(a);
-                                                a.click();
-                                                document.body.removeChild(a);
-                                                URL.revokeObjectURL(url);
-                                                console.log('第30帧下载完成: frame30_dual_channel_test.png');
-                                            }, 'image/png');
-                                            
-                                        } catch (downloadError) {
-                                            console.error('下载第30帧失败:', downloadError);
-                                        }
-                                    }
-                                    console.log('========== 第30帧测试数据处理完成 ==========');
-                                    // 注意：不break，继续等待正常的result消息
-                                    break;
-                                case 'error':
-                                    this._debugLog('error', 'Web Worker任务错误', { 
-                                        error: message.error, 
-                                        taskId: taskId,
-                                        details: message.details 
-                                    });
-                                    this._worker.removeEventListener('message', handleMessage);
-                                    this._worker.removeEventListener('error', handleError);
-                                    this._endPerformanceTimer(timer, false, 'worker');
-                                    reject(new Error('Worker处理失败: ' + message.error));
-                                    break;
-                            }
+                    if (message.id === taskId) {
+                        switch (message.type) {
+                            case 'result':
+                                console.log('[DualChannelComposer] Worker任务完成:', type, taskId);
+                                this._worker.removeEventListener('message', handleMessage);
+                                this._worker.removeEventListener('error', handleError);
+                                this._endPerformanceTimer(timer, true, 'worker');
+                                resolve(message.result);
+                                break;
+                            case 'progress':
+                                onProgress(message.progress / 100);
+                                break;
+                            case 'error':
+                                console.error('[DualChannelComposer] Worker任务错误:', message.error);
+                                this._worker.removeEventListener('message', handleMessage);
+                                this._worker.removeEventListener('error', handleError);
+                                this._endPerformanceTimer(timer, false, 'worker');
+                                reject(new Error('Worker处理失败: ' + message.error));
+                                break;
                         }
-                    };
-                    
-                    // 处理Worker错误（Worker的onerror事件）
-                    const handleError = (error) => {
-                        // ErrorEvent对象的结构：{ message, filename, lineno, colno, error }
-                        const errorMsg = error.message || error.error?.message || 'Unknown worker error';
-                        this._debugLog('error', 'Web Worker错误', { 
-                            message: errorMsg,
-                            filename: error.filename,
-                            lineno: error.lineno
-                        });
-                        this._worker.removeEventListener('message', handleMessage);
-                        this._worker.removeEventListener('error', handleError);
-                        this._endPerformanceTimer(timer, false, 'worker');
-                        reject(new Error('Worker执行错误: ' + errorMsg));
-                    };
-                    
-                    // 添加事件监听器
-                    this._worker.addEventListener('message', handleMessage);
-                    this._worker.addEventListener('error', handleError);
-                    
-                    // 发送任务到Worker（使try-catch包裹避免序列化失败）
-                    try {
-                        // 计算估计数据大小（不使用JSON.stringify）
-                        let estimatedSize = 0;
-                        if (data && data.frames && Array.isArray(data.frames)) {
-                            estimatedSize = data.frames.length * (data.width || 300) * (data.height || 300) * 4;
-                        }
-                        this._debugLog('info', '发送任务数据到Worker', { 
-                            taskId: taskId, 
-                            type: type,
-                            estimatedSize: (estimatedSize / 1024 / 1024).toFixed(2) + 'MB'
-                        });
-                        this._worker.postMessage(taskData, this._getTransferables(taskData));
-                        this._debugLog('info', '任务发送成功', { taskId: taskId });
-                    } catch (postError) {
-                        this._debugLog('error', '发送消息到Worker失败', { error: postError.message });
-                        this._worker.removeEventListener('message', handleMessage);
-                        this._worker.removeEventListener('error', handleError);
-                        throw postError;
                     }
+                };
+                    
+                const handleError = (error) => {
+                    const errorMsg = error.message || 'Unknown worker error';
+                    console.error('[DualChannelComposer] Worker执行错误:', errorMsg, {
+                        filename: error.filename,
+                        lineno: error.lineno,
+                        colno: error.colno
+                    });
+                    this._worker.removeEventListener('message', handleMessage);
+                    this._worker.removeEventListener('error', handleError);
+                    this._endPerformanceTimer(timer, false, 'worker');
+                    reject(new Error('Worker执行错误: ' + errorMsg));
+                };
+                    
+                this._worker.addEventListener('message', handleMessage);
+                this._worker.addEventListener('error', handleError);
+                    
+                try {
+                    let estimatedSize = 0;
+                    if (data && data.frames && Array.isArray(data.frames)) {
+                        estimatedSize = data.frames.length * (data.width || 300) * (data.height || 300) * 4;
+                    }
+                    console.log('[DualChannelComposer] 发送任务到Worker:', {
+                        taskId: taskId,
+                        type: type,
+                        estimatedSize: (estimatedSize / 1024 / 1024).toFixed(2) + 'MB'
+                    });
+                    this._worker.postMessage(taskData, this._getTransferables(taskData));
+                    console.log('[DualChannelComposer] 任务发送成功:', taskId);
+                } catch (postError) {
+                    console.error('[DualChannelComposer] 发送消息失败:', postError.message);
+                    this._worker.removeEventListener('message', handleMessage);
+                    this._worker.removeEventListener('error', handleError);
+                    throw postError;
                 }
             } catch (error) {
                 this._debugLog('error', '发送任务到Worker失败', { error: error.message });
@@ -1312,18 +1150,6 @@
         this._debugLog('info', 'Worker销毁成功');
       }
       
-      // 销毁Worker池
-      if (this._workerPool) {
-        try {
-          this._workerPool.shutdown();
-          this._debugLog('info', 'Worker池销毁成功');
-        } catch (error) {
-          this._debugLog('error', 'Worker池销毁失败', { error: error.message });
-        }
-        this._workerPool = null;
-      }
-      
-      // 清理性能数据
       this.clearPerformanceData();
       this._debugLog('info', '资源清理完成');
     }
