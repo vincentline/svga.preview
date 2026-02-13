@@ -575,7 +575,7 @@
                         type: type,
                         estimatedSize: (estimatedSize / 1024 / 1024).toFixed(2) + 'MB'
                     });
-                    this._worker.postMessage(taskData, this._getTransferables(taskData));
+                    this._worker.postMessage(taskData);
                     console.log('[DualChannelComposer] 任务发送成功:', taskId);
                 } catch (postError) {
                     console.error('[DualChannelComposer] 发送消息失败:', postError.message);

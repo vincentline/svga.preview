@@ -302,7 +302,6 @@ async function handleComposeFrame(task) {
     }));
     console.log('Block processing completed');
     
-    // 使用transferable objects传递数据，减少内存复制
     console.log('Posting result back to main thread');
     self.postMessage({
       id: task.id,
@@ -313,7 +312,7 @@ async function handleComposeFrame(task) {
         width: dualWidth,
         height: dualHeight
       }
-    }, [blackBgData.buffer, dualData.buffer]);
+    });
     
     console.log('Result posted successfully');
   } catch (error) {
@@ -534,21 +533,14 @@ async function handleComposeFrames(task) {
       }
     }
     
-    // 提取transferable objects
-    var transferables = [];
-    results.forEach(result => {
-      transferables.push(result.blackBgData.buffer);
-    });
+    console.log('All batches completed, total results:', results.length);
     
-    console.log('Extracted transferable objects, count:', transferables.length);
-    
-    // 使用transferable objects传递数据，减少内存复制
     console.log('Posting results back to main thread');
     self.postMessage({
       id: task.id,
       type: 'result',
       result: results
-    }, transferables);
+    });
     
     console.log('Results posted successfully, total frames processed:', results.length);
   } catch (error) {
