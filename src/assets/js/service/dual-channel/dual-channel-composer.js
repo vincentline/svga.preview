@@ -335,7 +335,7 @@
      * 初始化Web Worker
      * @private
      */
-    _initWorker: function() {
+    _initWorker: async function() {
         if (this._workerInitFailed) {
             return false;
         }
@@ -346,13 +346,26 @@
                     throw new Error('当前浏览器不支持Web Worker');
                 }
                 
-                console.log('[DualChannelComposer] 开始初始化Web Worker');
+                console.log('[DualChannelComposer] 初始化Worker');
                 
-                const workerPath = this.defaults.workerPath;
-                console.log('[DualChannelComposer] Worker路径:', workerPath);
+                // 构建Worker路径
+                let workerPath = '/' + this.defaults.workerPath;
                 
-                this._worker = new Worker(workerPath);
-                console.log('[DualChannelComposer] Worker创建成功');
+                // 使用 fetch + Blob URL 方式加载 Worker，绕过 Vite 转换
+                // 这样可以确保 Worker 脚本以原始形式执行
+                const response = await fetch(workerPath);
+                if (!response.ok) {
+                    throw new Error('Worker文件加载失败: ' + response.status);
+                }
+                const workerCode = await response.text();
+                
+                
+                // 创建 Blob URL
+                const blob = new Blob([workerCode], { type: 'application/javascript' });
+                const blobUrl = URL.createObjectURL(blob);
+                
+                this._worker = new Worker(blobUrl);
+                console.log('[DualChannelComposer] Worker创建成功 (Blob URL模式)');
                 
                 this._worker.onerror = (error) => {
                     console.error('[DualChannelComposer] Worker全局错误:', {
@@ -363,7 +376,7 @@
                     });
                 };
                 
-                console.log('[DualChannelComposer] Worker初始化完成');
+            console.log('[DualChannelComposer] Worker初始化完成');
                 return true;
             } catch (error) {
                 console.error('[DualChannelComposer] Worker初始化失败:', error.message);
@@ -442,7 +455,7 @@
         options = options || {};
         const onProgress = options.onProgress || function() {};
         
-        // 验证数据大小，避免传输过大的数据
+        // 验证数据大小
         let estimatedSize = 0;
         let frameCount = 0;
         
@@ -454,147 +467,89 @@
             estimatedSize = frameCount * (data.data.width || 300) * (data.data.height || 300) * 4;
         }
         
-        this._debugLog('info', '任务数据大小估算', {
-            frameCount: frameCount,
-            estimatedSize: (estimatedSize / 1024 / 1024).toFixed(2) + 'MB',
-            type: type
-        });
-        
         // 数据完整性验证
         this._validateTaskData(data, type);
         
-        // 检查数据大小限制（50MB）
-        const MAX_DATA_SIZE = 50 * 1024 * 1024;
+        // 检查数据大小限制（1024MB）- 超过则报错
+        const MAX_DATA_SIZE = 1024 * 1024 * 1024;
         if (estimatedSize > MAX_DATA_SIZE) {
-            this._debugLog('warn', '任务数据过大，回退到主线程处理', {
-                estimatedSize: (estimatedSize / 1024 / 1024).toFixed(2) + 'MB',
-                maxSize: (MAX_DATA_SIZE / 1024 / 1024).toFixed(2) + 'MB'
-            });
-            return this._processInMainThread(type, data, options);
+            throw new Error('任务数据过大（' + (estimatedSize / 1024 / 1024).toFixed(2) + 'MB），超过限制' + (MAX_DATA_SIZE / 1024 / 1024) + 'MB');
         }
         
-        // 开始性能计时（使try-catch确保不会阻塞主流程）
+        // 开始性能计时
         let timer = null;
         try {
             timer = this._startPerformanceTimer(type, data);
         } catch (error) {
-            this._debugLog('warn', '性能计时失败', { error: error.message });
-            // 继续执行，不影响主流程
+            // 性能计时失败不影响主流程
         }
         
-        return new Promise((resolve, reject) => {
+        return new Promise(async (resolve, reject) => {
+            // 检查Worker支持
+            if (!this._isWorkerSupported()) {
+                reject(new Error('当前浏览器不支持Web Worker'));
+                return;
+            }
+            
+            // 初始化Worker
+            const workerReady = await this._initWorker();
+            if (!workerReady) {
+                reject(new Error('Worker初始化失败，请检查Worker文件路径'));
+                return;
+            }
+                
+            const taskId = ++this._taskId;
+                
+            const taskData = {
+                id: taskId,
+                type: type,
+                data: data
+            };
+                
+            const handleMessage = (e) => {
+                const message = e.data;
+                    
+                if (message.id === taskId) {
+                    switch (message.type) {
+                        case 'result':
+                            this._worker.removeEventListener('message', handleMessage);
+                            this._worker.removeEventListener('error', handleError);
+                            this._endPerformanceTimer(timer, true, 'worker');
+                            resolve(message.result);
+                            break;
+                        case 'progress':
+                            onProgress(message.progress / 100);
+                            break;
+                        case 'error':
+                            console.error('[DualChannel] Worker任务错误:', message.error);
+                            this._worker.removeEventListener('message', handleMessage);
+                            this._worker.removeEventListener('error', handleError);
+                            this._endPerformanceTimer(timer, false, 'worker');
+                            reject(new Error('Worker处理失败: ' + message.error));
+                            break;
+                    }
+                }
+            };
+                
+            const handleError = (error) => {
+                const errorMsg = error.message || 'Unknown worker error';
+                console.error('[DualChannel] Worker执行错误:', errorMsg);
+                this._worker.removeEventListener('message', handleMessage);
+                this._worker.removeEventListener('error', handleError);
+                this._endPerformanceTimer(timer, false, 'worker');
+                reject(new Error('Worker执行错误: ' + errorMsg));
+            };
+                
+            this._worker.addEventListener('message', handleMessage);
+            this._worker.addEventListener('error', handleError);
+                
             try {
-                if (!this._isWorkerSupported()) {
-                    console.log('[DualChannelComposer] 不支持Web Worker，使用主线程处理');
-                    this._processInMainThread(type, data, options)
-                        .then(result => {
-                            this._endPerformanceTimer(timer, true, 'main-thread');
-                            resolve(result);
-                        })
-                        .catch(error => {
-                            this._endPerformanceTimer(timer, false, 'main-thread');
-                            reject(error);
-                        });
-                    return;
-                }
-                
-                const workerReady = this._initWorker();
-                if (!workerReady) {
-                    console.log('[DualChannelComposer] Worker初始化失败，使用主线程处理');
-                    this._processInMainThread(type, data, options)
-                        .then(result => {
-                            this._endPerformanceTimer(timer, true, 'main-thread');
-                            resolve(result);
-                        })
-                        .catch(error => {
-                            this._endPerformanceTimer(timer, false, 'main-thread');
-                            reject(error);
-                        });
-                    return;
-                }
-                
-                console.log('[DualChannelComposer] 使用Worker发送任务:', type);
-                    
-                const taskId = ++this._taskId;
-                    
-                const taskData = {
-                    id: taskId,
-                    type: type,
-                    data: data
-                };
-                    
-                const handleMessage = (e) => {
-                    const message = e.data;
-                        
-                    if (message.id === taskId) {
-                        switch (message.type) {
-                            case 'result':
-                                console.log('[DualChannelComposer] Worker任务完成:', type, taskId);
-                                this._worker.removeEventListener('message', handleMessage);
-                                this._worker.removeEventListener('error', handleError);
-                                this._endPerformanceTimer(timer, true, 'worker');
-                                resolve(message.result);
-                                break;
-                            case 'progress':
-                                onProgress(message.progress / 100);
-                                break;
-                            case 'error':
-                                console.error('[DualChannelComposer] Worker任务错误:', message.error);
-                                this._worker.removeEventListener('message', handleMessage);
-                                this._worker.removeEventListener('error', handleError);
-                                this._endPerformanceTimer(timer, false, 'worker');
-                                reject(new Error('Worker处理失败: ' + message.error));
-                                break;
-                        }
-                    }
-                };
-                    
-                const handleError = (error) => {
-                    const errorMsg = error.message || 'Unknown worker error';
-                    console.error('[DualChannelComposer] Worker执行错误:', errorMsg, {
-                        filename: error.filename,
-                        lineno: error.lineno,
-                        colno: error.colno
-                    });
-                    this._worker.removeEventListener('message', handleMessage);
-                    this._worker.removeEventListener('error', handleError);
-                    this._endPerformanceTimer(timer, false, 'worker');
-                    reject(new Error('Worker执行错误: ' + errorMsg));
-                };
-                    
-                this._worker.addEventListener('message', handleMessage);
-                this._worker.addEventListener('error', handleError);
-                    
-                try {
-                    let estimatedSize = 0;
-                    if (data && data.frames && Array.isArray(data.frames)) {
-                        estimatedSize = data.frames.length * (data.width || 300) * (data.height || 300) * 4;
-                    }
-                    console.log('[DualChannelComposer] 发送任务到Worker:', {
-                        taskId: taskId,
-                        type: type,
-                        estimatedSize: (estimatedSize / 1024 / 1024).toFixed(2) + 'MB'
-                    });
-                    this._worker.postMessage(taskData);
-                    console.log('[DualChannelComposer] 任务发送成功:', taskId);
-                } catch (postError) {
-                    console.error('[DualChannelComposer] 发送消息失败:', postError.message);
-                    this._worker.removeEventListener('message', handleMessage);
-                    this._worker.removeEventListener('error', handleError);
-                    throw postError;
-                }
-            } catch (error) {
-                this._debugLog('error', '发送任务到Worker失败', { error: error.message });
-                // Worker失败时回退到主线程处理
-                this._processInMainThread(type, data, options)
-                    .then(result => {
-                        this._endPerformanceTimer(timer, true, 'main-thread');
-                        resolve(result);
-                    })
-                    .catch(err => {
-                        this._endPerformanceTimer(timer, false, 'main-thread');
-                        reject(err);
-                    });
+                this._worker.postMessage(taskData);
+            } catch (postError) {
+                console.error('[DualChannel] 发送消息失败:', postError.message);
+                this._worker.removeEventListener('message', handleMessage);
+                this._worker.removeEventListener('error', handleError);
+                reject(new Error('发送任务到Worker失败: ' + postError.message));
             }
         });
     },
@@ -1043,6 +998,19 @@
               onProgress(overallProgress);
             }
           });
+          
+          console.log('[DualChannel] 批次结果:', batchResult ? batchResult.length : 'null', '期望:', batchSize);
+          if (batchResult && batchResult[0]) {
+            console.log('[DualChannel] 第0帧数据:', {
+              hasBlackBgData: !!batchResult[0].blackBgData,
+              dataLength: batchResult[0].blackBgData ? batchResult[0].blackBgData.length : 0,
+              dataType: batchResult[0].blackBgData ? batchResult[0].blackBgData.constructor.name : 'none',
+              expectedLength: width * 2 * height * 4,
+              returnedWidth: batchResult[0].width,
+              returnedHeight: batchResult[0].height
+            });
+          }
+          
           this._debugLog('info', 'Web Worker批次处理完成', {
             returnedResults: batchResult.length
           });
@@ -1051,6 +1019,16 @@
           for (let i = 0; i < batchSize; i++) {
             if (onCancel()) {
               throw new Error('用户取消');
+            }
+            
+            // 检查数据是否存在
+            if (!batchResult[i]) {
+              console.error('[DualChannel] 帧' + (batchStart + i) + '数据缺失');
+              continue;
+            }
+            if (!batchResult[i].blackBgData) {
+              console.error('[DualChannel] 帧' + (batchStart + i) + '缺blackBgData');
+              continue;
             }
 
             try {
@@ -1087,11 +1065,7 @@
                 await new Promise(function(r) { setTimeout(r, 0); });
               }
             } catch (error) {
-              this._debugLog('error', '处理帧时出错', {
-                frameIndex: batchStart + i,
-                error: error.message
-              });
-              // 跳过出错的帧，继续处理
+              console.error('[DualChannel] 帧' + (batchStart + i) + '处理失败:', error.message);
               continue;
             }
           }

@@ -9550,6 +9550,8 @@ function initApp() {
       startMP4Conversion: async function (config) {
         var _this = this;
 
+        console.log('[双通道] 开始转换');
+
         // 如果传入了配置（来自组件），则更新本地配置
         if (config) {
           this.dualChannelConfig = Object.assign({}, this.dualChannelConfig, config);
@@ -9621,22 +9623,28 @@ function initApp() {
 
         try {
           // 1. 加载 FFmpeg (使用统一服务)
+          console.log('[双通道] 加载FFmpeg...');
           await Services.FFmpegService.init();
           if (this.dualChannelCancelled) throw new Error('用户取消转换');
 
           // 2. 提取序列帧
+          console.log('[双通道] 提取序列帧...');
           this.dualChannelStage = 'extracting';
           this.dualChannelMessage = '正在提取序列帧...';
           var frames = await this.extractFrames();
+          console.log('[双通道] 提取', frames.length, '帧');
           if (this.dualChannelCancelled) throw new Error('用户取消转换');
 
           // 3. 合成双通道
+          console.log('[双通道] 合成...');
           this.dualChannelStage = 'composing';
           this.dualChannelMessage = '正在合成双通道...';
           var dualFrames = await this.composeDualChannelFrames(frames);
+          console.log('[双通道] 合成', dualFrames.length, '帧');
           if (this.dualChannelCancelled) throw new Error('用户取消转换');
 
           // 4. 编码为 MP4 (使用统一服务)
+          console.log('[双通道] 编码MP4...');
           this.dualChannelStage = 'encoding';
           this.dualChannelMessage = '正在编码为MP4...';
 
@@ -9874,6 +9882,8 @@ function initApp() {
         var originalHeight = videoItem.videoSize.height;
         var fps = videoItem.FPS || 24;
 
+        console.log('[extractFrames]', totalFrames, '帧,', originalWidth, 'x', originalHeight);
+
         // 使用用户配置的尺寸
         var targetWidth = this.dualChannelConfig.width || originalWidth;
         var targetHeight = this.dualChannelConfig.height || originalHeight;
@@ -9891,6 +9901,8 @@ function initApp() {
         if (!playerCanvas) {
           throw new Error('无法获取播放器Canvas');
         }
+
+
 
         // 计算等待时间（帧率自适应，最小16ms）
         var frameWaitTime = Math.max(16, Math.ceil(1000 / fps * 1.5)); // 1.5帧时长更稳定
@@ -9939,6 +9951,8 @@ function initApp() {
 
             // 获取ImageData
             var imageData = tempCtx.getImageData(0, 0, targetWidth, targetHeight);
+            
+
             frames.push(imageData);
 
             // 让出线程，避免阻塞UI
