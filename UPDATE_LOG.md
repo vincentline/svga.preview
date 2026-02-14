@@ -18,6 +18,34 @@
 - 更新简述：如新增功能、修复问题、优化性能等，简单描述
 
 ## 更新记录
+[2026-02-15 01:40:00] 【修改文件】 : src/assets/js/components/webp-panel.js - 修复尺寸比例误差：始终使用原始文件比例；尺寸不再保存上次输入
+[2026-02-15 01:40:00] 【修改文件】 : src/assets/js/components/gif-panel.js - 尺寸不再保存上次输入，始终使用当前文件原始尺寸
+[2026-02-15 01:40:00] 【修改文件】 : src/assets/js/components/frames-panel.js - 修复尺寸比例误差；尺寸不再保存上次输入
+[2026-02-15 01:40:00] 【修改文件】 : src/assets/js/components/standard-mp4-panel.js - 尺寸不再保存上次输入，始终使用当前文件原始尺寸
+[2026-02-15 01:40:00] 【修改文件】 : src/assets/js/components/dual-channel-panel.js - 修复尺寸比例误差；尺寸不再保存上次输入
+[2026-02-15 01:40:00] 【修改文件】 : src/assets/js/components/to-svga-panel.js - 修复尺寸比例误差；尺寸不再保存上次输入
+[2026-02-15 01:35:00] 【修改文件】 : src/assets/js/service/image-compression-service.js - 清理PNG压缩冗余日志：移除oxipng/pako/browser压缩成功的console.log，保留失败日志
+[2026-02-15 01:30:00] 【修改文件】 : src/index.html - 底部浮层播放时间显示加上总时长，格式如"1.51s/9.00s"
+[2026-02-15 01:25:00] 【修改文件】 : src/assets/js/core/app.js - 清理转SVGA/双通道相关冗余调试日志：帧提取进度、音频变速预处理等console.log
+[2026-02-15 01:20:00] 【修改文件】 : src/assets/js/core/app.js - 删除转SVGA冗余代码：移除closeYyeva/Mp4/LottieToSvgaPanel、cancel、onWidthChange/onHeightChange等方法（已由panel-mixin统一处理）
+[2026-02-15 01:15:00] 【修改文件】 : src/assets/js/components/gif-panel.js - 新增 sourceFormatName prop 用于弹窗标题显示
+[2026-02-15 01:15:00] 【修改文件】 : src/assets/js/components/frames-panel.js - 新增 sourceFormatName prop 用于弹窗标题显示
+[2026-02-15 01:15:00] 【修改文件】 : src/assets/js/components/webp-panel.js - 新增 sourceFormatName prop 用于弹窗标题显示
+[2026-02-15 01:15:00] 【修改文件】 : src/index.html - 给GIF/序列帧/WebP组件传递 source-format-name 属性
+[2026-02-15 01:10:00] 【修改文件】 : src/assets/js/core/app.js - 新增 sourceFormatName 计算属性，用于转格式弹窗标题显示
+[2026-02-15 01:10:00] 【修改文件】 : src/index.html - 优化转格式弹窗标题，改为"源格式 →→ 目标格式"形式（GIF/序列帧/WebP/双通道MP4/普通MP4/SVGA）
+[2026-02-15 01:10:00] 【修改文件】 : src/assets/js/components/standard-mp4-panel.js - 弹窗标题改为"源格式 →→ MP4"，新增 sourceFormatName prop
+[2026-02-15 01:10:00] 【修改文件】 : src/assets/js/components/dual-channel-panel.js - 弹窗标题改为"源格式 →→ 双通道MP4"，新增 sourceFormatName prop
+[2026-02-15 01:10:00] 【修改文件】 : src/assets/js/components/to-svga-panel.js - 弹窗标题改为"源格式 →→ SVGA"，新增 sourceFormatName prop
+[2026-02-15 00:50:00] 【修改文件】 : src/assets/js/core/app.js - 修复mini模式下PlayerController未创建问题：移除进度条存在的硬性要求，进度条和音量滑块改为可选
+[2026-02-15 00:50:00] 【修改文件】 : src/assets/js/controllers/player-controller.js - 修复切换沉浸模式SVGA音频丢失：SvgaPlayerAdapter.destroy()不再卸载音频
+[2026-02-15 00:35:00] 【修改文件】 : src/index.html - 架构优化：沉浸模式音量滑块改用ref引用，移除内联事件绑定
+[2026-02-15 00:35:00] 【修改文件】 : src/assets/js/core/app.js - 架构优化：音量控制统一交给PlayerController，删除冗余的startVolumeDrag/updateVolume/stopVolumeDrag方法和isDraggingVolume状态
+[2026-02-15 00:20:00] 【修改文件】 : src/assets/js/core/app.js - 体验优化：ViewportController初始化的zoomStep从0.1调整为0.05
+[2026-02-15 00:15:00] 【修改文件】 : src/assets/js/core/app.js - 修复双通道MP4转SVGA报错：OffscreenCanvas使用convertToBlob()而非toBlob()，兼容两种 Canvas类型
+[2026-02-15 00:05:00] 【修改文件】 : src/assets/js/controllers/viewport-controller.js - 体验优化：画布缩放步进从10%调整为5%
+[2026-02-14 23:50:00] 【修改文件】 : src/index.html - 序列帧面板：修复按钮进度数字显示（乘100转百分比），移除重复的export-progress区域
+[2026-02-14 23:40:00] 【修改文件】 : src/index.html - GIF面板：修复按钮进度数字显示（乘100转百分比），移除重复的export-progress区域
 [2026-02-14 23:30:00] 【修改文件】 : src/index.html - WebP面板：修复按钮进度数字显示（乘100转百分比），移除重复的export-progress区域
 [2026-02-14 23:15:00] 【新增文件】 : src/assets/js/service/webp/index.js - WebP服务索引文件
 [2026-02-14 23:15:00] 【修改文件】 : README.md - 添加webpxmux.js到技术栈列表，更新WebP导出功能说明

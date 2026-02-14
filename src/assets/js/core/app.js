@@ -445,8 +445,7 @@ function initApp() {
 
         // 静音控制
         isMuted: false,
-        volume: 1, // 音量 值 0-1
-        isDraggingVolume: false, // 音量滑块拖动状态
+        volume: 1, // 音量值 0-1
         yyevaHasAudio: false, // 双通道MP4视频是否包含音频轨道
 
         // 序列帧模式状态
@@ -2145,63 +2144,70 @@ function initApp() {
 
         // 使用 $nextTick 确保 DOM 已渲染
         this.$nextTick(function () {
-          var progressBar = _this.$refs.progressBar;
-          var progressThumb = _this.$refs.progressThumb;
-          var volumeBar = _this.$refs.volumeSliderTrack;
-          var volumeThumb = _this.$refs.volumeSliderHandle;
+          // 正常模式：有进度条
+          // mini模式：没有进度条，但仍需创建 PlayerController 以支持播放/暂停/静音控制
+          var progressBar = _this.$refs.progressBar || null;
+          var progressThumb = _this.$refs.progressThumb || null;
+          
+          // 根据模式选择正确的音量滑块元素
+          // 沉浸模式：使用 mini 音量滑块
+          // 正常模式：使用标准音量滑块
+          var volumeBar = _this.isImmersiveMode 
+            ? _this.$refs.volumeSliderTrackMini 
+            : _this.$refs.volumeSliderTrack;
+          var volumeThumb = _this.isImmersiveMode 
+            ? _this.$refs.volumeSliderHandleMini 
+            : _this.$refs.volumeSliderHandle;
 
-          if (progressBar && progressThumb) {
-            _this.playerController = new Controllers.PlayerController({
-              progressBar: progressBar,
-              progressThumb: progressThumb,
-              volumeBar: volumeBar,
-              volumeThumb: volumeThumb,
-              onProgressChange: function (progress, currentFrame) {
-                _this.progress = progress;
-                _this.currentFrame = currentFrame;
-                // 修复：拖拽进度条时，同步更新 currentTime，确保快进快退基于最新时间计算
-                if (_this.totalDuration > 0) {
-                  _this.currentTime = (progress / 100) * _this.totalDuration;
-                }
-              },
-              onVolumeChange: function (volume) {
-                _this.volume = volume;
-              },
-              onPlayStateChange: function (isPlaying) {
-                _this.isPlaying = isPlaying;
-              },
-              getPlayerState: function () {
-                return {
-                  mode: _this.currentModule,
-                  isPlaying: _this.isPlaying,
-                  progress: _this.progress,
-                  totalFrames: _this.totalFrames,
-                  totalDuration: _this.totalDuration, // 补充时长
-                  currentTime: _this.currentTime,     // 补充当前时间
-                  isMuted: _this.isMuted,             // 补充静音状态（修复静音按钮无效问题）
-                  hasFile: _this.svga.hasFile || _this.yyeva.hasFile || _this.mp4.hasFile || _this.lottie.hasFile || _this.frames.hasFile,
-                  svgaPlayer: _this.svgaPlayer,
-                  lottiePlayer: _this.lottiePlayer,
-                  yyevaVideo: _this.yyevaVideo,
-                  yyevaAnimationId: _this.yyevaAnimationId,
-                  mp4Video: _this.mp4Video,
-                  speedRemapConfig: _this.speedRemapConfig,
-                  // 新增：传递音频配置和包含音频数据的 videoItem
-                  svgaAudios: _this.svgaAudios,
-                  svgaAudioData: _this.svgaAudioData, // 显式传递解析后的音频数据
-                  videoItem: _this.originalVideoItem,
-                  startYyevaRenderLoop: function () { _this.startYyevaRenderLoop(); },
-                  startMp4ProgressLoop: function () { _this.startMp4ProgressLoop(); },
-                  stopFramesPlayLoop: function () { _this.stopFramesPlayLoop(); },
-                  startFramesPlayLoop: function () { _this.startFramesPlayLoop(); },
-                  renderYyevaFrame: function () { _this.renderYyevaFrame(); },
-                  seekFramesTo: function (frame) { _this.seekFramesTo(frame); }
-                };
+          // 创建 PlayerController，进度条和音量滑块都是可选的
+          // mini模式下没有进度条，但仍需要 PlayerController 来控制播放/暂停/静音
+          _this.playerController = new Controllers.PlayerController({
+            progressBar: progressBar,
+            progressThumb: progressThumb,
+            volumeBar: volumeBar,
+            volumeThumb: volumeThumb,
+            onProgressChange: function (progress, currentFrame) {
+              _this.progress = progress;
+              _this.currentFrame = currentFrame;
+              // 修复：拖拽进度条时，同步更新 currentTime，确保快进快退基于最新时间计算
+              if (_this.totalDuration > 0) {
+                _this.currentTime = (progress / 100) * _this.totalDuration;
               }
-            });
-
-            // SVGA 播放器的 onFrame 回调已在 initSvgaPlayer 中设置
-          }
+            },
+            onVolumeChange: function (volume) {
+              _this.volume = volume;
+            },
+            onPlayStateChange: function (isPlaying) {
+              _this.isPlaying = isPlaying;
+            },
+            getPlayerState: function () {
+              return {
+                mode: _this.currentModule,
+                isPlaying: _this.isPlaying,
+                progress: _this.progress,
+                totalFrames: _this.totalFrames,
+                totalDuration: _this.totalDuration,
+                currentTime: _this.currentTime,
+                isMuted: _this.isMuted,
+                hasFile: _this.svga.hasFile || _this.yyeva.hasFile || _this.mp4.hasFile || _this.lottie.hasFile || _this.frames.hasFile,
+                svgaPlayer: _this.svgaPlayer,
+                lottiePlayer: _this.lottiePlayer,
+                yyevaVideo: _this.yyevaVideo,
+                yyevaAnimationId: _this.yyevaAnimationId,
+                mp4Video: _this.mp4Video,
+                speedRemapConfig: _this.speedRemapConfig,
+                svgaAudios: _this.svgaAudios,
+                svgaAudioData: _this.svgaAudioData,
+                videoItem: _this.originalVideoItem,
+                startYyevaRenderLoop: function () { _this.startYyevaRenderLoop(); },
+                startMp4ProgressLoop: function () { _this.startMp4ProgressLoop(); },
+                stopFramesPlayLoop: function () { _this.stopFramesPlayLoop(); },
+                startFramesPlayLoop: function () { _this.startFramesPlayLoop(); },
+                renderYyevaFrame: function () { _this.renderYyevaFrame(); },
+                seekFramesTo: function (frame) { _this.seekFramesTo(frame); }
+              };
+            }
+          });
         });
       },
 
@@ -2228,14 +2234,10 @@ function initApp() {
             if (typeof isDragging !== 'undefined') {
               _this.dragging = isDragging;
             }
-            // 同步视图模式状态，用于更新按钮CLASS和TITLE
+            // 同步视图模式状态，用于更新按钮class和title
             _this.viewMode = _this.viewportController.getViewMode();
           },
-          footerHeight: 154,
-          screenHeightRatio: 0.75,
-          minScale: 0.1,
-          maxScale: 5,
-          zoomStep: 0.1
+          footerHeight: 154 // 应用特定的底部浮层高度，其他参数使用 viewport-controller.js 默认值
         });
       },
 
@@ -2259,58 +2261,6 @@ function initApp() {
         if (this.playerController) {
           this.playerController.setMuted(this.isMuted);
         }
-      },
-
-      /**
-       * 开始拖动音量滑块
-       */
-      startVolumeDrag: function (event) {
-        event.preventDefault();
-        this.isDraggingVolume = true;
-        this.updateVolume(event);
-        
-        // 添加全局事件监听
-        document.addEventListener('mousemove', this.updateVolume);
-        document.addEventListener('mouseup', this.stopVolumeDrag);
-        document.addEventListener('touchmove', this.updateVolume);
-        document.addEventListener('touchend', this.stopVolumeDrag);
-      },
-
-      /**
-       * 更新音量
-       */
-      updateVolume: function (event) {
-        if (!this.isDraggingVolume) return;
-        event.preventDefault();
-        
-        var track = event.currentTarget;
-        if (!track) return;
-        
-        var rect = track.getBoundingClientRect();
-        var clientY = event.clientY || (event.touches && event.touches[0] && event.touches[0].clientY);
-        if (!clientY) return;
-        
-        var y = clientY - rect.top;
-        var percentage = 1 - Math.max(0, Math.min(1, y / rect.height));
-        var volume = percentage;
-        
-        this.volume = volume;
-        if (this.playerController) {
-          this.playerController.setVolume(volume);
-        }
-      },
-
-      /**
-       * 停止拖动音量滑块
-       */
-      stopVolumeDrag: function () {
-        this.isDraggingVolume = false;
-        
-        // 移除全局事件监听
-        document.removeEventListener('mousemove', this.updateVolume);
-        document.removeEventListener('mouseup', this.stopVolumeDrag);
-        document.removeEventListener('touchmove', this.updateVolume);
-        document.removeEventListener('touchend', this.stopVolumeDrag);
       },
 
       // 检测视频是否包含音频轨道
@@ -5053,6 +5003,16 @@ function initApp() {
         var duration = sourceInfo.duration || 0;
         var totalFrames = sourceInfo.totalFrames || Math.ceil(duration * config.fps);
 
+        // 变速支持：如果MP4模式且启用变速，使用帧映射表
+        var frameMap = null;
+        if (this.currentModule === 'mp4' && this.speedRemapConfig.enabled && this.speedRemapConfig.keyframes && this.speedRemapConfig.keyframes.length >= 2) {
+          frameMap = this.buildFrameMap(config.fps);
+          if (frameMap && frameMap.length > 0) {
+            totalFrames = frameMap.length;
+            duration = totalFrames / config.fps;
+          }
+        }
+
         // 检查帧数是否有效
         if (!totalFrames || totalFrames <= 0) {
           alert('WebP导出失败：无法获取动画帧数\n\n请确保已加载有效的动画文件。');
@@ -5108,11 +5068,32 @@ function initApp() {
             width: config.width,
             height: config.height,
             fps: config.fps,
-            totalFrames: totalFrames,  // 传递总帧数
+            totalFrames: totalFrames,  // 传递总帧数（变速后）
             quality: 80,  // WebP质量
             getFrame: async function(frameIndex) {
+              // 变速支持：使用帧映射表获取原始帧号
+              var actualFrameIndex = frameIndex;
+              var seekFps = config.fps; // 默认为导出帧率
+
+              if (frameMap) {
+                if (frameMap[frameIndex] !== undefined) {
+                  actualFrameIndex = frameMap[frameIndex];
+                  // 修复：使用帧映射时，actualFrameIndex是原始视频的帧索引
+                  // 所以必须使用原始视频的FPS来计算时间点，而不是导出FPS
+                  if (_this.currentModule === 'mp4' && _this.mp4 && _this.mp4.fileInfo && _this.mp4.fileInfo.fps) {
+                    seekFps = parseFloat(_this.mp4.fileInfo.fps) || 30;
+                  }
+                } else if (frameMap.length > 0) {
+                  // 越界保护：使用最后一帧
+                  actualFrameIndex = frameMap[frameMap.length - 1];
+                  if (_this.currentModule === 'mp4' && _this.mp4 && _this.mp4.fileInfo && _this.mp4.fileInfo.fps) {
+                    seekFps = parseFloat(_this.mp4.fileInfo.fps) || 30;
+                  }
+                }
+              }
+
               // 跳转到对应帧
-              await _this.seekToFrame(frameIndex, config.fps, sourceInfo);
+              await _this.seekToFrame(actualFrameIndex, seekFps, sourceInfo);
               
               // 添加延迟，确保帧渲染完成
               await new Promise(function(resolve) { setTimeout(resolve, 50); });
@@ -7393,7 +7374,6 @@ function initApp() {
           this.dualChannelProgress = 30;
         }
 
-        console.log('帧提取完成，实际提取帧数:', frames.length);
         return frames;
       },
 
@@ -7750,11 +7730,6 @@ function initApp() {
           var imageData = ctx.getImageData(0, 0, config.width, config.height);
           frames.push(imageData);
 
-          // 每处理10帧记录一次日志
-          if (i % 10 === 0) {
-            console.log('提取帧进度:', i + 1, '/', totalFrames);
-          }
-
           this.dualChannelProgress = Math.floor((i / totalFrames) * 30);
         }
 
@@ -7823,132 +7798,7 @@ function initApp() {
         });
       },
 
-      /**
-       * 关闭转SVGA弹窗
-       */
-      closeYyevaToSvgaPanel: function () {
-        if (this.isConvertingToSvga) {
-          if (!confirm('正在转换中，确定要取消吗？')) {
-            return;
-          }
-          this.isConvertingToSvga = false;
-          this.toSvgaProgress = 0;
-          this.toSvgaCancelled = true;
-        }
-        this.showYyevaToSvgaPanel = false;
-      },
-
-      cancelYyevaToSvgaConversion: function () {
-        this.toSvgaCancelled = true;
-        this.isConvertingToSvga = false;
-        this.toSvgaProgress = 0;
-        this.toSvgaStage = '';
-        this.toSvgaMessage = '';
-      },
-
       /* ==================== 普通MP4转SVGA ==================== */
-
-      /**
-       * 打开/关闭普通MP4转SVGA弹窗
-       */
-      openMp4ToSvgaPanel: function () {
-        if (!this.mp4Video || !this.mp4.hasFile) {
-          alert('请先加载 MP4 文件');
-          return;
-        }
-
-        // Source Info
-        var videoFps = this.mp4.fileInfo.fps || 30;
-        this.toSvgaSourceInfo = {
-          name: this.mp4.fileInfo.name,
-          sizeWH: this.mp4.originalWidth + ' x ' + this.mp4.originalHeight,
-          duration: this.mp4Video.duration.toFixed(1) + 's',
-          fileSize: this.mp4.fileInfo.sizeText,
-          fps: videoFps
-        };
-
-        // 初始化配置
-        this.toSvgaConfig.width = this.mp4.originalWidth || 0;
-        this.toSvgaConfig.height = this.mp4.originalHeight || 0;
-
-        // 使用视频帧率，限制在1-60范围
-        this.toSvgaConfig.fps = Math.min(60, Math.max(1, Math.round(parseFloat(videoFps))));
-
-        // 读取配置管理器中保存的配置
-        if (this.configManager) {
-          var savedConfig = this.configManager.get('toSvgaConfig');
-          if (savedConfig) {
-            if (savedConfig.quality) this.toSvgaConfig.quality = savedConfig.quality;
-          }
-        }
-
-        // 使用统一的弹窗管理
-        this.openRightPanel('showMp4ToSvgaPanel');
-
-        // 预加载protobuf和pako库
-        this.loadLibrary(['protobuf', 'pako'], true).catch(function (e) {
-          console.warn('Library preload failed:', e);
-          // 静默失败，将在需要时重新加载
-        });
-      },
-
-      /**
-       * 关闭普通MP4转SVGA弹窗
-       */
-      closeMp4ToSvgaPanel: function () {
-        if (this.isConvertingToSvga) {
-          if (!confirm('正在转换中，确定要取消吗？')) {
-            return;
-          }
-          this.isConvertingToSvga = false;
-          this.toSvgaProgress = 0;
-          this.toSvgaCancelled = true;
-        }
-        this.showMp4ToSvgaPanel = false;
-      },
-
-      /**
-       * 取消普通MP4转SVGA转换
-       */
-      cancelMp4ToSvgaConversion: function () {
-        this.toSvgaCancelled = true;
-        this.isConvertingToSvga = false;
-        this.toSvgaProgress = 0;
-        this.toSvgaStage = '';
-        this.toSvgaMessage = '';
-      },
-
-      /**
-       * 普通MP4转SVGA宽度变化（保持比例）
-       */
-      onMp4ToSvgaWidthChange: function () {
-        var originalWidth = this.mp4.originalWidth || 0;
-        var originalHeight = this.mp4.originalHeight || 0;
-        if (!originalWidth || !originalHeight) return;
-
-        var ratio = originalHeight / originalWidth;
-        var newWidth = Math.max(1, Math.min(3000, parseInt(this.toSvgaConfig.width) || 0));
-        var newHeight = Math.floor(newWidth * ratio);
-
-        this.toSvgaConfig.width = newWidth;
-        this.toSvgaConfig.height = newHeight;
-      },
-
-      /**
-       * 普通MP4转SVGA高度变化（保持比例）
-       */
-      onMp4ToSvgaHeightChange: function () {
-        var originalWidth = this.mp4.originalWidth || 0;
-        var originalHeight = this.mp4.originalHeight || 0;
-        if (!originalWidth || !originalHeight) return;
-
-        var ratio = originalWidth / originalHeight;
-        var newHeight = Math.max(1, Math.min(3000, parseInt(this.toSvgaConfig.height) || 0));
-        var newWidth = Math.floor(newHeight * ratio);
-
-        this.toSvgaConfig.width = newWidth;
-        this.toSvgaConfig.height = newHeight;
-      },
 
       /**
        * 开始普通MP4转SVGA转换
@@ -8319,44 +8169,6 @@ function initApp() {
           console.warn('Library preload failed:', e);
           // 静默失败，将在需要时重新加载
         });
-      },
-
-      closeLottieToSvgaPanel: function () {
-        if (this.isConvertingToSvga) {
-          if (!confirm('正在转换中，确定要取消吗？')) {
-            return;
-          }
-          this.isConvertingToSvga = false;
-          this.toSvgaProgress = 0;
-          this.toSvgaCancelled = true;
-        }
-        this.showLottieToSvgaPanel = false;
-      },
-
-      onLottieToSvgaWidthChange: function () {
-        var originalWidth = this.lottie.originalWidth;
-        var originalHeight = this.lottie.originalHeight;
-        if (!originalWidth || !originalHeight) return;
-
-        var ratio = originalHeight / originalWidth;
-        var newWidth = Math.max(1, Math.min(3000, parseInt(this.toSvgaConfig.width) || 0));
-        var newHeight = Math.floor(newWidth * ratio);
-
-        this.toSvgaConfig.width = newWidth;
-        this.toSvgaConfig.height = newHeight;
-      },
-
-      onLottieToSvgaHeightChange: function () {
-        var originalWidth = this.lottie.originalWidth;
-        var originalHeight = this.lottie.originalHeight;
-        if (!originalWidth || !originalHeight) return;
-
-        var ratio = originalWidth / originalHeight;
-        var newHeight = Math.max(1, Math.min(3000, parseInt(this.toSvgaConfig.height) || 0));
-        var newWidth = Math.floor(newHeight * ratio);
-
-        this.toSvgaConfig.width = newWidth;
-        this.toSvgaConfig.height = newHeight;
       },
 
       /**
@@ -9001,7 +8813,6 @@ function initApp() {
         var images = this.framesImages;
         var totalFrames = images.length;
         var frames = [];
-        console.log('开始提取帧，总帧数:', totalFrames, '尺寸:', config.width, 'x', config.height);
 
         // 创建canvas
         var canvas = document.createElement('canvas');
@@ -9130,7 +8941,7 @@ function initApp() {
         var taskId = null;
         if (this.taskManager) {
           taskId = this.taskManager.register('双通道MP4转SVGA', function () {
-            _this.cancelYyevaToSvgaConversion();
+            _this.cancelToSvgaConversion();
           });
         }
 
@@ -9352,12 +9163,19 @@ function initApp() {
           dstCtx.clearRect(0, 0, scaledWidth, scaledHeight);
           dstCtx.drawImage(tempCanvas, 0, 0, halfWidth, videoHeight, 0, 0, scaledWidth, scaledHeight);
 
-          // 转换为PNG Blob
-          var pngBlob = await new Promise(function (resolve) {
-            dstCanvas.toBlob(function (blob) {
-              resolve(blob);
-            }, 'image/png');
-          });
+          // 转换为PNG Blob（OffscreenCanvas使用convertToBlob，普通Canvas使用toBlob）
+          var pngBlob;
+          if (dstCanvas.convertToBlob) {
+            // OffscreenCanvas
+            pngBlob = await dstCanvas.convertToBlob({ type: 'image/png' });
+          } else {
+            // HTMLCanvasElement
+            pngBlob = await new Promise(function (resolve) {
+              dstCanvas.toBlob(function (blob) {
+                resolve(blob);
+              }, 'image/png');
+            });
+          }
 
           // 读取为ArrayBuffer
           var arrayBuffer = await pngBlob.arrayBuffer();
@@ -9547,12 +9365,19 @@ function initApp() {
             dstCtx.clearRect(0, 0, scaledWidth, scaledHeight);
             dstCtx.drawImage(tempCanvas, 0, 0, halfWidth, img.height, 0, 0, scaledWidth, scaledHeight);
 
-            // 转换为PNG Blob
-            var pngBlob = await new Promise(function (resolve) {
-              dstCanvas.toBlob(function (blob) {
-                resolve(blob);
-              }, 'image/png');
-            });
+            // 转换为PNG Blob（OffscreenCanvas使用convertToBlob，普通Canvas使用toBlob）
+            var pngBlob;
+            if (dstCanvas.convertToBlob) {
+              // OffscreenCanvas
+              pngBlob = await dstCanvas.convertToBlob({ type: 'image/png' });
+            } else {
+              // HTMLCanvasElement
+              pngBlob = await new Promise(function (resolve) {
+                dstCanvas.toBlob(function (blob) {
+                  resolve(blob);
+                }, 'image/png');
+              });
+            }
 
             // 读取为ArrayBuffer
             var arrayBuffer = await pngBlob.arrayBuffer();
@@ -9836,8 +9661,6 @@ function initApp() {
               // 防止除以零
               if (range < 0.0001) range = 1.0;
 
-              console.log('音频变速预处理: 归一化关键帧范围', startPos.toFixed(3) + '-' + endPos.toFixed(3), 'Range:', range.toFixed(3));
-
               keyframes = keyframes.map(function (k) {
                 return {
                   frame: k.frame,
@@ -9920,8 +9743,6 @@ function initApp() {
         var originalWidth = videoItem.videoSize.width;
         var originalHeight = videoItem.videoSize.height;
         var fps = videoItem.FPS || 24;
-
-        console.log('[extractFrames]', totalFrames, '帧,', originalWidth, 'x', originalHeight);
 
         // 使用用户配置的尺寸
         var targetWidth = this.dualChannelConfig.width || originalWidth;
@@ -10139,6 +9960,21 @@ function initApp() {
 
       isEmpty: function () {
         return !this.svga.hasFile && !this.yyeva.hasFile && !this.mp4.hasFile && !this.lottie.hasFile && !this.frames.hasFile;
+      },
+
+      /**
+       * 当前源格式的显示名称
+       * 用于转格式弹窗的标题显示，如 "SVGA →→ GIF"
+       */
+      sourceFormatName: function () {
+        var formatMap = {
+          'svga': 'SVGA',
+          'yyeva': '双通道MP4',
+          'lottie': 'Lottie',
+          'mp4': 'MP4',
+          'frames': '序列帧'
+        };
+        return formatMap[this.currentModule] || this.currentModule.toUpperCase();
       },
 
       currentFileInfo: function () {

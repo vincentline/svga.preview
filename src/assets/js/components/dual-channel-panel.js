@@ -35,7 +35,7 @@
       <div class="side-panel-container">
         <!-- 标题区 -->
         <div class="side-panel-header">
-          <h3 class="side-panel-title">转换为双通道MP4格式</h3>
+          <h3 class="side-panel-title">{{ sourceFormatName }} →→ 双通道MP4</h3>
           <div class="side-panel-divider"></div>
         </div>
 
@@ -179,6 +179,8 @@
     props: {
       // 面板可见性
       visible: { type: Boolean, default: false },
+      // 源格式名称（用于标题显示）
+      sourceFormatName: { type: String, default: '' },
       // 源文件信息
       sourceInfo: { type: Object, default: function () { return {}; } },
       // 初始配置
@@ -251,16 +253,8 @@
       initParams: function () {
         var source = this.sourceInfo;
 
-        // 1. 尺寸初始化
-        if (this.initialConfig && this.initialConfig.width > 0) {
-          this.config.width = this.initialConfig.width;
-          if (this.initialConfig.height > 0) {
-            this.config.height = this.initialConfig.height;
-          } else if (source.width && source.height) {
-            var ratio = source.height / source.width;
-            this.config.height = Math.floor(this.config.width * ratio);
-          }
-        } else if (source.width && source.height) {
+        // 1. 尺寸初始化（始终使用原始尺寸，不保存上次输入）
+        if (source.width && source.height) {
           this.config.width = source.width;
           this.config.height = source.height;
         } else {
@@ -268,9 +262,11 @@
           this.config.height = 300;
         }
         
-        // 计算并保存宽高比
-        if (this.config.width > 0 && this.config.height > 0) {
-          this.aspectRatio = this.config.width / this.config.height;
+        // 计算并保存宽高比（始终使用原始文件的比例）
+        var originalWidth = source.width || this.config.width;
+        var originalHeight = source.height || this.config.height;
+        if (originalWidth > 0 && originalHeight > 0) {
+          this.aspectRatio = originalWidth / originalHeight;
         } else {
           this.aspectRatio = 1;
         }

@@ -485,7 +485,7 @@
                         <div class="progress-thumb" ref="progressThumb" :style="{left: progress + '%'}"></div>
                       </div>
                       <div class="progress-text">
-                        <span class="progress-time">{{ currentTime.toFixed(2) }}s</span>
+                        <span class="progress-time">{{ currentTime.toFixed(2) }}s/{{ totalDuration.toFixed(2) }}s</span>
                         <span class="progress-frames">{{ currentFrame }}/{{ totalFrames }}</span>
                       </div>
                     </div>
@@ -823,11 +823,11 @@
               }" :disabled="!hasAudio" @click="toggleMute"
                   :title="hasAudio ? (isMuted ? '取消静音' : '静音') : '无音频'">
                 </button>
-                <!-- 音量滑块 -->
+                <!-- 音量滑块（沉浸模式） -->
                 <div class="volume-slider-container mini-volume-slider" v-show="hasAudio">
-                  <div class="volume-slider-track" @mousedown="startVolumeDrag" @touchstart="startVolumeDrag">
+                  <div class="volume-slider-track" ref="volumeSliderTrackMini">
                     <div class="volume-slider-fill" :style="{height: volume * 100 + '%'}"></div>
-                    <div class="volume-slider-handle" :style="{bottom: volume * 100 + '%'}" @mousedown="startVolumeDrag" @touchstart="startVolumeDrag"></div>
+                    <div class="volume-slider-handle" ref="volumeSliderHandleMini" :style="{bottom: volume * 100 + '%'}"></div>
                   </div>
                 </div>
               </div>
@@ -864,34 +864,34 @@
       @download="downloadMaterial" @edit="openMaterialEditor" @compress="openCompressAndExportModal"></material-panel>
 
     <!-- 统一 转双通道MP4 弹窗 (SVGA/MP4/Lottie/Frames -> Dual Channel MP4) -->
-    <dual-channel-panel :visible="activeRightPanel === 'dual-channel'" :source-info="dualChannelSourceInfo"
+    <dual-channel-panel :visible="activeRightPanel === 'dual-channel'" :source-format-name="sourceFormatName" :source-info="dualChannelSourceInfo"
       :initial-config="dualChannelConfig" :is-converting="isConvertingToDualChannel" :progress="dualChannelProgress"
       :message="dualChannelMessage" :disabled="isGlobalTaskRunning" @close="closeRightPanel"
       @cancel="cancelDualChannelConversion" @convert="handleDualChannelConvert">
     </dual-channel-panel>
 
     <!-- 普通MP4转换弹窗 -->
-    <standard-mp4-panel :visible="showStandardMp4Panel" :source-info="standardMp4SourceInfo"
+    <standard-mp4-panel :visible="showStandardMp4Panel" :source-format-name="sourceFormatName" :source-info="standardMp4SourceInfo"
       :initial-config="standardMp4Config" :is-converting="isConvertingStandardMp4" :progress="standardMp4Progress"
       :message="standardMp4Message" :disabled="isGlobalTaskRunning" :current-module="currentModule"
       @close="closeStandardMp4Panel" @cancel="cancelStandardMp4Conversion" @convert="startStandardMp4Conversion">
     </standard-mp4-panel>
 
     <!-- GIF导出弹窗（所有模式通用右侧弹窗） -->
-    <gif-panel :visible="activeRightPanel === 'gif'" :source-info="getGifSourceInfo()" :initial-config="gifConfig"
+    <gif-panel :visible="activeRightPanel === 'gif'" :source-format-name="sourceFormatName" :source-info="getGifSourceInfo()" :initial-config="gifConfig"
       :bg-color-key="bgColorKey" :current-bg-color="currentBgColor" :is-exporting="isExportingGIF"
       :export-progress="gifExportProgress" :export-stage="gifExportStage" :export-message="gifExportMessage"
       :disabled="isGlobalTaskRunning" @close="closeGifPanel" @cancel="cancelGifExport" @export="handleGifExport"
       @config-change="handleGifConfigChange"></gif-panel>
 
     <!-- 序列帧导出弹窗（所有模式通用右侧弹窗） -->
-    <frames-panel :visible="activeRightPanel === 'frames'" :source-info="getFramesSourceInfo()" :initial-config="framesConfig"
+    <frames-panel :visible="activeRightPanel === 'frames'" :source-format-name="sourceFormatName" :source-info="getFramesSourceInfo()" :initial-config="framesConfig"
       :is-exporting="isExportingFrames" :export-progress="framesExportProgress" :export-stage="framesExportStage"
       :export-message="framesExportMessage" :disabled="isGlobalTaskRunning" @close="closeFramesPanel"
       @cancel="cancelFramesExport" @export="handleFramesExport" @config-change="handleFramesConfigChange"></frames-panel>
 
     <!-- webp导出弹窗（所有模式通用右侧弹窗） -->
-    <webp-panel :visible="activeRightPanel === 'webp'" :source-info="getWebpSourceInfo()" :initial-config="webpConfig"
+    <webp-panel :visible="activeRightPanel === 'webp'" :source-format-name="sourceFormatName" :source-info="getWebpSourceInfo()" :initial-config="webpConfig"
       :is-exporting="isExportingWebp" :export-progress="webpExportProgress" :export-stage="''"
       :export-message="webpExportMessage" :disabled="isGlobalTaskRunning" @close="closeWebpPanel" @cancel="cancelWebpExport"
       @export="handleWebpExport" @config-change="handleWebpConfigChange"></webp-panel>
@@ -1050,7 +1050,7 @@
     </div>
 
     <!-- 统一 转SVGA 弹窗 (MP4/Lottie/Frames -> SVGA) -->
-    <to-svga-panel :visible="activeRightPanel === 'to-svga'" :source-info="toSvgaSourceInfo"
+    <to-svga-panel :visible="activeRightPanel === 'to-svga'" :source-format-name="sourceFormatName" :source-info="toSvgaSourceInfo"
       :initial-config="toSvgaConfig" :is-converting="isConvertingToSvga" :progress="toSvgaProgress"
       :message="toSvgaMessage" :disabled="isGlobalTaskRunning" @close="closeRightPanel" @cancel="cancelToSvgaConversion"
       @convert="handleToSvgaConvert">
@@ -1284,7 +1284,7 @@
       <div class="side-panel-container">
         <!-- 标题区 -->
         <div class="side-panel-header">
-          <h3 class="side-panel-title">转成GIF动图</h3>
+          <h3 class="side-panel-title">{{ sourceFormatName }} →→ GIF</h3>
           <div class="side-panel-divider"></div>
         </div>
 
@@ -1369,22 +1369,7 @@
               <span class="gif-color-value">{{ config.ditherColor }}</span>
             </div>
           </div>
-        
-
-        <!-- 导出进度 -->
-        <div class="export-progress" v-if="isExporting">
-          <div class="progress-info">
-            <span class="progress-status">
-              <span class="spinner" v-if="exportStage !== 'done'"></span>
-              {{ exportMessage }}
-            </span>
-            <span class="progress-percent">{{ Math.round(exportProgress * 100) }}%</span>
-          </div>
-          <div class="progress-bar-bg">
-            <div class="progress-bar-fill" :style="{ width: (exportProgress * 100) + '%' }"></div>
-          </div>
         </div>
-      </div>
 
       <div class="side-panel-footer">
         <button v-if="!isExporting" class="material-btn-back" @click="close" title="返回">
@@ -1405,7 +1390,7 @@
         <button class="btn-large-secondary" :class="{'svga-btn-converting': isExporting}"
           :disabled="isExporting || disabled" @click="startExport">
           <template v-if="isExporting">
-            <span class="svga-progress-text">{{ exportProgress }}%</span>
+            <span class="svga-progress-text">{{ Math.round(exportProgress) }}%</span>
             <span class="svga-stage-text">{{ exportMessage }}</span>
           </template>
           <template v-else>
@@ -1420,7 +1405,7 @@
       <div class="side-panel-container">
         <!-- 标题区 -->
         <div class="side-panel-header">
-          <h3 class="side-panel-title">转为序列帧</h3>
+          <h3 class="side-panel-title">{{ sourceFormatName }} →→ 序列帧</h3>
           <div class="side-panel-divider"></div>
         </div>
 
@@ -1480,20 +1465,6 @@
           </div>
         </div>
 
-        <!-- 导出进度 -->
-        <div class="export-progress" v-if="isExporting">
-          <div class="progress-info">
-            <span class="progress-status">
-              <span class="spinner" v-if="exportStage !== 'done'"></span>
-              {{ exportMessage }}
-            </span>
-            <span class="progress-percent">{{ Math.round(exportProgress * 100) }}%</span>
-          </div>
-          <div class="progress-bar-bg">
-            <div class="progress-bar-fill" :style="{ width: (exportProgress * 100) + '%' }"></div>
-          </div>
-        </div>
-
         <!-- 底部按钮 -->
         <div class="side-panel-footer">
           <button v-if="!isExporting" class="material-btn-back" @click="close" title="返回">
@@ -1514,7 +1485,7 @@
           <button class="btn-large-secondary" :class="{'svga-btn-converting': isExporting}"
             :disabled="isExporting || disabled" @click="startExport">
             <template v-if="isExporting">
-              <span class="svga-progress-text">{{ exportProgress }}%</span>
+              <span class="svga-progress-text">{{ Math.round(exportProgress * 100) }}%</span>
               <span class="svga-stage-text">{{ exportMessage }}</span>
             </template>
             <template v-else>
@@ -1530,7 +1501,7 @@
       <div class="side-panel-container">
         <!-- 标题区 -->
         <div class="side-panel-header">
-          <h3 class="side-panel-title">转为webp</h3>
+          <h3 class="side-panel-title">{{ sourceFormatName }} →→ WebP</h3>
           <div class="side-panel-divider"></div>
         </div>
 

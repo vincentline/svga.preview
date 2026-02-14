@@ -16,6 +16,11 @@
         type: Boolean,
         default: false
       },
+      // 源格式名称（用于标题显示）
+      sourceFormatName: {
+        type: String,
+        default: ''
+      },
       sourceInfo: {
         type: Object,
         default: () => ({})
@@ -74,18 +79,20 @@
     },
     methods: {
       initConfig() {
-        // 初始化配置
+        // 尺寸始终使用当前文件的原始尺寸，不保存上次输入
         this.config = {
-          width: this.initialConfig.width || this.sourceInfo.width || 0,
-          height: this.initialConfig.height || this.sourceInfo.height || 0,
+          width: this.sourceInfo.width || 0,
+          height: this.sourceInfo.height || 0,
           fps: this.initialConfig.fps || this.sourceInfo.fps || 24,
           quality: this.initialConfig.quality || 80,
           transparent: this.initialConfig.transparent || false
         }
         
-        // 计算宽高比
-        if (this.config.width > 0 && this.config.height > 0) {
-          this.aspectRatio = this.config.width / this.config.height
+        // 计算宽高比（始终使用原始文件的比例）
+        var originalWidth = this.sourceInfo.width || this.config.width
+        var originalHeight = this.sourceInfo.height || this.config.height
+        if (originalWidth > 0 && originalHeight > 0) {
+          this.aspectRatio = originalWidth / originalHeight
         }
       },
       

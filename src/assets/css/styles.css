@@ -2794,7 +2794,7 @@ body.dark-mode .material-search:focus-within {
 
 /* 迷你模式下的静音控制容器 */
 .mute-control-container.mini-mute-control {
-  gap: 6px;
+  gap: 1px;
 }
 
 /* 音量滑块容器 */
@@ -2816,7 +2816,7 @@ body.dark-mode .material-search:focus-within {
 /* 迷你模式下的音量滑块 */
 .volume-slider-container.mini-volume-slider {
   height: 60px;
-  margin-bottom: 6px;
+  
 }
 
 /* 鼠标悬停时显示音量滑块 */

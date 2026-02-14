@@ -50,6 +50,8 @@
     props: {
       // 面板可见性
       visible: { type: Boolean, default: false },
+      // 源格式名称（用于标题显示）
+      sourceFormatName: { type: String, default: '' },
       // 帧源信息（宽、高、FPS、时长等）
       sourceInfo: { type: Object, default: function () { return {}; } },
       // 初始配置（用于回显用户上次保存的偏好）
@@ -102,26 +104,15 @@
       /**
        * 初始化导出参数
        * 逻辑：
-       * 1. 优先使用用户上次保存的偏好（initialConfig）
-       * 2. 如果无偏好，则使用素材原始尺寸和帧率
-       * 3. 保持宽高比
+       * 1. 尺寸始终使用当前文件的原始尺寸，不保存上次输入
+       * 2. 其他参数（帧率、质量等）使用用户上次保存的偏好
        */
       initParams: function () {
         var source = this.sourceInfo;
 
-        // 1. 尺寸初始化
-        if (this.initialConfig && this.initialConfig.width > 0) {
-          // 有用户偏好：保持宽度，按当前素材比例重算高度
-          this.config.width = this.initialConfig.width;
-          if (source.width && source.height) {
-            var ratio = source.height / source.width;
-            this.config.height = Math.floor(this.config.width * ratio);
-          }
-        } else {
-          // 无偏好：使用原始尺寸
-          this.config.width = source.width || 300;
-          this.config.height = source.height || 300;
-        }
+        // 1. 尺寸初始化（始终使用原始尺寸）
+        this.config.width = source.width || 300;
+        this.config.height = source.height || 300;
 
         // 2. 帧率初始化
         if (this.initialConfig && this.initialConfig.fps) {

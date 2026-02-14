@@ -35,7 +35,7 @@
  *   screenHeightRatio: 0.75,  // 初始缩放：屏幕高度75%
  *   minScale: 0.1,            // 最小缩放比例
  *   maxScale: 5,              // 最大缩放比例
- *   zoomStep: 0.1             // 每次缩放步长
+ *   zoomStep: 0.05            // 每次缩放步长
  * });
  * 
  * // 2. 加载新文件时：计算初始缩放 + 居中
@@ -78,7 +78,7 @@
    * @param {Number} [options.screenHeightRatio=0.75] - 初始缩放时屏幕高度占比
    * @param {Number} [options.minScale=0.1] - 最小缩放比例
    * @param {Number} [options.maxScale=5] - 最大缩放比例
-   * @param {Number} [options.zoomStep=0.1] - 每次缩放的步长
+   * @param {Number} [options.zoomStep=0.05] - 每次缩放的步长
    * @param {HTMLElement} [options.targetElement=null] - 监听事件的目标元素（如viewer容器）
    */
   function ViewportController(options) {
@@ -106,7 +106,7 @@
     this.defaultScreenHeightRatio = options.screenHeightRatio || 0.75; // 默认屏幕高度的75%
     this.minScale = options.minScale || 0.1;                           // 最小缩放 10%
     this.maxScale = options.maxScale || 5;                             // 最大缩放 500%
-    this.zoomStep = options.zoomStep || 0.1;                           // 每次缩放 10%
+    this.zoomStep = options.zoomStep || 0.05;                          // 每次缩放 5%
   }
 
   /**
@@ -161,8 +161,8 @@
    * 
    * 功能：
    *   - 支持普通滚轮直接缩放（不需要按Ctrl键）
-   *   - 滚轮向上：放大 10%
-   *   - 滚轮向下：缩小 10%
+   *   - 滚轮向上：放大 5%
+   *   - 滚轮向下：缩小 5%
    *   - 围绕播放器中心点缩放，保持中心位置不变
    * 
    * 实现原理：
@@ -385,7 +385,7 @@
    * 放大播放器
    * 
    * 功能：
-   *   - 每次增加固定步长（默认 10%，即 0.1）
+   *   - 每次增加固定步长（默认 5%，即 0.05）
    *   - 围绕播放器中心点缩放，保持中心点位置不变
    *   - 自动限制最大缩放比例（默认 500%，即 5.0）
    * 
@@ -410,7 +410,7 @@
    * 缩小播放器
    * 
    * 功能：
-   *   - 每次减少固定步长（默认 10%，即 0.1）
+   *   - 每次减少固定步长（默认 5%，即 0.05）
    *   - 围绕播放器中心点缩放，保持中心点位置不变
    *   - 自动限制最小缩放比例（默认 10%，即 0.1）
    * 

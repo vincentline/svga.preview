@@ -211,10 +211,7 @@
 
                 if (this.isOxipngReady()) {
                     compressedData = await this.compressWithOxipng(pngData, quality);
-                    console.log('oxipng compression succeeded');
                     return compressedData;
-                } else {
-                    console.log('oxipng not ready, trying pako...');
                 }
             } catch (error) {
                 console.error('oxipng compression failed:', error);
@@ -223,17 +220,14 @@
             // 降级：使用 pako 压缩
             try {
                 compressedData = await this.compressWithPako(pngData);
-                console.log('pako compression succeeded');
                 return compressedData;
             } catch (error) {
                 this.compressionFailed = true;
-                console.log('pako compression failed, trying browser default...');
             }
 
             // 降级：使用浏览器默认编码
             try {
                 compressedData = await this.compressWithBrowserDefault(pngData);
-                console.log('browser default compression succeeded');
                 return compressedData;
             } catch (error) {
                 this.compressionFailed = true;

@@ -36,7 +36,7 @@
       <div class="side-panel-container">
         <!-- 标题区 -->
         <div class="side-panel-header">
-          <h3 class="side-panel-title">转换为标准MP4格式</h3>
+          <h3 class="side-panel-title">{{ sourceFormatName }} →→ MP4</h3>
           <div class="side-panel-divider"></div>
         </div>
 
@@ -130,6 +130,8 @@
     props: {
       // 面板可见性
       visible: { type: Boolean, default: false },
+      // 源格式名称（用于标题显示）
+      sourceFormatName: { type: String, default: '' },
       // 源文件信息
       sourceInfo: { type: Object, default: function () { return {}; } },
       // 初始配置
@@ -174,17 +176,9 @@
       initParams: function () {
         var source = this.sourceInfo;
 
-        // 1. 尺寸初始化
-        if (this.initialConfig && this.initialConfig.width > 0) {
-          this.config.width = this.initialConfig.width;
-          if (source.width && source.height) {
-            var ratio = source.height / source.width;
-            this.config.height = Math.floor(this.config.width * ratio);
-          }
-        } else {
-          this.config.width = source.width || 300;
-          this.config.height = source.height || 300;
-        }
+        // 1. 尺寸初始化（始终使用原始尺寸，不保存上次输入）
+        this.config.width = source.width || 300;
+        this.config.height = source.height || 300;
 
         // 2. 帧率初始化（范围1-120）
         if (this.initialConfig && this.initialConfig.fps) {

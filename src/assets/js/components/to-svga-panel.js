@@ -4,7 +4,7 @@
       <div class="side-panel-container">
         <!-- 标题区 -->
         <div class="side-panel-header">
-          <h3 class="side-panel-title">转换为SVGA动画格式</h3>
+          <h3 class="side-panel-title">{{ sourceFormatName }} →→ SVGA</h3>
           <div class="side-panel-divider"></div>
         </div>
 
@@ -150,6 +150,11 @@
         type: Boolean,
         default: false
       },
+      // 源格式名称（用于标题显示）
+      sourceFormatName: {
+        type: String,
+        default: ''
+      },
       sourceInfo: {
         type: Object,
         default: function () {
@@ -195,12 +200,23 @@
     },
     watch: {
       visible: function (newVal) {
-        if (newVal && this.initialConfig) {
-          // 深拷贝初始配置到本地配置
-          this.config = JSON.parse(JSON.stringify(this.initialConfig));
-          // 计算宽高比
-          if (this.config.width && this.config.height) {
-            this.config.aspectRatio = this.config.width / this.config.height;
+        if (newVal) {
+          // 尺寸始终使用当前文件的原始尺寸，不保存上次输入
+          this.config.width = this.sourceInfo.width || 0;
+          this.config.height = this.sourceInfo.height || 0;
+          
+          // 其他参数使用上次保存的配置
+          if (this.initialConfig) {
+            this.config.quality = this.initialConfig.quality || 80;
+            this.config.fps = this.initialConfig.fps || 30;
+            this.config.muted = this.initialConfig.muted || false;
+          }
+          
+          // 计算宽高比（始终使用原始文件的比例）
+          var originalWidth = this.sourceInfo.width || this.config.width;
+          var originalHeight = this.sourceInfo.height || this.config.height;
+          if (originalWidth > 0 && originalHeight > 0) {
+            this.config.aspectRatio = originalWidth / originalHeight;
           }
         }
       }

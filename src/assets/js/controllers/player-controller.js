@@ -724,9 +724,11 @@
     GlobalAudioManager.setVolume(volume);
   };
 
-  // 销毁时清理音频
+  // 销毁时清理引用（不卸载音频，因为音频属于文件而非控制器）
+  // 音频卸载应在加载新文件时由 ResourceManager 统一处理
   SvgaPlayerAdapter.prototype.destroy = function () {
-    GlobalAudioManager.unloadAll();
+    // 只清理引用，不调用 GlobalAudioManager.unloadAll()
+    // 避免切换沉浸模式时导致音频丢失
     this.audioCache = {};
   };
 
