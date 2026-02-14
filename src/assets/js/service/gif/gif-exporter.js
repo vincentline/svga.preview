@@ -89,9 +89,24 @@
       });
 
       // 检查浏览器是否支持Web Worker
-      if (typeof Worker === 'undefined') {
+      var useWorker = typeof Worker !== 'undefined';
+      
+      // 测试Worker是否可正常加载
+      if (useWorker) {
+        try {
+          // 尝试创建一个临时Worker来测试
+          var testWorker = new Worker('/assets/js/service/gif/gif.worker.js');
+          testWorker.terminate();
+          console.log('[GIF Exporter] Web Worker测试成功');
+        } catch (e) {
+          console.warn('[GIF Exporter] Web Worker测试失败，将使用单线程编码:', e.message);
+          useWorker = false;
+        }
+      }
+      
+      if (!useWorker) {
         // 降级方案：使用单线程编码
-        console.warn('浏览器不支持Web Worker，将使用单线程编码，可能会较慢');
+        console.warn('浏览器不支持Web Worker或Worker加载失败，将使用单线程编码，可能会较慢');
         var gifOptions = {
           workers: 0,  // 禁用Worker
           quality: Math.min(quality, 15),  // 降低质量以提高单线程编码速度
@@ -108,49 +123,23 @@
         var workerCount = Math.max(1, Math.min(Math.floor(availableCores / 2), 4));
         console.log('[GIF Exporter] 检测到', availableCores, '个CPU核心，将使用', workerCount, '个Worker');
         
-        // 添加Worker错误处理和资源管理
-        var workers = [];
-        // 监听Worker创建和销毁
-        gif.on('workerCreated', function(worker) {
-          workers.push(worker);
-          console.log('[GIF Exporter] Worker创建，当前Worker数量:', workers.length);
-        });
-        
-        // 构建绝对路径，确保Worker脚本在任何环境下都能正确加载
-        var workerScriptPath;
-        if (typeof window !== 'undefined' && window.location) {
-          // 在浏览器环境中，使用绝对路径
-          // 使用更简单可靠的方法构建路径
-          var baseUrl = window.location.origin + window.location.pathname;
-          // 移除文件名，获取目录路径
-          baseUrl = baseUrl.substring(0, baseUrl.lastIndexOf('/') + 1);
-          // 确保路径正确指向gif.worker.js
-          workerScriptPath = baseUrl + 'src/assets/js/service/gif/gif.worker.js';
-        } else {
-          // 降级到相对路径
-          workerScriptPath = 'src/assets/js/service/gif/gif.worker.js';
-        }
-        
-        // 验证Worker脚本路径是否存在
-        try {
-          // 尝试通过fetch验证路径
-          var fetchPromise = fetch(workerScriptPath, { method: 'HEAD' });
-          fetchPromise.catch(function() {
-            console.warn('Worker脚本路径可能不正确:', workerScriptPath);
-          });
-        } catch (e) {
-          console.warn('无法验证Worker脚本路径:', e);
-        }
+        // Worker脚本路径 - Vite开发模式必须使用绝对路径（以/开头）
+        var workerScriptPath = '/assets/js/service/gif/gif.worker.js';
+        console.log('[GIF Exporter] Worker路径:', workerScriptPath);
         
         var gifOptions = {
-          workers: workerCount,  // 根据设备CPU核心数动态调整
-          workerScript: workerScriptPath,  // 使用绝对路径
-          quality: Math.min(quality, 20),  // 限制最大质量，提高编码速度
+          workers: workerCount,
+          workerScript: workerScriptPath,
+          quality: Math.min(quality, 20),
           width: width,
           height: height,
-          repeat: 0,  // 0 = 无限循环
-          background: '#ffffff'  // 默认背景色
+          repeat: 0,
+          background: '#ffffff',
+          debug: true  // 启用调试日志
         };
+        
+        // 调试：打印Worker路径
+        console.log('[GIF Exporter] Worker路径:', workerScriptPath);
       }
 
       if (transparent) {
@@ -271,19 +260,98 @@
           console.log('[GIF Exporter] GIF选项:', gif.options);
           console.log('[GIF Exporter] 帧数:', gif.frames.length);
           
+          // 调试：检查第一帧数据结构
+          if (gif.frames.length > 0) {
+            var firstFrame = gif.frames[0];
+            console.log('[GIF Exporter] 第一帧结构:', {
+              hasData: !!firstFrame.data,
+              dataType: firstFrame.data ? firstFrame.data.constructor.name : 'null',
+              dataLength: firstFrame.data ? firstFrame.data.length : 0,
+              delay: firstFrame.delay,
+              transparent: firstFrame.transparent
+            });
+            // 检查数据是否全零
+            if (firstFrame.data) {
+              var nonZeroCount = 0;
+              for (var j = 0; j < Math.min(1000, firstFrame.data.length); j++) {
+                if (firstFrame.data[j] !== 0) nonZeroCount++;
+              }
+              console.log('[GIF Exporter] 第一帧前1000字节非零数:', nonZeroCount);
+            }
+          }
+          
+          // 启动编码
           gif.render();
           
           console.log('[GIF Exporter] 编码启动成功');
         } catch (renderError) {
           console.error('[GIF Exporter] 编码启动失败:', renderError);
-          throw new Error('编码启动失败: ' + renderError.message);
+          
+          // 尝试降级到单线程模式
+          console.log('[GIF Exporter] 尝试降级到单线程模式...');
+          
+          // 创建单线程GIF实例
+          var singleThreadGif = new GIF({
+            workers: 0,  // 禁用Worker
+            quality: Math.min(quality, 15),  // 降低质量以提高单线程编码速度
+            width: width,
+            height: height,
+            repeat: 0,  // 0 = 无限循环
+            background: '#ffffff'  // 默认背景色
+          });
+          
+          // 重新添加所有帧
+          for (var i = 0; i < gif.frames.length; i++) {
+            var frame = gif.frames[i];
+            singleThreadGif.addFrame(frame.data, { delay: frame.delay, transparent: frame.transparent });
+          }
+          
+          // 重新创建编码Promise
+          encodingPromise = new Promise(function (resolve, reject) {
+            singleThreadGif.on('progress', function (p) {
+              console.log('[GIF Exporter] 单线程编码进度:', p);
+              onProgress(50 + Math.floor(p * 50), 'encoding', '编码中...');
+            });
+            
+            singleThreadGif.on('finished', function (blob) {
+              console.log('[GIF Exporter] 单线程编码完成，blob:', blob);
+              if (!blob || typeof blob !== 'object' || !blob.size) {
+                reject(new Error('单线程GIF编码器生成的blob无效'));
+              } else {
+                resolve(blob);
+              }
+            });
+            
+            singleThreadGif.on('abort', function () {
+              console.log('[GIF Exporter] 单线程编码被取消');
+              reject(new Error('用户取消'));
+            });
+            
+            singleThreadGif.on('error', function (error) {
+              console.error('[GIF Exporter] 单线程编码错误:', error);
+              reject(new Error('单线程GIF编码失败: ' + (error.message || error)));
+            });
+          });
+          
+          // 启动单线程编码
+          singleThreadGif.render();
+          console.log('[GIF Exporter] 单线程编码启动成功');
         }
 
         // 添加超时机制，避免编码过程无限卡住
-        var timeoutPromise = new Promise(function (reject) {
+        var timeoutPromise = new Promise(function (resolve, reject) {
           setTimeout(function () {
+            console.error('[GIF Exporter] 编码超时，尝试取消...');
+            // 尝试取消编码
+            if (gif) {
+              try {
+                gif.abort();
+              } catch (e) {
+                console.warn('[GIF Exporter] 取消编码时出错:', e);
+              }
+            }
             reject(new Error('GIF编码超时，可能是由于GIF.js库问题或文件过大导致'));
-          }, 120000); // 120秒超时，给编码过程更多时间
+          }, 120000); // 120秒超时
         });
         
         // 等待编码完成或超时

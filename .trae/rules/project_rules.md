@@ -6,19 +6,6 @@
 - **构建工具**：Vite 5.0.0
 - **开发语言**：JavaScript
 - **样式管理**：原生 CSS
-- **核心库**：
-  - `svgaplayerweb`：SVGA 动画解析与播放
-  - `lottie-web`：Lottie 动画渲染
-  - `konva`：Canvas 操作和图形处理
-  - `gif.js`：GIF 编码
-  - `@ffmpeg/ffmpeg`：浏览器端视频编码
-  - `jszip`：ZIP 文件处理
-  - `pako`：压缩库
-  - `protobufjs`：Protocol Buffers 解析
-- **构建优化**：
-  - Terser：JavaScript 压缩
-  - clean-css：CSS 压缩
-  - 多页应用配置
 
 # 项目规则
 1. 开发侧边栏弹窗前，参考`.trae\documents\侧边弹窗技术规范文档.md`和[侧边弹窗开发经验文档.md](../documents/侧边弹窗开发经验文档.md)
@@ -30,3 +17,4 @@
 7. 导出GIF功能，查阅`.trae\documents\GIF导出功能技术文档.md`[GIF导出功能技术文档.md](../documents/GIF导出功能技术文档.md)
 8. 导出双通道MP4功能，查阅`.trae\documents\双通道MP4导出功能技术文档.md`[双通道MP4导出功能技术文档.md](../documents/双通道MP4导出功能技术文档.md)
 9. 推理时请查看代码去验证自己的推理是否正确。
+10. 测试前必须查阅`ai_protocol_hub/core_rules/TESTING_RULES.md`，严格遵守测试规则
