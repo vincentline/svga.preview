@@ -2138,7 +2138,7 @@ body.dark-mode .theme-toggle .tooltip-text::after {
   <div class="header-left-action">
     <img class="header-logo" src="logo.png" alt="Logo">
   </div>
-  <h1 class="header-navbar-title">SVGA Preview</h1>
+  <h1 class="header-navbar-title">MeeWoo</h1>
   <div class="header-right-action">
     <a href="#" class="nav-link">文档</a>
     <a href="#" class="avatar-link">

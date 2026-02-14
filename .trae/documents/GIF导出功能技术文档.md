@@ -71,25 +71,25 @@ var ctx = canvas.getContext('2d', { willReadFrequently: true });
 
 ### 2.3 Worker路径配置
 
-**关键要点**: 使用相对路径加载Worker，提高代码可移植性
+**关键要点**: 使用正确的路径加载Worker，确保在开发和生产环境都能正常工作
 
 ```javascript
-// ✅ 正确：使用相对路径（推荐）
+// ✅ 正确：使用带前导斜杠的绝对路径（Vite项目推荐）
+workerScript: '/assets/js/service/gif/gif.worker.js'
+
+// ✅ 正确：使用相对路径（备选方案）
 workerScript: 'assets/js/service/gif/gif.worker.js'
 
-// ✅ 正确：使用绝对路径（备选方案）
+// ✅ 正确：使用完整URL（备选方案）
 workerScript: window.location.origin + '/assets/js/service/gif/gif.worker.js'
-
-// ❌ 错误：带前导斜杠的路径可能导致加载失败
-workerScript: '/assets/js/service/gif/gif.worker.js'
 
 // ❌ 错误：包含src目录的路径在生产环境可能无效
 workerScript: window.location.origin + '/src/assets/js/service/gif/gif.worker.js'
 ```
 
 **最佳实践**:
-- 使用相对路径加载Worker，提高代码可移植性和兼容性
-- 添加Worker路径可访问性检查，确保路径正确
+- 对于Vite项目，推荐使用带前导斜杠的绝对路径（如 `/assets/js/...`）
+- 确保Worker文件在构建后能被正确访问
 - 考虑构建工具（如Vite）的路径解析规则
 - 在部署前验证Worker路径是否可访问
 
@@ -106,7 +106,7 @@ var gifOptions = {
   quality: Math.min(quality, 20),  // 限制最大质量，提高编码速度
   width: config.width,
   height: config.height,
-  workerScript: 'assets/js/service/gif/gif.worker.js',  // 使用相对路径
+  workerScript: '/assets/js/service/gif/gif.worker.js',  // 使用绝对路径
   repeat: 0,  // 0 = 无限循环
   background: '#ffffff'  // 默认背景色
 };
@@ -506,10 +506,10 @@ gif.addFrame(processedImageData, frameOptions);
 
 **解决方案**:
 ```javascript
-// 使用相对路径加载Worker（推荐）
-workerScript: 'assets/js/service/gif/gif.worker.js'
+// 使用正确的路径加载Worker（推荐）
+workerScript: '/assets/js/service/gif/gif.worker.js'
 
-// 或使用绝对路径（备选方案）
+// 或使用完整URL（备选方案）
 workerScript: window.location.origin + '/assets/js/service/gif/gif.worker.js'
 ```
 
@@ -618,7 +618,7 @@ if (typeof GIF === 'undefined') {
 // 优化 Worker 路径和编码参数
 var gifOptions = {
   workers: 2,  // 增加 Worker 数量
-  workerScript: 'assets/js/service/gif/gif.worker.js',  // 使用相对路径
+  workerScript: '/assets/js/service/gif/gif.worker.js',  // 使用绝对路径
   quality: Math.min(quality, 20),  // 限制最大质量
   width: width,
   height: height,
@@ -627,7 +627,62 @@ var gifOptions = {
 };
 ```
 
-### 8.3 常见错误与解决方案
+### 8.3 编码卡在50%问题
+
+**问题现象**：
+- SVGA模式下GIF导出卡在50%编码中
+- Web Worker已成功启动，但编码过程停滞
+- 编码监控显示进度几乎没波动
+
+**排查过程**：
+1. 初步分析：怀疑是Worker通信问题或内存问题
+2. 尝试方案：
+   - 增加Worker状态监控
+   - 实现自动降级到单线程模式
+   - 降低编码质量
+   - 减少Worker数量
+3. 问题定位：所有优化方案都无效，问题不在这些方面
+
+**根本原因**：
+**过度干预第三方库的正常流程**：添加了过多的监控代码、降级逻辑、进度检测等，这些代码可能干扰了GIF.js的正常编码流程。
+
+**解决方案**：
+**简化代码，回归原始实现**：
+
+```javascript
+// ❌ 错误方式：添加过多监控和降级逻辑
+var workerStatusInterval = setInterval(function() {
+  // 详细的Worker状态监控...
+}, 5000);
+
+var progressStallTimeout = setTimeout(function() {
+  // 自动降级逻辑...
+}, 20000);
+
+// 复杂的进度监控和事件处理...
+
+// ✅ 正确方式：保持简洁，信任第三方库
+gif.render();
+
+// 只保留必要的事件处理
+gif.on('finished', function() {
+  console.log('[GIF Exporter] 编码完成');
+});
+```
+
+**经验教训**：
+1. **信任第三方库**：如果之前能正常运行，问题通常不在第三方库，而在于我们对它的过度干预
+2. **保持简洁**：有时候最简单的解决方案就是最好的解决方案
+3. **避免过度优化**：不要在问题未定位前就添加大量监控和降级逻辑
+4. **回归原始**：当问题无法解决时，尝试回归到最原始的实现
+
+**诊断方法**：
+1. 检查控制台日志，确认Worker是否正常启动
+2. 检查内存使用情况，排除内存问题
+3. 尝试移除所有新增的监控和优化代码
+4. 对比原始实现和当前实现的差异
+
+### 8.4 常见错误与解决方案
 
 | 错误现象 | 可能原因 | 解决方案 |
 |---------|---------|--------|
@@ -638,7 +693,7 @@ var gifOptions = {
 | 脚本初始化失败 | 脚本加载顺序错误 | 将组件库脚本移动到模板定义之前 |
 | 依赖缺失 | GIF.js 库未加载 | 添加库加载检查和动态加载机制 |
 
-### 8.4 最佳实践
+### 8.5 最佳实践
 
 1. **透明处理**：始终使用 `ImageData` 直接传递处理后的数据，确保透明效果正确
 2. **Canvas 配置**：所有相关 canvas 都启用 alpha 通道，避免透明区域变黑
@@ -654,6 +709,7 @@ var gifOptions = {
 9. **路径检查**：添加 Worker 路径可访问性检查，确保路径正确
 10. **数据验证**：验证处理后的图像数据有效性，避免传递无效数据给编码器
 11. **用户体验**：提供清晰的进度反馈和取消选项，增强用户体验
+12. **第三方库集成**：**信任第三方库的正常流程**，避免过度干预。保持代码简洁，只在必要时添加监控和优化。如果之前能正常运行，问题通常不在第三方库，而在于我们对它的过度干预。
 
 ---
 
@@ -661,8 +717,7 @@ var gifOptions = {
 - 2025-12-26: v1.0 创建文档，记录透明GIF导出和杂色边处理关键技术
 - 2026-02-08: v1.1 更新文档，添加故障排除经验，修正文件路径和实现细节
 - 2026-02-10: v1.2 更新文档，修正Worker路径配置推荐，添加新的故障排除经验和最佳实践
-- 2026-02-15: v1.3 添加双通道MP4面板问题和解决方案
-- 2026-02-20: v1.4 更新双通道MP4面板问题解决方案，添加全局备用方法和测试脚本，完善最佳实践
+- 2026-02-14: v1.3 添加编码卡在50%问题案例，记录过度干预第三方库的经验教训，更新最佳实践
 
 ---
 

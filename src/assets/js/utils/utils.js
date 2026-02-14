@@ -50,7 +50,7 @@
  * utils.copyToClipboard('复制的文本');
  * ```
  * 
- * @author SVGA Preview Team
+ * @author MeeWoo Team
  * @version 1.0.0
  * ====================================================================
  */
