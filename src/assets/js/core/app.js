@@ -508,6 +508,37 @@ function initApp() {
       },
 
       /**
+       * 重置所有转格式弹窗的尺寸配置
+       * 调用时机：清空画布、恢复播放、打开新文件等操作
+       * 效果：下次打开弹窗时将使用文件的原始尺寸，而不是用户上次修改的尺寸
+       */
+      resetExportPanelSizes: function () {
+        // GIF 配置
+        this.gifConfig.width = 0;
+        this.gifConfig.height = 0;
+
+        // 序列帧配置
+        this.framesConfig.width = 0;
+        this.framesConfig.height = 0;
+
+        // WebP 配置
+        this.webpConfig.width = 0;
+        this.webpConfig.height = 0;
+
+        // 普通MP4 配置
+        this.standardMp4Config.width = 0;
+        this.standardMp4Config.height = 0;
+
+        // 双通道MP4 配置（在 panel-mixin.js 中定义）
+        this.dualChannelConfig.width = 0;
+        this.dualChannelConfig.height = 0;
+
+        // 转SVGA 配置（在 panel-mixin.js 中定义）
+        this.toSvgaConfig.width = 0;
+        this.toSvgaConfig.height = 0;
+      },
+
+      /**
        * 检查是否有正在进行的任务，并弹窗确认
        * @param {string} action - 操作名称（如："播放新文件"、"清空画布"、"导出GIF"）
        * @param {string} actionType - 操作类型（'load' | 'clear' | 'task'）
@@ -784,6 +815,9 @@ function initApp() {
             return;
           }
           this.cancelOngoingTasks(true);
+
+          // 重置所有转格式弹窗的尺寸配置，下次打开弹窗时将使用新文件的原始尺寸
+          this.resetExportPanelSizes();
         }
 
         var filesArray = Array.prototype.slice.call(files);
@@ -841,6 +875,9 @@ function initApp() {
             return;
           }
           this.cancelOngoingTasks(true);
+
+          // 重置所有转格式弹窗的尺寸配置，下次打开弹窗时将使用新文件的原始尺寸
+          this.resetExportPanelSizes();
         }
 
         // 判断文件类型
@@ -959,6 +996,9 @@ function initApp() {
         // 确认后取消任务
         this.cancelOngoingTasks(true);
 
+        // 重置所有转格式弹窗的尺寸配置，下次打开弹窗时将使用新文件的原始尺寸
+        this.resetExportPanelSizes();
+
         // 清理音频 (修复：清空后声音可能残留问题)
         // 使用 ResourceManager 统一清理，避免直接调用 Howler 造成冲突
         if (this.resourceManager) {
@@ -1044,6 +1084,9 @@ function initApp() {
 
         // 确认后取消任务
         this.cancelOngoingTasks(true);
+
+        // 重置所有转格式弹窗的尺寸配置，下次打开弹窗时将使用文件的原始尺寸
+        this.resetExportPanelSizes();
 
         // 退出沉浸模式（如果当前在沉浸模式中）
         if (this.isImmersiveMode) {
@@ -7763,6 +7806,8 @@ function initApp() {
         this.toSvgaSourceInfo = {
           name: this.yyeva.fileInfo.name,
           sizeWH: width + ' x ' + height,
+          width: width,
+          height: height,
           duration: this.yyevaVideo.duration.toFixed(1) + 's',
           fileSize: this.yyeva.fileInfo.sizeText,
           fps: videoFps
@@ -8143,6 +8188,8 @@ function initApp() {
         this.toSvgaSourceInfo = {
           name: this.lottie.fileInfo.name,
           sizeWH: (this.lottie.originalWidth || 0) + ' x ' + (this.lottie.originalHeight || 0),
+          width: this.lottie.originalWidth || 0,
+          height: this.lottie.originalHeight || 0,
           duration: duration.toFixed(1) + 's',
           fileSize: this.lottie.fileInfo.sizeText,
           fps: fps
@@ -8377,6 +8424,8 @@ function initApp() {
         this.toSvgaSourceInfo = {
           name: this.frames.fileInfo.name,
           sizeWH: (this.frames.originalWidth || 0) + ' x ' + (this.frames.originalHeight || 0),
+          width: this.frames.originalWidth || 0,
+          height: this.frames.originalHeight || 0,
           duration: this.frames.fileInfo.duration,
           fileSize: this.frames.fileInfo.sizeText,
           fps: fps

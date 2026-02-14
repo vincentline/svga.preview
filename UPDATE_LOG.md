@@ -18,6 +18,20 @@
 - 更新简述：如新增功能、修复问题、优化性能等，简单描述
 
 ## 更新记录
+[2026-02-15 02:10:00] 【修改文件】 : src/assets/js/core/app.js - 新增 resetExportPanelSizes 方法；在 clearAll、restorePlayback、handleFile、handleFiles 中调用，实现文件状态重置时清空尺寸配置
+[2026-02-15 02:10:00] 【修改文件】 : src/assets/js/components/gif-panel.js - 修改尺寸初始化逻辑：优先使用用户上次修改的尺寸，仅在配置无效时才使用原始尺寸
+[2026-02-15 02:10:00] 【修改文件】 : src/assets/js/components/frames-panel.js - 修改尺寸初始化逻辑：优先使用用户上次修改的尺寸
+[2026-02-15 02:10:00] 【修改文件】 : src/assets/js/components/webp-panel.js - 修改尺寸初始化逻辑：优先使用用户上次修改的尺寸
+[2026-02-15 02:10:00] 【修改文件】 : src/assets/js/components/standard-mp4-panel.js - 修改尺寸初始化逻辑：优先使用用户上次修改的尺寸
+[2026-02-15 02:10:00] 【修改文件】 : src/assets/js/components/dual-channel-panel.js - 修改尺寸初始化逻辑：优先使用用户上次修改的尺寸
+[2026-02-15 02:10:00] 【修改文件】 : src/assets/js/components/to-svga-panel.js - 修改尺寸初始化逻辑：优先使用用户上次修改的尺寸
+[2026-02-15 01:55:00] 【修改文件】 : src/assets/js/components/frames-panel.js - 修复尺寸无法修改问题：移除 initialConfig 的 deep watcher，避免 config-change 触发重置
+[2026-02-15 01:55:00] 【修改文件】 : src/assets/js/components/webp-panel.js - 修复尺寸无法修改问题：移除 initialConfig 的 deep watcher，避免 config-change 触发重置
+[2026-02-15 01:50:00] 【修改文件】 : src/assets/js/core/app.js - 给 toSvgaSourceInfo 添加 width/height 属性，修复双通道MP4模式下转SVGA默认尺寸显示0的问题
+[2026-02-15 01:50:00] 【修改文件】 : src/assets/js/components/frames-panel.js - 添加 aspectRatio 保护，修复尺寸输入问题
+[2026-02-15 01:50:00] 【修改文件】 : src/assets/js/components/webp-panel.js - 添加 aspectRatio 保护，修复尺寸输入问题
+[2026-02-15 01:50:00] 【修改文件】 : src/assets/js/components/to-svga-panel.js - 添加尺寸范围验证（1-3000）和 aspectRatio 保护
+[2026-02-15 01:45:00] 【修改文件】 : src/assets/js/core/app.js - 修复WebP导出不支持变速的问题：添加帧映射表支持，使变速后的MP4能正确导出为WebP动画
 [2026-02-15 01:40:00] 【修改文件】 : src/assets/js/components/webp-panel.js - 修复尺寸比例误差：始终使用原始文件比例；尺寸不再保存上次输入
 [2026-02-15 01:40:00] 【修改文件】 : src/assets/js/components/gif-panel.js - 尺寸不再保存上次输入，始终使用当前文件原始尺寸
 [2026-02-15 01:40:00] 【修改文件】 : src/assets/js/components/frames-panel.js - 修复尺寸比例误差；尺寸不再保存上次输入

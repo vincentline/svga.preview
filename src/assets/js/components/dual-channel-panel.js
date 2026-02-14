@@ -253,8 +253,12 @@
       initParams: function () {
         var source = this.sourceInfo;
 
-        // 1. 尺寸初始化（始终使用原始尺寸，不保存上次输入）
-        if (source.width && source.height) {
+        // 1. 尺寸初始化：优先使用用户上次修改的尺寸
+        var useInitialSize = this.initialConfig && this.initialConfig.width > 0 && this.initialConfig.height > 0;
+        if (useInitialSize) {
+          this.config.width = this.initialConfig.width;
+          this.config.height = this.initialConfig.height;
+        } else if (source.width && source.height) {
           this.config.width = source.width;
           this.config.height = source.height;
         } else {
@@ -262,7 +266,7 @@
           this.config.height = 300;
         }
         
-        // 计算并保存宽高比（始终使用原始文件的比例）
+        // 计算并保存宽高比（始终使用原始文件的比例，确保缩放时比例正确）
         var originalWidth = source.width || this.config.width;
         var originalHeight = source.height || this.config.height;
         if (originalWidth > 0 && originalHeight > 0) {

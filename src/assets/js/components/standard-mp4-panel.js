@@ -176,9 +176,10 @@
       initParams: function () {
         var source = this.sourceInfo;
 
-        // 1. 尺寸初始化（始终使用原始尺寸，不保存上次输入）
-        this.config.width = source.width || 300;
-        this.config.height = source.height || 300;
+        // 1. 尺寸初始化：优先使用用户上次修改的尺寸
+        var useInitialSize = this.initialConfig && this.initialConfig.width > 0 && this.initialConfig.height > 0;
+        this.config.width = useInitialSize ? this.initialConfig.width : (source.width || 300);
+        this.config.height = useInitialSize ? this.initialConfig.height : (source.height || 300);
 
         // 2. 帧率初始化（范围1-120）
         if (this.initialConfig && this.initialConfig.fps) {

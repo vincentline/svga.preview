@@ -201,9 +201,10 @@
     watch: {
       visible: function (newVal) {
         if (newVal) {
-          // 尺寸始终使用当前文件的原始尺寸，不保存上次输入
-          this.config.width = this.sourceInfo.width || 0;
-          this.config.height = this.sourceInfo.height || 0;
+          // 尺寸逻辑：优先使用用户上次修改的尺寸，否则使用文件原始尺寸
+          var useInitialSize = this.initialConfig && this.initialConfig.width > 0 && this.initialConfig.height > 0;
+          this.config.width = useInitialSize ? this.initialConfig.width : (this.sourceInfo.width || 0);
+          this.config.height = useInitialSize ? this.initialConfig.height : (this.sourceInfo.height || 0);
           
           // 其他参数使用上次保存的配置
           if (this.initialConfig) {
@@ -212,7 +213,7 @@
             this.config.muted = this.initialConfig.muted || false;
           }
           
-          // 计算宽高比（始终使用原始文件的比例）
+          // 计算宽高比（始终使用原始文件的比例，确保缩放时比例正确）
           var originalWidth = this.sourceInfo.width || this.config.width;
           var originalHeight = this.sourceInfo.height || this.config.height;
           if (originalWidth > 0 && originalHeight > 0) {
@@ -232,15 +233,21 @@
         this.$emit('convert', this.config);
       },
       onWidthChange: function () {
-        var w = this.config.width;
-        if (w > 0 && this.config.aspectRatio > 0) {
-          this.config.height = Math.round(w / this.config.aspectRatio);
+        // 验证宽度范围
+        this.config.width = Math.max(1, Math.min(3000, parseInt(this.config.width) || 0));
+        // 保持宽高比（需要有效的 aspectRatio）
+        if (this.config.width > 0 && this.config.aspectRatio > 0) {
+          this.config.height = Math.round(this.config.width / this.config.aspectRatio);
+          this.config.height = Math.max(1, Math.min(3000, this.config.height));
         }
       },
       onHeightChange: function () {
-        var h = this.config.height;
-        if (h > 0 && this.config.aspectRatio > 0) {
-          this.config.width = Math.round(h * this.config.aspectRatio);
+        // 验证高度范围
+        this.config.height = Math.max(1, Math.min(3000, parseInt(this.config.height) || 0));
+        // 保持宽高比（需要有效的 aspectRatio）
+        if (this.config.height > 0 && this.config.aspectRatio > 0) {
+          this.config.width = Math.round(this.config.height * this.config.aspectRatio);
+          this.config.width = Math.max(1, Math.min(3000, this.config.width));
         }
       }
     }

@@ -67,28 +67,23 @@
         if (newVal) {
           this.initConfig()
         }
-      },
-      initialConfig: {
-        handler(newVal) {
-          if (this.visible) {
-            this.initConfig()
-          }
-        },
-        deep: true
       }
+      // 注意：不监听 initialConfig，因为 config-change 会更新父组件的配置，
+      // 会触发 initialConfig watcher，导致尺寸被重置
     },
     methods: {
       initConfig() {
-        // 尺寸始终使用当前文件的原始尺寸，不保存上次输入
+        // 尺寸逻辑：优先使用用户上次修改的尺寸，否则使用文件原始尺寸
+        var useInitialSize = this.initialConfig && this.initialConfig.width > 0 && this.initialConfig.height > 0
         this.config = {
-          width: this.sourceInfo.width || 0,
-          height: this.sourceInfo.height || 0,
+          width: useInitialSize ? this.initialConfig.width : (this.sourceInfo.width || 0),
+          height: useInitialSize ? this.initialConfig.height : (this.sourceInfo.height || 0),
           fps: this.initialConfig.fps || this.sourceInfo.fps || 24,
           quality: this.initialConfig.quality || 80,
           transparent: this.initialConfig.transparent || false
         }
         
-        // 计算宽高比（始终使用原始文件的比例）
+        // 计算宽高比（始终使用原始文件的比例，确保缩放时比例正确）
         var originalWidth = this.sourceInfo.width || this.config.width
         var originalHeight = this.sourceInfo.height || this.config.height
         if (originalWidth > 0 && originalHeight > 0) {
@@ -99,25 +94,25 @@
       onWidthChange() {
         // 验证宽度范围
         this.config.width = Math.max(1, Math.min(3000, parseInt(this.config.width) || 0))
-        // 保持宽高比
-        if (this.config.width > 0) {
+        // 保持宽高比（需要有效的 aspectRatio）
+        if (this.config.width > 0 && this.aspectRatio > 0) {
           this.config.height = Math.round(this.config.width / this.aspectRatio)
           // 验证高度范围
           this.config.height = Math.max(1, Math.min(3000, this.config.height))
-          this.$emit('config-change', this.config)
         }
+        this.$emit('config-change', this.config)
       },
       
       onHeightChange() {
         // 验证高度范围
         this.config.height = Math.max(1, Math.min(3000, parseInt(this.config.height) || 0))
-        // 保持宽高比
-        if (this.config.height > 0) {
+        // 保持宽高比（需要有效的 aspectRatio）
+        if (this.config.height > 0 && this.aspectRatio > 0) {
           this.config.width = Math.round(this.config.height * this.aspectRatio)
           // 验证宽度范围
           this.config.width = Math.max(1, Math.min(3000, this.config.width))
-          this.$emit('config-change', this.config)
         }
+        this.$emit('config-change', this.config)
       },
       
       onFpsChange() {
