@@ -80,6 +80,46 @@
 - **性能问题**：检查数据传输量、Worker创建频率
 - **内存泄漏**：确保正确终止Worker实例
 
+### 4.4 Vite开发服务器Worker加载问题（重要）
+
+**问题现象**：Worker在生产构建后正常工作，但在`npm run dev`（Vite开发模式）下被阻止
+
+**症状表现**：
+- Network面板中Worker脚本请求显示`ERR_BLOCKED_BY_RESPONSE`错误
+- GIF/图像编码卡在某个百分比不动
+- vite.config.js中的`server.headers`配置不生效
+
+**根本原因**：Vite开发服务器会对JS文件做特殊处理（模块转换、热更新等），可能覆盖或忽略自定义headers配置。
+
+**解决方案**：使用Vite中间件插件为Worker脚本添加CORS响应头：
+
+```javascript
+// vite.config.js
+export default defineConfig({
+  plugins: [
+    // ... 其他插件
+    // 为Worker脚本添加CORP响应头（解决COEP策略阻止问题）
+    {
+      name: 'worker-cors-headers',
+      configureServer(server) {
+        server.middlewares.use((req, res, next) => {
+          if (req.url && req.url.includes('.worker.js')) {
+            res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+            res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
+          }
+          next();
+        });
+      }
+    }
+  ]
+});
+```
+
+**诊断步骤**：
+1. 检查Network面板，查看Worker脚本请求是否有`ERR_BLOCKED_BY_RESPONSE`错误
+2. 对比开发环境（`npm run dev`）和生产构建的表现差异
+3. 检查Worker脚本的响应头是否包含`Cross-Origin-Resource-Policy`
+
 ## 5. 优化策略
 
 ### 5.1 数据传输优化

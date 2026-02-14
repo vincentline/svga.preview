@@ -107,7 +107,8 @@
         width: width,
         height: height,
         repeat: 0,
-        background: '#ffffff'
+        background: '#ffffff',
+        debug: true  // 启用调试日志
       };
 
       if (transparent) {

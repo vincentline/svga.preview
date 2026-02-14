@@ -18,6 +18,13 @@
 - 更新简述：如新增功能、修复问题、优化性能等，简单描述
 
 ## 更新记录
+[2026-02-14 17:30:00] 【修改文件】 : vite.config.js - 修复Vite开发模式Worker加载问题：添加中间件插件为Worker脚本添加CORS响应头
+[2026-02-14 17:30:00] 【修改文件】 : src/assets/js/service/gif/gif-exporter.js - 启用gif.js的debug模式以获取完整Worker日志
+[2026-02-14 17:30:00] 【修改文件】 : src/assets/js/lib/gif.js - 恢复原版0.2.0版本（带版本注释和sourcemap引用）
+[2026-02-14 17:30:00] 【修改文件】 : src/_headers - 添加Cross-Origin-Resource-Policy响应头
+[2026-02-14 17:30:00] 【修改文件】 : .trae/documents/侧边弹窗开发经验文档.md - 添加Vite开发服务器Worker加载问题案例（6.6章节）
+[2026-02-14 17:30:00] 【修改文件】 : .trae/skills/web-worker/SKILL.md - 添加Vite开发服务器Worker加载问题排查章节（4.4）
+[2026-02-14 17:30:00] 【修改文件】 : .trae/skills/web-worker/references/skill_checklist.md - 添加Vite Worker加载问题排查章节（4.4）
 [2026-02-14 13:00:00] 【修改文件】 : src/assets/js/core/app.js - 修复SVGA转MP4弹窗宽高联动失效问题：standardMp4SourceInfo补充width/height/fps字段
 [2026-02-14 12:45:00] 【修改文件】 : src/assets/js/components/standard-mp4-panel.js - 修复SVGA转MP4弹窗组件：添加quality/muted配置、添加start/cancel方法
 [2026-02-14 12:30:00] 【修改文件】 : src/assets/js/components/standard-mp4-panel.js - 修复SVGA转MP4弹窗输入控件bug：宽高范围从0-3000改为1-3000，帧率范围从1-60改为1-120

@@ -89,6 +89,46 @@ This skill provides a comprehensive guide to Web Worker technology, enabling dev
 - **Performance Issues**: Check data transfer volume, Worker creation frequency
 - **Memory Leaks**: Ensure proper termination of Worker instances
 
+### 4.4 Vite Development Server Worker Loading Issues (Important)
+
+**Problem**: Worker works in production build but gets blocked in `npm run dev` (Vite development mode)
+
+**Symptom**: 
+- Worker script requests show `ERR_BLOCKED_BY_RESPONSE` in Network panel
+- GIF/image encoding stuck at a certain percentage
+- `server.headers` configuration in vite.config.js doesn't take effect
+
+**Root Cause**: Vite's development server applies special processing to JS files (module transformation, HMR, etc.), which may override or ignore custom headers configuration.
+
+**Solution**: Use Vite middleware plugin to add CORS headers for Worker scripts:
+
+```javascript
+// vite.config.js
+export default defineConfig({
+  plugins: [
+    // ... other plugins
+    // Add CORP headers for Worker scripts (fix COEP policy blocking)
+    {
+      name: 'worker-cors-headers',
+      configureServer(server) {
+        server.middlewares.use((req, res, next) => {
+          if (req.url && req.url.includes('.worker.js')) {
+            res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+            res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
+          }
+          next();
+        });
+      }
+    }
+  ]
+});
+```
+
+**Diagnosis Steps**:
+1. Check Network panel for `ERR_BLOCKED_BY_RESPONSE` errors on Worker script requests
+2. Compare behavior between development (`npm run dev`) and production build
+3. Verify Worker script response headers include `Cross-Origin-Resource-Policy`
+
 ## Optimization Strategies
 
 ### 5.1 Data Transfer Optimization

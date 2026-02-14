@@ -89,23 +89,32 @@ export default defineConfig({
     port: 4000,
     open: true,
     host: true,
-    // 静态文件服务
-    static: {
-      directory: resolve(__dirname, 'src'),
-      watch: true,
-      // 启用目录浏览
-      serveIndex: true,
-      // 添加CORS头，允许worker脚本加载
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Cross-Origin-Embedder-Policy': 'require-corp',
-        'Cross-Origin-Opener-Policy': 'same-origin'
-      }
+    // 添加CORS头，允许Worker脚本加载
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Cross-Origin-Embedder-Policy': 'require-corp',
+      'Cross-Origin-Opener-Policy': 'same-origin',
+      // 允许Worker脚本在COEP环境下加载
+      'Cross-Origin-Resource-Policy': 'cross-origin'
     }
   },
   // 插件
   plugins: [
-    vue()
+    vue(),
+    // 为Worker脚本添加CORP响应头（解决COEP策略下的加载问题）
+    {
+      name: 'worker-cors-headers',
+      configureServer(server) {
+        server.middlewares.use((req, res, next) => {
+          // 为Worker脚本添加必要的CORS头
+          if (req.url && req.url.includes('.worker.js')) {
+            res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+            res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
+          }
+          next();
+        });
+      }
+    }
   ],
   // 别名配置
   resolve: {
