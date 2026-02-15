@@ -1014,7 +1014,7 @@ body.dark-mode .empty-state-title {
   left: 0;
   backdrop-filter: blur(12px);
   align-self: flex-start;
-  width: 88%;
+  width: 88%; 
 }
 
 /* 模式名称淡入动画 */
