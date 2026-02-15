@@ -10,11 +10,14 @@
 1. 开发侧边栏弹窗前，参考`.trae\documents\侧边弹窗技术规范文档.md`和[侧边弹窗开发经验文档.md](../documents/侧边弹窗开发经验文档.md)
 2. 文件管理规范，查阅`.trae\documents\项目文件管理规范.md`[项目文件管理规范.md](../documents/项目文件管理规范.md)
 3. app.js核心功能文件详解，查阅`.trae\documents\app.js核心功能详解文档.md`[app.js核心功能详解文档.md](../documents/app.js核心功能详解文档.md)
-4. 不同类型用户展示配置，查阅`.trae\documents\用户类型配置优化方案.md`[用户类型配置优化方案.md](../documents/用户类型配置优化方案.md)
-5. 设计规范，查阅`..\..\ai_protocol_hub\core_rules\UI-DESIGN-SYSTEM.md`[UI-DESIGN-SYSTEM.md](../../ai_protocol_hub/core_rules/UI-DESIGN-SYSTEM.md)
-6. 项目功能模块索引，查阅`..\..\INDEX.md`[INDEX.md](../../INDEX.md)
-7. 导出GIF功能，查阅`.trae\documents\GIF导出功能技术文档.md`[GIF导出功能技术文档.md](../documents/GIF导出功能技术文档.md)
-8. 导出双通道MP4功能，查阅`.trae\documents\双通道MP4导出功能技术文档.md`[双通道MP4导出功能技术文档.md](../documents/双通道MP4导出功能技术文档.md)
-9. 推理时请查看代码去验证自己的推理是否正确。
-10. 测试前必须查阅`ai_protocol_hub/core_rules/TESTING_RULES.md`，严格遵守测试规则
-11. 代码保持简洁，避免冗余和复杂的逻辑。
+
+# 任务执行规则：
+1. 项目结构和功能模块查阅`README.md`
+2. 定位文件/功能查阅`INDEX.md` ，索引文件找不到时再使用其他方式搜索
+3. 生成代码前必须查阅`ai_protocol_hub/core_rules/CODE_STYLE.md`，确保符合项目的代码规范
+4. 对文件和文件夹进行新增、删除、修改、重命名、移动的操作，必须查阅`UPDATE_LOG.md` 并执行记录操作
+5. 测试前必须查阅`ai_protocol_hub/core_rules/TESTING_RULES.md`，并按其中规范进行测试
+
+# 指令
+1. 用户描述中包含“【】”，为指令操作，执行指令文件`ai_protocol_hub/core_rules/INSTRUCTIONS.md`对应的操作
+2. 指令包括但不限于：【测试】、【回答】、【提交】、【收尾】、【更新索引】、【更新日志】、【同步AI协议】等指令

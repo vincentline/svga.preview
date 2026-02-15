@@ -317,8 +317,9 @@
         <!-- footer-main 容器（包含主控制区和右上角清空按钮） -->
         <div class="footer-main-wrapper" :class="{'footer-main-wrapper-immersive': isImmersiveMode}">
           <!-- 模式名称：底部浮层左对齐 -->
-          <div class="mode-name-box" :class="{'fade-out': isImmersiveMode && modeNameFadeOut}" v-if="!isEmpty"
-            @click.stop>
+          <transition name="mode-name-fade">
+            <div class="mode-name-box" v-if="!isEmpty && !isImmersiveMode"
+              @click.stop>
             <span class="mode-name-label">
               <!-- 模式名 -->
               <template v-if="currentModule === 'svga'">SVGA</template>
@@ -352,6 +353,7 @@
               </template>
             </span>
           </div>
+          </transition>
           <!-- 右上角按钮区域：恢复播放（沉浸模式不显示）、清空画布（沉浸模式不显示） -->
           <div class="footer-top-actions" :class="{'footer-top-actions-immersive': isImmersiveMode}" v-if="!isEmpty"
             @click.stop>

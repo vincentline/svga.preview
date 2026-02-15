@@ -961,9 +961,9 @@ body.dark-mode .empty-state-title {
 .footer-bar {
   position: absolute;
   top: calc(100vh - 190px);
-  left: calc((100vw - 1020px) / 2);
-  right: calc((100vw - 1020px) / 2);
-  width: 1020px;
+  left: calc((100vw - 1000px) / 2);
+  right: calc((100vw - 1000px) / 2);
+  width: auto;
   height: 190px;
   display: flex;
   flex-direction: row;
@@ -1002,19 +1002,33 @@ body.dark-mode .empty-state-title {
 
 /* 模式名称容器 - 左对齐 */
 .mode-name-box {
+  position: absolute;
   display: flex;
   align-items: center;
-  height: 28px;
-  padding: 0 12px;
-  background: #ffffff;
+  height: auto;
+  padding: 4px 10px;
+  background: #ffffffb7;
   border: 1px solid #F3F3F3;
   border-radius: 8px;
-  /* 沉浸模式下淡出动画*/
-  opacity: 1;
-  transition: opacity 1s ease;
-  margin-bottom: 10px;
+  bottom: 140px;
+  left: 0;
+  backdrop-filter: blur(12px);
   align-self: flex-start;
-  width: 90%;
+  width: 88%;
+}
+
+/* 模式名称淡入动画 */
+.mode-name-fade-enter-active,
+.mode-name-fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+.mode-name-fade-enter,
+.mode-name-fade-leave-to {
+  opacity: 0;
+}
+.mode-name-box:hover {
+  background: #ffffff;
+  height: auto;
 }
 
 /* 右上角清空按钮区域*/
@@ -1037,17 +1051,11 @@ body.dark-mode .empty-state-title {
   top: auto;
 }
 
-/* 娌夋蹈妯″紡涓嬫ā寮忓悕绉板眳涓樉绀?*/
+/* 沉浸模式下模式名称居中显示*/
 .footer-top-actions-immersive {
   left: 50%;
   right: auto;
   transform: translateX(-50%);
-}
-
-/* 娌夋蹈妯″紡涓?s鍚庢贰鍑?*/
-.mode-name-box.fade-out {
-  opacity: 0;
-  pointer-events: none;
 }
 
 body.dark-mode .mode-name-box {
@@ -1059,13 +1067,18 @@ body.dark-mode .mode-name-box {
 .mode-name-label {
   font-family: 'Segoe UI', sans-serif;
   font-weight: 400;
-  font-size: 14px;
-  line-height: 28px;
+  font-size: 12px;
+  line-height: 22px;
   color: #333333;
   max-width: 100%;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+}
+.mode-name-box:hover .mode-name-label {
+  word-wrap: break-word;
+  word-break: break-word;
+  white-space: normal;
 }
 
 body.dark-mode .mode-name-label {
@@ -1150,9 +1163,9 @@ body.dark-mode .clear-canvas-btn:active .sprite-close {
 /* 底部主控制区 */
 .footer-main {
   flex: 0 1 auto;
-  min-width: 1000px;
+  min-width: 600px;
   max-width: fit-content;
-  height: 170px;
+  height: 136px;
   background-color: #ffffff;
   border: 1px solid #e6e6e6;
   border-radius: 16px;
@@ -1162,7 +1175,7 @@ body.dark-mode .clear-canvas-btn:active .sprite-close {
   flex-direction: column;
   gap: 12px;
   position: relative;
-  bottom: 0px;
+  top: 34px;
   opacity: 1;
   transform: translateY(0);
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -1261,12 +1274,7 @@ body.dark-mode .footer-main {
   align-items: center;
   justify-content: space-between;
   height: auto;
-}
-
-.footer-tabs {
-  display: flex;
-  flex-direction: row;
-  gap: 16px;
+  gap: 10px;
 }
 
 .footer-actions {
@@ -1691,7 +1699,7 @@ body.dark-mode .mute-btn.is-disabled:active {
 
 /* 进度条 */
 .progress-bar {
-  width: 260px;
+  width: 220px;
   height: 16px;
   background-color: #f3f3f3;
   border-radius: 0;
