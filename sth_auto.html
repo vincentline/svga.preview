@@ -1,0 +1,2950 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="utf-8" />
+  <title>素材自助</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/png" href="favicon.png">
+
+  <!-- 多语言字体：Google Fonts Noto Sans 系列 (本地化优化：注释掉外部引用) -->
+  <!--
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Sans+Arabic:wght@400;500;700&family=Noto+Sans+Thai:wght@400;500;700&family=Noto+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    -->
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      font-family: 'Noto Sans', 'Noto Sans SC', 'Noto Sans Arabic', 'Noto Sans Thai',
+        'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+      overflow: hidden;
+      background-color: #fcfcfc;
+      transition: background-color 0.3s;
+    }
+
+    body.dark-mode {
+      background-color: #1a1a1a;
+    }
+
+    #app {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ==================== 顶部导航栏 ==================== */
+    .header-navbar {
+      width: 100%;
+      height: 56px;
+      background-color: #ffffff;
+      border-bottom: 1px solid #e3e3e3;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      position: relative;
+      z-index: 100;
+      transition: background-color 0.3s, border-color 0.3s;
+    }
+
+    body.dark-mode .header-navbar {
+      background-color: #2a2a2a;
+      border-bottom-color: #404040;
+    }
+
+    .header-logo {
+      height: 24px;
+      width: auto;
+      margin-right: 12px;
+      content: url('assets/img/logo.png');
+      transition: all 0.2s ease;
+    }
+
+    .header-logo:hover {
+      content: url('assets/img/logo_hover.png');
+    }
+
+    body.dark-mode .header-logo {
+      content: url('assets/img/logo_dark.png');
+    }
+
+    body.dark-mode .header-logo:hover {
+      content: url('assets/img/logo_hover.png');
+    }
+
+    .header-navbar-title {
+      font-weight: 700;
+      font-size: 12px;
+      color: #2c3e50;
+      transition: color 0.3s;
+    }
+
+    body.dark-mode .header-navbar-title {
+      color: #e0e0e0;
+    }
+
+    .back-link {
+      position: absolute;
+      left: 16px;
+      font-size: 12px;
+      color: #409eff;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .back-link:hover {
+      text-decoration: underline;
+    }
+
+    body.dark-mode .back-link {
+      color: #66b1ff;
+    }
+
+    .theme-toggle {
+      width: 24px;
+      height: 24px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .theme-toggle svg {
+      width: 18px;
+      height: 18px;
+      fill: #2c3e50;
+      transition: fill 0.3s;
+    }
+
+    body.dark-mode .theme-toggle svg {
+      fill: #e0e0e0;
+    }
+
+    /* ==================== Tab 标签栏 ==================== */
+    .tab-bar {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 24px;
+      background-color: #ffffff;
+      border-bottom: 1px solid #e3e3e3;
+      transition: background-color 0.3s, border-color 0.3s;
+    }
+
+    body.dark-mode .tab-bar {
+      background-color: #2a2a2a;
+      border-bottom-color: #404040;
+    }
+
+    .tab-btn {
+      height: 28px;
+      padding: 0 12px;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      color: #818181;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .tab-btn:hover {
+      background: #f5f5f5;
+      color: #333333;
+    }
+
+    .tab-btn.active {
+      background: #ffffff;
+      border-color: #e3e3e3;
+      color: #333333;
+    }
+
+    body.dark-mode .tab-btn {
+      color: #a0a0a0;
+    }
+
+    body.dark-mode .tab-btn:hover {
+      background: #333333;
+      color: #e0e0e0;
+    }
+
+    body.dark-mode .tab-btn.active {
+      background: #2a2a2a;
+      border-color: #404040;
+      color: #e0e0e0;
+    }
+
+    /* ==================== 主内容区域 ==================== */
+    .main-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+    }
+
+    /* 开发中提示 */
+    .dev-placeholder {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 300px;
+      color: #999999;
+      font-size: 16px;
+    }
+
+    body.dark-mode .dev-placeholder {
+      color: #666666;
+    }
+
+    /* 列表网格 */
+    .frame-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 16px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .frame-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 12px;
+      background: #ffffff;
+      border: 1px solid #e3e3e3;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .frame-item.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    .frame-item:hover {
+      background: #f5f5f5;
+      border-color: #409eff;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    body.dark-mode .frame-item {
+      background: #2a2a2a;
+      border-color: #404040;
+    }
+
+    body.dark-mode .frame-item:hover {
+      background: #333333;
+      border-color: #409eff;
+    }
+
+    .frame-icon {
+      width: 80px;
+      height: 80px;
+      object-fit: contain;
+      margin-bottom: 8px;
+    }
+
+    .frame-name {
+      font-size: 12px;
+      color: #333333;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+    }
+
+    body.dark-mode .frame-name {
+      color: #e0e0e0;
+    }
+
+    /* 加载提示 */
+    .loading-tip {
+      text-align: center;
+      padding: 40px;
+      color: #999;
+      font-size: 14px;
+    }
+
+    /* Toast提示 */
+    .toast {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.8);
+      color: #fff;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      z-index: 9999;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s, visibility 0.3s;
+    }
+
+    .toast.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    /* ==================== 蒙层弹窗 ==================== */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s, visibility 0.3s;
+    }
+
+    .modal-overlay.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    body.dark-mode .modal-overlay {
+      background: rgba(0, 0, 0, 0.7);
+    }
+
+    .modal-container {
+      display: flex;
+      width: 90%;
+      max-width: 1000px;
+      height: 80%;
+      max-height: 700px;
+      overflow: hidden;
+      position: relative;
+      border-radius: 16px;
+      background: #ffffff;
+      background-image: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjEiIGZpbGw9IiNlM2UzZTMiLz48L3N2Zz4=);
+      background-size: 8px 8px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+    }
+
+    body.dark-mode .modal-container {
+      background: #2a2a2a;
+      background-image: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjEiIGZpbGw9IiM0MDQwNDAiLz48L3N2Zz4=);
+      background-size: 8px 8px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+    }
+
+    .modal-close-btn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: rgba(0, 0, 0, 0.1);
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      transition: all 0.2s;
+    }
+
+    .modal-close-btn:hover {
+      background: rgba(0, 0, 0, 0.2);
+      transform: scale(1.1);
+    }
+
+    .modal-close-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    body.dark-mode .modal-close-btn {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    body.dark-mode .modal-close-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .modal-close-btn svg {
+      width: 16px;
+      height: 16px;
+      stroke: #333;
+      stroke-width: 2;
+    }
+
+    body.dark-mode .modal-close-btn svg {
+      stroke: #e0e0e0;
+    }
+
+    .preview-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 24px;
+    }
+
+    .preview-player {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      overflow: hidden;
+      position: relative;
+      max-height: 400px;
+    }
+
+    body.dark-mode .preview-player {
+      background: #1a1a1a;
+    }
+
+    #darSvgaContainer,
+    #giftSvgaContainer {
+      width: 400px;
+      height: 400px;
+    }
+
+    .preview-info {
+      margin-top: 16px;
+      padding: 12px;
+      background: #fff;
+      border-radius: 8px;
+    }
+
+    body.dark-mode .preview-info {
+      background: #1a1a1a;
+    }
+
+    .material-preview-container {
+      margin-top: 16px;
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .material-preview-info {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .material-preview-info .section-title {
+      text-align: center;
+    }
+
+    .material-preview-info .material-card {
+      max-width: 400px;
+    }
+
+    .info-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      font-size: 12px;
+      justify-content: center;
+    }
+
+    .info-item {
+      display: flex;
+      gap: 4px;
+    }
+
+    .info-label {
+      color: #999;
+    }
+
+    .info-value {
+      color: #333;
+      font-weight: 500;
+    }
+
+    .info-value.warning {
+      color: #ff4444;
+    }
+
+    body.dark-mode .info-value {
+      color: #e0e0e0;
+    }
+
+    .settings-panel {
+      width: 360px;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+    }
+
+    body.dark-mode .settings-panel {
+      background: #1e1e1e;
+    }
+
+    .panel-section {
+      padding: 20px;
+      border-bottom: 1px solid #e3e3e3;
+    }
+
+    body.dark-mode .panel-section {
+      border-bottom-color: #404040;
+    }
+
+    .panel-section:last-child {
+      border-bottom: none;
+    }
+
+    .section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 12px;
+    }
+
+    body.dark-mode .section-title {
+      color: #e0e0e0;
+    }
+
+    .material-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: #f5f5f5;
+      border-radius: 8px;
+      margin-bottom: 12px;
+    }
+
+    body.dark-mode .material-card {
+      background: #1a1a1a;
+    }
+
+    .material-thumb {
+      width: 48px;
+      height: 48px;
+      background: #fff;
+      border: 1px solid #e3e3e3;
+      border-radius: 4px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    body.dark-mode .material-thumb {
+      background: #2a2a2a;
+      border-color: #404040;
+    }
+
+    .material-thumb img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    .material-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .material-name {
+      font-size: 12px;
+      color: #333;
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    body.dark-mode .material-name {
+      color: #e0e0e0;
+    }
+
+    .material-btns {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn {
+      height: 28px;
+      padding: 0 12px;
+      border: 1px solid #e3e3e3;
+      border-radius: 8px;
+      background: #ffffff;
+      color: #333;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    .btn:hover {
+      background: #f5f5f5;
+      border-color: #d0d0d0;
+    }
+
+    body.dark-mode .btn {
+      background: #2a2a2a;
+      border-color: #404040;
+      color: #e0e0e0;
+    }
+
+    body.dark-mode .btn:hover {
+      background: #333333;
+      border-color: #505050;
+    }
+
+    .btn-primary {
+      background: #409eff;
+      border-color: #409eff;
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: #66b1ff;
+      border-color: #66b1ff;
+    }
+
+    .btn-success {
+      background: #67c23a;
+      border-color: #67c23a;
+      color: #fff;
+    }
+
+    .btn-success:hover {
+      background: #85ce61;
+      border-color: #85ce61;
+    }
+
+    .btn-icon {
+      width: 28px;
+      padding: 0;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .text-effect-area {
+      margin-bottom: 16px;
+    }
+
+    .text-canvas-wrapper {
+      width: 100%;
+      height: 70px;
+      background: #fff;
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: move;
+      position: relative;
+    }
+
+    body.dark-mode .text-canvas-wrapper {
+      background: #2a2a2a;
+    }
+
+    .text-canvas {
+      max-width: 100%;
+      max-height: 100%;
+      border: 1px solid #e3e3e3;
+    }
+
+    .text-input {
+      width: 100%;
+      height: 40px;
+      padding: 0 12px;
+      border: 1px solid #e3e3e3;
+      border-radius: 8px;
+      background: #ffffff;
+      color: #333;
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+
+    .text-input:focus {
+      outline: none;
+      border-color: #409eff;
+    }
+
+    body.dark-mode .text-input {
+      background: #1a1a1a;
+      border-color: #404040;
+      color: #e0e0e0;
+    }
+
+    .position-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .position-btns {
+      display: flex;
+      gap: 4px;
+    }
+
+    .pos-btn {
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      border: 1px solid #e3e3e3;
+      border-radius: 6px;
+      background: #ffffff;
+      color: #333;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .pos-btn:hover {
+      background: #f5f5f5;
+      border-color: #409eff;
+      color: #409eff;
+    }
+
+    body.dark-mode .pos-btn {
+      background: #2a2a2a;
+      border-color: #404040;
+      color: #e0e0e0;
+    }
+
+    body.dark-mode .pos-btn:hover {
+      background: #333;
+      border-color: #409eff;
+      color: #409eff;
+    }
+
+    .export-section {
+      padding: 20px;
+      border-top: 1px solid #e3e3e3;
+      margin-top: auto;
+    }
+
+    body.dark-mode .export-section {
+      border-top-color: #404040;
+    }
+
+    .export-btn {
+      width: 100%;
+      height: 40px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    /* 图标生成效果 */
+    .icon-generator {
+      display: flex;
+      justify-content: center;
+      padding: 16px 0;
+    }
+
+    .icon-preview {
+      display: block;
+      width: 300px;
+      height: 300px;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      background: #f9f9f9;
+    }
+
+    body.dark-mode .icon-preview {
+      border-color: #404040;
+      background: #2a2a2a;
+    }
+
+    /* 裁剪弹窗 */
+    .crop-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+    }
+
+    .crop-modal-content {
+      background: #fff;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 600px;
+      max-height: 90vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    body.dark-mode .crop-modal-content {
+      background: #2a2a2a;
+    }
+
+    .crop-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    body.dark-mode .crop-modal-header {
+      border-bottom-color: #404040;
+    }
+
+    .crop-modal-header h3 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 500;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 28px;
+      color: #666;
+      cursor: pointer;
+      padding: 0;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+      transition: background-color 0.2s;
+    }
+
+    .close-btn:hover {
+      background: #f0f0f0;
+    }
+
+    body.dark-mode .close-btn {
+      color: #999;
+    }
+
+    body.dark-mode .close-btn:hover {
+      background: #404040;
+    }
+
+    .crop-modal-body {
+      padding: 20px;
+      flex: 1;
+      overflow: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .crop-container {
+      position: relative;
+      width: 100%;
+      height: 500px;
+      background: #f5f5f5;
+      border-radius: 8px;
+      overflow: hidden;
+      cursor: move;
+    }
+
+    body.dark-mode .crop-container {
+      background: #1a1a1a;
+    }
+
+    .crop-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 0;
+    }
+
+    .crop-controls label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      color: #333;
+    }
+
+    body.dark-mode .crop-controls label {
+      color: #e0e0e0;
+    }
+
+    .crop-scale-slider {
+      width: 400px;
+      height: 4px;
+      -webkit-appearance: none;
+      appearance: none;
+      background: #ddd;
+      outline: none;
+      border-radius: 2px;
+    }
+
+    .crop-scale-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      background: #007bff;
+      cursor: pointer;
+      border-radius: 50%;
+    }
+
+    body.dark-mode .crop-scale-slider {
+      background: #404040;
+    }
+
+    .crop-scale-value {
+      min-width: 50px;
+      font-weight: 500;
+      color: #007bff;
+    }
+
+    body.dark-mode .crop-scale-value {
+      color: #4a9eff;
+    }
+
+    .crop-canvas {
+      width: 100%;
+      height: 100%;
+    }
+
+    .crop-tips {
+      text-align: center;
+      color: #999;
+      font-size: 13px;
+    }
+
+    .crop-modal-footer {
+      padding: 16px 20px;
+      border-top: 1px solid #e0e0e0;
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+    }
+
+    body.dark-mode .crop-modal-footer {
+      border-top-color: #404040;
+    }
+
+    /* ==================== 用户勋章样式 ==================== */
+    .frame-item.add-btn {
+      border: 2px dashed #e3e3e3;
+      justify-content: center;
+      color: #999;
+    }
+
+    .frame-item.add-btn:hover {
+      border-color: #409eff;
+      color: #409eff;
+    }
+
+    .add-icon {
+      font-size: 32px;
+      margin-bottom: 8px;
+    }
+
+    .delete-badge-btn {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      width: 20px;
+      height: 20px;
+      background: rgba(0, 0, 0, 0.5);
+      color: #fff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 14px;
+      opacity: 0;
+      transition: opacity 0.2s;
+      z-index: 5;
+    }
+
+    .edit-badge-btn {
+      position: absolute;
+      top: 4px;
+      right: 28px;
+      width: 20px;
+      height: 20px;
+      background: rgba(0, 0, 0, 0.5);
+      color: #fff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 12px;
+      opacity: 0;
+      transition: opacity 0.2s;
+      z-index: 5;
+    }
+
+    .frame-item:hover .delete-badge-btn,
+    .frame-item:hover .edit-badge-btn {
+      opacity: 1;
+    }
+
+    .frame-item {
+      position: relative;
+    }
+
+    /* 上传区域 */
+    .upload-area {
+      border: 2px dashed #e3e3e3;
+      border-radius: 12px;
+      height: 200px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      background: #fafafa;
+      transition: all 0.3s;
+      margin-bottom: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .upload-area:hover {
+      border-color: #409eff;
+      background: #f0f7ff;
+    }
+
+    body.dark-mode .upload-area {
+      background: #2a2a2a;
+      border-color: #404040;
+    }
+
+    body.dark-mode .upload-area:hover {
+      background: #333;
+    }
+
+    .upload-preview-img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    .upload-placeholder {
+      text-align: center;
+      color: #999;
+    }
+
+    /* 勋章生成预览 */
+    .badge-gen-preview {
+      width: 100%;
+      height: 300px;
+      background: #f5f5f5;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+      overflow: hidden;
+      position: relative;
+      background-image: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjEiIGZpbGw9IiNlM2UzZTMiLz48L3N2Zz4=);
+    }
+
+    body.dark-mode .badge-gen-preview {
+      background-color: #1a1a1a;
+      background-image: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjEiIGZpbGw9IiM0MDQwNDAiLz48L3N2Zz4=);
+    }
+
+    .badge-canvas-wrapper {
+      position: relative;
+      cursor: move;
+    }
+
+    .css-input {
+      width: 100%;
+      height: 100px;
+      padding: 12px;
+      border: 1px solid #e3e3e3;
+      border-radius: 8px;
+      background: #ffffff;
+      color: #333;
+      font-family: monospace;
+      font-size: 12px;
+      resize: vertical;
+      margin-bottom: 12px;
+    }
+
+    body.dark-mode .css-input {
+      background: #1a1a1a;
+      border-color: #404040;
+      color: #e0e0e0;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app" @mousemove="onDragMove" @mouseup="onDragEnd">
+    <!-- 顶部导航栏 -->
+    <div class="header-navbar">
+      <a href="index.html?type=internal" style="display:flex;align-items:center;text-decoration:none;color:inherit;">
+        <img class="header-logo" src="assets/img/logo.png" alt="Logo">
+        <div class="header-navbar-title">素材自助</div>
+      </a>
+      <button class="theme-toggle" @click="toggleTheme" :title="isDarkMode ? '切换为白天模式' : '切换为暗黑模式'">
+        <svg v-if="!isDarkMode" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+        </svg>
+        <svg v-else viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="4" />
+          <path
+            d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Tab 标签栏 -->
+    <div class="tab-bar">
+      <button class="tab-btn" :class="{ active: activeTab === 'dar' }" @click="switchTab('dar')">大R头像框</button>
+      <button class="tab-btn" :class="{ active: activeTab === 'gift_1photo' }"
+        @click="switchTab('gift_1photo')">名人礼物基本款</button>
+      <button class="tab-btn" :class="{ active: activeTab === 'gift_3photo' }"
+        @click="switchTab('gift_3photo')">名人礼物3图款</button>
+      <button class="tab-btn" :class="{ active: activeTab === 'gift_video' }"
+        @click="switchTab('gift_video')">名人礼物视频款</button>
+      <button class="tab-btn" :class="{ active: activeTab === 'badge' }" @click="switchTab('badge')">用户勋章</button>
+    </div>
+
+    <!-- 主内容区域 -->
+    <div class="main-content">
+      <!-- 大R头像框列表 -->
+      <template v-if="activeTab === 'dar'">
+        <div v-if="dar.loading" class="loading-tip">加载中...</div>
+        <div v-else-if="dar.frameList.length === 0" class="loading-tip">暂无头像框，请将SVGA文件放入 assets/dar_svga 目录</div>
+        <div v-else class="frame-grid">
+          <div v-for="(item, index) in dar.frameList" :key="'dar_' + item.name" class="frame-item"
+            :class="{ 'disabled': dar.isExporting }" @click="!dar.isExporting && openDarFrame(item)">
+            <img :src="'assets/dar_svga/' + item.icon" :alt="item.name" class="frame-icon" />
+            <div class="frame-name">{{ item.name }}</div>
+          </div>
+        </div>
+      </template>
+
+      <!-- 名人礼物基本款列表 -->
+      <template v-if="activeTab === 'gift_1photo'">
+        <div v-if="gift.loading" class="loading-tip">加载中...</div>
+        <div v-else-if="gift.frameList.length === 0" class="loading-tip">暂无礼物，请将SVGA文件放入 assets/mingren_gift_1photo 目录
+        </div>
+        <div v-else class="frame-grid">
+          <div v-for="(item, index) in gift.frameList" :key="'gift_' + item.name" class="frame-item"
+            :class="{ 'disabled': gift.isExporting || gift.isConvertingMP4 }"
+            @click="!gift.isExporting && !gift.isConvertingMP4 && openGiftFrame(item)">
+            <img :src="'assets/mingren_gift_1photo/' + item.icon" :alt="item.name" class="frame-icon" />
+            <div class="frame-name">{{ item.name }}</div>
+          </div>
+        </div>
+      </template>
+
+      <!-- 名人礼物3图款（开发中） -->
+      <template v-if="activeTab === 'gift_3photo'">
+        <div class="dev-placeholder">开发中...</div>
+      </template>
+
+      <!-- 名人礼物视频款（开发中） -->
+      <template v-if="activeTab === 'gift_video'">
+        <div class="dev-placeholder">开发中...</div>
+      </template>
+
+      <!-- 用户勋章列表 -->
+      <template v-if="activeTab === 'badge'">
+        <div class="frame-grid">
+          <!-- 增加样式按钮 -->
+          <div class="frame-item add-btn" @click="openBadgeAddModal">
+            <div class="add-icon">+</div>
+            <div class="frame-name">增加样式</div>
+          </div>
+          <!-- 勋章列表 -->
+          <div v-for="(item, index) in badge.list" :key="'badge_' + index" class="frame-item"
+            @click="openBadgeGenModal(item)">
+            <div class="delete-badge-btn" v-if="item.isCustom" @click.stop="deleteBadge(item)">×</div>
+            <div class="edit-badge-btn" v-if="item.isCustom" @click.stop="openBadgeEditModal(item)">✎</div>
+            <img :src="item.url" :alt="item.name" class="frame-icon" />
+            <div class="frame-name">{{ item.name }}</div>
+          </div>
+        </div>
+      </template>
+    </div>
+
+    <!-- Toast提示 -->
+    <div class="toast" :class="{show: toastVisible}">{{ toastMessage }}</div>
+
+    <!-- 大R头像框弹窗 -->
+    <div class="modal-overlay" :class="{show: dar.showModal}">
+      <div class="modal-container" v-if="dar.currentFrame">
+        <button class="modal-close-btn" :disabled="dar.isExporting" @click="closeDarModal" title="关闭">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M18 6L6 18M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </button>
+        <div class="preview-section">
+          <div class="preview-player">
+            <div id="darSvgaContainer"></div>
+          </div>
+          <div class="preview-info">
+            <div class="info-row">
+              <div class="info-item"><span class="info-label">文件名：</span><span class="info-value">{{
+                  dar.currentFrame.name }}.svga</span></div>
+              <div class="info-item"><span class="info-label">尺寸：</span><span class="info-value">{{ dar.svgaInfo.width
+                  }}×{{ dar.svgaInfo.height }}</span></div>
+              <div class="info-item"><span class="info-label">帧率：</span><span class="info-value">{{ dar.svgaInfo.fps }}
+                  FPS</span></div>
+            </div>
+          </div>
+          <div class="material-preview-container" v-if="dar.materialKeys.length > 0">
+            <div class="material-preview-info" v-for="key in dar.materialKeys" :key="key" v-if="dar.materials[key]">
+              <div class="section-title">素材：{{ key }}</div>
+              <div class="material-card">
+                <div class="material-thumb"><img :src="dar.materials[key].previewUrl"
+                    v-if="dar.materials[key].previewUrl" /></div>
+                <div class="material-info">
+                  <div class="material-name">{{ dar.materials[key].sizeText }}</div>
+                </div>
+                <div class="material-btns">
+                  <button class="btn" :disabled="dar.isExporting" @click="darReplaceMaterial(key)">替换</button>
+                  <button class="btn btn-icon" :disabled="dar.isExporting" @click="darDownloadMaterial(key)"
+                    title="下载">↓</button>
+                  <button class="btn btn-icon" v-if="dar.replacedImages[key]" :disabled="dar.isExporting"
+                    @click="darRestoreMaterial(key)" title="恢复">↺</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="settings-panel">
+          <div class="panel-section">
+            <div class="section-title">文本内容输入</div>
+            <input type="text" class="text-input" v-model="dar.textInput1" placeholder="输入文字，支持emoji 😊"
+              @input="darRenderText" />
+            <div class="position-controls">
+              <div class="position-btns">
+                <button class="pos-btn" @click="darMoveText('up')">↑</button>
+                <button class="pos-btn" @click="darMoveText('down')">↓</button>
+                <button class="pos-btn" @click="darMoveText('left')">←</button>
+                <button class="pos-btn" @click="darMoveText('right')">→</button>
+                <button class="pos-btn" @click="darScaleText('down')" title="缩小">-</button>
+                <button class="pos-btn" @click="darScaleText('up')" title="放大">+</button>
+              </div>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn" style="flex: 1;" @click="darResetText">恢复默认位置</button>
+            </div>
+          </div>
+
+          <div class="panel-section" v-for="(key, index) in dar.materialKeys" :key="'panel_' + key"
+            v-if="dar.materials[key]">
+            <div class="section-title">文本效果区域：{{ key }}</div>
+            <div class="text-effect-area">
+              <div class="text-canvas-wrapper" @mousedown="darStartDragText" @wheel="darHandleWheel">
+                <canvas ref="darTextCanvas" class="text-canvas" width="300" height="50"></canvas>
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <button class="btn btn-primary" style="flex: 1;" @click="darApplyText(key, index)">替换"{{ key
+                  }}"</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel-section" v-if="dar.materialKeys.length === 0">
+            <div class="loading-tip">该SVGA未配置可替换素材</div>
+          </div>
+          <div class="export-section">
+            <button class="btn btn-success export-btn" :disabled="!darCanExport || dar.isExporting"
+              @click="darExportSVGA">导出新SVGA</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 名人礼物基本款弹窗 -->
+    <div class="modal-overlay" :class="{show: gift.showModal}">
+      <div class="modal-container" v-if="gift.currentFrame">
+        <button class="modal-close-btn" :disabled="gift.isExporting || gift.isConvertingMP4" @click="closeGiftModal"
+          title="关闭">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M18 6L6 18M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </button>
+        <div class="preview-section">
+          <div class="preview-player">
+            <div id="giftSvgaContainer"></div>
+          </div>
+          <div class="preview-info">
+            <div class="info-row">
+              <div class="info-item"><span class="info-label">文件名：</span><span class="info-value">{{
+                  gift.currentFrame.name }}.svga</span></div>
+              <div class="info-item"><span class="info-label">尺寸：</span><span class="info-value">{{ gift.svgaInfo.width
+                  }}×{{ gift.svgaInfo.height }}</span></div>
+              <div class="info-item"><span class="info-label">帧率：</span><span class="info-value">{{ gift.svgaInfo.fps }}
+                  FPS</span></div>
+            </div>
+          </div>
+          <div class="material-preview-container" v-if="gift.materials.zaky">
+            <div class="material-preview-info">
+              <div class="section-title">素材：zaky</div>
+              <div class="material-card">
+                <div class="material-thumb"><img :src="gift.materials.zaky.previewUrl"
+                    v-if="gift.materials.zaky.previewUrl" /></div>
+                <div class="material-info">
+                  <div class="material-name">{{ gift.materials.zaky.sizeText }}</div>
+                </div>
+                <div class="material-btns">
+                  <button class="btn" :disabled="gift.isExporting || gift.isConvertingMP4"
+                    @click="giftReplaceMaterial('zaky')">替换</button>
+                  <button class="btn btn-icon" :disabled="gift.isExporting || gift.isConvertingMP4"
+                    @click="giftDownloadMaterial('zaky')" title="下载">↓</button>
+                  <button class="btn btn-icon" v-if="gift.replacedImages.zaky"
+                    :disabled="gift.isExporting || gift.isConvertingMP4" @click="giftRestoreMaterial('zaky')"
+                    title="恢复">↺</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="settings-panel">
+          <div class="panel-section" v-if="gift.materials.zaky">
+            <div class="section-title">图标生成效果</div>
+            <div class="icon-generator"><canvas ref="giftIconCanvas" width="300" height="300"
+                class="icon-preview"></canvas></div>
+          </div>
+          <div class="panel-section" v-if="!gift.materials.zaky">
+            <div class="loading-tip">未检测到 zaky 素材</div>
+          </div>
+          <div class="export-section">
+            <button class="btn btn-success export-btn"
+              :disabled="!giftCanExportMP4 || gift.isConvertingMP4 || gift.isExporting" @click="giftExportMP4AndIcon">
+              <span v-if="!gift.isConvertingMP4">导出双通道MP4和PNG图标</span>
+              <span v-else>{{ gift.mp4ConvertStage }} {{ gift.mp4ConvertProgress }}%</span>
+            </button>
+            <button class="btn btn-success export-btn" style="margin-top: 8px;"
+              :disabled="!giftCanExport || gift.isExporting" @click="giftExportAll">导出新SVGA和PNG图标</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 名人礼物裁剪弹窗 -->
+    <div class="crop-modal" v-if="gift.showCropModal"
+      @click.self="!gift.isExporting && !gift.isConvertingMP4 && giftCloseCropModal">
+      <div class="crop-modal-content">
+        <div class="crop-modal-header">
+          <h3>裁剪图片（322×423）</h3>
+          <button class="close-btn" :disabled="gift.isExporting || gift.isConvertingMP4"
+            @click="giftCloseCropModal">×</button>
+        </div>
+        <div class="crop-modal-body">
+          <div class="crop-container"><canvas ref="giftCropCanvas" class="crop-canvas"></canvas></div>
+          <div class="crop-controls">
+            <label>缩放：
+              <input type="range" min="0.1" max="4" step="0.0025" v-model.number="gift.cropImageScale"
+                @input="giftRenderCropCanvas" class="crop-scale-slider" />
+              <span class="crop-scale-value">{{ Math.round(gift.cropImageScale * 100) }}%</span>
+            </label>
+          </div>
+          <div class="crop-tips">拖动调整图片位置，滚轮或滑块缩放图片</div>
+        </div>
+        <div class="crop-modal-footer">
+          <button class="btn" :disabled="gift.isExporting || gift.isConvertingMP4"
+            @click="giftCloseCropModal">取消</button>
+          <button class="btn btn-primary" :disabled="gift.isExporting || gift.isConvertingMP4"
+            @click="giftConfirmCrop">确认裁剪</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 用户勋章：增加样式弹窗 -->
+    <div class="modal-overlay" :class="{show: badge.showAddModal}">
+      <div class="modal-container" style="height: auto; max-height: 90%;">
+        <button class="modal-close-btn" @click="closeBadgeAddModal" title="关闭">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M18 6L6 18M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </button>
+        <div class="preview-section" style="border-right: 1px solid #e3e3e3;">
+          <div class="section-title">上传PNG图片 (拖拽或点击)</div>
+          <div class="upload-area" @click="$refs.badgeFileInput.click()" @dragover.prevent
+            @drop.prevent="badgeHandleDrop">
+            <img v-if="badge.addForm.previewUrl" :src="badge.addForm.previewUrl" class="upload-preview-img" />
+            <div v-else class="upload-placeholder">
+              <div style="font-size: 24px; margin-bottom: 8px;">+</div>
+              <div>点击或拖拽PNG图片到此处</div>
+              <div style="font-size: 12px; margin-top: 4px;">PNG, < 5MB, < 3000px</div>
+              </div>
+            </div>
+          </div>
+          <div class="settings-panel" style="width: 400px; box-shadow: none;">
+            <div class="panel-section">
+              <div class="section-title">{{ badge.editingId ? '修改用户勋章样式' : '增加用户勋章样式' }}</div>
+              <div style="margin-bottom: 12px;">
+                <div style="font-size: 12px; color: #666; margin-bottom: 4px;">名称 (非必填，默认文件名)</div>
+                <input type="text" class="text-input" v-model="badge.addForm.name" placeholder="请输入勋章名称" />
+              </div>
+              <div>
+                <div style="font-size: 12px; color: #666; margin-bottom: 4px;">文字CSS样式 (找设计师提供，非必填)</div>
+                <textarea class="css-input" v-model="badge.addForm.css" placeholder="粘贴CSS样式代码..."></textarea>
+              </div>
+            </div>
+            <div class="export-section">
+              <button class="btn btn-success export-btn" :disabled="!badge.addForm.file && !badge.addForm.previewUrl"
+                @click="badgeSubmitAdd">提交</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 用户勋章：生成图片弹窗 -->
+      <div class="modal-overlay" :class="{show: badge.showGenModal}">
+        <div class="modal-container" style=" height: auto;">
+          <button class="modal-close-btn" @click="closeBadgeGenModal" title="关闭">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M18 6L6 18M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </button>
+          <div style="flex: 1; display: flex; flex-direction: column; padding: 24px;">
+            <div class="section-title" style="text-align: center;">生成用户勋章图片</div>
+
+            <div class="badge-gen-preview" @wheel="badgeHandleWheel">
+              <div class="badge-canvas-wrapper" @mousedown="badgeStartDrag">
+                <canvas ref="badgeCanvas"></canvas>
+              </div>
+            </div>
+
+            <div style="margin-bottom: 16px;">
+              <input type="text" class="text-input" v-model="badge.genText" placeholder="请输入文字 (支持Emoji)"
+                @input="badgeRenderCanvas" />
+            </div>
+
+            <button class="btn btn-success export-btn" :disabled="!badge.genText || !badge.genText.trim()"
+              @click="badgeExport">导出PNG图片</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 隐藏的文件输入框 -->
+      <input type="file" ref="darFileInput" accept="image/*" style="display:none" @change="darHandleFileSelect" />
+      <input type="file" ref="giftFileInput" accept="image/*" style="display:none" @change="giftHandleFileSelect" />
+      <input type="file" ref="badgeFileInput" accept="image/png" style="display:none" @change="badgeHandleFileSelect" />
+    </div>
+
+    <!-- Vue.js -->
+    <script src="assets/js/lib/vue.min.js"></script>
+    <!-- SVGA Player -->
+    <script src="assets/js/lib/svga.min.js"></script>
+    <!-- Pako (用于压缩/解压) -->
+    <script src="assets/js/lib/pako.min.js"></script>
+    <!-- Protobuf.js (用于解析proto) -->
+    <script src="assets/js/lib/protobuf.min.js"></script>
+
+    <script>
+      new Vue({
+        el: '#app',
+        data: function () {
+          return {
+            isDarkMode: false,
+            activeTab: 'dar',
+            toastVisible: false,
+            toastMessage: '',
+
+            // 大R头像框数据
+            dar: {
+              loading: true,
+              frameList: [],
+              currentFrame: null,
+              svgaPlayer: null,
+              svgaParser: null,
+              svgaVideoItem: null,
+              svgaFile: null,
+              svgaInfo: { width: 0, height: 0, fps: 0 },
+              materials: {}, // 动态存储素材信息
+              materialKeys: [], // 当前SVGA包含的素材key列表
+              replacedImages: {},
+              textInput1: '',
+              textOffset: { x: 0, y: 0 },
+              textScale: 1,
+              draggingText: false,
+              dragStartPos: { x: 0, y: 0 },
+              textStyle: {
+                fontSize: 24,
+                fontFamily: "'Noto Sans', 'Noto Sans SC', sans-serif",
+                fillColor: '#ffffff',
+                strokeColor: '#000000',
+                strokeWidth: 2,
+                textAlign: 'center'
+              },
+              customTextStyle: {},
+              currentReplaceTarget: null,
+              showModal: false,
+              isExporting: false
+            },
+
+            // 名人礼物基本款数据
+            gift: {
+              loading: true,
+              frameList: [],
+              currentFrame: null,
+              svgaPlayer: null,
+              svgaParser: null,
+              svgaVideoItem: null,
+              svgaFile: null,
+              svgaInfo: { width: 0, height: 0, fps: 0 },
+              materials: { zaky: null },
+              replacedImages: {},
+              showModal: false,
+              showCropModal: false,
+              cropImage: null,
+              cropImageScale: 1,
+              cropImageOffset: { x: 0, y: 0 },
+              cropDragging: false,
+              cropDragStart: { x: 0, y: 0 },
+              croppedImageData: null,
+              currentReplaceTarget: null,
+              isExporting: false,
+              isConvertingMP4: false,
+              mp4ConvertProgress: 0,
+              mp4ConvertStage: ''
+            },
+
+            // 用户勋章数据
+            badge: {
+              list: [],
+              customList: [],
+              current: null,
+              showAddModal: false,
+              showGenModal: false,
+              editingId: null,
+
+              // 增加样式表单
+              addForm: {
+                name: '',
+                file: null,
+                previewUrl: '',
+                css: '',
+                width: 0,
+                height: 0
+              },
+
+              // 生成图片
+              genText: '',
+              genOffset: { x: 0, y: 0 },
+              genScale: 1,
+              dragging: false,
+              dragStartPos: { x: 0, y: 0 },
+              cachedImage: null
+            }
+          };
+        },
+
+        mounted: function () {
+          var savedTheme = localStorage.getItem('theme');
+          if (savedTheme === 'dark') {
+            this.isDarkMode = true;
+            document.body.classList.add('dark-mode');
+          }
+          this.loadDarFrameList();
+          this.loadGiftFrameList();
+          this.badgeLoadList(); // 加载勋章列表
+          document.addEventListener('mousemove', this.onDragMove);
+          document.addEventListener('mouseup', this.onDragEnd);
+        },
+
+        beforeDestroy: function () {
+          document.removeEventListener('mousemove', this.onDragMove);
+          document.removeEventListener('mouseup', this.onDragEnd);
+        },
+
+        computed: {
+          darCanExport: function () { return Object.keys(this.dar.replacedImages).length > 0; },
+          giftCanExport: function () { return Object.keys(this.gift.replacedImages).length > 0; },
+          giftCanExportMP4: function () { return this.gift.svgaVideoItem !== null; }
+        },
+
+        methods: {
+          toggleTheme: function () {
+            this.isDarkMode = !this.isDarkMode;
+            document.body.classList.toggle('dark-mode');
+            localStorage.setItem('theme', this.isDarkMode ? 'dark' : 'light');
+          },
+          switchTab: function (tab) { this.activeTab = tab; },
+          showToast: function (msg) {
+            this.toastMessage = msg;
+            this.toastVisible = true;
+            var _this = this;
+            setTimeout(function () { _this.toastVisible = false; }, 2000);
+          },
+          getTimestampFilename: function (baseName, ext) {
+            var now = new Date();
+            var y = now.getFullYear();
+            var m = String(now.getMonth() + 1).padStart(2, '0');
+            var d = String(now.getDate()).padStart(2, '0');
+            var h = String(now.getHours()).padStart(2, '0');
+            var mi = String(now.getMinutes()).padStart(2, '0');
+            var s = String(now.getSeconds()).padStart(2, '0');
+            return baseName + '_' + y + m + d + h + mi + s + '.' + ext;
+          },
+          formatBytes: function (bytes) {
+            if (bytes === 0) return '0 B';
+            var k = 1024;
+            var sizes = ['B', 'KB', 'MB', 'GB'];
+            var i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+          },
+
+          // ==================== 通用SVGA加载方法 ====================
+          loadSVGA: function (module, item, containerId) {
+            var _this = this;
+            var svgaUrl = item.svga;
+            if (svgaUrl.indexOf('http') === 0) svgaUrl += (svgaUrl.indexOf('?') > -1 ? '&' : '?') + '_t=' + Date.now();
+            var container = document.getElementById(containerId);
+            if (container) container.innerHTML = '';
+            module.svgaPlayer = new SVGA.Player('#' + containerId);
+            module.svgaParser = new SVGA.Parser('#' + containerId);
+            fetch(svgaUrl, { mode: 'cors' })
+              .then(function (res) { if (!res.ok) throw new Error('HTTP ' + res.status); return res.blob(); })
+              .then(function (blob) {
+                module.svgaFile = blob;
+                var objectUrl = URL.createObjectURL(blob);
+                module.svgaParser.load(objectUrl, function (videoItem) {
+                  URL.revokeObjectURL(objectUrl);
+                  module.svgaVideoItem = videoItem;
+                  module.svgaPlayer.setVideoItem(videoItem);
+                  module.svgaPlayer.loops = 0;
+                  module.svgaPlayer.startAnimation();
+                  module.svgaInfo.width = videoItem.videoSize.width;
+                  module.svgaInfo.height = videoItem.videoSize.height;
+                  module.svgaInfo.fps = videoItem.FPS;
+                  if (module === _this.dar) _this.darExtractMaterials(videoItem);
+                  else if (module === _this.gift) _this.giftExtractMaterials(videoItem);
+                }, function (err) { URL.revokeObjectURL(objectUrl); _this.showToast('加载SVGA失败'); });
+              })
+              .catch(function (err) { _this.showToast('获取文件失败'); });
+          },
+
+          // 通用导出SVGA方法
+          exportSVGA: function (module, baseName) {
+            var _this = this;
+            if (!module.svgaFile || Object.keys(module.replacedImages).length === 0) {
+              _this.showToast('请先替换至少一个素材'); return;
+            }
+            _this.showToast('正在导出...');
+            var reader = new FileReader();
+            reader.onload = function (e) {
+              try {
+                var arrayBuffer = e.target.result;
+                var uint8Array = new Uint8Array(arrayBuffer);
+                var inflatedData = pako.inflate(uint8Array);
+                protobuf.load('svga.proto', function (err, root) {
+                  if (err) { _this.showToast('Proto加载失败'); return; }
+                  try {
+                    var MovieEntity = root.lookupType('com.opensource.svga.MovieEntity');
+                    var movieData = MovieEntity.decode(inflatedData);
+                    for (var imageKey in module.replacedImages) {
+                      if (module.replacedImages.hasOwnProperty(imageKey) && movieData.images[imageKey]) {
+                        var base64Data = module.replacedImages[imageKey];
+                        var base64String = base64Data.split(',')[1] || base64Data;
+                        var binaryString = atob(base64String);
+                        var bytes = new Uint8Array(binaryString.length);
+                        for (var i = 0; i < binaryString.length; i++) bytes[i] = binaryString.charCodeAt(i);
+                        movieData.images[imageKey] = bytes;
+                      }
+                    }
+                    var buffer = MovieEntity.encode(movieData).finish();
+                    var deflatedData = pako.deflate(buffer);
+                    var fileName = _this.getTimestampFilename(baseName, 'svga');
+                    var blob = new Blob([deflatedData], { type: 'application/octet-stream' });
+                    var url = URL.createObjectURL(blob);
+                    var a = document.createElement('a');
+                    a.href = url; a.download = fileName; a.click();
+                    URL.revokeObjectURL(url);
+                    _this.showToast('导出成功！');
+                  } catch (decodeErr) { _this.showToast('编码失败'); }
+                });
+              } catch (err) { _this.showToast('处理失败'); }
+            };
+            reader.readAsArrayBuffer(module.svgaFile);
+          },
+
+          // 通用应用到SVGA方法
+          applyImageToSVGA: function (player, imageKey, dataUrl) {
+            var img = new Image();
+            img.onload = function () {
+              player.setImage(img, imageKey);
+              player.startAnimation();
+            };
+            img.src = dataUrl;
+          },
+
+          // ==================== 大R头像框方法 ====================
+          loadDarFrameList: function () {
+            var _this = this;
+            fetch('assets/dar_svga/file-list.json')
+              .then(function (res) { return res.json(); })
+              .then(function (list) {
+                _this.dar.frameList = list.map(function (item) {
+                  return {
+                    name: item.name,
+                    svga: item.svga,
+                    icon: item.name + '.png',
+                    textStyle: item.textStyle || null
+                  };
+                });
+                _this.dar.loading = false;
+              })
+              .catch(function () { _this.dar.frameList = []; _this.dar.loading = false; });
+          },
+
+          openDarFrame: function (item) {
+            if (this.dar.svgaPlayer) this.dar.svgaPlayer.clear();
+            this.dar.currentFrame = item;
+            this.dar.showModal = true;
+            this.dar.materials = {};
+            this.dar.materialKeys = item.textStyle ? Object.keys(item.textStyle) : [];
+            this.dar.replacedImages = {};
+            this.dar.textInput1 = '';
+            this.dar.textOffset = { x: 0, y: 0 };
+            this.dar.textScale = 1;
+
+            // 初始化样式配置
+            this.dar.customTextStyle = item.textStyle || {};
+
+            this.$nextTick(function () { this.loadDarSVGA(item); }.bind(this));
+          },
+
+          closeDarModal: function () {
+            if (this.dar.isExporting) return;
+            this.dar.showModal = false;
+            if (this.dar.svgaPlayer) this.dar.svgaPlayer.clear();
+            this.dar.currentFrame = null;
+          },
+
+          loadDarSVGA: function (item) {
+            this.loadSVGA(this.dar, item, 'darSvgaContainer');
+          },
+
+          darExtractMaterials: function (videoItem) {
+            var _this = this;
+            var images = videoItem.images || {};
+
+            // 遍历所有动态key
+            this.dar.materialKeys.forEach(function (key) {
+              if (images[key]) {
+                var imgData = images[key];
+                var previewUrl = typeof imgData === 'string' ? (imgData.startsWith('data:') ? imgData : ('data:image/png;base64,' + imgData)) : '';
+                var img = new Image();
+                img.onload = function () {
+                  _this.$set(_this.dar.materials, key, {
+                    previewUrl: previewUrl,
+                    width: this.width,
+                    height: this.height,
+                    sizeText: this.width + '×' + this.height
+                  });
+                  _this.$forceUpdate();
+                  _this.$nextTick(function () {
+                    // 触发重绘
+                    _this.darRenderText();
+                  });
+                };
+                img.src = previewUrl;
+              }
+            });
+          },
+
+          darRenderTextToCanvas: function (canvas, text, offset, scale, targetKey) {
+            if (!canvas) return;
+            var ctx = canvas.getContext('2d');
+            var baseStyle = this.dar.textStyle;
+            var customStyle = targetKey && this.dar.customTextStyle[targetKey] ? this.dar.customTextStyle[targetKey] : null;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (!text) return;
+            ctx.save();
+            var fontSize = baseStyle.fontSize * scale;
+            var fontWeight = (customStyle && customStyle.fontWeight) || 'normal';
+            ctx.font = fontWeight + ' ' + fontSize + 'px ' + baseStyle.fontFamily;
+            ctx.textAlign = baseStyle.textAlign;
+            ctx.textBaseline = 'middle';
+            var x = canvas.width / 2 + offset.x;
+            var y = canvas.height / 2 + offset.y;
+
+            if (customStyle && customStyle.multiShadow) {
+              for (var i = 0; i < customStyle.multiShadow.length; i++) {
+                var parts = customStyle.multiShadow[i].match(/([\d.-]+)px\s+([\d.-]+)px\s+([\d.-]+)px\s+([^\)]+(?:\([^\)]+\))?)/i);
+                if (parts) {
+                  ctx.shadowOffsetX = parseFloat(parts[1]);
+                  ctx.shadowOffsetY = parseFloat(parts[2]);
+                  ctx.shadowBlur = parseFloat(parts[3]);
+                  ctx.shadowColor = parts[4].trim();
+                  if (customStyle.gradient) {
+                    var textMetrics = ctx.measureText(text);
+                    var textHeight = fontSize;
+                    var grad = ctx.createLinearGradient(x, y - textHeight / 2, x, y + textHeight / 2);
+                    for (var j = 0; j < customStyle.gradient.colors.length; j++) {
+                      grad.addColorStop(customStyle.gradient.positions[j], customStyle.gradient.colors[j]);
+                    }
+                    ctx.fillStyle = grad;
+                  } else {
+                    ctx.fillStyle = customStyle.fillColor || baseStyle.fillColor;
+                  }
+                  ctx.fillText(text, x, y);
+                }
+              }
+              ctx.shadowOffsetX = 0;
+              ctx.shadowOffsetY = 0;
+              ctx.shadowBlur = 0;
+            } else if (customStyle && customStyle.textShadow) {
+              var shadowParts = customStyle.textShadow.match(/([\d.-]+)px\s+([\d.-]+)px\s+([\d.-]+)px\s+([^\)]+(?:\([^\)]+\))?)/i);
+              if (shadowParts) {
+                ctx.shadowOffsetX = parseFloat(shadowParts[1]);
+                ctx.shadowOffsetY = parseFloat(shadowParts[2]);
+                ctx.shadowBlur = parseFloat(shadowParts[3]);
+                ctx.shadowColor = shadowParts[4].trim();
+              }
+            } else {
+              ctx.shadowOffsetX = 0;
+              ctx.shadowOffsetY = 0;
+              ctx.shadowBlur = 0;
+            }
+
+            var strokeW = customStyle && customStyle.strokeWidth !== undefined ? customStyle.strokeWidth : (customStyle ? 0 : baseStyle.strokeWidth);
+            if (strokeW > 0) {
+              ctx.strokeStyle = (customStyle && customStyle.strokeColor) || baseStyle.strokeColor;
+              ctx.lineWidth = strokeW * scale;
+              ctx.lineJoin = 'round';
+              ctx.strokeText(text, x, y);
+            }
+
+            if (customStyle && customStyle.gradient) {
+              var textMetrics = ctx.measureText(text);
+              var textHeight = fontSize;
+              var gradient = ctx.createLinearGradient(x, y - textHeight / 2, x, y + textHeight / 2);
+              for (var k = 0; k < customStyle.gradient.colors.length; k++) {
+                gradient.addColorStop(customStyle.gradient.positions[k], customStyle.gradient.colors[k]);
+              }
+              ctx.fillStyle = gradient;
+            } else {
+              ctx.fillStyle = (customStyle && customStyle.fillColor) || baseStyle.fillColor;
+            }
+            ctx.fillText(text, x, y);
+            ctx.restore();
+          },
+
+          darRenderText: function () {
+            var _this = this;
+            var canvases = this.$refs.darTextCanvas;
+            if (!canvases || !Array.isArray(canvases)) return;
+
+            this.dar.materialKeys.forEach(function (key, index) {
+              // 确保Canvas尺寸与素材匹配
+              var canvas = canvases[index];
+              if (canvas && _this.dar.materials[key]) {
+                if (canvas.width !== _this.dar.materials[key].width || canvas.height !== _this.dar.materials[key].height) {
+                  canvas.width = _this.dar.materials[key].width;
+                  canvas.height = _this.dar.materials[key].height;
+                }
+                _this.darRenderTextToCanvas(canvas, _this.dar.textInput1, _this.dar.textOffset, _this.dar.textScale, key);
+              }
+            });
+          },
+
+          darMoveText: function (direction) {
+            switch (direction) {
+              case 'up': this.dar.textOffset.y -= 1; break;
+              case 'down': this.dar.textOffset.y += 1; break;
+              case 'left': this.dar.textOffset.x -= 1; break;
+              case 'right': this.dar.textOffset.x += 1; break;
+            }
+            this.darRenderText();
+          },
+
+          darScaleText: function (direction) {
+            if (direction === 'up') this.dar.textScale += 0.1;
+            else this.dar.textScale = Math.max(0.1, this.dar.textScale - 0.1);
+            this.darRenderText();
+          },
+
+          darHandleWheel: function (e) {
+            e.preventDefault();
+            var delta = e.deltaY > 0 ? -0.05 : 0.05;
+            this.dar.textScale = Math.max(0.1, Math.min(5, this.dar.textScale + delta));
+            this.darRenderText();
+          },
+
+          darStartDragText: function (e) {
+            this.dar.draggingText = true;
+            this.dar.dragStartPos = { x: e.clientX, y: e.clientY };
+            e.preventDefault();
+          },
+
+          darResetText: function () {
+            this.dar.textInput1 = '';
+            this.dar.textOffset = { x: 0, y: 0 };
+            this.dar.textScale = 1;
+            this.darRenderText();
+          },
+
+          darApplyText: function (key, index) {
+            var canvases = this.$refs.darTextCanvas;
+            if (!canvases || !canvases[index] || !this.dar.textInput1) { this.showToast('请输入文字'); return; }
+            var dataUrl = canvases[index].toDataURL('image/png');
+            this.$set(this.dar.replacedImages, key, dataUrl);
+            this.darApplyToSVGA(key, dataUrl);
+            this.showToast('已应用到 ' + key);
+          },
+
+          darApplyToSVGA: function (imageKey, dataUrl) {
+            this.applyImageToSVGA(this.dar.svgaPlayer, imageKey, dataUrl);
+          },
+
+          darReplaceMaterial: function (key) {
+            this.dar.currentReplaceTarget = key;
+            this.$refs.darFileInput.click();
+          },
+
+          darHandleFileSelect: function (e) {
+            var _this = this;
+            var file = e.target.files[0];
+            if (!file) return;
+            var reader = new FileReader();
+            reader.onload = function (evt) {
+              var dataUrl = evt.target.result;
+              var key = _this.dar.currentReplaceTarget;
+              var material = _this.dar.materials[key];
+              if (material) {
+                _this.darScaleImageToSize(dataUrl, material.width, material.height, function (scaledDataUrl) {
+                  _this.$set(_this.dar.replacedImages, key, scaledDataUrl);
+                  _this.darApplyToSVGA(key, scaledDataUrl);
+                  _this.showToast('已替换 ' + key);
+                });
+              }
+            };
+            reader.readAsDataURL(file);
+            e.target.value = '';
+          },
+
+          darScaleImageToSize: function (dataUrl, width, height, callback) {
+            var img = new Image();
+            img.onload = function () {
+              var canvas = document.createElement('canvas');
+              canvas.width = width; canvas.height = height;
+              var ctx = canvas.getContext('2d');
+              var scale = Math.max(width / img.width, height / img.height);
+              var scaledWidth = img.width * scale;
+              var scaledHeight = img.height * scale;
+              var x = (width - scaledWidth) / 2;
+              var y = (height - scaledHeight) / 2;
+              ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
+              callback(canvas.toDataURL('image/png'));
+            };
+            img.src = dataUrl;
+          },
+
+          darDownloadMaterial: function (key) {
+            var material = this.dar.materials[key];
+            if (!material || !material.previewUrl) return;
+            var a = document.createElement('a');
+            a.href = material.previewUrl;
+            a.download = key + '.png';
+            a.click();
+          },
+
+          darRestoreMaterial: function (key) {
+            this.$delete(this.dar.replacedImages, key);
+            if (this.dar.currentFrame) this.loadDarSVGA(this.dar.currentFrame);
+            this.showToast('已恢复 ' + key);
+          },
+
+          darExportSVGA: function () {
+            this.dar.isExporting = true;
+            var _this = this;
+            this.exportSVGA(this.dar, this.dar.currentFrame.name);
+            setTimeout(function () {
+              _this.darExportFrame5PNG();
+              _this.dar.isExporting = false;
+            }, 50);
+          },
+
+          darExportFrame5PNG: function () {
+            var _this = this;
+            if (!_this.dar.svgaPlayer) return;
+            _this.dar.svgaPlayer.pauseAnimation();
+            _this.dar.svgaPlayer.stepToFrame(4);
+            setTimeout(function () {
+              var container = document.getElementById('darSvgaContainer');
+              var canvas = container ? container.querySelector('canvas') : null;
+              if (canvas) {
+                var dataUrl = canvas.toDataURL('image/png');
+                var a = document.createElement('a');
+                a.href = dataUrl;
+                a.download = _this.getTimestampFilename(_this.dar.currentFrame.name + '_frame5', 'png');
+                a.click();
+              }
+              _this.dar.svgaPlayer.startAnimation();
+            }, 100);
+          },
+
+          // ==================== 名人礼物基本款方法 ====================
+          loadGiftFrameList: function () {
+            var _this = this;
+            fetch('assets/mingren_gift_1photo/file-list.json')
+              .then(function (res) { return res.json(); })
+              .then(function (list) {
+                _this.gift.frameList = list.map(function (item) {
+                  return { name: item.name, svga: item.svga, icon: item.name + '.png' };
+                });
+                _this.gift.loading = false;
+              })
+              .catch(function () { _this.gift.frameList = []; _this.gift.loading = false; });
+          },
+
+          openGiftFrame: function (item) {
+            if (this.gift.svgaPlayer) this.gift.svgaPlayer.clear();
+            this.gift.currentFrame = item;
+            this.gift.showModal = true;
+            this.gift.materials = { zaky: null };
+            this.gift.replacedImages = {};
+            this.gift.croppedImageData = null;
+            this.$nextTick(function () { this.loadGiftSVGA(item); }.bind(this));
+          },
+
+          closeGiftModal: function () {
+            if (this.gift.isExporting || this.gift.isConvertingMP4) return;
+            this.gift.showModal = false;
+            if (this.gift.svgaPlayer) this.gift.svgaPlayer.clear();
+            this.gift.currentFrame = null;
+          },
+
+          loadGiftSVGA: function (item) {
+            this.loadSVGA(this.gift, item, 'giftSvgaContainer');
+          },
+
+          giftExtractMaterials: function (videoItem) {
+            var _this = this;
+            var images = videoItem.images || {};
+            if (images['zaky']) {
+              var imgData = images['zaky'];
+              var previewUrl = typeof imgData === 'string' ? (imgData.startsWith('data:') ? imgData : ('data:image/png;base64,' + imgData)) : '';
+              var img = new Image();
+              img.onload = function () {
+                _this.gift.materials.zaky = { previewUrl: previewUrl, width: this.width, height: this.height, sizeText: this.width + '×' + this.height };
+                _this.$forceUpdate();
+              };
+              img.src = previewUrl;
+            }
+          },
+
+          giftApplyToSVGA: function (imageKey, dataUrl) {
+            this.applyImageToSVGA(this.gift.svgaPlayer, imageKey, dataUrl);
+          },
+
+          giftReplaceMaterial: function (key) {
+            this.gift.currentReplaceTarget = key;
+            this.$refs.giftFileInput.click();
+          },
+
+          giftHandleFileSelect: function (e) {
+            var _this = this;
+            var file = e.target.files[0];
+            if (!file) return;
+            var reader = new FileReader();
+            reader.onload = function (evt) {
+              var img = new Image();
+              img.onload = function () {
+                _this.gift.cropImage = img;
+                _this.gift.showCropModal = true;
+                _this.gift.cropImageScale = 1;
+                _this.gift.cropImageOffset = { x: 0, y: 0 };
+                _this.$nextTick(function () { _this.giftInitCropCanvas(); });
+              };
+              img.src = evt.target.result;
+            };
+            reader.readAsDataURL(file);
+            e.target.value = '';
+          },
+
+          giftInitCropCanvas: function () {
+            var canvas = this.$refs.giftCropCanvas;
+            if (!canvas) return;
+            var container = canvas.parentElement;
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            this.giftRenderCropCanvas();
+            canvas.addEventListener('mousedown', this.giftStartCropDrag);
+            canvas.addEventListener('wheel', this.giftHandleCropWheel);
+          },
+
+          giftRenderCropCanvas: function () {
+            var canvas = this.$refs.giftCropCanvas;
+            if (!canvas || !this.gift.cropImage) return;
+            var ctx = canvas.getContext('2d');
+            var cw = canvas.width, ch = canvas.height;
+            ctx.clearRect(0, 0, cw, ch);
+            var img = this.gift.cropImage;
+            var scale = this.gift.cropImageScale;
+            var offset = this.gift.cropImageOffset;
+            var imgW = img.width * scale, imgH = img.height * scale;
+            var imgX = (cw - imgW) / 2 + offset.x, imgY = (ch - imgH) / 2 + offset.y;
+            ctx.drawImage(img, imgX, imgY, imgW, imgH);
+            var cropW = 322, cropH = 423;
+            var cropX = (cw - cropW) / 2, cropY = (ch - cropH) / 2;
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.fillRect(0, 0, cw, cropY);
+            ctx.fillRect(0, cropY, cropX, cropH);
+            ctx.fillRect(cropX + cropW, cropY, cw - cropX - cropW, cropH);
+            ctx.fillRect(0, cropY + cropH, cw, ch - cropY - cropH);
+            ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
+            ctx.strokeRect(cropX, cropY, cropW, cropH);
+            ctx.fillStyle = '#fff'; ctx.font = '14px sans-serif'; ctx.textAlign = 'center';
+            ctx.fillText('322 × 423', cw / 2, cropY - 10);
+          },
+
+          giftStartCropDrag: function (e) {
+            this.gift.cropDragging = true;
+            this.gift.cropDragStart = { x: e.clientX, y: e.clientY };
+          },
+
+          onDragMove: function (e) {
+            if (this.dar.draggingText) {
+              var dx = (e.clientX - this.dar.dragStartPos.x) / 1.2;
+              var dy = (e.clientY - this.dar.dragStartPos.y) / 1.2;
+              this.dar.textOffset.x += dx;
+              this.dar.textOffset.y += dy;
+              this.dar.dragStartPos = { x: e.clientX, y: e.clientY };
+              this.darRenderText();
+            }
+            if (this.gift.cropDragging) {
+              var dx2 = e.clientX - this.gift.cropDragStart.x;
+              var dy2 = e.clientY - this.gift.cropDragStart.y;
+              this.gift.cropImageOffset.x += dx2;
+              this.gift.cropImageOffset.y += dy2;
+              this.gift.cropDragStart = { x: e.clientX, y: e.clientY };
+              this.giftRenderCropCanvas();
+            }
+            if (this.badge.dragging) {
+              var dx3 = e.clientX - this.badge.dragStartPos.x;
+              var dy3 = e.clientY - this.badge.dragStartPos.y;
+              this.badge.genOffset.x += dx3;
+              this.badge.genOffset.y += dy3;
+              this.badge.dragStartPos = { x: e.clientX, y: e.clientY };
+              this.badgeRenderCanvas();
+            }
+          },
+
+          onDragEnd: function () {
+            this.dar.draggingText = false;
+            this.gift.cropDragging = false;
+            this.badge.dragging = false;
+          },
+
+          giftHandleCropWheel: function (e) {
+            e.preventDefault();
+            var delta = e.deltaY > 0 ? -0.05 : 0.05;
+            this.gift.cropImageScale = Math.max(0.1, Math.min(5, this.gift.cropImageScale + delta));
+            this.giftRenderCropCanvas();
+          },
+
+          giftCloseCropModal: function () {
+            this.gift.showCropModal = false;
+            this.gift.cropImage = null;
+            this.gift.cropImageScale = 1;
+            this.gift.cropImageOffset = { x: 0, y: 0 };
+          },
+
+          giftConfirmCrop: function () {
+            var _this = this;
+            var canvas = this.$refs.giftCropCanvas;
+            if (!canvas || !this.gift.cropImage) return;
+            var cropCanvas = document.createElement('canvas');
+            cropCanvas.width = 322; cropCanvas.height = 423;
+            var cropCtx = cropCanvas.getContext('2d');
+            var cw = canvas.width, ch = canvas.height;
+            var cropX = (cw - 322) / 2, cropY = (ch - 423) / 2;
+            var img = this.gift.cropImage;
+            var scale = this.gift.cropImageScale;
+            var offset = this.gift.cropImageOffset;
+            var imgW = img.width * scale, imgH = img.height * scale;
+            var imgX = (cw - imgW) / 2 + offset.x, imgY = (ch - imgH) / 2 + offset.y;
+            var sx = (cropX - imgX) / scale, sy = (cropY - imgY) / scale;
+            var sw = 322 / scale, sh = 423 / scale;
+            cropCtx.drawImage(img, sx, sy, sw, sh, 0, 0, 322, 423);
+            var croppedDataUrl = cropCanvas.toDataURL('image/png');
+            this.gift.croppedImageData = croppedDataUrl;
+            var key = this.gift.currentReplaceTarget;
+            this.$set(this.gift.replacedImages, key, croppedDataUrl);
+            this.giftApplyToSVGA(key, croppedDataUrl);
+            this.giftGenerateIcon();
+            this.giftCloseCropModal();
+            this.showToast('已裁剪并应用到 ' + key);
+          },
+
+          giftGenerateIcon: function () {
+            var _this = this;
+            var canvas = this.$refs.giftIconCanvas;
+            if (!canvas) return;
+            var ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, 300, 300);
+            var loadCount = 0, colorImg = null, zakyImg = null, maskImg = null;
+            function checkComplete() {
+              loadCount++;
+              if (loadCount === 3) drawIcon();
+            }
+            function drawIcon() {
+              var maskedZakyCanvas = null;
+              if (zakyImg) {
+                var zakyW = 155.57, zakyH = 204.36;
+                var tempCanvas = document.createElement('canvas');
+                tempCanvas.width = 300; tempCanvas.height = 300;
+                var tempCtx = tempCanvas.getContext('2d');
+                var zakyX = 76.82, zakyY = 42.71;
+                tempCtx.save();
+                tempCtx.translate(zakyX + zakyW / 2, zakyY + zakyH / 2);
+                tempCtx.rotate(15 * Math.PI / 180);
+                tempCtx.drawImage(zakyImg, -zakyW / 2, -zakyH / 2, zakyW, zakyH);
+                tempCtx.restore();
+                if (maskImg) {
+                  tempCtx.globalCompositeOperation = 'destination-in';
+                  tempCtx.drawImage(maskImg, 0, 0, 300, 300);
+                }
+                maskedZakyCanvas = tempCanvas;
+              }
+              if (maskedZakyCanvas) ctx.drawImage(maskedZakyCanvas, 0, 0, 300, 300);
+              if (colorImg) ctx.drawImage(colorImg, 0, 0, 300, 300);
+            }
+            if (this.gift.croppedImageData) {
+              var zakyImage = new Image();
+              zakyImage.onload = function () { zakyImg = zakyImage; checkComplete(); };
+              zakyImage.onerror = checkComplete;
+              zakyImage.src = this.gift.croppedImageData;
+            } else { checkComplete(); }
+            var maskImage = new Image();
+            maskImage.onload = function () { maskImg = maskImage; checkComplete(); };
+            maskImage.onerror = checkComplete;
+            maskImage.src = 'assets/img/icon_musk.png';
+            if (this.gift.currentFrame && this.gift.currentFrame.icon) {
+              var colorImage = new Image();
+              colorImage.onload = function () { colorImg = colorImage; checkComplete(); };
+              colorImage.onerror = checkComplete;
+              colorImage.src = 'assets/mingren_gift_1photo/' + this.gift.currentFrame.icon;
+            } else { checkComplete(); }
+          },
+
+          giftDownloadMaterial: function (key) {
+            var material = this.gift.materials[key];
+            if (!material || !material.previewUrl) return;
+            var a = document.createElement('a');
+            a.href = material.previewUrl;
+            a.download = key + '.png';
+            a.click();
+          },
+
+          giftRestoreMaterial: function (key) {
+            this.$delete(this.gift.replacedImages, key);
+            this.gift.croppedImageData = null;
+            if (this.gift.currentFrame) this.loadGiftSVGA(this.gift.currentFrame);
+            var canvas = this.$refs.giftIconCanvas;
+            if (canvas) canvas.getContext('2d').clearRect(0, 0, 300, 300);
+            this.showToast('已恢复 ' + key);
+          },
+
+          giftExportIconPNG: function () {
+            var canvas = this.$refs.giftIconCanvas;
+            if (canvas) {
+              var baseName = this.gift.currentFrame ? this.gift.currentFrame.name : 'icon';
+              var filename = this.getTimestampFilename(baseName + '_icon', 'png');
+              var dataUrl = canvas.toDataURL('image/png');
+              var a = document.createElement('a');
+              a.href = dataUrl; a.download = filename; a.click();
+            }
+          },
+
+          giftExportAll: function () {
+            this.gift.isExporting = true;
+            try {
+              this.giftExportSVGA();
+              var _this = this;
+              setTimeout(function () {
+                _this.giftExportIconPNG();
+                _this.gift.isExporting = false;
+              }, 50);
+            } catch (err) { this.gift.isExporting = false; }
+          },
+
+          giftExportSVGA: function () {
+            this.exportSVGA(this.gift, this.gift.currentFrame.name);
+          },
+
+          giftExportMP4AndIcon: async function () {
+            var _this = this;
+            if (!this.gift.svgaVideoItem) { this.showToast('请先选择一个礼物'); return; }
+            this.gift.isExporting = true;
+            try {
+              this.giftExportIconPNG();
+              await new Promise(function (r) { setTimeout(r, 50); });
+              await this.giftConvertToMP4();
+            } catch (err) {
+              console.error('MP4导出错误:', err);
+              this.showToast('MP4导出失败: ' + err.message);
+            } finally {
+              this.gift.isExporting = false;
+            }
+          },
+
+          giftConvertToMP4: async function () {
+            var _this = this;
+            _this.gift.isConvertingMP4 = true;
+            _this.gift.mp4ConvertProgress = 0;
+            try {
+              var width = _this.gift.svgaInfo.width || 0;
+              var height = _this.gift.svgaInfo.height || 0;
+              var fps = _this.gift.svgaInfo.fps || 30;
+              if (width === 0 || height === 0) { _this.showToast('SVGA尺寸信息错误'); _this.gift.isConvertingMP4 = false; return; }
+              _this.gift.mp4ConvertStage = '加载转换器'; _this.gift.mp4ConvertProgress = 5;
+              await _this.giftLoadFFmpeg();
+              _this.gift.mp4ConvertStage = '提取序列帧'; _this.gift.mp4ConvertProgress = 15;
+              var frames = await _this.giftExtractFrames(width, height);
+              _this.gift.mp4ConvertStage = '合成双通道'; _this.gift.mp4ConvertProgress = 45;
+              var dualFrames = await _this.giftComposeDualFrames(frames, width, height);
+              _this.gift.mp4ConvertStage = '编码MP4'; _this.gift.mp4ConvertProgress = 70;
+              var mp4Blob = await _this.giftEncodeMP4(dualFrames, width, height, fps);
+              _this.gift.mp4ConvertProgress = 95;
+              var baseName = _this.gift.currentFrame ? _this.gift.currentFrame.name : 'gift';
+              var filename = _this.getTimestampFilename(baseName + '_dual', 'mp4');
+              var url = URL.createObjectURL(mp4Blob);
+              var a = document.createElement('a');
+              a.href = url; a.download = filename; a.click();
+              URL.revokeObjectURL(url);
+              _this.gift.mp4ConvertProgress = 100;
+              _this.showToast('MP4导出成功');
+            } catch (err) {
+              console.error('MP4转换错误:', err);
+              _this.showToast('MP4转换失败: ' + err.message);
+            } finally {
+              _this.gift.isConvertingMP4 = false;
+              _this.gift.mp4ConvertStage = '';
+              _this.gift.mp4ConvertProgress = 0;
+            }
+          },
+
+          giftLoadFFmpeg: async function () {
+            if (window.ffmpegInstance && window.ffmpegLoaded) return window.ffmpegInstance;
+            if (!window.FFmpeg) {
+              await new Promise(function (resolve, reject) {
+                var script = document.createElement('script');
+                script.src = 'assets/js/lib/ffmpeg.min.js';
+                script.onload = resolve; script.onerror = reject;
+                document.head.appendChild(script);
+              });
+            }
+            var ffmpeg = window.FFmpeg.createFFmpeg({ log: false });
+            await ffmpeg.load();
+            window.ffmpegInstance = ffmpeg;
+            window.ffmpegLoaded = true;
+            return ffmpeg;
+          },
+
+          giftExtractFrames: async function (targetWidth, targetHeight) {
+            var _this = this;
+            var frames = [];
+            var totalFrames = _this.gift.svgaVideoItem.frames;
+            var player = _this.gift.svgaPlayer;
+            var wasPlaying = !player.paused;
+            if (wasPlaying) player.pauseAnimation();
+            var container = document.getElementById('giftSvgaContainer');
+            var canvas = container.querySelector('canvas');
+            if (!canvas) throw new Error('未找到SVGA canvas元素');
+            for (var i = 0; i < totalFrames; i++) {
+              player.stepToFrame(i);
+              await new Promise(function (r) { setTimeout(r, 16); });
+              var tempCanvas = document.createElement('canvas');
+              tempCanvas.width = targetWidth; tempCanvas.height = targetHeight;
+              var ctx = tempCanvas.getContext('2d');
+              ctx.imageSmoothingEnabled = false;
+              ctx.drawImage(canvas, 0, 0, targetWidth, targetHeight);
+              var imageData = ctx.getImageData(0, 0, targetWidth, targetHeight);
+              frames.push(imageData);
+              if (i % 5 === 0) await new Promise(function (r) { setTimeout(r, 0); });
+            }
+            if (wasPlaying) player.startAnimation();
+            else player.stepToFrame(0);
+            return frames;
+          },
+
+          giftComposeDualFrames: async function (frames, width, height) {
+            var dualFrames = [];
+            for (var i = 0; i < frames.length; i++) {
+              var dualCanvas = this.giftComposeDualChannel(frames[i]);
+              dualFrames.push(dualCanvas);
+              if (i % 5 === 0) await new Promise(function (r) { setTimeout(r, 0); });
+            }
+            return dualFrames;
+          },
+
+          giftComposeDualChannel: function (imageData) {
+            var width = imageData.width, height = imageData.height;
+            var dualCanvas = document.createElement('canvas');
+            dualCanvas.width = width * 2; dualCanvas.height = height;
+            var dualCtx = dualCanvas.getContext('2d', { alpha: true, willReadFrequently: true });
+            dualCtx.imageSmoothingEnabled = false;
+            dualCtx.clearRect(0, 0, width * 2, height);
+            var leftData = dualCtx.createImageData(width, height);
+            var rightData = dualCtx.createImageData(width, height);
+            for (var i = 0; i < imageData.data.length; i += 4) {
+              var r = imageData.data[i + 0], g = imageData.data[i + 1], b = imageData.data[i + 2], a = imageData.data[i + 3];
+              var finalR = r, finalG = g, finalB = b;
+              if (a > 0 && a < 255) {
+                finalR = Math.min(255, Math.round(r * 255 / a));
+                finalG = Math.min(255, Math.round(g * 255 / a));
+                finalB = Math.min(255, Math.round(b * 255 / a));
+              } else if (a === 0) { finalR = finalG = finalB = 0; }
+              leftData.data[i + 0] = finalR; leftData.data[i + 1] = finalG; leftData.data[i + 2] = finalB; leftData.data[i + 3] = a;
+              rightData.data[i + 0] = a; rightData.data[i + 1] = a; rightData.data[i + 2] = a; rightData.data[i + 3] = 255;
+            }
+            dualCtx.putImageData(leftData, 0, 0);
+            dualCtx.putImageData(rightData, width, 0);
+            return dualCanvas;
+          },
+
+          giftEncodeMP4: async function (dualFrames, width, height, fps) {
+            var ffmpeg = window.ffmpegInstance;
+            for (var i = 0; i < dualFrames.length; i++) {
+              var canvas = dualFrames[i];
+              var blackCanvas = document.createElement('canvas');
+              blackCanvas.width = width * 2; blackCanvas.height = height;
+              var blackCtx = blackCanvas.getContext('2d');
+              var dualData = canvas.getContext('2d').getImageData(0, 0, width * 2, height);
+              var blackData = blackCtx.createImageData(width * 2, height);
+              for (var j = 0; j < dualData.data.length; j += 4) {
+                blackData.data[j + 0] = dualData.data[j + 0];
+                blackData.data[j + 1] = dualData.data[j + 1];
+                blackData.data[j + 2] = dualData.data[j + 2];
+                blackData.data[j + 3] = 255;
+              }
+              blackCtx.putImageData(blackData, 0, 0);
+              var blob = await new Promise(function (resolve) { blackCanvas.toBlob(resolve, 'image/jpeg', 0.6); });
+              var data = new Uint8Array(await blob.arrayBuffer());
+              var filename = 'frame_' + String(i).padStart(4, '0') + '.jpg';
+              ffmpeg.FS('writeFile', filename, data);
+              if (i % 5 === 0) await new Promise(function (r) { setTimeout(r, 0); });
+            }
+            var args = ['-framerate', String(fps), '-i', 'frame_%04d.jpg', '-c:v', 'libx264', '-profile:v', 'high', '-level', '4.0', '-pix_fmt', 'yuv420p', '-crf', '23', '-preset', 'medium', '-movflags', '+faststart', '-an', 'output.mp4'];
+            await ffmpeg.run.apply(ffmpeg, args);
+            var mp4Data = ffmpeg.FS('readFile', 'output.mp4');
+            var mp4Blob = new Blob([mp4Data.buffer], { type: 'video/mp4' });
+            for (var k = 0; k < dualFrames.length; k++) {
+              try { ffmpeg.FS('unlink', 'frame_' + String(k).padStart(4, '0') + '.jpg'); } catch (e) { }
+            }
+            try { ffmpeg.FS('unlink', 'output.mp4'); } catch (e) { }
+            return mp4Blob;
+          },
+
+          // ==================== 用户勋章方法 ====================
+          badgeLoadList: function () {
+            var _this = this;
+            // 1. 加载本地存储的自定义勋章
+            var custom = [];
+            try {
+              var stored = localStorage.getItem('custom_badges');
+              if (stored) custom = JSON.parse(stored);
+            } catch (e) { console.error('加载本地勋章失败', e); }
+            this.badge.customList = custom;
+
+            // 2. 加载xunzhang文件夹里的配置 (暂未提供，先置空或尝试加载)
+            // 假设有个 assets/xunzhang/file-list.json，没有的话就只有自定义
+            this.badge.list = [];
+            // 合并显示
+            this.badgeUpdateList();
+          },
+
+          badgeUpdateList: function () {
+            // 合并：预置列表 + 自定义列表
+            // 预置列表暂为空，后续可扩展
+            var defaultList = [];
+            this.badge.list = defaultList.concat(this.badge.customList.map(function (item) {
+              return {
+                name: item.name,
+                url: item.url,
+                css: item.css,
+                width: item.width,
+                height: item.height,
+                isCustom: true,
+                id: item.id
+              };
+            }));
+          },
+
+          openBadgeAddModal: function () {
+            this.badge.editingId = null;
+            this.badge.addForm = {
+              name: '',
+              file: null,
+              previewUrl: '',
+              css: '',
+              width: 0,
+              height: 0
+            };
+            this.badge.showAddModal = true;
+          },
+
+          openBadgeEditModal: function (item) {
+            this.badge.editingId = item.id;
+            this.badge.addForm = {
+              name: item.name,
+              file: null, // 编辑时不强制重新上传文件
+              previewUrl: item.url,
+              css: item.css || '',
+              width: item.width,
+              height: item.height
+            };
+            this.badge.showAddModal = true;
+          },
+
+          closeBadgeAddModal: function () {
+            this.badge.showAddModal = false;
+            this.badge.editingId = null;
+          },
+
+          badgeHandleFileSelect: function (e) {
+            var file = e.target.files[0];
+            this.badgeProcessFile(file);
+            e.target.value = '';
+          },
+
+          badgeHandleDrop: function (e) {
+            var file = e.dataTransfer.files[0];
+            this.badgeProcessFile(file);
+          },
+
+          badgeProcessFile: function (file) {
+            var _this = this;
+            if (!file) return;
+
+            // 校验：是否PNG
+            if (file.type !== 'image/png') {
+              this.showToast('只支持PNG图片');
+              return;
+            }
+
+            // 校验：大小是否超过5M
+            if (file.size > 5 * 1024 * 1024) {
+              this.showToast('图片大小不能超过5M');
+              return;
+            }
+
+            var reader = new FileReader();
+            reader.onload = function (evt) {
+              var img = new Image();
+              img.onload = function () {
+                // 校验：尺寸是否超过3000px
+                if (img.width > 3000 || img.height > 3000) {
+                  _this.showToast('图片宽高不能超过3000px');
+                  return;
+                }
+
+                _this.badge.addForm.file = file;
+                _this.badge.addForm.previewUrl = evt.target.result;
+                _this.badge.addForm.width = img.width;
+                _this.badge.addForm.height = img.height;
+
+                // 默认名称使用文件名（去扩展名）
+                if (!_this.badge.addForm.name) {
+                  var name = file.name.replace(/\.[^/.]+$/, "");
+                  _this.badge.addForm.name = name;
+                }
+              };
+              img.src = evt.target.result;
+            };
+            reader.readAsDataURL(file);
+          },
+
+          badgeSubmitAdd: function () {
+            var form = this.badge.addForm;
+            var _this = this;
+            if ((!form.file && !form.previewUrl)) {
+              this.showToast('请上传图片');
+              return;
+            }
+
+            // 简单的CSS校验 (非强制，仅提示)
+            if (form.css && form.css.trim() !== '') {
+              // 这里不做严格校验，用户负责粘贴正确的CSS
+            }
+
+            if (this.badge.editingId) {
+              // 编辑现有
+              var index = this.badge.customList.findIndex(function (i) { return i.id === _this.badge.editingId; });
+              if (index > -1) {
+                var updatedItem = Object.assign({}, this.badge.customList[index], {
+                  name: form.name || '未命名勋章',
+                  url: form.previewUrl,
+                  css: form.css,
+                  width: form.width,
+                  height: form.height,
+                  // id和timestamp保持不变
+                });
+                // Vue不能检测索引赋值，使用splice
+                this.badge.customList.splice(index, 1, updatedItem);
+                this.showToast('修改成功');
+              }
+            } else {
+              // 新增
+              var newItem = {
+                id: Date.now(),
+                name: form.name || '未命名勋章',
+                url: form.previewUrl, // 存Base64到本地
+                css: form.css,
+                width: form.width,
+                height: form.height,
+                timestamp: Date.now()
+              };
+              this.badge.customList.push(newItem);
+              this.showToast('添加成功');
+            }
+
+            this.badgeSaveCustomList();
+            this.badgeUpdateList();
+            this.closeBadgeAddModal();
+          },
+
+          badgeSaveCustomList: function () {
+            try {
+              localStorage.setItem('custom_badges', JSON.stringify(this.badge.customList));
+            } catch (e) {
+              if (e.name === 'QuotaExceededError') {
+                this.showToast('本地存储空间已满，无法保存更多勋章');
+              } else {
+                console.error(e);
+              }
+            }
+          },
+
+          deleteBadge: function (item) {
+            if (!confirm('确定要删除这个勋章吗？')) return;
+            var index = this.badge.customList.findIndex(function (i) { return i.id === item.id; });
+            if (index > -1) {
+              this.badge.customList.splice(index, 1);
+              this.badgeSaveCustomList();
+              this.badgeUpdateList();
+              this.showToast('已删除');
+            }
+          },
+
+          openBadgeGenModal: function (item) {
+            this.badge.current = item;
+            this.badge.genText = '';
+            this.badge.genOffset = { x: 0, y: 0 };
+            this.badge.genScale = 1;
+            this.badge.showGenModal = true;
+            this.badge.cachedImage = null;
+
+            var img = new Image();
+            var _this = this;
+            img.onload = function () {
+              _this.badge.cachedImage = img;
+              _this.$nextTick(function () {
+                _this.badgeRenderCanvas();
+              });
+            };
+            img.src = item.url;
+          },
+
+          closeBadgeGenModal: function () {
+            this.badge.showGenModal = false;
+            this.badge.current = null;
+            this.badge.cachedImage = null;
+          },
+
+          badgeStartDrag: function (e) {
+            this.badge.dragging = true;
+            this.badge.dragStartPos = { x: e.clientX, y: e.clientY };
+            e.preventDefault();
+          },
+
+          badgeHandleWheel: function (e) {
+            e.preventDefault();
+            var delta = e.deltaY > 0 ? -0.1 : 0.1;
+            this.badge.genScale = Math.max(0.1, Math.min(5, this.badge.genScale + delta));
+            this.badgeRenderCanvas();
+          },
+
+          badgeRenderCanvas: function () {
+            var canvas = this.$refs.badgeCanvas;
+            if (!canvas || !this.badge.current || !this.badge.cachedImage) return;
+            var item = this.badge.current;
+
+            // 设置画布尺寸为图片尺寸
+            if (canvas.width !== item.width || canvas.height !== item.height) {
+              canvas.width = item.width;
+              canvas.height = item.height;
+              // 调整外层容器样式以适应
+              var wrapper = canvas.parentElement;
+              var preview = wrapper.parentElement;
+              var scale = Math.min(preview.clientWidth / item.width, preview.clientHeight / item.height, 1) * 0.9;
+              wrapper.style.transform = 'scale(' + scale + ')';
+              wrapper.style.transformOrigin = 'center center';
+            }
+
+            var ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            ctx.drawImage(this.badge.cachedImage, 0, 0);
+
+            // 绘制文字
+            if (this.badge.genText) {
+              this.badgeDrawText(ctx, item.width, item.height);
+            }
+          },
+
+          badgeDrawText: function (ctx, width, height) {
+            var text = this.badge.genText;
+            var offset = this.badge.genOffset;
+            var scale = this.badge.genScale;
+            var customCss = this.badge.current.css;
+
+            ctx.save();
+
+            // 默认样式
+            var fontSize = 24 * scale;
+            var fontFamily = "'Noto Sans', 'Noto Sans SC', sans-serif";
+            var fillColor = '#ffffff';
+            var strokeColor = '#000000';
+            var strokeWidth = 0; // 默认描边宽度改为0
+            var hasStroke = false; // 标记是否有显式描边
+
+            // 尝试解析CSS
+            // 增强CSS解析，支持渐变色 background-image/background 
+            var gradient = null;
+
+            if (customCss) {
+              // 提取颜色
+              var colorMatch = customCss.match(/color:\s*([^;]+)/i);
+              if (colorMatch) fillColor = colorMatch[1];
+
+              // 提取字体大小 (基于默认24px缩放)
+              var sizeMatch = customCss.match(/font-size:\s*([\d.]+)px/i);
+              if (sizeMatch) fontSize = parseFloat(sizeMatch[1]) * scale;
+
+              // 提取字体
+              var fontMatch = customCss.match(/font-family:\s*([^;]+)/i);
+              if (fontMatch) fontFamily = fontMatch[1];
+
+              // 提取描边
+              var strokeMatch = customCss.match(/-webkit-text-stroke:\s*([\d.]+)px\s*([^;]+)/i);
+              if (strokeMatch) {
+                strokeWidth = parseFloat(strokeMatch[1]) * scale;
+                strokeColor = strokeMatch[2];
+                hasStroke = true;
+              }
+
+              // 提取渐变色
+              // background: linear-gradient(180deg, #FFF1A2 0%, #FFFFFF 50%, #FFF1A2 72.12%, #FFBE32 100%);
+              var bgMatch = customCss.match(/background:\s*linear-gradient\(([\d]+)deg,\s*(.+)\)/i);
+              if (bgMatch) {
+                var angle = parseInt(bgMatch[1]); // 180deg
+                var stopsStr = bgMatch[2];
+
+                // 简单的渐变方向计算 (仅支持0, 90, 180, 270等简单情况，这里针对180deg做垂直渐变)
+                // Canvas渐变坐标: x0, y0, x1, y1
+                var x0 = x, y0 = y - fontSize / 2, x1 = x, y1 = y + fontSize / 2; // 默认180deg (从上到下)
+
+                if (angle === 90) { // 从左到右
+                  x0 = x - width / 2; y0 = y; x1 = x + width / 2; y1 = y;
+                }
+
+                // 创建渐变对象
+                // 由于文字宽度未知，这里只能估算或者先measureText
+                // 为了更精确，我们在下面measureText之后再创建gradient
+                // 这里先解析颜色点
+                var stops = [];
+                // 简单的分割，假设颜色和百分比之间有空格，逗号分隔
+                // #FFF1A2 0%, #FFFFFF 50% ...
+                // 正则提取: (#[\w\d]+|rgba?\(.+?\))\s*([\d.]+)%
+                var stopRegex = /(#[\w\d]+|rgba?\(.+?\))\s*([\d.]+)%/g;
+                var stopMatch;
+                while ((stopMatch = stopRegex.exec(stopsStr)) !== null) {
+                  stops.push({
+                    color: stopMatch[1],
+                    pos: parseFloat(stopMatch[2]) / 100
+                  });
+                }
+
+                if (stops.length > 0) {
+                  gradient = {
+                    angle: angle,
+                    stops: stops
+                  };
+                }
+              }
+            }
+
+            ctx.font = 'bold ' + fontSize + 'px ' + fontFamily;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            var x = width / 2 + offset.x;
+            var y = height / 2 + offset.y;
+
+            // 如果有渐变，需要基于文字实际高度创建CanvasGradient
+            if (gradient) {
+              // 估算文字高度区域
+              var textTop = y - fontSize / 2;
+              var textBottom = y + fontSize / 2;
+              var grd = ctx.createLinearGradient(x, textTop, x, textBottom); // 默认180deg
+
+              gradient.stops.forEach(function (s) {
+                grd.addColorStop(s.pos, s.color);
+              });
+              fillColor = grd;
+            }
+
+            // 处理阴影 (text-shadow)
+            if (customCss) {
+              var shadowMatch = customCss.match(/text-shadow:\s*([^;]+)/i);
+              if (shadowMatch) {
+                var shadowsStr = shadowMatch[1];
+                // 复杂的阴影分割逻辑，因为rgba中也包含逗号
+                // 简单的按逗号分割会切断rgba
+                // 策略：按 "px" 后的逗号或者 ") " 后的逗号分割
+                // 这里使用一个简单的栈策略或者正则替换保护来处理
+
+                // 先将 rgba(...) 中的逗号临时替换为占位符
+                var tempStr = shadowsStr.replace(/rgba?\([^)]+\)/gi, function (match) {
+                  return match.replace(/,/g, '|');
+                });
+
+                var shadows = tempStr.split(',').map(function (s) {
+                  return s.replace(/\|/g, ',').trim();
+                });
+
+                // Canvas只支持单层shadow，如果有多个，只能画多次
+                // 注意：Canvas的shadow是基于绘制内容的，如果连续画多次带shadow的文字，文字本身也会重叠变粗
+                // 正确的多重阴影绘制方法：
+                // 1. 先绘制最底层的阴影（文字颜色设为透明，只留阴影）-> 这一步Canvas比较难直接做，因为shadow依附于实体
+                // 2. 或者：每层阴影都完整绘制一遍文字
+
+                shadows.forEach(function (shadow) {
+                  // 解析阴影参数: x y blur color
+                  // 可能格式: 0px 2px 1px rgba(0,0,0,0.5) 或 rgba(0,0,0,0.5) 0px 2px 1px
+                  // 简单起见，假设 px 在前
+                  var pxMatches = shadow.match(/([-\d.]+)px\s+([-\d.]+)px\s+([-\d.]+)px/);
+                  var colorMatch = shadow.match(/(#[\w\d]+|rgba?\([^)]+\))/);
+
+                  if (pxMatches && colorMatch) {
+                    ctx.save();
+                    ctx.shadowOffsetX = parseFloat(pxMatches[1]);
+                    ctx.shadowOffsetY = parseFloat(pxMatches[2]);
+                    ctx.shadowBlur = parseFloat(pxMatches[3]);
+                    ctx.shadowColor = colorMatch[1];
+
+                    // 关键：为了只画阴影不加深文字，或者为了支持多重阴影的层叠效果
+                    // 这里的策略是：每一层阴影都画一遍文字
+                    // 如果fillColor是渐变，多次绘制可能导致性能问题或效果偏差，但在Canvas里这是标准做法
+                    ctx.fillStyle = fillColor;
+                    ctx.fillText(text, x, y);
+                    ctx.restore();
+                  }
+                });
+
+                // 阴影绘制完后，最后再绘制一次不带阴影的主体文字（覆盖在阴影之上）
+                // 这样可以确保文字清晰，且避免阴影绘制时的文字重叠导致边缘锯齿
+                // 但是，上面的forEach已经画了多次文字本身了（虽然是为了阴影）
+                // 优化：其实Canvas的shadow绘制时，是先画阴影再画实体的。
+                // 如果画多次，实体会叠加。
+                // 技巧：将globalCompositeOperation设为destination-over (在下方绘制) ? 不行，因为阴影也是通过fillText触发的
+                // 
+                // 更好的多重阴影模拟：
+                // 倒序绘制阴影？不，阴影通常在文字下方。
+                // 我们的shadows数组通常是第一层最接近文字。
+                // 
+                // 最终策略：
+                // 1. 不在循环里画，循环只收集配置
+                // 2. 实际上Canvas API不支持一次设置多重阴影
+                // 3. 所以必须多次调用fillText
+                // 4. 为了避免实体文字多次叠加变色（特别是半透明颜色时），应该：
+                //    每次绘制阴影时，将 fillStyle 设为全透明？不行，全透明文字没有阴影。
+                //    正确做法：在离屏Canvas或者临时位置绘制阴影，或者...
+                //    
+                //    **简单有效的方法**：
+                //    循环绘制所有阴影：
+                //      ctx.shadowColor = ...; ctx.fillText(...);
+                //    最后绘制一次无阴影的实体文字：
+                //      ctx.shadowColor = 'transparent'; ctx.fillText(...);
+                //    
+                //    但是每次fillText都会把文字实体画上去。如果文字是不透明的，多层叠加没问题（除了边缘可能锯齿）。
+                //    如果文字是半透明或渐变，叠加会变色。
+                //    
+                //    针对本需求（通常勋章文字不透明），直接多次绘制即可。
+                //    为了保证最后文字颜色正确，我们在循环结束后，清除阴影，再画一次“纯净”的文字。
+                return; // 中断后续的默认绘制，改由这里接管
+              }
+            }
+
+            // 如果没有阴影逻辑接管，或者没有阴影，走下面的普通绘制
+
+            // 描边
+            if (hasStroke) {
+              ctx.strokeStyle = strokeColor;
+              ctx.lineWidth = strokeWidth;
+              ctx.lineJoin = 'round';
+              ctx.strokeText(text, x, y);
+            }
+
+            // 填充
+            ctx.fillStyle = fillColor;
+            ctx.fillText(text, x, y);
+
+            ctx.restore();
+          },
+
+          badgeExport: function () {
+            var canvas = this.$refs.badgeCanvas;
+            if (!canvas) return;
+            var name = this.badge.current.name || 'badge';
+            var filename = this.getTimestampFilename(name, 'png');
+            var dataUrl = canvas.toDataURL('image/png');
+            var a = document.createElement('a');
+            a.href = dataUrl;
+            a.download = filename;
+            a.click();
+          }
+        }
+      });
+    </script>
+</body>
+
+</html>

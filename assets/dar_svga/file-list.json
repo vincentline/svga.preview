@@ -1,0 +1,547 @@
+[
+  {
+    "name": "D02",
+    "svga": "https://blog-1258489735.cos.ap-chengdu.myqcloud.com/other/avatar_frame_dar/D02.svga",
+    "textStyle": {
+      "name01": {
+        "fontWeight": "700",
+        "textShadow": "0px 2px 1.5px #694D41",
+        "gradient": {
+          "colors": [
+            "#FFFFFF",
+            "#FFFFFF",
+            "#FDEA91",
+            "#FDEA91"
+          ],
+          "positions": [
+            0.0,
+            0.1971,
+            0.7981,
+            1.0
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "D06",
+    "svga": "https://blog-1258489735.cos.ap-chengdu.myqcloud.com/other/avatar_frame_dar/D06.svga",
+    "textStyle": {
+      "name01": {
+        "fontWeight": "700",
+        "textShadow": "0px 2px 1.5px #694D41",
+        "gradient": {
+          "colors": [
+            "#FFFFFF",
+            "#FFFFFF",
+            "#FDEA91",
+            "#FDEA91"
+          ],
+          "positions": [
+            0.0,
+            0.1971,
+            0.7981,
+            1.0
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "D07",
+    "svga": "https://blog-1258489735.cos.ap-chengdu.myqcloud.com/other/avatar_frame_dar/D07.svga",
+    "textStyle": {
+      "name01": {
+        "fontWeight": "700",
+        "fillColor": "#FFFFFF",
+        "strokeColor": "#7C2E07",
+        "strokeWidth": 1.5,
+        "textShadow": "0px 2.5px 0px #7C2E07"
+      }
+    }
+  },
+  {
+    "name": "D08",
+    "svga": "https://blog-1258489735.cos.ap-chengdu.myqcloud.com/other/avatar_frame_dar/D08.svga",
+    "textStyle": {
+      "name01": {
+        "fontWeight": "700",
+        "fillColor": "#FFF6B2",
+        "textShadow": "0px 2.5px 1px #A12424"
+      }
+    }
+  },
+  {
+    "name": "D09",
+    "svga": "https://blog-1258489735.cos.ap-chengdu.myqcloud.com/other/avatar_frame_dar/D09.svga",
+    "textStyle": {
+      "name01": {
+        "fontWeight": "700",
+        "fillColor": "#FFF6B2"
+      }
+    }
+  },
+  {
+    "name": "D13",
+    "svga": "https://blog-1258489735.cos.ap-chengdu.myqcloud.com/other/avatar_frame_dar/D13.svga",
+    "textStyle": {
+      "name01": {
+        "fontWeight": "700",
+        "fillColor": "#EBC547",
+        "textShadow": "1px 3px 1px #373737"
+      }
+    }
+  },
+  {
+    "name": "D14",
+    "svga": "https://blog-1258489735.cos.ap-chengdu.myqcloud.com/other/avatar_frame_dar/D14.svga",
+    "textStyle": {
+      "name01": {
+        "fontWeight": "700",
+        "fillColor": "#FFF6B2",
+        "textShadow": "0px 2.5px 1px #A12424"
+      }
+    }
+  },
+  {
+    "name": "D54",
+    "svga": "https://blog-1258489735.cos.ap-chengdu.myqcloud.com/other/avatar_frame_dar/D54.svga",
+    "textStyle": {
+      "name01": {
+        "fontWeight": "700",
+        "strokeColor": "#633434",
+        "strokeWidth": 1,
+        "textShadow": "0px 0px 3px #FFFFFF",
+        "gradient": {
+          "colors": [
+            "#FFFAC5",
+            "#FEFBD8",
+            "#FFFFFF",
+            "#FFE45B",
+            "#FFC351",
+            "#FFEE82",
+            "#FFFFFF",
+            "#FFFFFF"
+          ],
+          "positions": [
+            0.0,
+            0.2019,
+            0.5,
+            0.58,
+            0.62,
+            0.72,
+            0.95,
+            1.0
+          ]
+        }
+      },
+      "Username01": {
+        "fontWeight": "700",
+        "fillColor": "#FFFFFF",
+        "strokeColor": "#633434",
+        "strokeWidth": 1,
+        "textShadow": "0px 0px 3px #FFFFFF"
+      }
+    }
+  },
+  {
+    "name": "D58",
+    "svga": "https://blog-1258489735.cos.ap-chengdu.myqcloud.com/other/avatar_frame_dar/D58.svga",
+    "textStyle": {
+      "name01": {
+        "fontWeight": "700",
+        "textShadow": "0px 2px 1.5px #694D41",
+        "gradient": {
+          "colors": [
+            "#FFFFFF",
+            "#FFFFFF",
+            "#FDEA91",
+            "#FDEA91"
+          ],
+          "positions": [
+            0.0,
+            0.1971,
+            0.7981,
+            1.0
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "D59",
+    "svga": "https://blog-1258489735.cos.ap-chengdu.myqcloud.com/other/avatar_frame_dar/D59.svga",
+    "textStyle": {
+      "name01": {
+        "fontWeight": "700",
+        "textShadow": "1px 2px 1px #373737",
+        "gradient": {
+          "colors": [
+            "#FFFAC5",
+            "#FEFBD8",
+            "#FFFFFF",
+            "#FFE45B",
+            "#FFC351",
+            "#FFEE82",
+            "#FFFFFF",
+            "#FFFFFF"
+          ],
+          "positions": [
+            0.0,
+            0.2019,
+            0.5,
+            0.58,
+            0.62,
+            0.72,
+            0.95,
+            1.0
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "D60",
+    "svga": "https://blog-1258489735.cos.ap-chengdu.myqcloud.com/other/avatar_frame_dar/D60.svga",
+    "textStyle": {
+      "name01": {
+        "fontWeight": "700",
+        "textShadow": "0px 2px 6px rgba(0, 0, 0, 0.7)",
+        "gradient": {
+          "colors": [
+            "#CDA0FF",
+            "#EDAFFF",
+            "#FFFFFF"
+          ],
+          "positions": [
+            0.0,
+            0.5,
+            1.0
+          ]
+        }
+      },
+      "Username01": {
+        "fontWeight": "700",
+        "textShadow": "0px 2px 6px rgba(0, 0, 0, 0.7)",
+        "gradient": {
+          "colors": [
+            "#A61F32",
+            "#F68A30",
+            "#FFE664"
+          ],
+          "positions": [
+            0.1587,
+            0.5,
+            0.8462
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "D61",
+    "svga": "https://blog-1258489735.cos.ap-chengdu.myqcloud.com/other/avatar_frame_dar/D61.svga",
+    "textStyle": {
+      "name01": {
+        "fontWeight": "700",
+        "gradient": {
+          "colors": [
+            "#F9EB50",
+            "#FDFA8A",
+            "#FBFFCD",
+            "#FFE45B",
+            "#F38F00",
+            "#F9BC2F",
+            "#FFDF50",
+            "#FFE985"
+          ],
+          "positions": [
+            0.0,
+            0.2019,
+            0.5,
+            0.58,
+            0.62,
+            0.72,
+            0.95,
+            1.0
+          ]
+        },
+        "multiShadow": [
+          "0px 1px 0px #BB3000",
+          "0px 3px 0px #F85A0A",
+          "0px 2px 6px rgba(0, 0, 0, 0.7)"
+        ]
+      },
+      "Username01": {
+        "fontWeight": "700",
+        "gradient": {
+          "colors": [
+            "#FFFAC5",
+            "#FEFBD8",
+            "#FFFFFF",
+            "#FFF16A",
+            "#FDE84B",
+            "#FFF3A2",
+            "#FFFFFF",
+            "#FFFFFF"
+          ],
+          "positions": [
+            0.0,
+            0.2019,
+            0.56,
+            0.58,
+            0.6,
+            0.72,
+            0.95,
+            1.0
+          ]
+        },
+        "multiShadow": [
+          "0px 1px 0px #EF9A4B",
+          "0px 3px 0px #F8B94B",
+          "0px 2px 6px rgba(0, 0, 0, 0.7)"
+        ]
+      }
+    }
+  },
+  {
+    "name": "D63",
+    "svga": "https://blog-1258489735.cos.ap-chengdu.myqcloud.com/other/avatar_frame_dar/D63.svga",
+    "textStyle": {
+      "name01": {
+        "fontWeight": "700",
+        "strokeColor": "#FFF3B9",
+        "strokeWidth": 1,
+        "gradient": {
+          "colors": [
+            "#FFEABD",
+            "#FEFBD8",
+            "#FFFFFF",
+            "#FFF16A",
+            "#FFB87B",
+            "#FFE096",
+            "#FFFFFF"
+          ],
+          "positions": [
+            0.0,
+            0.2019,
+            0.56,
+            0.58,
+            0.6,
+            0.7837,
+            1.0
+          ]
+        },
+        "multiShadow": [
+          "0px 1px 0px #EF9A4B",
+          "0px 2px 6px rgba(0, 0, 0, 0.7)"
+        ]
+      }
+    }
+  },
+  {
+    "name": "D68",
+    "svga": "https://blog-1258489735.cos.ap-chengdu.myqcloud.com/other/avatar_frame_dar/D68.svga",
+    "textStyle": {
+      "name01": {
+        "fontWeight": "700",
+        "textShadow": "0px 2px 6px rgba(0, 0, 0, 0.7)",
+        "gradient": {
+          "colors": [
+            "#A0C8FA",
+            "#2D25CB",
+            "#5456F3"
+          ],
+          "positions": [
+            0.1154,
+            0.5481,
+            1.0
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "D90",
+    "svga": "https://blog-1258489735.cos.ap-chengdu.myqcloud.com/other/avatar_frame_dar/D90.svga",
+    "textStyle": {
+      "name01": {
+        "fontWeight": "700",
+        "textShadow": "0px 2px 1.5px #694D41",
+        "gradient": {
+          "colors": [
+            "#FFFFFF",
+            "#FFFFFF",
+            "#FDEA91",
+            "#FDEA91"
+          ],
+          "positions": [
+            0.0,
+            0.1971,
+            0.7981,
+            1.0
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "H11",
+    "svga": "https://blog-1258489735.cos.ap-chengdu.myqcloud.com/other/avatar_frame_dar/H11.svga",
+    "textStyle": {
+      "name01": {
+        "fontWeight": "700"
+      }
+    }
+  },
+  {
+    "name": "D62",
+    "svga": "https://blog-1258489735.cos.ap-chengdu.myqcloud.com/other/avatar_frame_dar/D62.svga",
+    "textStyle": {
+      "name01": {
+        "fontWeight": "700",
+        "textShadow": "1px 3px 1px #000000",
+        "gradient": {
+          "colors": [
+            "#FFF189",
+            "#FFC919",
+            "#FFA411"
+          ],
+          "positions": [
+            0.0,
+            0.5,
+            1.0
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "Dbaodao",
+    "svga": "https://blog-1258489735.cos.ap-chengdu.myqcloud.com/other/avatar_frame_dar/Dbaodao.svga",
+    "textStyle": {
+      "name01": {
+        "fontWeight": "700",
+        "fillColor": "#FFDE45",
+        "textShadow": "0px 2.5px 2px #330703"
+      }
+    }
+  },
+  {
+    "name": "Dheijin",
+    "svga": "https://blog-1258489735.cos.ap-chengdu.myqcloud.com/other/avatar_frame_dar/Dheijin.svga",
+    "textStyle": {
+      "name01": {
+        "fontWeight": "700",
+        "fillColor": "#FFFFFF",
+        "strokeColor": "#D3A386",
+        "strokeWidth": 3
+      }
+    }
+  },
+  {
+    "name": "Dzijin",
+    "svga": "https://blog-1258489735.cos.ap-chengdu.myqcloud.com/other/avatar_frame_dar/Dzijin.svga",
+    "textStyle": {
+      "name01": {
+        "fontWeight": "700",
+        "fillColor": "#FFDE45",
+        "multiShadow": [
+          "2px -2px 1px #FFFFFF",
+          "-1px 2px 1px #A97008"
+        ]
+      }
+    }
+  },
+  {
+    "name": "n01",
+    "svga": "https://blog-1258489735.cos.ap-chengdu.myqcloud.com/other/avatar_frame_dar/n01.svga",
+    "textStyle": {
+      "Assistant": {
+        "fontWeight": "900",
+        "fillColor": "#FFFFFF",
+        "textShadow": "2px 3.5px 3px #C35806"
+      }
+    }
+  },
+  {
+    "name": "n02",
+    "svga": "https://blog-1258489735.cos.ap-chengdu.myqcloud.com/other/avatar_frame_dar/n02.svga",
+    "textStyle": {
+      "img_2103118107": {
+        "fontWeight": "700",
+        "textShadow": "1.5px 2px 2px #000000",
+        "gradient": {
+          "colors": [
+            "#FFC21A",
+            "#FF9E1A",
+            "#FFFE69",
+            "#FFFE69"
+          ],
+          "positions": [
+            0.0,
+            0.2,
+            0.7,
+            1.0
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "n03",
+    "svga": "https://blog-1258489735.cos.ap-chengdu.myqcloud.com/other/avatar_frame_dar/n03.svga",
+    "textStyle": {
+      "img_2103118097": {
+        "fontWeight": "700",
+        "textShadow": "1.5px 2px 1px #0518AA",
+        "gradient": {
+          "colors": [
+            "#FFFFFF",
+            "#61E5FF",
+            "#FFFFFF",
+            "#CDF7FF",
+            "#88EBFF",
+            "#FFFFFF"
+          ],
+          "positions": [
+            0.0,
+            0.2692,
+            0.476,
+            0.6635,
+            0.8,
+            1.0
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "n04",
+    "svga": "https://blog-1258489735.cos.ap-chengdu.myqcloud.com/other/avatar_frame_dar/n04.svga"
+  },
+  {
+    "name": "n05",
+    "svga": "https://blog-1258489735.cos.ap-chengdu.myqcloud.com/other/avatar_frame_dar/n05.svga",
+    "textStyle": {
+      "img_394": {
+        "fontWeight": "700",
+        "textShadow": "0px 3px 0px rgba(0, 0, 0, 0.05)",
+        "gradient": {
+          "colors": [
+            "#FFFFFF",
+            "#FFFFFF",
+            "#FABE91",
+            "#FABE91"
+          ],
+          "positions": [
+            0.0,
+            0.4,
+            0.8,
+            1.0
+          ]
+        }
+      }
+    }
+  }
+]
