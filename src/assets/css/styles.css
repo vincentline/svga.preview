@@ -863,7 +863,7 @@ body.dark-mode .help-modal-content th {
   /* 显示时可接收拖拽事件 */
 }
 
-/* 鎷栨嫿鎻愮ず */
+/* 拖拽提示 */
 .drop-hint {
   display: flex;
   flex-direction: column;
@@ -972,7 +972,7 @@ body.dark-mode .viewer-filename {
   -ms-interpolation-mode: bicubic;
 }
 
-/* 绌虹姸鎬佽鐩栧眰 */
+/* 空状态覆盖层 */
 .empty-state-overlay {
   position: absolute;
   inset: 0;
