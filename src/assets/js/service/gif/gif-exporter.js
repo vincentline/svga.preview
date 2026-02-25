@@ -97,12 +97,16 @@
       var availableCores = navigator.hardwareConcurrency || 2;
       var workerCount = Math.max(1, Math.min(Math.floor(availableCores / 2), 4));
       
-      // 使用相对路径，确保在不同部署环境中都能正确加载
+      // 构建worker脚本的绝对路径，确保在任何环境中都能正确加载
       var workerScriptPath = 'assets/js/service/gif/gif.worker.js';
+      // 确保路径正确
+      var baseUrl = window.location.origin;
+      var fullWorkerPath = new URL(workerScriptPath, baseUrl).href;
+      console.log('[GIF Exporter] Worker script path:', fullWorkerPath);
       
       var gifOptions = {
         workers: workerCount,
-        workerScript: workerScriptPath,
+        workerScript: fullWorkerPath,
         quality: Math.min(quality, 20),
         width: width,
         height: height,
