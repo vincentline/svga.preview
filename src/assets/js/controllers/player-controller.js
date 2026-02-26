@@ -194,10 +194,18 @@
 
   function YyevaPlayerAdapter(state) {
     VideoPlayerAdapter.call(this, state, state.yyevaVideo);
+    this.yyevaData = state.yyevaData || null;
+    this.effectConfig = state.yyevaEffectConfig || {};
   }
 
   YyevaPlayerAdapter.prototype = Object.create(VideoPlayerAdapter.prototype);
   YyevaPlayerAdapter.prototype.constructor = YyevaPlayerAdapter;
+
+  YyevaPlayerAdapter.prototype.updateState = function (state) {
+    VideoPlayerAdapter.prototype.updateState.call(this, state);
+    this.yyevaData = state.yyevaData || null;
+    this.effectConfig = state.yyevaEffectConfig || {};
+  };
 
   YyevaPlayerAdapter.prototype.afterPlay = function () {
     if (this.state.startYyevaRenderLoop) {
@@ -230,6 +238,38 @@
         this.state.renderYyevaFrame();
       }
     }
+  };
+
+  YyevaPlayerAdapter.prototype.setYyevaText = function (effectTag, config) {
+    this.effectConfig[effectTag] = this.effectConfig[effectTag] || {};
+    Object.assign(this.effectConfig[effectTag], config);
+    if (this.state.yyevaEffectConfig) {
+      this.state.yyevaEffectConfig[effectTag] = this.effectConfig[effectTag];
+    }
+  };
+
+  YyevaPlayerAdapter.prototype.setYyevaImage = function (effectTag, imageSource) {
+    this.effectConfig[effectTag] = this.effectConfig[effectTag] || {};
+    this.effectConfig[effectTag].imageSource = imageSource;
+    if (this.state.yyevaEffectConfig) {
+      this.state.yyevaEffectConfig[effectTag] = this.effectConfig[effectTag];
+    }
+  };
+
+  YyevaPlayerAdapter.prototype.getYyevaEffects = function () {
+    if (!this.yyevaData || !this.yyevaData.effect) return [];
+    var effects = [];
+    for (var key in this.yyevaData.effect) {
+      effects.push({
+        key: key,
+        config: this.yyevaData.effect[key]
+      });
+    }
+    return effects;
+  };
+
+  YyevaPlayerAdapter.prototype.hasYyevaData = function () {
+    return this.yyevaData !== null;
   };
 
   // ==================== MP4 播放器适配器（含变速逻辑）====================

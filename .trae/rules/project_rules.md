@@ -10,6 +10,7 @@
 1. 开发侧边栏弹窗前，参考`.trae\documents\侧边弹窗技术规范文档.md`和[侧边弹窗开发经验文档.md](../documents/侧边弹窗开发经验文档.md)
 2. 文件管理规范，查阅`.trae\documents\项目文件管理规范.md`[项目文件管理规范.md](../documents/项目文件管理规范.md)
 3. app.js核心功能文件详解，查阅`.trae\documents\app.js核心功能详解文档.md`[app.js核心功能详解文档.md](../documents/app.js核心功能详解文档.md)
+4. 代码优先考虑不放app.js里的，例如单独的js文件实现还是放在对应的文件里，app.js已经太大了。
 
 # 任务执行规则：
 1. 项目结构和功能模块查阅`README.md`

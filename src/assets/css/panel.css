@@ -81,7 +81,7 @@
   flex-direction: column;
   align-self: stretch;
   padding: 20px;
-  gap: 16px;
+  gap: 24px;
   width: 380px;
   background: #FFFFFF;
   border: 1px solid #e6e6e6;
@@ -202,6 +202,444 @@ body.dark-mode .side-panel-divider {
 .mp4-size-input-wrapper,
 .mp4-value-input-wrapper {
   width: 73px;
+}
+
+/* 16. YYEVA Key 面板特有样式 */
+.yyeva-key-panel {
+  width: 400px;
+}
+
+/* YYEVA Key 信息区域样式 */
+.yyeva-key-info-section {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  gap: 4px;
+}
+
+.yyeva-key-info-row {
+  font-family: 'Segoe UI', sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 19px;
+  color: #333333;
+  margin: 0;
+}
+
+body.dark-mode .yyeva-key-info-row {
+  color: #cccccc;
+}
+
+.yyeva-key-hint {
+  font-family: 'Segoe UI', sans-serif;
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 16px;
+  color: #AAAAAA;
+  margin: 0;
+}
+
+body.dark-mode .yyeva-key-hint {
+  color: #666666;
+}
+
+/* YYEVA Key 搜索区域样式 */
+.yyeva-key-search {
+  width: 100%;
+  margin-top: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  padding: 0 16px;
+  gap: 4px;
+  min-width: 50px;
+  height: 36px;
+  background: #F3F3F3;
+  border: 2px solid #F3F3F3;
+  border-radius: 8px;
+  flex: none;
+  flex-grow: 0;
+  transition: all 0.3s;
+}
+
+.yyeva-key-search:hover {
+  background: #FCFCFC;
+  border: 2px solid #333333;
+}
+
+.yyeva-key-search:focus-within {
+  background: #FFFFFF;
+  border: 2px solid #333333;
+}
+
+body.dark-mode .yyeva-key-search {
+  background: #3a3a3a;
+  border: 2px solid #3a3a3a;
+}
+
+body.dark-mode .yyeva-key-search:hover {
+  background: #454545;
+  border: 2px solid #999999;
+}
+
+body.dark-mode .yyeva-key-search:focus-within {
+  background: #3a3a3a;
+  border: 2px solid #999999;
+}
+
+.yyeva-key-search-input {
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  font-family: 'Segoe UI';
+  font-size: 14px;
+  color: #333333;
+  background: transparent;
+  outline: none;
+  transition: all 0.3s;
+}
+
+.yyeva-key-search-input::placeholder {
+  color: #D3D3D3;
+}
+
+.yyeva-key-search-input:focus {
+  color: #333333;
+}
+
+body.dark-mode .yyeva-key-search-input {
+  color: #e0e0e0;
+}
+
+body.dark-mode .yyeva-key-search-input::placeholder {
+  color: #666666;
+}
+
+body.dark-mode .yyeva-key-search-input:focus {
+  color: #e0e0e0;
+}
+
+/* YYEVA Key 区域样式 */
+.yyeva-key-section {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  gap: 12px;
+}
+
+.yyeva-key-section-title {
+  font-family: 'Segoe UI', sans-serif;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 16px;
+  color: #818181;
+  align-self: stretch;
+}
+
+body.dark-mode .yyeva-key-section-title {
+  color: #999999;
+}
+
+.yyeva-key-list {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  gap: 12px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.yyeva-key-item {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 12px;
+  align-self: stretch;
+  padding: 12px;
+  background: #F8F8F8;
+  border-radius: 8px;
+  transition: background 0.3s;
+}
+
+body.dark-mode .yyeva-key-item {
+  background: #2a2a2a;
+}
+
+.yyeva-key-thumb {
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.yyeva-key-thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.yyeva-key-thumb-placeholder {
+  font-family: 'Segoe UI', sans-serif;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 16px;
+  color: #AAAAAA;
+}
+
+body.dark-mode .yyeva-key-thumb-placeholder {
+  color: #666666;
+}
+
+.yyeva-key-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.yyeva-key-info-full {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.yyeva-key-name {
+  font-family: 'Segoe UI', sans-serif;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 19px;
+  color: #333333;
+  transition: color 0.3s;
+}
+
+body.dark-mode .yyeva-key-name {
+  color: #e0e0e0;
+}
+
+.yyeva-key-meta {
+  font-family: 'Segoe UI', sans-serif;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 16px;
+  color: #818181;
+  transition: color 0.3s;
+}
+
+body.dark-mode .yyeva-key-meta {
+  color: #999999;
+}
+
+.yyeva-key-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.yyeva-key-btn-replace {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  padding: 6px 12px;
+  gap: 4px;
+  width: 80px;
+  height: 32px;
+  background: #FFFFFF;
+  border: 1px solid #E6E6E6;
+  border-radius: 6px;
+  flex: none;
+  order: 0;
+  flex-grow: 0;
+  font-family: 'Segoe UI', sans-serif;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 16px;
+  color: #333333;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.yyeva-key-btn-replace:hover {
+  background: #FCFCFC;
+  border: 1px solid #333333;
+}
+
+.yyeva-key-btn-replace:active {
+  background: #F3F3F3;
+  border: 2px solid #333333;
+  padding: 5px 11px;
+}
+
+body.dark-mode .yyeva-key-btn-replace {
+  background: #2c2c2c;
+  border: 1px solid #404040;
+  color: #e0e0e0;
+}
+
+body.dark-mode .yyeva-key-btn-replace:hover {
+  background: #3a3a3a;
+  border: 1px solid #666666;
+}
+
+.yyeva-key-btn-restore {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  padding: 4px 8px;
+  gap: 4px;
+  width: 80px;
+  height: 24px;
+  background: #FFFFFF;
+  border: 1px solid #E6E6E6;
+  border-radius: 4px;
+  flex: none;
+  order: 1;
+  flex-grow: 0;
+  font-family: 'Segoe UI', sans-serif;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 10px;
+  line-height: 14px;
+  color: #818181;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.yyeva-key-btn-restore:hover {
+  background: #FCFCFC;
+  border: 1px solid #333333;
+  color: #333333;
+}
+
+body.dark-mode .yyeva-key-btn-restore {
+  background: #2c2c2c;
+  border: 1px solid #404040;
+  color: #999999;
+}
+
+body.dark-mode .yyeva-key-btn-restore:hover {
+  background: #3a3a3a;
+  border: 1px solid #666666;
+  color: #e0e0e0;
+}
+
+.yyeva-key-text-input {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.yyeva-key-text-field {
+  flex: 1;
+  box-sizing: border-box;
+  padding: 8px 12px;
+  gap: 4px;
+  height: 32px;
+  background: #FFFFFF;
+  border: 1px solid #E6E6E6;
+  border-radius: 6px;
+  font-family: 'Segoe UI', sans-serif;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 19px;
+  color: #333333;
+  transition: all 0.3s;
+}
+
+.yyeva-key-text-field:focus {
+  outline: none;
+  border: 1px solid #333333;
+  background: #FFFFFF;
+}
+
+body.dark-mode .yyeva-key-text-field {
+  background: #2c2c2c;
+  border: 1px solid #404040;
+  color: #e0e0e0;
+}
+
+body.dark-mode .yyeva-key-text-field:focus {
+  border: 1px solid #666666;
+  background: #1a1a1a;
+}
+
+.yyeva-key-btn-restore-text {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  padding: 4px 8px;
+  gap: 4px;
+  width: 60px;
+  height: 24px;
+  background: #FFFFFF;
+  border: 1px solid #E6E6E6;
+  border-radius: 4px;
+  flex: none;
+  order: 1;
+  flex-grow: 0;
+  font-family: 'Segoe UI', sans-serif;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 10px;
+  line-height: 14px;
+  color: #818181;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.yyeva-key-btn-restore-text:hover {
+  background: #FCFCFC;
+  border: 1px solid #333333;
+  color: #333333;
+}
+
+body.dark-mode .yyeva-key-btn-restore-text {
+  background: #2c2c2c;
+  border: 1px solid #404040;
+  color: #999999;
+}
+
+body.dark-mode .yyeva-key-btn-restore-text:hover {
+  background: #3a3a3a;
+  border: 1px solid #666666;
+  color: #e0e0e0;
+}
+
+.yyeva-key-empty {
+  font-family: 'Segoe UI', sans-serif;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 19px;
+  color: #AAAAAA;
+  text-align: center;
+  padding: 24px 0;
+}
+
+body.dark-mode .yyeva-key-empty {
+  color: #666666;
 }
 
 /* 15. 统一配置区域样式 */

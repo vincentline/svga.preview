@@ -1,0 +1,6379 @@
+{
+  "descript": {
+    "width": 1504,
+    "height": 1904,
+    "isEffect": 1,
+    "version": 1,
+    "rgbFrame": [
+      0,
+      0,
+      750,
+      1700
+    ],
+    "alphaFrame": [
+      750,
+      0,
+      750,
+      1700
+    ],
+    "fps": 30,
+    "hasAudio": true
+  },
+  "effect": [
+    {
+      "effectWidth": 376,
+      "effectHeight": 72,
+      "effectId": 1,
+      "effectType": "txt",
+      "effectTag": "text_01",
+      "fontColor": "#ffffff",
+      "fontSize": 36,
+      "textAlign": "center"
+    },
+    {
+      "effectWidth": 206,
+      "effectHeight": 196,
+      "effectId": 2,
+      "effectType": "img",
+      "scaleMode": "scaleFill",
+      "effectTag": "avatar_01"
+    }
+  ],
+  "datas": [
+    {
+      "frameIndex": 0,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1363.832002893,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1144.832002893,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 1,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1363.1652819286,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1144.1652819286,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 2,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1362.49932684432,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1143.49932684432,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 3,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1361.83406141622,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1142.83406141622,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 4,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1361.16923298888,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1142.16923298888,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 5,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1360.50448673564,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1141.50448673563,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 6,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1359.83943210057,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1140.83943210057,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 7,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1359.17370660146,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1140.17370660146,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 8,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1358.50704189132,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1139.50704189132,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 9,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1357.83933722414,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1138.83933722414,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 10,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1357.17074628791,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1138.17074628791,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 11,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1356.50178489302,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1137.50178489302,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 12,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1355.83346950088,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1136.83346950088,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 13,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1355.16830807363,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1136.16830807363,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 14,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1354.50696697981,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1135.50696697981,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 15,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1353.84473372257,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1134.84473372257,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 16,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1353.17819790567,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1134.17819790567,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 17,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1352.50639436883,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1133.50639436883,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 18,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1351.83355129906,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1132.83355129906,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 19,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1351.16417309222,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1132.16417309222,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 20,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1350.5,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1131.5,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 21,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1351.16844244033,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1132.16844244033,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 22,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1351.83701342066,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1132.83701342066,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 23,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1352.50029507408,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1133.50029507408,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 24,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1353.16666773562,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1134.16666773562,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 25,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1353.83336047237,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1134.83336047237,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 26,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1354.50023526243,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1135.50023526243,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 27,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1355.16812907269,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1136.16812907269,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 28,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1355.83549652273,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1136.83549652273,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 29,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1356.50174412462,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1137.50174412462,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 30,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1357.16730587137,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1138.16730587137,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 31,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1357.8333352116,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1138.8333352116,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 32,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1358.50015879846,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1139.50015879846,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 33,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1359.16696332715,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1140.16696332715,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 34,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1359.83362004149,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1140.83362004149,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 35,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1360.50015547076,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1141.50015547076,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 36,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1361.16667137079,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1142.16667137079,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 37,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1361.8332696761,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1142.8332696761,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 38,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1362.49997747702,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1143.49997747702,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 39,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1363.16640031512,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1144.16640031512,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 40,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1363.83212107692,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1144.83212107692,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 41,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1364.49814042392,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1145.49814042392,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 42,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1365.16505033486,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1146.16505033486,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 43,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1365.83271831448,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1146.83271831448,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 44,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1366.50000298437,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1147.50000298437,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 45,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1367.16664706144,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1148.16664706144,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 46,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1367.83331662761,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1148.83331662761,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 47,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1368.49739694083,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1149.49739694083,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 48,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1369.15880720779,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1150.15880720779,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 49,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1369.82831042144,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1150.82831042144,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 50,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1370.5,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1151.5,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 51,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1369.83155755967,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1150.83155755967,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 52,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1369.16298657934,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1150.16298657934,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 53,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1368.49970492592,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1149.49970492592,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 54,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1367.83333226438,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1148.83333226438,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 55,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1367.16663952763,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1148.16663952763,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 56,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1366.49976473757,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1147.49976473757,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 57,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1365.83187092731,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1146.83187092731,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 58,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1365.16450347727,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1146.16450347727,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 59,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1364.49825587538,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1145.49825587538,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 60,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1363.83269412863,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1144.83269412863,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 61,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1363.1666647884,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1144.1666647884,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 62,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1362.49984120154,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1143.49984120154,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 63,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1361.83303667285,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1142.83303667285,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 64,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1361.16637995851,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1142.16637995851,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 65,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1360.49984452924,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1141.49984452924,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 66,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1359.83332862921,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1140.83332862921,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 67,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1359.1667303239,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1140.1667303239,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 68,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1358.50002252298,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1139.50002252298,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 69,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1357.83359968488,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1138.83359968488,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 70,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1357.16787892308,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1138.16787892308,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 71,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1356.50185957608,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1137.50185957608,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 72,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1355.83494966514,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1136.83494966514,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 73,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1355.16728168552,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1136.16728168552,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 74,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1354.49999701563,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1135.49999701563,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 75,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1353.83335293856,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1134.83335293856,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 76,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1353.16668337239,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1134.16668337239,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 77,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1352.50260305917,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1133.50260305917,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 78,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1351.84119279221,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1132.84119279221,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 79,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1351.17168957856,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1132.17168957856,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 80,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1350.5,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1131.5,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 81,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1351.16844244033,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1132.16844244033,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 82,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1351.83701342066,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1132.83701342066,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 83,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1352.50029507408,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1133.50029507408,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 84,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1353.16666773562,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1134.16666773562,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 85,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1353.83336047237,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1134.83336047237,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 86,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1354.50023526243,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1135.50023526243,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 87,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1355.16812907269,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1136.16812907269,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 88,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1355.83549652273,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1136.83549652273,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 89,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1356.50174412462,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1137.50174412462,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 90,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1357.16730587137,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1138.16730587137,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 91,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1357.8333352116,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1138.8333352116,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 92,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1358.50015879846,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1139.50015879846,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 93,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1359.16696332715,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1140.16696332715,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 94,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1359.83362004149,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1140.83362004149,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 95,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1360.50015547076,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1141.50015547076,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 96,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1361.16667137079,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1142.16667137079,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 97,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1361.8332696761,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1142.8332696761,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 98,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1362.49997747702,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1143.49997747702,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 99,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1363.16640031512,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1144.16640031512,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 100,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1363.83212107692,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1144.83212107692,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 101,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1364.49814042392,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1145.49814042392,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 102,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1365.16505033486,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1146.16505033486,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 103,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1365.83271831448,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1146.83271831448,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 104,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1366.50000298437,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1147.50000298437,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 105,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1367.16664706144,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1148.16664706144,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 106,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1367.83331662761,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1148.83331662761,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 107,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1368.49739694083,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1149.49739694083,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 108,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1369.15880720779,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1150.15880720779,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 109,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1369.82831042144,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1150.82831042144,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 110,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1370.5,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1151.5,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 111,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1369.83155755967,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1150.83155755967,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 112,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1369.16298657934,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1150.16298657934,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 113,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1368.49970492592,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1149.49970492592,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 114,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1367.83333226438,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1148.83333226438,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 115,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1367.16663952763,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1148.16663952763,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 116,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1366.49976473757,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1147.49976473757,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 117,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1365.83187092731,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1146.83187092731,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 118,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1365.16450347727,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1146.16450347727,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 119,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1364.49825587538,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1145.49825587538,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 120,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1363.83269412863,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1144.83269412863,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 121,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1363.1666647884,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1144.1666647884,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 122,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1362.49984120154,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1143.49984120154,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 123,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1361.83303667285,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1142.83303667285,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 124,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1361.16637995851,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1142.16637995851,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 125,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1360.49984452924,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1141.49984452924,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 126,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1359.83332862921,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1140.83332862921,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 127,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1359.1667303239,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1140.1667303239,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 128,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1358.50002252298,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1139.50002252298,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 129,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1357.83359968488,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1138.83359968488,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 130,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1357.16787892308,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1138.16787892308,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 131,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1356.50185957608,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1137.50185957608,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 132,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1355.83494966514,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1136.83494966514,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 133,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1355.16728168552,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1136.16728168552,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 134,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1354.49999701563,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1135.49999701563,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 135,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1353.83335293856,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1134.83335293856,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 136,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1353.16668337239,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1134.16668337239,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 137,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1352.50260305917,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1133.50260305917,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 138,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1351.84119279221,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1132.84119279221,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 139,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1351.17168957856,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1132.17168957856,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 140,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1350.5,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1131.5,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 141,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1351.16417309222,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1132.16417309222,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 142,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1351.83355129906,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1132.83355129906,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 143,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1352.50639436883,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1133.50639436883,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 144,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1353.17819790567,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1134.17819790567,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 145,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1353.84473372256,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1134.84473372257,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 146,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1354.50696697981,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1135.50696697981,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 147,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1355.16830807363,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1136.16830807363,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 148,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1355.83346950088,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1136.83346950088,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 149,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1356.50178489302,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1137.50178489302,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 150,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1357.17074628791,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1138.17074628791,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 151,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1357.83933722414,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1138.83933722413,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 152,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1358.50704189132,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1139.50704189132,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 153,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1359.17370660146,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1140.17370660146,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 154,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1359.83943210057,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1140.83943210057,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 155,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1360.50448673564,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1141.50448673564,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 156,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1361.16923298888,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1142.16923298888,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 157,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1361.83406141622,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1142.83406141622,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 158,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1362.49932684432,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1143.49932684432,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 159,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1363.1652819286,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1144.1652819286,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 160,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1363.832002893,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1144.832002893,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 161,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1364.49930141609,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1145.49930141609,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 162,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1365.16661505399,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1146.16661505399,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 163,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1365.83281434401,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1146.83281434401,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 164,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1366.49827932674,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1147.49827932674,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 165,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1367.16471535232,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1148.16471535232,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 166,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1367.83252037105,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1148.83252037105,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 167,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1368.49999052276,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1149.49999052276,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 168,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1369.16725269205,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1150.16725269205,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 169,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1369.8371245803,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1150.8371245803,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 170,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1370.5,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1151.5,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 171,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1370.5,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1151.5,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 172,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1370.5,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1151.5,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 173,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1370.5,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1151.5,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 174,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1370.5,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1151.5,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 175,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1370.5,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1151.5,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 176,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1370.5,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1151.5,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 177,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1370.5,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1151.5,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 178,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1370.5,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1151.5,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 179,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1370.5,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1151.5,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    },
+    {
+      "frameIndex": 180,
+      "data": [
+        {
+          "renderFrame": [
+            187,
+            1370.5,
+            376,
+            72
+          ],
+          "effectId": 1,
+          "outputFrame": [
+            752,
+            1702,
+            376,
+            72
+          ]
+        },
+        {
+          "renderFrame": [
+            272.5,
+            1151.5,
+            206,
+            196
+          ],
+          "effectId": 2,
+          "outputFrame": [
+            1130,
+            1702,
+            206,
+            196
+          ]
+        }
+      ]
+    }
+  ]
+}

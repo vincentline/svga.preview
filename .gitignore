@@ -70,5 +70,8 @@ figma-mcp-example.md
 # 归档文件夹
 归档/
 
+# 其他
+# *.mp4
+
 # package-lock.json（可选，建议忽略避免冲突）
 package-lock.json

@@ -234,8 +234,16 @@ function initApp() {
           originalWidth: 0,  // 视频原始宽度
           originalHeight: 0, // 视频原始高度
           displayWidth: 0,   // 显示宽度（原始宽度/2）
-          displayHeight: 0   // 显示高度
+          displayHeight: 0,  // 显示高度
+          isYyeva: false,    // 是否为 YYEVA 格式（带动态元素）
+          yyevaData: null    // YYEVA 解析数据（descript, effect, datas）
         },
+
+        // YYEVA 动态元素配置（用户可修改）
+        yyevaImageKeys: [],      // 图片key列表
+        yyevaTextKeys: [],       // 文本key列表
+        yyevaReplacedImages: {}, // 替换的图片
+        yyevaReplacedTexts: {},  // 替换的文本
 
         // Lottie 状态
         lottie: {
@@ -1633,6 +1641,69 @@ function initApp() {
           // 设置检测到的alpha位置（优先使用检测结果）
           _this.yyeva.alphaPosition = detectedAlphaPosition;
 
+          // 处理 YYEVA 数据（带动态元素的双通道 MP4）
+          if (validatedData.isYyeva && validatedData.yyevaData) {
+            _this.yyeva.isYyeva = true;
+            _this.yyeva.yyevaData = validatedData.yyevaData;
+            _this.yyevaData = validatedData.yyevaData; // 便于适配器访问
+            
+            // 初始化 YYEVA 渲染器
+            if (!_this.yyevaRenderer) {
+              _this.yyevaRenderer = new window.MeeWoo.Services.YyevaRenderer();
+            } else {
+              _this.yyevaRenderer.reset();
+            }
+            
+            // 使用 YYEVA descript 中的尺寸信息作为有效显示区域
+            if (validatedData.yyevaData.descript) {
+              var descript = validatedData.yyevaData.descript;
+              
+              // 优先使用 rgbFrame 中的尺寸信息（原始动画尺寸）
+              if (descript.rgbFrame && descript.rgbFrame.length === 4) {
+                _this.yyeva.displayWidth = descript.rgbFrame[2];
+                _this.yyeva.displayHeight = descript.rgbFrame[3];
+                _this.yyeva.fileInfo.sizeWH = _this.yyeva.displayWidth + ' × ' + _this.yyeva.displayHeight;
+                _this.yyeva.fileInfo.width = _this.yyeva.displayWidth;
+                _this.yyeva.fileInfo.height = _this.yyeva.displayHeight;
+              } else if (descript.width && descript.height) {
+                _this.yyeva.displayWidth = descript.width;
+                _this.yyeva.displayHeight = descript.height;
+                _this.yyeva.fileInfo.sizeWH = _this.yyeva.displayWidth + ' × ' + _this.yyeva.displayHeight;
+                _this.yyeva.fileInfo.width = _this.yyeva.displayWidth;
+                _this.yyeva.fileInfo.height = _this.yyeva.displayHeight;
+              }
+            }
+          } else {
+            _this.yyeva.isYyeva = false;
+            _this.yyeva.yyevaData = null;
+            _this.yyevaData = null;
+            _this.yyevaImageKeys = [];
+            _this.yyevaTextKeys = [];
+            _this.yyevaReplacedImages = {};
+            _this.yyevaReplacedTexts = {};
+            
+            // 重置 YYEVA 渲染器
+            if (_this.yyevaRenderer) {
+              _this.yyevaRenderer.reset();
+            }
+          }
+          
+          // 解析并分离图片key和文本key
+          if (validatedData.isYyeva && validatedData.yyevaData && validatedData.yyevaData.effect) {
+            var effects = validatedData.yyevaData.effect;
+            _this.yyevaImageKeys = [];
+            _this.yyevaTextKeys = [];
+            
+            for (var key in effects) {
+              var effect = effects[key];
+              if (effect.effectType === 'img') {
+                _this.yyevaImageKeys.push(effect);
+              } else if (effect.effectType === 'txt') {
+                _this.yyevaTextKeys.push(effect);
+              }
+            }
+          }
+
           // 检测是否包含音频
           _this.yyevaHasAudio = _this.detectVideoHasAudio(video);
 
@@ -3012,6 +3083,10 @@ function initApp() {
 
         var halfWidth = Math.floor(video.videoWidth / 2);
         var height = video.videoHeight;
+        
+        // 确定有效显示区域尺寸
+        var displayWidth = this.yyeva.displayWidth;
+        var displayHeight = this.yyeva.displayHeight;
 
         // 确定彩色和Alpha的位置
         // 默认认为Alpha在右侧（左彩右黑），除非明确标记为'left'
@@ -3038,35 +3113,35 @@ function initApp() {
           this.yyevaPixelPool = {
             colorData: null,
             alphaData: null,
-            halfWidth: 0,
+            width: 0,
             height: 0
           };
         }
 
         // 复用像素数据对象，避免每帧创建新的ImageData
         if (!this.yyevaPixelPool.colorData || 
-            this.yyevaPixelPool.halfWidth !== halfWidth || 
-            this.yyevaPixelPool.height !== height) {
-          // 获取新的像素数据
-          this.yyevaPixelPool.colorData = tempCtx.getImageData(colorX, 0, halfWidth, height);
-          this.yyevaPixelPool.alphaData = tempCtx.getImageData(alphaX, 0, halfWidth, height);
-          this.yyevaPixelPool.halfWidth = halfWidth;
-          this.yyevaPixelPool.height = height;
+            this.yyevaPixelPool.width !== displayWidth || 
+            this.yyevaPixelPool.height !== displayHeight) {
+          // 获取新的像素数据（只获取有效显示区域）
+          this.yyevaPixelPool.colorData = tempCtx.getImageData(colorX, 0, displayWidth, displayHeight);
+          this.yyevaPixelPool.alphaData = tempCtx.getImageData(alphaX, 0, displayWidth, displayHeight);
+          this.yyevaPixelPool.width = displayWidth;
+          this.yyevaPixelPool.height = displayHeight;
         } else {
           // 复用现有像素数据，仅更新内容
           // 注意：这种方式可能在某些浏览器中不支持，需要测试
           try {
             // 尝试直接获取数据到现有对象
-            var newColorData = tempCtx.getImageData(colorX, 0, halfWidth, height);
-            var newAlphaData = tempCtx.getImageData(alphaX, 0, halfWidth, height);
+            var newColorData = tempCtx.getImageData(colorX, 0, displayWidth, displayHeight);
+            var newAlphaData = tempCtx.getImageData(alphaX, 0, displayWidth, displayHeight);
             
             // 复制像素数据，避免创建新对象
             this.yyevaPixelPool.colorData.data.set(newColorData.data);
             this.yyevaPixelPool.alphaData.data.set(newAlphaData.data);
           } catch (e) {
             // 如果复制失败，回退到创建新对象
-            this.yyevaPixelPool.colorData = tempCtx.getImageData(colorX, 0, halfWidth, height);
-            this.yyevaPixelPool.alphaData = tempCtx.getImageData(alphaX, 0, halfWidth, height);
+            this.yyevaPixelPool.colorData = tempCtx.getImageData(colorX, 0, displayWidth, displayHeight);
+            this.yyevaPixelPool.alphaData = tempCtx.getImageData(alphaX, 0, displayWidth, displayHeight);
           }
         }
 
@@ -3093,6 +3168,113 @@ function initApp() {
 
         // 绘制到显示Canvas
         ctx.putImageData(colorData, 0, 0);
+
+        // 渲染 YYEVA 动态元素（如果有)
+        if (this.yyeva.isYyeva && this.yyeva.yyevaData && this.yyevaRenderer) {
+          // 传递完整视频帧数据用于提取蒙版（蒙版存放在视频帧底部超出显示区域的部分）
+          var maskContext = {
+            ctx: tempCtx,                           // 完整视频帧的上下文
+            videoWidth: video.videoWidth,           // 视频宽度
+            videoHeight: video.videoHeight,         // 视频高度（包含蒙版区域）
+            displayWidth: displayWidth,             // 有效显示宽度
+            displayHeight: displayHeight,           // 有效显示高度
+            alphaX: alphaX,                         // Alpha通道起始X
+            descript: this.yyeva.yyevaData.descript // YYEVA描述信息
+          };
+          this.yyevaRenderer.renderEffects(ctx, this.currentFrame, this.yyeva.yyevaData, maskContext);
+        }
+      },
+
+
+
+      // YYEVA 渲染器方法委托
+      setYevaText: function (effectTag, config) {
+        if (this.yyevaRenderer) {
+          this.yyevaRenderer.setText(effectTag, config);
+        }
+      },
+
+      setYevaImage: function (effectTag, imageSource) {
+        if (this.yyevaRenderer) {
+          this.yyevaRenderer.setImage(effectTag, imageSource);
+        }
+      },
+
+      getYyevaEffects: function () {
+        if (this.yyevaRenderer && this.yyeva.yyevaData) {
+          return this.yyevaRenderer.getEffects(this.yyeva.yyevaData);
+        }
+        return [];
+      },
+
+      // 打开 YYEVA Key素材管理面板
+      openYyevaKeyPanel: function () {
+        if (!this.yyeva.hasFile) return;
+        
+        // 确保当前模块是 YYEVA
+        this.currentModule = 'yyeva';
+        
+        // 如果当前已经打开了 YYEVA Key 面板，则关闭它
+        if (this.activeRightPanel === 'yyeva-key') {
+          this.closeRightPanel();
+        } else {
+          // 关闭其他面板
+          this.showStandardMp4Panel = false;
+          // 打开 YYEVA Key素材管理面板
+          this.activeRightPanel = 'yyeva-key';
+        }
+      },
+
+      // 处理 YYEVA Key素材确认
+      handleYyevaKeyConfirm: function (data) {
+        this.yyevaReplacedImages = data.replacedImages;
+        this.yyevaReplacedTexts = data.replacedTexts;
+        
+        // 更新渲染器配置
+        if (this.yyevaRenderer) {
+          // 应用所有替换的文本
+          for (var effectTag in data.replacedTexts) {
+            this.yyevaRenderer.setText(effectTag, { text: data.replacedTexts[effectTag] });
+          }
+          // 应用所有替换的图片
+          for (var imgTag in data.replacedImages) {
+            this.yyevaRenderer.setImage(imgTag, data.replacedImages[imgTag]);
+          }
+        }
+        
+        this.closeRightPanel();
+      },
+
+      // 处理 YYEVA 图片替换
+      handleYyevaImageReplaced: function (data) {
+        this.yyevaReplacedImages[data.effectTag] = data.imageData;
+        if (this.yyevaRenderer) {
+          this.yyevaRenderer.setImage(data.effectTag, data.imageData);
+        }
+      },
+
+      // 处理 YYEVA 图片恢复
+      handleYyevaImageRestored: function (effectTag) {
+        delete this.yyevaReplacedImages[effectTag];
+        if (this.yyevaRenderer) {
+          this.yyevaRenderer.setImage(effectTag, null);
+        }
+      },
+
+      // 处理 YYEVA 文本恢复
+      handleYyevaTextRestored: function (effectTag) {
+        delete this.yyevaReplacedTexts[effectTag];
+        if (this.yyevaRenderer) {
+          this.yyevaRenderer.setText(effectTag, {});
+        }
+      },
+
+      // 处理 YYEVA 文本输入
+      handleYyevaTextInput: function (data) {
+        this.yyevaReplacedTexts[data.effectTag] = data.text;
+        if (this.yyevaRenderer) {
+          this.yyevaRenderer.setText(data.effectTag, { text: data.text });
+        }
       },
 
       // 更新 双通道MP4 进度
@@ -4189,6 +4371,10 @@ function initApp() {
         }
 
         return null;
+      },
+
+      openMaterialEditor: function (item) {
+        window.MeeWoo.Core.MaterialOperations.openMaterialEditor(this, item);
       },
 
       replaceMaterial: function (index) {

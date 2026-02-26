@@ -45,7 +45,7 @@
   <!-- COI Service Worker for SharedArrayBuffer support on GitHub Pages -->
   <script src="coi-serviceworker.js?v=9"></script>
 
-  <!-- 外部样式表（优先加载） -->
+  <!-- 外部样式表（优先加载） -->
 
   <!-- 库加载管理器（优先加载，独立模块） -->
   <script src="assets/js/service/library-loader.js"></script>
@@ -92,7 +92,7 @@
   <!-- FFmpeg - 转MP4时加载 -->
   
   
-  <link rel="stylesheet" crossorigin href="/assets/index-CitagZdh.css">
+  <link rel="stylesheet" crossorigin href="/assets/index-CFBzwEaa.css">
   <link rel="stylesheet" crossorigin href="/assets/styles-AO8rDKm6.css">
 </head>
 
@@ -269,7 +269,10 @@
           <div class="viewer-filename" v-if="!isEmpty && currentFileInfo.name" :style="viewerFilenameStyle">
             {{ currentFileInfo.name }} /
             <template v-if="currentModule === 'svga'">SVGA</template>
-            <template v-else-if="currentModule === 'yyeva'">双通道MP4</template>
+            <template v-else-if="currentModule === 'yyeva'">
+              <template v-if="yyeva.isYyeva">双通道MP4（带key）</template>
+              <template v-else>双通道MP4</template>
+            </template>
             <template v-else-if="currentModule === 'mp4'">MP4</template>
             <template v-else-if="currentModule === 'frames'">序列帧</template>
             <template v-else>Lottie</template>
@@ -327,7 +330,10 @@
             <span class="mode-name-label">
               <!-- 模式名 -->
               <template v-if="currentModule === 'svga'">SVGA</template>
-              <template v-else-if="currentModule === 'yyeva'">双通道MP4</template>
+              <template v-else-if="currentModule === 'yyeva'">
+                <template v-if="yyeva.isYyeva">双通道MP4（带key）</template>
+                <template v-else>双通道MP4</template>
+              </template>
               <template v-else-if="currentModule === 'mp4'">MP4</template>
               <template v-else-if="currentModule === 'frames'">序列帧</template>
               <template v-else>Lottie</template>
@@ -638,6 +644,13 @@
                           title="下载文件...">
                           <span class="tooltip-text">功能开发中...</span>
                         </button>
+                        <button class="btn-large-primary btn-material-manager" @click="openYyevaKeyPanel"
+                          v-if="yyeva.hasFile" title="key素材管理">
+                        </button>
+                        <button class="btn-large-primary tooltip" v-else>
+                          <span class="tooltip-text">请先拖入 MP4 文件</span>
+                          key素材管理
+                        </button>
                       </div>
                       <div class="footer-actions">
                         <button class="btn-large-primary" :class="{'tooltip': !yyeva.hasFile}" :disabled="!yyeva.hasFile"
@@ -867,8 +880,23 @@
       :replaced-images="replacedImages" :thumb-bg-color="materialThumbBgColor" :svga-file-info="svga.fileInfo"
       :is-compressing="isCompressingMaterials" :compress-progress="compressProgress"
       :has-compressed="hasCompressedMaterials" :material-edit-states="materialEditStates"
-      @close="activeRightPanel = null" @replace="replaceMaterial" @restore="restoreMaterial"
-      @download="downloadMaterial" @edit="openMaterialEditor" @compress="openCompressAndExportModal"></material-panel>
+      @close="closeRightPanel"
+      @replace="replaceMaterial" @edit="openMaterialEditor" @restore="restoreMaterial"
+      @download="downloadMaterial" @compress="openCompressAndExportModal"></material-panel>
+
+    <!-- YYEVA Key素材替换弹窗 -->
+    <div class="material-overlay" :class="{'show': activeRightPanel === 'yyeva-key' && currentModule === 'yyeva'}"
+      @click="activeRightPanel = null"></div>
+
+    <yyeva-key-panel :visible="activeRightPanel === 'yyeva-key' && currentModule === 'yyeva'" 
+      :image-keys="yyevaImageKeys" :text-keys="yyevaTextKeys"
+      :replaced-images="yyevaReplacedImages" :replaced-texts="yyevaReplacedTexts"
+      @close="closeRightPanel"
+      @confirm="handleYyevaKeyConfirm"
+      @image-replaced="handleYyevaImageReplaced"
+      @image-restored="handleYyevaImageRestored"
+      @text-restored="handleYyevaTextRestored"
+      @text-input="handleYyevaTextInput"></yyeva-key-panel>
 
     <!-- 统一 转双通道MP4 弹窗 (SVGA/MP4/Lottie/Frames -> Dual Channel MP4) -->
     <dual-channel-panel :visible="activeRightPanel === 'dual-channel'" :source-format-name="sourceFormatName" :source-info="dualChannelSourceInfo"
@@ -1244,6 +1272,7 @@
   <script src="assets/js/components/standard-mp4-panel.js"></script>
   <script src="assets/js/components/dual-channel-panel.js"></script>
   <script src="assets/js/components/material-panel.js"></script>
+  <script src="assets/js/components/yyeva-key-panel.js"></script>
   <script src="assets/js/components/gif-panel.js"></script>
   <script src="assets/js/components/frames-panel.js"></script>
   <script src="assets/js/components/webp-panel.js"></script>
@@ -1768,6 +1797,10 @@
 
   <!-- 任务管理器模块 -->
   <script src="assets/js/service/task-manager.js"></script>
+
+  <!-- YYEVA 相关服务 -->
+  <script src="assets/js/service/yyeva/yyeva-parser.js"></script>
+  <script src="assets/js/service/yyeva/yyeva-renderer.js"></script>
 
   <!-- 应用主逻辑 -->
   <script src="assets/js/core/app.js?v=1.16"></script>

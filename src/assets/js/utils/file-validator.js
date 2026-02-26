@@ -310,12 +310,13 @@
 
     /**
      * 验证双通道MP4文件（复用detectMp4Type进行内容检测）
+     * 同时检测是否为 YYEVA 格式（带动态元素）
      * @private
      */
     FileValidator.prototype._validateYyeva = function (file, resolve, reject) {
         var _this = this;
 
-        // 并行执行：内容检测 和 FPS解析
+        // 并行执行：内容检测、FPS解析、YYEVA检测
         Promise.all([
             new Promise(function (res, rej) {
                 _this.detectMp4Type(file, function (isDualChannel, alphaPosition) {
@@ -326,20 +327,138 @@
                     }
                 });
             }),
-            _this.detectMp4Fps(file)
+            _this.detectMp4Fps(file),
+            _this.detectYyevaType(file)
         ]).then(function (results) {
             var typeResult = results[0];
             var fps = results[1];
+            var yyevaResult = results[2];
 
             resolve({
                 file: file,
                 isDualChannel: typeResult.isDualChannel,
                 alphaDirection: typeResult.alphaDirection,
-                detectedFps: fps
+                detectedFps: fps,
+                isYyeva: yyevaResult ? yyevaResult.isYyeva : false,
+                yyevaData: yyevaResult ? yyevaResult.data : null
             });
         }).catch(function (err) {
             reject(err);
         });
+    };
+
+    /**
+     * 检测 MP4 是否为 YYEVA 格式（带动态元素）
+     * @param {File} file - MP4 文件
+     * @returns {Promise<{isYyeva: boolean, data: object|null}>}
+     */
+    FileValidator.prototype.detectYyevaType = function (file) {
+        return new Promise(function (resolve) {
+            // 确保 pako 库已加载
+            var loadPakoAndDetect = function () {
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    try {
+                        var buffer = new Uint8Array(e.target.result);
+                        var yyevaData = _parseYyevaMetadata(buffer);
+                        if (yyevaData) {
+                            resolve({ isYyeva: true, data: yyevaData });
+                        } else {
+                            resolve({ isYyeva: false, data: null });
+                        }
+                    } catch (err) {
+                        console.warn('YYEVA 检测失败:', err);
+                        resolve({ isYyeva: false, data: null });
+                    }
+                };
+                reader.onerror = function () {
+                    resolve({ isYyeva: false, data: null });
+                };
+                reader.readAsArrayBuffer(file);
+            };
+
+            // 检查 pako 是否已加载
+            if (typeof pako !== 'undefined' && pako.inflate) {
+                loadPakoAndDetect();
+            } else if (window.MeeWoo && window.MeeWoo.Core && window.MeeWoo.Core.libraryLoader) {
+                // 动态加载 pako
+                window.MeeWoo.Core.libraryLoader.load('pako', true).then(function () {
+                    loadPakoAndDetect();
+                }).catch(function (err) {
+                    console.warn('pako 加载失败，跳过 YYEVA 检测:', err);
+                    resolve({ isYyeva: false, data: null });
+                });
+            } else {
+                console.warn('YYEVA 解析需要 pako 库，请确保已加载');
+                resolve({ isYyeva: false, data: null });
+            }
+        });
+
+        function _parseYyevaMetadata(buffer) {
+            var YYEVA_MARKER = 'yyeffectmp4json';
+            var markerBytes = new TextEncoder().encode(YYEVA_MARKER);
+            
+            var markerIndex = -1;
+            for (var i = 0; i <= buffer.length - markerBytes.length; i++) {
+                var found = true;
+                for (var j = 0; j < markerBytes.length; j++) {
+                    if (buffer[i + j] !== markerBytes[j]) {
+                        found = false;
+                        break;
+                    }
+                }
+                if (found) {
+                    markerIndex = i;
+                    break;
+                }
+            }
+
+            if (markerIndex === -1) {
+                return null;
+            }
+
+            var dataStart = markerIndex + YYEVA_MARKER.length;
+            var maxLen = Math.min(buffer.length - dataStart, 50000);
+            var str = '';
+            for (var k = dataStart; k < dataStart + maxLen; k++) {
+                str += String.fromCharCode(buffer[k]);
+            }
+
+            var base64Match = str.match(/\[\[([A-Za-z0-9+/=]+)\]\]/);
+            if (!base64Match || !base64Match[1]) {
+                return null;
+            }
+
+            try {
+                var binaryStr = atob(base64Match[1]);
+                var compressed = new Uint8Array(binaryStr.length);
+                for (var m = 0; m < binaryStr.length; m++) {
+                    compressed[m] = binaryStr.charCodeAt(m);
+                }
+
+                if (typeof pako === 'undefined' || !pako.inflate) {
+                    console.warn('YYEVA 解析需要 pako 库，请确保已加载');
+                    return null;
+                }
+
+                var decompressed = pako.inflate(compressed);
+                var jsonStr = new TextDecoder('utf-8').decode(decompressed);
+                var jsonData = JSON.parse(jsonStr);
+
+                if (!jsonData.descript || jsonData.descript.isEffect !== 1) {
+                    return null;
+                }
+
+                return {
+                    descript: jsonData.descript,
+                    effect: jsonData.effect || {},
+                    datas: jsonData.datas || []
+                };
+            } catch (e) {
+                console.warn('YYEVA 数据解析失败:', e);
+                return null;
+            }
+        }
     };
 
     /**

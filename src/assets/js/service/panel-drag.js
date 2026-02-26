@@ -136,6 +136,9 @@
       // 标记为已初始化
       panelElement._dragInitialized = true;
 
+      // 设置关闭动画监听器
+      this._setupPanelCloseAnimation(panelElement);
+
       // 获取弹窗头部 - 支持多种头部类名
       let header = panelElement.querySelector('.side-panel-header');
       // 如果没有默认头部，检查是否是素材面板
@@ -260,6 +263,48 @@
 
         // 恢复过渡动画，以便下次打开时有动画效果
         panelElement.style.transition = '';
+      });
+    },
+
+    /**
+     * 为单个面板设置关闭动画监听器
+     * @param {HTMLElement} panel - 面板元素
+     */
+    _setupPanelCloseAnimation: function (panel) {
+      if (!panel) return;
+
+      // 监听关闭动画结束事件
+      panel.addEventListener('transitionend', (e) => {
+        if (e.propertyName === 'opacity' && panel.classList.contains('closing')) {
+          // 原地消失动画结束后，添加fly-out类开始飞出去动画
+          panel.classList.add('fly-out');
+
+          // 重置位置（回默认位置）
+          if (panel.classList.contains('side-panel--left')) {
+            panel.style.left = '-400px';
+          } else {
+            panel.style.right = '-400px';
+          }
+
+          // 重置top和transform
+          panel.style.top = '';
+          panel.style.transform = '';
+
+          // 动画结束后移除类名，准备下次打开
+          setTimeout(() => {
+            panel.classList.remove('closing', 'fly-out');
+            // 确保位置被重置
+            this.resetPanelPosition(panel);
+          }, 100);
+        } else if (e.propertyName === 'opacity') {
+          // 当其他opacity动画结束时，重置位置
+          this.resetPanelPosition(panel);
+        }
+      });
+
+      // 监听动画结束事件，确保位置被重置
+      panel.addEventListener('animationend', (e) => {
+        this.resetPanelPosition(panel);
       });
     }
   };

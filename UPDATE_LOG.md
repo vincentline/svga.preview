@@ -18,6 +18,8 @@
 - 更新简述：如新增功能、修复问题、优化性能等，简单描述
 
 ## 更新记录
+[2026-02-26 16:05:00] 【修改文件】 : src/assets/js/core/app.js - 修复YYEVA图片key蒙版不生效问题：传递完整视频帧数据用于提取蒙版形状
+[2026-02-26 16:05:00] 【修改文件】 : src/assets/js/service/yyeva/yyeva-renderer.js - 实现真正的YYEVA蒙版提取和应用逻辑：从outputFrame位置提取蒙版并应用到替换图片
 [2026-02-26 02:18:49] 【修改文件】 : src/index.html - 帮助按钮改为点击弹出浮层，添加遮罩层和关闭按钮
 [2026-02-26 02:18:49] 【修改文件】 : src/assets/css/styles.css - 帮助浮层改为居中显示，宽度70%，添加标题栏和关闭按钮样式
 [2026-02-26 02:18:49] 【修改文件】 : src/assets/js/core/app.js - 新增 showHelp 状态、toggleHelp/closeHelp 方法
