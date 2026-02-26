@@ -4808,15 +4808,21 @@ body.dark-mode .ad-position-bottom {
 .speed-remap-editor {
   position: absolute;
   bottom: 166px;
-  width: 1000px;
+  width: auto;
+  min-width: 600px;
   margin: 0 0 8px 0;
   z-index: 100;
   align-items: flex-start;
   left: 0;
-  background-color: #ffffff;
-  border: 1px solid #e6e6e6;
+  background-color: #ffffffb7;
+  border: 1px solid #f3f3f3;
   border-radius: 16px;
-  padding: 16px 28px;
+  padding: 16px 20px;
+  backdrop-filter: blur(12px);
+}
+
+.speed-remap-editor:hover {
+  background-color: #ffffff;
 }
 
 body.dark-mode .speed-remap-editor {
@@ -5156,8 +5162,8 @@ body.dark-mode .speed-remap-duration-label {
 .btn-speed-reset {
   gap: 4px;
   padding: 0 8px 0 8px;
-  width: 54px;
-  min-width: 54px;
+  width: 44px;
+  min-width: 44px;
 }
 
 .btn-speed-reset svg {
