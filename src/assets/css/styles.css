@@ -689,7 +689,7 @@ body.dark-mode .help-button:hover {
 
 /* Help 弹窗主体 */
 .help-modal {
-  width: 50%;
+  width: 40%;
   min-height: 300px;
   max-width: 900px;
   max-height: 85vh;
@@ -813,12 +813,14 @@ body.dark-mode .help-modal-content th {
 /* Help 弹窗内容 - 标题样式 */
 .help-modal-content h1 {
   font-size: 1.7em;
+  font-weight: 400;
   margin-bottom: 16px;
   color: #333333;
 }
 
 .help-modal-content h2 {
   font-size: 1.3em;
+  font-weight: 400;
   margin-bottom: 12px;
   color: #5b5b5b;
 }
@@ -1007,9 +1009,9 @@ body.dark-mode .viewer-filename {
 }
 
 .empty-state-icon {
-  width: 160px;
-  height: 210x;
-  margin-bottom: 0;
+  width: 80px;
+  height: 105px;
+  margin-bottom: 8px;
 }
 
 .empty-state-icon svg,
