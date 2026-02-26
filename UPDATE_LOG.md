@@ -18,6 +18,11 @@
 - 更新简述：如新增功能、修复问题、优化性能等，简单描述
 
 ## 更新记录
+[2026-02-26 23:54:42] 【修改文件】 : src/assets/css/styles.css - 添加帮助文档h1和h2标题样式，h1字号1.7em，h2字号1.3em
+[2026-02-26 23:54:42] 【修改文件】 : src/help.md - 在特色功能部分添加带key的双通道MP4功能说明
+[2026-02-26 19:25:00] 【修改文件】 : src/assets/js/service/yyeva/yyeva-renderer.js - 修复三个问题：1)图片再次替换不更新（setImage时清除图片缓存）；2)文本恢复默认不生效（setText空对象时删除text属性）；3)文本 key默认显示 ID改为空字符串
+[2026-02-26 19:15:00] 【修改文件】 : src/assets/js/components/yyeva-key-panel.js - 修复key素材替换弹窗上传图片后预览区不更新问题，使用Vue2的$set/$delete方法确保响应式更新
+[2026-02-26 19:10:00] 【修改文件】 : src/index.html - 序列帧模式和Lottie模式底部浮层去掉"下载文件..."按钮
 [2026-02-26 18:40:00] 【修改文件】 : .trae/documents/侧边弹窗开发经验文档.md - 添加 Vue Mixin 方法被 app.js 覆盖问题案例，更新开发检查清单和经验教训总结
 [2026-02-26 18:35:00] 【修改文件】 : src/assets/js/core/app.js - 删除冗余的 openMaterialEditor 方法定义，该方法覆盖了 material-editor.js mixin 中的同名方法，导致 Konva 初始化逻辑丢失
 [2026-02-26 18:35:00] 【修改文件】 : ai_protocol_hub/tool_guides/EXPERIENCES.md - 添加 Vue Mixin 方法覆盖问题的开发经验

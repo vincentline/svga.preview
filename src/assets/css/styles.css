@@ -810,6 +810,28 @@ body.dark-mode .help-modal-content th {
   color: #e0e0e0;
 }
 
+/* Help 弹窗内容 - 标题样式 */
+.help-modal-content h1 {
+  font-size: 1.7em;
+  margin-bottom: 16px;
+  color: #333333;
+}
+
+.help-modal-content h2 {
+  font-size: 1.3em;
+  margin-bottom: 12px;
+  color: #5b5b5b;
+}
+
+/* Help 弹窗内容 - 标题样式暗黑模式 */
+body.dark-mode .help-modal-content h1 {
+  color: #e0e0e0;
+}
+
+body.dark-mode .help-modal-content h2 {
+  color: #999999;
+}
+
 /* ====================  主页面容器 ==================== */
 
 .main-page {

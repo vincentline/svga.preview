@@ -214,7 +214,8 @@
         // 读取文件并转换为DataURL
         var reader = new FileReader();
         reader.onload = function (e) {
-          this.localReplacedImages[key.effectTag] = e.target.result;
+          // Vue 2 必须使用 $set 添加新属性，否则视图不会更新
+          this.$set(this.localReplacedImages, key.effectTag, e.target.result);
           this.$emit('image-replaced', {
             effectTag: key.effectTag,
             imageData: e.target.result
@@ -223,11 +224,13 @@
         reader.readAsDataURL(file);
       },
       restoreImage: function (key) {
-        delete this.localReplacedImages[key.effectTag];
+        // Vue 2 必须使用 $delete 删除属性，否则视图不会更新
+        this.$delete(this.localReplacedImages, key.effectTag);
         this.$emit('image-restored', key.effectTag);
       },
       restoreText: function (key) {
-        delete this.localReplacedTexts[key.effectTag];
+        // Vue 2 必须使用 $delete 删除属性，否则视图不会更新
+        this.$delete(this.localReplacedTexts, key.effectTag);
         this.$emit('text-restored', key.effectTag);
       },
       handleTextInput: function (key) {

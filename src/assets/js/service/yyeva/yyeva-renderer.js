@@ -140,8 +140,8 @@
       var w = renderFrame[2];
       var h = renderFrame[3];
 
-      // 获取文本内容
-      var text = userConfig && userConfig.text ? userConfig.text : effectInfo.effectTag || '';
+      // 获取文本内容（默认为空字符串，不显示 key ID）
+      var text = userConfig && userConfig.text ? userConfig.text : '';
 
       // 获取样式
       var fontSize = (userConfig && userConfig.fontSize) || effectInfo.fontSize || 36;
@@ -359,23 +359,33 @@
     /**
      * 设置文本配置
      * @param {string} effectTag - 效果标签
-     * @param {Object} config - 配置对象
+     * @param {Object} config - 配置对象，传入空对象表示恢复默认
      */
     setText: function (effectTag, config) {
       if (!this.effectConfig[effectTag]) {
         this.effectConfig[effectTag] = {};
       }
-      Object.assign(this.effectConfig[effectTag], config);
+      // 如果传入空对象，表示恢复默认，删除 text 属性
+      if (!config || Object.keys(config).length === 0) {
+        delete this.effectConfig[effectTag].text;
+      } else {
+        Object.assign(this.effectConfig[effectTag], config);
+      }
     },
 
     /**
      * 设置图片配置
      * @param {string} effectTag - 效果标签
-     * @param {string} imageSource - 图片源
+     * @param {string} imageSource - 图片源，传入 null 表示恢复默认
      */
     setImage: function (effectTag, imageSource) {
       if (!this.effectConfig[effectTag]) {
         this.effectConfig[effectTag] = {};
+      }
+      // 清除图片缓存，确保替换后重新加载
+      var cachedKey = '_yyevaImg_' + effectTag;
+      if (this.imageCache[cachedKey]) {
+        delete this.imageCache[cachedKey];
       }
       this.effectConfig[effectTag].imageSource = imageSource;
     },
