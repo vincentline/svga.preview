@@ -1009,8 +1009,8 @@ body.dark-mode .viewer-filename {
 }
 
 .empty-state-icon {
-  width: 80px;
-  height: 105px;
+  /* width: 80px;
+  height: 105px; */
   margin-bottom: 8px;
 }
 
