@@ -18,6 +18,8 @@
 - 更新简述：如新增功能、修复问题、优化性能等，简单描述
 
 ## 更新记录
+[2026-02-27 01:12:00] 【修改文件】 : src/assets/js/core/material-editor.js - 添加完整的代码注释，包括 data、computed、watch、methods 各部分的中文注释
+[2026-02-27 01:05:00] 【修改文件】 : src/assets/js/core/material-editor.js - 修复素材编辑弹窗图层选择后另一图层仍可拖动的问题，选中时取消另一图层的draggable状态
 [2026-02-27 00:36:30] 【修改文件】 : src/assets/css/styles.css - 修改帮助文档h1和h2标题字重为400
 [2026-02-26 23:54:42] 【修改文件】 : src/assets/css/styles.css - 添加帮助文档h1和h2标题样式，h1字号1.7em，h2字号1.3em
 [2026-02-26 23:54:42] 【修改文件】 : src/help.md - 在特色功能部分添加带key的双通道MP4功能说明
