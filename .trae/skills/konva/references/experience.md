@@ -190,3 +190,75 @@ const imageY = exportCenterY + imageOffsetY;
 - 数据与显示区域无关，便于切换不同尺寸
 - 导出时直接使用原始尺寸计算
 - 便于保存和恢复编辑状态
+
+---
+
+## 7. 舞台拖拽无感激活
+
+**Problem:** 第一次拖动画布无响应，需要先点击一次才能拖动。
+
+**Solution:** 使用 `mouseenter` 事件监听器，在鼠标移入时自动激活舞台拖拽，同时初始化时就启用拖拽作为双重保障。
+
+```javascript
+// 初始化时启用舞台拖拽
+this.stageInstance.draggable(true);
+
+// 鼠标移入时再次确认激活（无感激活）
+this.stageInstance.on('mouseenter', function () {
+    // 只有在没有选中任何元素时才允许舞台拖拽
+    if (editor.activeElement === 'none') {
+        stage.draggable(true);
+    }
+});
+```
+
+**关键点：**
+- 初始化时就设置 `draggable(true)` 作为第一重保障
+- `mouseenter` 事件处理函数作为第二重保障
+- 检查 `activeElement` 状态，确保只在未选中元素时激活
+- 用户完全感知不到"激活"过程，体验流畅
+
+---
+
+## 8. getClientRect() 实现居中缩放
+
+**Problem:** Konva 缩放以左上角为原点，直接修改 scale 会导致内容偏移；getClientRect() 返回的坐标受舞台位置影响，多次切换后计算错误。
+
+**Solution:** 调用 getClientRect() 前先将舞台位置临时设为 (0,0)，获取相对于原点的绝对坐标后再计算居中位置。
+
+```javascript
+// 正确的居中缩放流程
+function zoomAndCenter(stage, group, newScale) {
+    var stageWidth = stage.width();
+    var stageHeight = stage.height();
+    
+    // 1. 临时设置舞台位置为 (0, 0)
+    stage.position({ x: 0, y: 0 });
+    
+    // 2. 设置新的缩放比例
+    stage.scale({ x: newScale, y: newScale });
+    
+    // 3. 获取 Group 相对于舞台原点的实际显示区域
+    var rect = group.getClientRect();
+    // rect 包含：{ x, y, width, height }
+    
+    // 4. 计算居中位置：让内容区域在舞台中心
+    var centerX = (stageWidth - rect.width) / 2 - rect.x;
+    var centerY = (stageHeight - rect.height) / 2 - rect.y;
+    
+    // 5. 设置新的舞台位置并重绘
+    stage.position({ x: centerX, y: centerY });
+    stage.draw();
+}
+```
+
+**居中公式：**
+```
+stagePosition = (stageSize - rectSize) / 2 - rectPosition
+```
+
+**关键点：**
+- 必须先设置 `position({x:0, y:0})` 再调用 `getClientRect()`
+- 这样获取到的坐标是绝对的，不会受历史状态影响
+- 每次点击按钮都会重新计算，保证始终正确
+- 适用于 1:1 缩放和适应画布缩放两种场景

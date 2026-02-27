@@ -18,6 +18,8 @@
 - 更新简述：如新增功能、修复问题、优化性能等，简单描述
 
 ## 更新记录
+[2026-02-28 02:57:21] 【修改文件】 : src/assets/js/core/material-interactions.js - 修复 SVGA 模式编辑素材图弹窗的视图模式切换按钮问题：使用 getClientRect() 实现正确的居中逻辑，1:1 和适应画布按钮都能正确居中显示
+[2026-02-28 02:57:21] 【修改文件】 : src/assets/js/core/material-editor.js - 修复素材图编辑弹窗第一次拖动画布无响应的问题：添加 mouseenter 事件监听器实现无感激活舞台拖拽，初始化时启用 draggable 并使用 batchDraw() 确保图层交互状态
 [2026-02-28 01:30:03] 【修改文件】 : src/assets/js/service/gif/gif-exporter.js - 使用 TimerService 管理 URL 清理，替换 setTimeout 为 createDelay，分组 ID 为'gif-export'
 [2026-02-28 01:30:03] 【修改文件】 : src/assets/js/service/svga/svga-builder.js - 使用 TimerService 管理 SVGA 帧提取时的 URL 清理，替换 setTimeout 为 createDelay，分组 ID 为'svga-frame-extract'
 [2026-02-27 01:18:00] 【修改文件】 : src/assets/css/panel.css - 修复 yyeva-key-text-field 输入框背景透明问题，添加组合选择器提高优先级覆盖 base-input 的透明背景

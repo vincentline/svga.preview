@@ -72,7 +72,8 @@ MeeWoo 是一个 SVGA 动画预览与转换工具，支持多种动画格式的�
 | `src/assets/js/core/material-editor.js` | 素材编辑器，支持 SVGA 素材的编辑功能，使用 Konva.js 渲染 | 素材编辑、素材管理、编辑器、Konva、Transformer |
 | `src/assets/js/core/material-interactions.js` | 素材交互逻辑，包含素材的交互操作 | 素材交互、交互操作 |
 | `src/assets/js/core/material-operations.js` | 素材操作逻辑，包含素材替换、保存等功能 | 素材操作、替换逻辑、保存逻辑 |
-| `src/assets/js/core/material-state.js` | 素材状态管理，记录素材编辑状态 | 状态管理、素材状态、编辑状态 |
+| `src/assets/js/core/material-state.js` | 素材状态管理，记录素材编辑状态和导出区域位置 | 状态管理、素材状态、编辑状态、exportAreaX/Y |
+| `src/assets/js/core/konva-base-layer.js` | Konva 基础图层管理，用于创建和管理画布图层 | Konva、图层管理、画布操作 |
 | `src/assets/js/core/konva-command.js` | Konva 命令系统，用于画布操作的撤销/重做 | Konva、命令系统、撤销/重做 |
 | `src/assets/js/core/konva-element.js` | Konva 元素管理，用于创建和管理画布元素 | Konva、元素管理 |
 | `src/assets/js/core/konva-export.js` | Konva 导出功能，用于将画布内容导出为图片 | Konva、导出功能 |
@@ -91,6 +92,7 @@ MeeWoo 是一个 SVGA 动画预览与转换工具，支持多种动画格式的�
 | `src/assets/js/components/material-panel.js` | 素材管理面板组件 | 素材管理、面板组件、素材替换 |
 | `src/assets/js/components/standard-mp4-panel.js` | 标准 MP4 转换面板 | 标准 MP4、转换面板、视频转换 |
 | `src/assets/js/components/to-svga-panel.js` | 转 SVGA 面板组件 | SVGA 转换、面板组件、格式转换 |
+| `src/assets/js/components/yyeva-key-panel.js` | YYEVA key 素材替换面板组件，支持图片和文本 key 的实时替换 | key 素材替换、YYEVA、双通道 MP4、图片替换、文本替换 |
 
 ### 4. 混合模块 (src/assets/js/mixins/)
 
@@ -128,6 +130,7 @@ MeeWoo 是一个 SVGA 动画预览与转换工具，支持多种动画格式的�
 | `src/assets/js/service/svga/` | SVGA 相关服务，用于 SVGA 处理 | SVGA 服务、格式处理、动画服务 |
 | `src/assets/js/service/svga/svga-builder.js` | SVGA 构建器，用于构建 SVGA 文件 | SVGA 构建、格式处理 |
 | `src/assets/js/service/task-manager.js` | 任务管理器，管理应用任务 | 任务管理、异步任务、任务调度 |
+| `src/assets/js/service/timer-service.js` | 定时器服务，统一管理所有定时任务，支持延迟/周期/轮询/重试等模式 | 定时器管理、TimerService、内存优化 |
 
 ### 7. 工具模块 (src/assets/js/utils/)
 
@@ -156,7 +159,13 @@ MeeWoo 是一个 SVGA 动画预览与转换工具，支持多种动画格式的�
 | `src/assets/js/lib/svga.min.js` | SVGA 播放器库，用于 SVGA 动画播放 | SVGA 播放器、动画播放、第三方库 |
 | `src/assets/js/lib/vue.min.js` | Vue.js 框架，用于页面交互和组件管理 | Vue.js、框架、组件管理 |
 
-### 8. 样式与资源文件
+### 8. 新增服务模块 (src/assets/js/service/)
+
+| 文件路径 | 功能描述 | 关键词 |
+|---------|---------|--------|
+| `src/assets/js/service/timer-service.js` | 定时器服务，统一管理所有定时任务，支持延迟/周期/轮询/重试等模式，提供分组管理、取消、统计等功能 | TimerService、定时器管理、内存优化 |
+
+### 9. 样式与资源文件
 
 | 文件路径 | 功能描述 | 关键词 |
 |---------|---------|--------|
@@ -169,7 +178,7 @@ MeeWoo 是一个 SVGA 动画预览与转换工具，支持多种动画格式的�
 | `docs/assets/svga/` | SVGA 示例文件目录 | SVGA 示例、示例文件、静态资源 |
 | `docs/assets/xunzhang/` | 勋章相关资源 | 勋章、资源文件 |
 
-### 9. 小工具集合 (docs/gadgets/)
+### 10. 小工具集合 (docs/gadgets/)
 
 | 文件路径 | 功能描述 | 关键词 |
 |---------|---------|--------|
@@ -181,7 +190,7 @@ MeeWoo 是一个 SVGA 动画预览与转换工具，支持多种动画格式的�
 | `docs/gadgets/common_chars.js` | 常用字符集数据 | 字符集、数据文件、字符编码 |
 | `docs/gadgets/encoding-indexes.js` | 编码索引数据 | 编码索引、数据文件、字符编码 |
 
-### 10. 根目录文档和配置文件
+### 11. 根目录文档和配置文件
 
 | 文件路径 | 功能描述 | 关键词 |
 |---------|---------|--------|
@@ -202,7 +211,7 @@ MeeWoo 是一个 SVGA 动画预览与转换工具，支持多种动画格式的�
 | `CNAME` | 域名配置文件 | 域名配置、CNAME、部署配置 |
 | `package.json` | 项目依赖配置文件 | 依赖配置、package.json |
 
-### 11. 其他工具和脚本
+### 12. 其他工具和脚本
 
 | 文件路径 | 功能描述 | 关键词 |
 |---------|---------|--------|
@@ -228,6 +237,6 @@ MeeWoo 是一个 SVGA 动画预览与转换工具，支持多种动画格式的�
 
 ## 版本信息
 
-- 索引版本：1.1.4
-- 最后更新：[2026-02-25 13:28:00]
+- 索引版本：1.2.0
+- 最后更新：[2026-02-28 01:40:00]
 - 适用项目版本：v1.0.0

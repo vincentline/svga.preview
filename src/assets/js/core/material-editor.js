@@ -347,9 +347,21 @@
                     // 初始化底图和文字层
                     this.initKonvaBaseImage();
                     this.initKonvaTextLayer();
+                    
+                    // 先绘制一次确保舞台渲染完成
                     this.stageInstance.draw();
+                    
                     // 初始化舞台事件
                     this.initKonvaStageEvents();
+                    
+                    // 初始启用舞台拖拽（用于平移画布）
+                    this.stageInstance.draggable(true);
+                    
+                    // 再次调用 batchDraw() 确保所有图层都已激活交互
+                    // 这是为了解决第一次拖动画布无响应的问题
+                    this.konvaLayers.backgroundLayer.batchDraw();
+                    this.konvaLayers.textLayer.batchDraw();
+                    this.konvaLayers.transformerLayer.batchDraw();
 
                 } catch (error) {
                     console.error('Failed to initialize Konva stage:', error);
@@ -953,10 +965,18 @@
 
             /**
              * 初始化舞台级别的事件
-             * 包括：点击空白区域取消选中、鼠标滚轮缩放
+             * 包括：点击空白区域取消选中、鼠标滚轮缩放、鼠标移入激活舞台拖拽
              */
             initKonvaStageEvents: function () {
                 var _this = this;
+
+                // 鼠标移入时激活舞台拖拽（无感激活，解决第一次拖动无响应的问题）
+                this.stageInstance.on('mouseenter', function () {
+                    // 只有在没有选中任何元素时才允许舞台拖拽
+                    if (_this.editor.activeElement === 'none') {
+                        _this.stageInstance.draggable(true);
+                    }
+                });
 
                 // 点击舞台空白区域时取消所有元素的选中状态
                 this.stageInstance.on('click tap', function (e) {

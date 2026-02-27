@@ -41,36 +41,86 @@
             if (!previewArea || !vueInstance.editor.baseImageHeight) return;
 
             if (vueInstance.editor.viewMode === 'fit-height') {
-                // 切换到1:1模式
+                // 切换到 1:1 模式
                 vueInstance.editor.viewMode = 'one-to-one';
                 vueInstance.editor.scale = 1.0;
+                                        
+                // 同步更新 Konva 舞台缩放并居中（使用 getClientRect 实现）
+                if (vueInstance.stageInstance && vueInstance.baseLayerInstance) {
+                    var stageWidth = vueInstance.stageInstance.width();
+                    var stageHeight = vueInstance.stageInstance.height();
+                    
+                    // 保存当前的舞台位置
+                    var currentStagePos = vueInstance.stageInstance.position();
+                    
+                    // 临时设置舞台位置为 (0, 0)，以便正确计算 Group 的绝对位置
+                    vueInstance.stageInstance.position({ x: 0, y: 0 });
+                    
+                    // 设置 1:1 缩放
+                    vueInstance.stageInstance.scale({ x: 1.0, y: 1.0 });
+                    
+                    // 使用 getClientRect() 获取 1:1 缩放下 Group 的实际显示区域（相对于舞台原点）
+                    var rect = vueInstance.baseLayerInstance.getClientRect();
+                    
+                    // 计算居中位置：让内容区域在舞台中心
+                    var centerX = (stageWidth - rect.width) / 2 - rect.x;
+                    var centerY = (stageHeight - rect.height) / 2 - rect.y;
+                    
+                    vueInstance.stageInstance.position({ x: centerX, y: centerY });
+                    vueInstance.stageInstance.draw();
+                }
             } else {
-                // 切换到适应高度模式（智能适应：优先按高度75%，如果宽度超出则按宽度100%）
+                // 切换到适应画布模式（智能适应：优先按高度 75%，如果宽度超出则按宽度 100%）
                 vueInstance.editor.viewMode = 'fit-height';
-
+            
                 var containerHeight = previewArea.clientHeight;
                 var containerWidth = previewArea.clientWidth;
-
-                // 1. 先按高度75%计算缩放比例
+            
+                // 1. 先按高度 75% 计算缩放比例
                 var fitByHeightScale = (containerHeight * 0.75) / vueInstance.editor.baseImageHeight;
-
+            
                 // 2. 计算此时的宽度
                 var widthAfterHeightFit = vueInstance.editor.baseImageWidth * fitByHeightScale;
-
+            
                 // 3. 判断宽度是否超出容器
                 var fitScale;
                 if (widthAfterHeightFit > containerWidth) {
-                    // 宽度超出，改为按宽度100%缩放
+                    // 宽度超出，改为按宽度 100% 缩放
                     fitScale = containerWidth / vueInstance.editor.baseImageWidth;
                 } else {
-                    // 宽度未超出，使用高度75%的缩放
+                    // 宽度未超出，使用高度 75% 的缩放
                     fitScale = fitByHeightScale;
                 }
-
+            
                 // 限制缩放范围
                 if (fitScale > 5.0) fitScale = 5.0;
                 if (fitScale < 0.1) fitScale = 0.1;
                 vueInstance.editor.scale = parseFloat(fitScale.toFixed(2));
+                            
+                // 同步更新 Konva 舞台缩放并居中（使用 getClientRect 实现）
+                if (vueInstance.stageInstance && vueInstance.baseLayerInstance) {
+                    var stageWidth = vueInstance.stageInstance.width();
+                    var stageHeight = vueInstance.stageInstance.height();
+                    
+                    // 保存当前的舞台位置
+                    var currentStagePos = vueInstance.stageInstance.position();
+                    
+                    // 临时设置舞台位置为 (0, 0)，以便正确计算 Group 的绝对位置
+                    vueInstance.stageInstance.position({ x: 0, y: 0 });
+                    
+                    // 设置缩放
+                    vueInstance.stageInstance.scale({ x: fitScale, y: fitScale });
+                    
+                    // 使用 getClientRect() 获取缩放后 Group 的实际显示区域（相对于舞台原点）
+                    var rect = vueInstance.baseLayerInstance.getClientRect();
+                    
+                    // 计算居中位置：让内容区域在舞台中心
+                    var centerX = (stageWidth - rect.width) / 2 - rect.x;
+                    var centerY = (stageHeight - rect.height) / 2 - rect.y;
+                    
+                    vueInstance.stageInstance.position({ x: centerX, y: centerY });
+                    vueInstance.stageInstance.draw();
+                }
             }
         },
 
