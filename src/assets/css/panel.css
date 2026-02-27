@@ -548,7 +548,8 @@ body.dark-mode .yyeva-key-btn-restore:hover {
   gap: 8px;
 }
 
-.yyeva-key-text-field {
+.yyeva-key-text-field,
+.base-input.yyeva-key-text-field {
   flex: 1;
   box-sizing: border-box;
   padding: 8px 12px;
@@ -566,19 +567,22 @@ body.dark-mode .yyeva-key-btn-restore:hover {
   transition: all 0.3s;
 }
 
-.yyeva-key-text-field:focus {
+.yyeva-key-text-field:focus,
+.base-input.yyeva-key-text-field:focus {
   outline: none;
   border: 1px solid #333333;
   background: #FFFFFF;
 }
 
-body.dark-mode .yyeva-key-text-field {
+body.dark-mode .yyeva-key-text-field,
+body.dark-mode .base-input.yyeva-key-text-field {
   background: #2c2c2c;
   border: 1px solid #404040;
   color: #e0e0e0;
 }
 
-body.dark-mode .yyeva-key-text-field:focus {
+body.dark-mode .yyeva-key-text-field:focus,
+body.dark-mode .base-input.yyeva-key-text-field:focus {
   border: 1px solid #666666;
   background: #1a1a1a;
 }

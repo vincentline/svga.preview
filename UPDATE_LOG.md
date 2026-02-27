@@ -18,6 +18,7 @@
 - 更新简述：如新增功能、修复问题、优化性能等，简单描述
 
 ## 更新记录
+[2026-02-27 01:18:00] 【修改文件】 : src/assets/css/panel.css - 修复 yyeva-key-text-field 输入框背景透明问题，添加组合选择器提高优先级覆盖 base-input 的透明背景
 [2026-02-27 01:12:00] 【修改文件】 : src/assets/js/core/material-editor.js - 添加完整的代码注释，包括 data、computed、watch、methods 各部分的中文注释
 [2026-02-27 01:05:00] 【修改文件】 : src/assets/js/core/material-editor.js - 修复素材编辑弹窗图层选择后另一图层仍可拖动的问题，选中时取消另一图层的draggable状态
 [2026-02-27 00:36:30] 【修改文件】 : src/assets/css/styles.css - 修改帮助文档h1和h2标题字重为400
