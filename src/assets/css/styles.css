@@ -1300,8 +1300,8 @@ body.dark-mode .clear-canvas-btn:active .sprite-close {
 
 /* 空状态：宽度240px，居中*/
 .footer-main.footer-main-empty {
-  min-width: 240px;
-  max-width: 600px;
+  min-width: 280px;
+  max-width: 800px;
   justify-content: center;
   align-items: center;
   height: 100px;
@@ -1312,6 +1312,8 @@ body.dark-mode .clear-canvas-btn:active .sprite-close {
   border-color: #333333;
   cursor: pointer;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 200px;
+  padding: 0px 24px;
 }
 
 /* 空白页状态下的文字颜色覆盖 */
@@ -1332,6 +1334,7 @@ body.dark-mode .clear-canvas-btn:active .sprite-close {
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 0;
 }
 
 .footer-empty-tip-sub {
@@ -1356,7 +1359,7 @@ body.dark-mode .footer-empty-tip-sub {
 
 .click-upload-text:hover {
   color: #000000;
-  text-decoration: underline;
+  /* text-decoration: underline; */
 }
 
 body.dark-mode .click-upload-text {
@@ -1985,12 +1988,12 @@ body.dark-mode .btn-primary:active {
   border-color: #333333;
 }
 
-/* 大按钮通用样式（44px高度，16px圆角） */
+/* 大按钮通用样式（44px高度，50%圆角） */
 .btn-large-primary,
 .btn-large-secondary {
   height: 44px;
   padding: 0 20px;
-  border-radius: 12px;
+  border-radius: 44px;
   border: 1px solid transparent;
   font-family: 'Segoe UI', sans-serif;
   font-weight: 400;
@@ -2069,7 +2072,7 @@ body.dark-mode .btn-large-primary:disabled {
 }
 
 body.dark-mode .btn-open-file {
-  background-position: -120px -320px;
+  background-position: -111px -312px;
 }
 
 /* 下载文件按钮特殊样式 */
@@ -2085,7 +2088,7 @@ body.dark-mode .btn-open-file {
 }
 
 body.dark-mode .btn-download-file {
-  background-position: -120px -360px;
+  background-position: -111px -352px;
 }
 
 /* 绿幕抠图按钮特殊样式 */
@@ -2273,7 +2276,7 @@ body.dark-mode .sprite-AI-img.btn-icon-ai:hover {
   height: 44px;
   min-width: 44px;
   padding: 0;
-  border-radius: 12px;
+  border-radius: 44px;
   border: 1px solid #e6e6e6;
   background-color: #ffffff;
   background-image: url('../img/output_more.png');
@@ -2301,7 +2304,7 @@ body.dark-mode .btn-export-more:hover {
   background-color: #333333;
   border-color: #666666;
 }
-
+/*
 .btn-export-more:active {
   background-color: #d3d3d3;
   border-color: #333333;
@@ -2311,7 +2314,7 @@ body.dark-mode .btn-export-more:active {
   background-color: #404040;
   border-color: #888888;
 }
-
+*/
 .btn-export-more:disabled {
   background-color: #ffffff;
   border-color: #f3f3f3;
@@ -2328,7 +2331,7 @@ body.dark-mode .btn-export-more:disabled {
 .export-more-menu {
   position: absolute;
   bottom: 100%;
-  right: 0;
+  right: -58px;
   margin-bottom: 0px;
   padding: 10px;
   display: flex;
@@ -2342,7 +2345,7 @@ body.dark-mode .btn-export-more:disabled {
   z-index: 1000;
   min-width: 160px;
   background-color: #ffffff;
-  box-shadow: 0px 6px 50px 0px rgba(51, 51, 51, 0.1);
+  box-shadow: 0px 8px 50px 0px rgba(51, 51, 51, 0.1);
   border-radius: 12px;
 }
 
@@ -2888,7 +2891,7 @@ body.dark-mode .clear-btn svg path {
   stroke: #e0e0e0;
 }
 
-/* 空状态底部提示 */
+/* 空状态底部提示
 .footer-empty-tip {
   display: flex;
   flex-direction: column;
@@ -2896,7 +2899,7 @@ body.dark-mode .clear-btn svg path {
   justify-content: center;
   gap: 4px;
   padding: 16px;
-}
+} */
 
 .footer-empty-tip-main {
   font-family: 'Segoe UI', sans-serif;
@@ -2914,7 +2917,7 @@ body.dark-mode .footer-empty-tip-main {
 .footer-empty-tip-sub {
   font-family: 'Segoe UI', sans-serif;
   font-weight: 400;
-  font-size: 14px;
+  font-size: 20px;
   line-height: 1.33;
   color: #80868c;
   transition: color 0.3s;
@@ -3624,7 +3627,7 @@ body.dark-mode .material-btn-new:hover {
   height: 44px;
   background: #FFFFFF;
   border: 1px solid #e6e6e6;
-  border-radius: 12px;
+  border-radius: 44px;
   cursor: pointer;
   transition: all 0.15s ease;
   flex-shrink: 0;
@@ -5835,8 +5838,8 @@ body.dark-mode .material-btn-edit:hover {
   width: 28px;
   height: 28px;
   border: none;
-  background-color: #f3f3f3;
-  border-radius: 8px;
+  background-color: #ffffff;
+  border-radius: 6px;
   cursor: pointer;
   background-image: url('../img/controls-sprite.png');
   background-size: 400px 400px;
@@ -5845,111 +5848,61 @@ body.dark-mode .material-btn-edit:hover {
 }
 
 .text-align-btn:hover {
-  background-color: #e6e6e6;
+  background-color: #f3f3f3;
 }
 
 .text-align-btn.active {
-  background-color: #5b5b5b;
+  background-color: #f3f3f3;
 }
 
 /* 左对齐按钮 */
 .text-align-left {
-  background-position: -160px -320px;
+  background-position: -238px -318px;
 }
 
 .text-align-left.active {
-  background-position: -160px -320px;
+  background-position: -238px -318px;
 }
 
 /* 居中对齐按钮 */
 .text-align-center {
-  background-position: -160px -360px;
+  background-position: -158px -318px;
 }
 
 .text-align-center.active {
-  background-position: -160px -360px;
+  background-position: -158px -318px;
 }
 
 /* 右对齐按钮 */
 .text-align-right {
-  background-position: -200px -360px;
+  background-position: -318px -318px;
 }
 
 .text-align-right.active {
-  background-position: -200px -360px;
+  background-position: -318px -318px;
 }
 
 /* 暗黑模式 */
 body.dark-mode .text-align-btn {
-  background-color: #3a3a3a;
+  background-color: #2a2a2a;
 }
 
 body.dark-mode .text-align-btn:hover {
-  background-color: #454545;
+  background-color: #5b5b5b;
 }
 
 body.dark-mode .text-align-btn.active {
-  background-color: #666666;
+  background-color: #5b5b5b;
 }
 
 body.dark-mode .text-align-left {
-  background-position: -200px -320px;
+  background-position: -278px -318px;
 }
 
 body.dark-mode .text-align-center {
-  background-position: -200px -360px;
+  background-position: -198px -318px;
 }
 
 body.dark-mode .text-align-right {
-  background-position: -240px -360px;
-}
-
-/* 文字对齐按钮组 */
-.text-align-buttons {
-  display: flex;
-  gap: 8px;
-}
-
-/* 单个对齐按钮 */
-.text-align-btn {
-  width: 28px;
-  height: 28px;
-  border: 1px solid #d9d9d9;
-  border-radius: 4px;
-  background: #fff;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  transition: all 0.3s;
-}
-
-.text-align-btn:hover {
-  border-color: #1890ff;
-}
-
-.text-align-btn.active {
-  background-color: #e6f7ff;
-  border-color: #1890ff;
-}
-
-.text-align-btn img {
-  width: 16px;
-  height: 16px;
-}
-
-/* 暗黑模式适配 */
-body.dark .text-align-btn {
-  background: #303030;
-  border-color: #555;
-}
-
-body.dark .text-align-btn:hover {
-  border-color: #40a9ff;
-}
-
-body.dark .text-align-btn.active {
-  background-color: #1f4287;
-  border-color: #40a9ff;
+  background-position: -358px -318px;
 }
