@@ -1,0 +1,108 @@
+{
+  "name": "vite-guide",
+  "display_name": "Vite开发指南",
+  "version": "1.0.0",
+  "description": "基于项目实际配置的Vite开发指南，包含配置、构建、性能优化和常见问题解决方案",
+  "author": "AI-Protocol-Hub",
+  "created_at": "[2026-03-01 12:00:00]",
+  "updated_at": "[2026-03-01 12:00:00]",
+  "tags": ["vite", "前端构建", "多页应用", "性能优化", "开发服务器"],
+  "skills": [
+    {
+      "id": "vite-project-config",
+      "name": "Vite项目配置",
+      "description": "基于项目实际配置的Vite设置，包括根目录、基础路径、别名等配置",
+      "examples": [
+        "如何配置Vite的根目录和基础路径",
+        "如何设置Vite的别名路径",
+        "如何配置Vite的构建输出目录"
+      ],
+      "reference": "https://vitejs.cn/vite3-cn/config/"
+    },
+    {
+      "id": "vite-multipage",
+      "name": "多页应用配置",
+      "description": "配置Vite的多页应用，支持主页面和小工具页面",
+      "examples": [
+        "如何配置Vite的多页应用",
+        "如何添加新的页面到Vite构建",
+        "多页应用的路由配置"
+      ],
+      "reference": "https://vitejs.cn/vite3-cn/guide/build.html#multi-page-app"
+    },
+    {
+      "id": "vite-dev-server",
+      "name": "开发服务器配置",
+      "description": "配置Vite的开发服务器，包括端口、CORS头、Worker脚本支持等",
+      "examples": [
+        "如何配置Vite的开发服务器端口",
+        "如何添加CORS头支持Worker脚本",
+        "如何配置COEP策略支持"
+      ],
+      "reference": "https://vitejs.cn/vite3-cn/config/server-options.html"
+    },
+    {
+      "id": "vite-static-assets",
+      "name": "静态资源管理",
+      "description": "管理Vite项目的静态资源，包括复制静态文件、资源压缩等",
+      "examples": [
+        "如何复制静态文件到构建目录",
+        "如何优化静态资源加载",
+        "如何配置资源压缩"
+      ],
+      "reference": "https://vitejs.cn/vite3-cn/guide/assets.html"
+    },
+    {
+      "id": "vite-build-optimization",
+      "name": "构建优化",
+      "description": "优化Vite的构建过程，包括代码压缩、sourcemap配置等",
+      "examples": [
+        "如何配置Terser进行代码压缩",
+        "如何配置sourcemap",
+        "如何优化构建速度"
+      ],
+      "reference": "https://vitejs.cn/vite3-cn/guide/build.html"
+    },
+    {
+      "id": "vite-performance",
+      "name": "性能优化",
+      "description": "优化Vite项目的运行性能，包括代码分割、预构建等",
+      "examples": [
+        "如何配置Vite的代码分割",
+        "如何优化Vite的预构建",
+        "如何提高开发服务器启动速度"
+      ],
+      "reference": "https://vitejs.cn/vite3-cn/guide/performance.html"
+    },
+    {
+      "id": "vite-plugins",
+      "name": "插件使用",
+      "description": "使用和配置Vite插件，包括Vue插件和自定义插件",
+      "examples": [
+        "如何配置Vue 2插件",
+        "如何创建自定义Vite插件",
+        "如何配置插件顺序"
+      ],
+      "reference": "https://vitejs.cn/vite3-cn/plugins/"
+    },
+    {
+      "id": "vite-troubleshooting",
+      "name": "常见问题排查",
+      "description": "排查和解决Vite使用过程中的常见问题",
+      "examples": [
+        "Vite启动失败怎么办",
+        "Worker脚本加载失败如何解决",
+        "构建错误排查方法",
+        "热更新不生效如何解决"
+      ],
+      "reference": "https://github.com/vitejs/vite/issues"
+    }
+  ],
+  "resources": {
+    "official": "https://vitejs.cn",
+    "github": "https://github.com/vitejs/vite",
+    "docs": "https://vitejs.cn/vite3-cn/guide/",
+    "project-config": "f:/my_tools/MeeWoo/MeeWoo/vite.config.js"
+  },
+  "keywords": ["vite", "前端构建", "多页应用", "性能优化", "开发服务器", "静态资源", "构建配置"]
+}

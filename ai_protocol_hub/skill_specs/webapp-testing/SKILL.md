@@ -96,3 +96,5 @@ with sync_playwright() as p:
   - `static_html_automation.py` - Using file:// URLs for local HTML
   - `console_logging.py` - Capturing console logs during automation
   - `enhanced_error_capture.py` - Enhanced browser error capture with real-time display and detailed logging
+  - `vue_component_testing.py` - Testing Vue-rendered popup components with fallback to DOM implementation
+  - `konva_editor_testing.py` - Testing Konva.js-based material editor (stage init, transformer, drag/drop, export)
