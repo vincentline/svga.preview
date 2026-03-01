@@ -101,15 +101,17 @@ export default defineConfig({
   // 插件
   plugins: [
     vue(),
-    // 为Worker脚本添加CORP响应头（解决COEP策略下的加载问题）
+    // 为所有资源添加CORP响应头（解决COEP策略下的加载问题）
     {
-      name: 'worker-cors-headers',
+      name: 'cors-headers-middleware',
       configureServer(server) {
+        // 使用 use() 注册中间件，确保在所有请求前执行
         server.middlewares.use((req, res, next) => {
-          // 为Worker脚本添加必要的CORS头
-          if (req.url && req.url.includes('.worker.js')) {
-            res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-            res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
+          // 为所有 JS、WASM 文件添加 CORP 头，确保能在 COEP 环境下被加载
+          // 特别是 Worker 脚本和动态加载的库文件
+          const url = req.url || '';
+          if (url.includes('.js') || url.includes('.wasm') || url.includes('.worker')) {
+            res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
           }
           next();
         });

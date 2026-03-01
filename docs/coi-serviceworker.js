@@ -73,11 +73,22 @@ if (typeof window === 'undefined') {
             });
           }
 
-          // Worker脚本需要添加CORP头，否则会COEP策略阻止加载
-          // destination为'worker'或路径包含.worker.js
-          if (request.destination === 'worker' || url.pathname.includes('.worker.js')) {
+          // 为同源的 JS/WASM 资源添加 CORP 头
+          // Worker 脚本和动态加载的库文件都需要 CORP 头才能在 COEP 环境下加载
+          const pathname = url.pathname.toLowerCase();
+          const isWorkerRequest = request.destination === 'worker' || 
+                                  request.destination === 'sharedworker' ||
+                                  pathname.includes('.worker.js') ||
+                                  pathname.includes('.worker');
+          const isScriptOrWasm = pathname.endsWith('.js') || 
+                                 pathname.endsWith('.wasm') ||
+                                 request.destination === 'script';
+          
+          // Worker 脚本或同源 JS/WASM 资源都添加 CORP 头
+          if (isWorkerRequest || (isScriptOrWasm && url.origin === self.location.origin)) {
             const newHeaders = new Headers(response.headers);
-            newHeaders.set('Cross-Origin-Resource-Policy', 'cross-origin');
+            // 使用 same-origin 而不是 cross-origin，因为这些是同源资源
+            newHeaders.set('Cross-Origin-Resource-Policy', 'same-origin');
 
             return new Response(response.body, {
               status: response.status,
