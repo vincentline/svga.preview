@@ -34,25 +34,31 @@ if (typeof window === 'undefined') {
     }
 
     /**
-     * 跳过第三方服务和CDN（避免 CORS 错误）
+     * 跨域 CDN 白名单
+     * 这些域名的请求直接透传，不添加额外的头
      * 
-     * 重要：即使使用 credentialless 模式，某些CDN还是会被 Service Worker 拦截导致 CORS 错误
-     * 
-     * 必须跳过的域名：
-     * 1. wind.hlgdata.com - 第三方统计服务
-     * 2. jsdelivr.net - 主 CDN（Vue、protobuf等核心库）
-     * 3. unpkg.com - 备用 CDN（pngquant 等）
-     * 4. cdnjs.cloudflare.com - 备用 CDN
-     * 
-     * 注意：修改此处时，请确保：
-     * - 所有项目依赖的 CDN 都在白名单中
-     * - 更新后升级 index.html 中的 Service Worker 版本号
-     * - 本地测试确认核心库能加载（Vue、SVGA、protobuf、pako）
+     * 重要：不能简单跳过（return），否则在 COEP 环境下跨域 wasm 加载会失败
      */
-    if (url.hostname === 'wind.hlgdata.com' ||
-      url.hostname.includes('jsdelivr.net') ||
-      url.hostname.includes('unpkg.com') ||
-      url.hostname.includes('cdnjs.cloudflare.com')) {
+    const cdnWhitelist = [
+      'wind.hlgdata.com',
+      'jsdelivr.net',
+      'unpkg.com',
+      'cdnjs.cloudflare.com'
+    ];
+    
+    const isCdnRequest = cdnWhitelist.some(cdn => url.hostname.includes(cdn));
+    
+    if (isCdnRequest) {
+      // 对 CDN 请求使用透传模式：fetch 并原样返回
+      // 这比 return 跳过更可靠，因为 Service Worker 的 fetch 在 COEP 环境下行为更可控
+      event.respondWith(
+        fetch(request, { mode: 'cors', credentials: 'omit' })
+          .catch(err => {
+            // CORS 失败时尝试无 CORS 模式
+            console.warn('[COI SW] CORS fetch failed for CDN, trying no-cors:', url.href);
+            return fetch(request);
+          })
+      );
       return;
     }
 

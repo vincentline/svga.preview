@@ -18,6 +18,8 @@
 - 更新简述：如新增功能、修复问题、优化性能等，简单描述
 
 ## 更新记录
+[2026-03-02 14:00:00] 【修改文件】 : src/coi-serviceworker.js - 修复线上FFmpeg加载失败：对CDN请求改用显式fetch透传模式（而非跳过），解决COEP环境下跨域wasm加载问题
+[2026-03-02 14:00:00] 【修改文件】 : src/index.html - Service Worker版本号升级到v=12
 [2026-03-02 13:30:00] 【修改文件】 : src/coi-serviceworker.js - 修复GitHub Pages线上GIF导出卡在编码中：扩大CORP头适用范围至所有同源JS/WASM文件，使用same-origin策略
 [2026-03-02 13:30:00] 【修改文件】 : src/index.html - Service Worker版本号升级到v=11
 [2026-03-02 13:30:00] 【修改文件】 : vite.config.js - 优化开发服务器CORS中间件，为所有JS/WASM文件添加CORP头
