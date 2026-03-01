@@ -1,113 +1,56 @@
-/*! coi-serviceworker v0.2.0 - Simplified version */
+/*! coi-serviceworker v0.3.0 - Based on gzuidhof/coi-serviceworker */
 /*! Enables SharedArrayBuffer for GitHub Pages */
 
+/**
+ * 使用 credentialless 模式：
+ * - 对文档设置 Cross-Origin-Embedder-Policy: credentialless
+ * - 该模式不需要为资源设置 CORP 头（与 require-corp 不同）
+ * - 对 no-cors 请求省略凭据
+ */
 if (typeof window === 'undefined') {
   // Service Worker 代码
-  self.addEventListener('install', (event) => {
-    console.log('[COI SW] Installing new version...');
-    // 强制跳过等待，立即激活新版本
-    self.skipWaiting();
-  });
-
-  self.addEventListener('activate', (event) => {
-    console.log('[COI SW] Activating new version...');
-    event.waitUntil(
-      self.clients.claim().then(() => {
-        // 强制刷新所有已打开的页面，使其使用新的 Service Worker
-        return self.clients.matchAll({ type: 'window' }).then(clients => {
-          clients.forEach(client => {
-            console.log('[COI SW] Reloading client:', client.url);
-            client.navigate(client.url);
-          });
-        });
-      })
-    );
-  });
+  self.addEventListener('install', () => self.skipWaiting());
+  self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim()));
 
   self.addEventListener('fetch', (event) => {
-    const request = event.request;
-    const url = new URL(request.url);
-
-    // 跳过非导航请求
-    if (request.cache === 'only-if-cached' && request.mode !== 'same-origin') {
+    const r = event.request;
+    
+    // 跳过特殊缓存请求
+    if (r.cache === 'only-if-cached' && r.mode !== 'same-origin') {
       return;
     }
 
-    /**
-     * 跨域 CDN 白名单
-     * 这些域名的请求直接透传，不添加额外的头
-     * 
-     * 重要：不能简单跳过（return），否则在 COEP 环境下跨域 wasm 加载会失败
-     */
-    const cdnWhitelist = [
-      'wind.hlgdata.com',
-      'jsdelivr.net',
-      'unpkg.com',
-      'cdnjs.cloudflare.com'
-    ];
-    
-    const isCdnRequest = cdnWhitelist.some(cdn => url.hostname.includes(cdn));
-    
-    if (isCdnRequest) {
-      // 对 CDN 请求使用透传模式：fetch 并原样返回
-      // 这比 return 跳过更可靠，因为 Service Worker 的 fetch 在 COEP 环境下行为更可控
-      event.respondWith(
-        fetch(request, { mode: 'cors', credentials: 'omit' })
-          .catch(err => {
-            // CORS 失败时尝试无 CORS 模式
-            console.warn('[COI SW] CORS fetch failed for CDN, trying no-cors:', url.href);
-            return fetch(request);
-          })
-      );
-      return;
-    }
+    // credentialless 模式：对 no-cors 请求省略凭据
+    const request = (r.mode === 'no-cors')
+      ? new Request(r, { credentials: 'omit' })
+      : r;
 
     event.respondWith(
       fetch(request)
-        .then(response => {
-          // 主文档（HTML页面）添加COOP/COEP头部
-          if (request.mode === 'navigate' || request.destination === 'document') {
-            const newHeaders = new Headers(response.headers);
-            newHeaders.set('Cross-Origin-Opener-Policy', 'same-origin');
-            // 使用credentialless模式，允许跨域资源加载
-            newHeaders.set('Cross-Origin-Embedder-Policy', 'credentialless');
-
-            return new Response(response.body, {
-              status: response.status,
-              statusText: response.statusText,
-              headers: newHeaders
-            });
+        .then((response) => {
+          // 响应状态码为 0 表示 opaque 响应（跨域 no-cors），直接返回
+          if (response.status === 0) {
+            return response;
           }
 
-          // 为同源的 JS/WASM 资源添加 CORP 头
-          // Worker 脚本和动态加载的库文件都需要 CORP 头才能在 COEP 环境下加载
-          const pathname = url.pathname.toLowerCase();
-          const isWorkerRequest = request.destination === 'worker' || 
-                                  request.destination === 'sharedworker' ||
-                                  pathname.includes('.worker.js') ||
-                                  pathname.includes('.worker');
-          const isScriptOrWasm = pathname.endsWith('.js') || 
-                                 pathname.endsWith('.wasm') ||
-                                 request.destination === 'script';
+          const newHeaders = new Headers(response.headers);
           
-          // Worker 脚本或同源 JS/WASM 资源都添加 CORP 头
-          if (isWorkerRequest || (isScriptOrWasm && url.origin === self.location.origin)) {
-            const newHeaders = new Headers(response.headers);
-            // 使用 same-origin 而不是 cross-origin，因为这些是同源资源
-            newHeaders.set('Cross-Origin-Resource-Policy', 'same-origin');
+          // 为所有响应设置 COOP
+          newHeaders.set('Cross-Origin-Opener-Policy', 'same-origin');
+          
+          // 为文档设置 COEP: credentialless
+          // credentialless 模式不需要为资源设置 CORP 头
+          newHeaders.set('Cross-Origin-Embedder-Policy', 'credentialless');
 
-            return new Response(response.body, {
-              status: response.status,
-              statusText: response.statusText,
-              headers: newHeaders
-            });
-          }
-
-          // 其他资源直接返回
-          return response;
+          return new Response(response.body, {
+            status: response.status,
+            statusText: response.statusText,
+            headers: newHeaders,
+          });
         })
-        .catch(err => {
-          console.error('[COI SW] Fetch failed:', err);
+        .catch((e) => {
+          console.error('[COI SW] Fetch error:', e);
+          // 返回网络错误而不是抛异常，避免页面崩溃
           return new Response('Network error', { status: 500 });
         })
     );
