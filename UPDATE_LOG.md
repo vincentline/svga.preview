@@ -18,6 +18,10 @@
 - 更新简述：如新增功能、修复问题、优化性能等，简单描述
 
 ## 更新记录
+[2026-03-02 01:00:00] 【修改文件】 : src/coi-serviceworker.js - 修复Worker脚本被COEP策略阻止加载：为Worker请求添加CORP响应头
+[2026-03-02 01:00:00] 【修改文件】 : docs/coi-serviceworker.js - 同步修复
+[2026-03-02 01:00:00] 【修改文件】 : src/index.html - Service Worker版本号升级到v=10
+[2026-03-02 01:00:00] 【修改文件】 : docs/index.html - Service Worker版本号升级到v=10
 [2026-03-02 00:30:00] 【修改文件】 : src/vercel.json - 修复线上GIF导出卡在50%问题：添加Cross-Origin-Resource-Policy响应头，解决Worker被COEP策略阻止
 [2026-03-02 00:30:00] 【修改文件】 : docs/vercel.json - 修复线上GIF导出卡在50%问题：添加Cross-Origin-Resource-Policy响应头
 [2026-02-28 10:47:24] 【修改文件】 : src/index.html - 为MP4、Lottie、序列帧、双通道MP4模式底部浮层添加更多导出按钮及hover菜单，统一导出功能入口，提升界面一致性

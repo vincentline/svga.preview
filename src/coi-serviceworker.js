@@ -59,7 +59,7 @@ if (typeof window === 'undefined') {
     event.respondWith(
       fetch(request)
         .then(response => {
-          // 只为主文档（HTML页面）添加COOP/COEP头部，其他资源不处理
+          // 主文档（HTML页面）添加COOP/COEP头部
           if (request.mode === 'navigate' || request.destination === 'document') {
             const newHeaders = new Headers(response.headers);
             newHeaders.set('Cross-Origin-Opener-Policy', 'same-origin');
@@ -73,7 +73,20 @@ if (typeof window === 'undefined') {
             });
           }
 
-          // 其他资源直接返回，不修改头部
+          // Worker脚本需要添加CORP头，否则会COEP策略阻止加载
+          // destination为'worker'或路径包含.worker.js
+          if (request.destination === 'worker' || url.pathname.includes('.worker.js')) {
+            const newHeaders = new Headers(response.headers);
+            newHeaders.set('Cross-Origin-Resource-Policy', 'cross-origin');
+
+            return new Response(response.body, {
+              status: response.status,
+              statusText: response.statusText,
+              headers: newHeaders
+            });
+          }
+
+          // 其他资源直接返回
           return response;
         })
         .catch(err => {
