@@ -3,10 +3,9 @@
 
 if (typeof window === 'undefined') {
   // Service Worker 代码
-  let isCrossOriginIsolated = false;
-
   self.addEventListener('install', (event) => {
     console.log('[COI SW] Installing new version...');
+    // 强制跳过等待，立即激活新版本
     self.skipWaiting();
   });
 
@@ -14,6 +13,7 @@ if (typeof window === 'undefined') {
     console.log('[COI SW] Activating new version...');
     event.waitUntil(
       self.clients.claim().then(() => {
+        // 强制刷新所有已打开的页面，使其使用新的 Service Worker
         return self.clients.matchAll({ type: 'window' }).then(clients => {
           clients.forEach(client => {
             console.log('[COI SW] Reloading client:', client.url);
@@ -22,13 +22,6 @@ if (typeof window === 'undefined') {
         });
       })
     );
-  });
-
-  self.addEventListener('message', (event) => {
-    if (event.data && event.data.type === 'SET_CROSS_ORIGIN_ISOLATED') {
-      isCrossOriginIsolated = event.data.value;
-      console.log('[COI SW] Cross origin isolated status:', isCrossOriginIsolated);
-    }
   });
 
   self.addEventListener('fetch', (event) => {
@@ -40,22 +33,26 @@ if (typeof window === 'undefined') {
       return;
     }
 
-    // 检查是否是 Worker 脚本请求
-    const isWorkerScript = request.destination === 'worker' || url.pathname.includes('.worker.js');
-
-    // 跳过第三方服务和CDN
+    /**
+     * 跳过第三方服务和CDN（避免 CORS 错误）
+     * 
+     * 重要：即使使用 credentialless 模式，某些CDN还是会被 Service Worker 拦截导致 CORS 错误
+     * 
+     * 必须跳过的域名：
+     * 1. wind.hlgdata.com - 第三方统计服务
+     * 2. jsdelivr.net - 主 CDN（Vue、protobuf等核心库）
+     * 3. unpkg.com - 备用 CDN（pngquant 等）
+     * 4. cdnjs.cloudflare.com - 备用 CDN
+     * 
+     * 注意：修改此处时，请确保：
+     * - 所有项目依赖的 CDN 都在白名单中
+     * - 更新后升级 index.html 中的 Service Worker 版本号
+     * - 本地测试确认核心库能加载（Vue、SVGA、protobuf、pako）
+     */
     if (url.hostname === 'wind.hlgdata.com' ||
       url.hostname.includes('jsdelivr.net') ||
       url.hostname.includes('unpkg.com') ||
       url.hostname.includes('cdnjs.cloudflare.com')) {
-      return;
-    }
-
-    // 只有以下情况才拦截：
-    // 1. Worker 脚本请求（始终需要添加 CORP 头）
-    // 2. 页面没有 COI 且是导航请求（需要添加 COOP/COEP 头）
-    if (!isWorkerScript && isCrossOriginIsolated) {
-      // 页面已经有 COI，且不是 Worker 脚本，直接返回原响应
       return;
     }
 
@@ -66,6 +63,7 @@ if (typeof window === 'undefined') {
           if (request.mode === 'navigate' || request.destination === 'document') {
             const newHeaders = new Headers(response.headers);
             newHeaders.set('Cross-Origin-Opener-Policy', 'same-origin');
+            // 使用credentialless模式，允许跨域资源加载
             newHeaders.set('Cross-Origin-Embedder-Policy', 'credentialless');
 
             return new Response(response.body, {
@@ -75,8 +73,9 @@ if (typeof window === 'undefined') {
             });
           }
 
-          // Worker脚本需要添加CORP头
-          if (isWorkerScript) {
+          // Worker脚本需要添加CORP头，否则会COEP策略阻止加载
+          // destination为'worker'或路径包含.worker.js
+          if (request.destination === 'worker' || url.pathname.includes('.worker.js')) {
             const newHeaders = new Headers(response.headers);
             newHeaders.set('Cross-Origin-Resource-Policy', 'cross-origin');
 
@@ -87,6 +86,7 @@ if (typeof window === 'undefined') {
             });
           }
 
+          // 其他资源直接返回
           return response;
         })
         .catch(err => {
@@ -100,17 +100,16 @@ if (typeof window === 'undefined') {
   (function () {
     'use strict';
 
+    // 检查是否已经跨域隔离
+    if (typeof window !== 'undefined' && window.crossOriginIsolated) {
+      console.log('[COI] Already cross-origin isolated');
+      return;
+    }
+
     // 检查浏览器支持
     if (!navigator.serviceWorker) {
       console.warn('[COI] Service Worker not supported');
       return;
-    }
-
-    // 即使已经跨域隔离，也需要注册 Service Worker
-    // 原因：Worker 脚本需要 CORP 头才能在 COEP 环境下加载
-    // 如果 SW 不注册，Worker 脚本会因为没有 CORP 头而被阻止
-    if (window.crossOriginIsolated) {
-      console.log('[COI] Already cross-origin isolated, but still registering SW for Worker support');
     }
 
     // 检查是否刚刚刷新过，防止无限循环
@@ -118,6 +117,7 @@ if (typeof window === 'undefined') {
     if (justReloaded === 'yes') {
       sessionStorage.removeItem('coi_reloaded');
       console.log('[COI] Reloaded, Service Worker should be active now');
+      return;
     }
 
     // 注册Service Worker
@@ -127,14 +127,6 @@ if (typeof window === 'undefined') {
       navigator.serviceWorker.register(scriptUrl)
         .then(registration => {
           console.log('[COI] Service Worker registered:', registration.scope);
-
-          // 向 Service Worker 发送 COI 状态
-          if (window.crossOriginIsolated && registration.active) {
-            registration.active.postMessage({
-              type: 'SET_CROSS_ORIGIN_ISOLATED',
-              value: true
-            });
-          }
 
           // 检查Service Worker状态
           const checkSWStatus = () => {
@@ -159,7 +151,7 @@ if (typeof window === 'undefined') {
               window.location.reload();
               return;
             }
-
+          
             // 继续检查，直到 Service Worker 激活或超时
             // 使用定时器服务进行轮询检测
             if (window.MeeWoo && window.MeeWoo.Service && window.MeeWoo.Service.TimerService) {
