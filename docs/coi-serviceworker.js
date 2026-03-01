@@ -100,16 +100,17 @@ if (typeof window === 'undefined') {
   (function () {
     'use strict';
 
-    // 检查是否已经跨域隔离
-    if (typeof window !== 'undefined' && window.crossOriginIsolated) {
-      console.log('[COI] Already cross-origin isolated');
-      return;
-    }
-
     // 检查浏览器支持
     if (!navigator.serviceWorker) {
       console.warn('[COI] Service Worker not supported');
       return;
+    }
+
+    // 即使已经跨域隔离，也需要注册 Service Worker
+    // 原因：Worker 脚本需要 CORP 头才能在 COEP 环境下加载
+    // 如果 SW 不注册，Worker 脚本会因为没有 CORP 头而被阻止
+    if (window.crossOriginIsolated) {
+      console.log('[COI] Already cross-origin isolated, but still registering SW for Worker support');
     }
 
     // 检查是否刚刚刷新过，防止无限循环
